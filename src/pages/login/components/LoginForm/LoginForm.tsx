@@ -42,8 +42,6 @@ const LoginForm: React.FC<LoginFormProps> = memo(({
     onTogglePassword,
     onFinish,
     onFinishFailed,
-    onNavigateToRegister,
-    onNavigateToForgotPassword,
 }) => (
     <Form
         form={form}
@@ -51,10 +49,10 @@ const LoginForm: React.FC<LoginFormProps> = memo(({
         onFinishFailed={onFinishFailed}
         className={styles.formContainer}
     >
-        <FormItem name="phone" label="手机号">
+        <FormItem name="phone" label="账号">
             <Input
                 type="tel"
-                placeholder="请输入手机号"
+                placeholder="请输入账号"
                 autoComplete="off"
                 prefix={PREFIX_PHONE}
             />
@@ -79,14 +77,6 @@ const LoginForm: React.FC<LoginFormProps> = memo(({
             立即登录
         </Button>
 
-        <nav className={styles.linksContainer} aria-label="账号操作">
-            <a href="#" onClick={onNavigateToRegister} className={styles.registerLink}>
-                新用户注册
-            </a>
-            <a href="#" onClick={onNavigateToForgotPassword}>
-                找回密码
-            </a>
-        </nav>
     </Form>
 ));
 

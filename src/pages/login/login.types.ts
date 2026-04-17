@@ -1,6 +1,6 @@
 // 登录页表单与视图类型定义。
 import type { ValidatorRule } from '@components/form';
-export { PHONE_PATTERN, PASSWORD_PATTERN } from '@pages/auth/shared/authValidation';
+export { PHONE_PATTERN, PASSWORD_PATTERN } from '@pages/login/shared/authValidation';
 
 /** 登录表单 DTO。 */
 export interface LoginFormDTO {

@@ -1,7 +1,6 @@
 // 登录页面：账号密码登录入口，包含品牌 Logo 区、表单区及底部协议链接。
 import React, { memo } from 'react';
 import AuthPageLayout from './shared/AuthPageLayout/AuthPageLayout';
-import AuthFooter from './shared/AuthFooter/AuthFooter';
 import LoginHeader from './components/LoginHeader/LoginHeader';
 import LoginForm from './components/LoginForm/LoginForm';
 import { useLoginForm } from './hooks/useLoginForm';
@@ -23,8 +22,6 @@ const Login: React.FC = memo(() => {
         handleFinishFailed,
         handleNavigateToRegister,
         handleNavigateToForgotPassword,
-        handleNavigateToAgreement,
-        handleNavigateToPrivacy,
     } = useLoginForm();
 
     return (
@@ -43,12 +40,6 @@ const Login: React.FC = memo(() => {
                 onNavigateToForgotPassword={handleNavigateToForgotPassword}
             />
 
-            {/* ── 底部协议区 ───────────────────────────────── */}
-            <AuthFooter
-                action="登录"
-                onAgreementClick={handleNavigateToAgreement}
-                onPrivacyClick={handleNavigateToPrivacy}
-            />
         </AuthPageLayout>
     );
 });

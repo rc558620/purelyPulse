@@ -15,7 +15,7 @@ const LoginHeader: React.FC = memo(() => (
                 <img src={icSavings} alt="Savings" className={styles.logoImg} />
             </div>
         </div>
-        <h1>纯利宝</h1>
+        <h1>purelyPulse</h1>
         <p>PREMIUM PROFIT TRACKER</p>
     </header>
 ));

@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { useForm } from '@components/form';
 import { useAnimatedNavigate } from '@hooks/useAnimatedNavigate';
 import { usePasswordVisibility } from '@hooks/usePasswordVisibility';
-import type { LoginFormDTO, LoginFormErrors } from '@pages/auth/login/login.types';
+import type { LoginFormDTO, LoginFormErrors } from '@pages/login/login.types';
 
 /** useLoginForm 返回值类型。 */
 export interface UseLoginFormReturn {
