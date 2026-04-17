@@ -1,0 +1,363 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/mixins.less';
+
+@item-h: 44px;
+@visible-rows: 7;
+
+// ─── 包裹容器 ──────────────────────────────────────────────
+.wrapper {
+  position: relative;
+  width: 100%;
+}
+
+// ─── Trigger ───────────────────────────────────────────────
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  width: 100%;
+  height: 50px;
+  padding: 0 1.6rem;
+  border-radius: @radius-lg;
+  border: 1px solid @border-color;
+  background-color: @bg-white;
+  color: @text-main;
+  font-size: 1.6rem;
+  font-family: 'Inter', 'Noto Sans SC', sans-serif;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    border-color: @primary-fade;
+    background-color: @bg-slate-50;
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: @primary;
+    box-shadow: 0 0 0 1px @primary;
+    background-color: @bg-white;
+  }
+}
+
+.triggerOpen {
+  border-color: @primary;
+  box-shadow: 0 0 0 1px @primary;
+  background-color: @bg-white;
+}
+
+.calIcon {
+  color: @text-sub;
+  flex-shrink: 0;
+  transition: color 0.15s;
+
+  .trigger:hover &,
+  .triggerOpen & {
+    color: @primary;
+  }
+}
+
+.triggerText {
+  flex: 1;
+  font-size: 1.6rem;
+  color: @text-main;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
+}
+
+.arrowPlaceholder {
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+}
+
+// ─── 清除按钮（× 图标，传入 onClear 时替代 arrowPlaceholder）──────
+.clearBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 9999px;
+  border: none;
+  background-color: fade(@text-sub, 10%);
+  color: @text-sub;
+  cursor: pointer;
+  padding: 0;
+  transition: background-color 0.15s, color 0.15s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    background-color: fade(@primary, 14%);
+    color: darken(@primary, 10%);
+  }
+
+  &:active {
+    transform: scale(0.88);
+  }
+}
+
+// ─── 面板（列区域 + 底部按钮）─────────────────────────────
+.panel {
+  display: flex;
+  flex-direction: column;
+}
+
+// 三列：年 | 月 | 日，用两条分割线隔开
+.panelBody {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
+  padding: 0 1.6rem;
+  position: relative;
+}
+
+// ─── 单列 ───────────────────────────────────────────────
+.column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+
+  // 列间分隔线（右边框，除最后一列）
+  &:not(:last-child) {
+    border-right: 1px solid @border-color;
+    padding-right: 0.8rem;
+  }
+
+  &:not(:first-child) {
+    padding-left: 0.8rem;
+  }
+}
+
+.columnLabel {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: @text-sub;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.4rem;
+  user-select: none;
+}
+
+.columnListWrap {
+  position: relative;
+  width: 100%;
+}
+
+.columnHighlight {
+  position: absolute;
+  top: 132px; // 3 * 44px
+  left: 0;
+  right: 0;
+  height: @item-h;
+  background-color: fade(@primary, 12%);
+  border-radius: @radius-md;
+  border-top: 1px solid fade(@primary, 25%);
+  border-bottom: 1px solid fade(@primary, 25%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.columnList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: @item-h * @visible-rows;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.columnPad {
+  display: block;
+  height: @item-h * ((@visible-rows - 1) / 2);
+  pointer-events: none;
+  user-select: none;
+}
+
+.columnItem {
+  .flex-center();
+  height: @item-h;
+  width: 100%;
+  font-size: 1.7rem;
+  font-weight: 400;
+  color: @text-sub;
+  cursor: pointer;
+  scroll-snap-align: center;
+  transition: color 0.15s, font-weight 0.15s;
+  user-select: none;
+  font-variant-numeric: tabular-nums;
+  position: relative;
+  z-index: 2;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    color: @text-main;
+  }
+}
+
+.columnItemSelected {
+  color: @text-main;
+  font-weight: 700;
+  font-size: 1.9rem;
+}
+
+// ─── 底部操作区 ────────────────────────────────────────
+.panelFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.2rem 2rem 1.6rem;
+  border-top: 1px solid @border-color;
+  margin-top: 0.8rem;
+}
+
+.footerNow {
+  font-size: 1.4rem;
+  font-weight: 500;
+  color: @primary;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.4rem 0.8rem;
+  border-radius: @radius-md;
+  transition: background-color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    background-color: fade(@primary, 10%);
+  }
+}
+
+.footerConfirm {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: @text-sub;
+  background-color: @bg-slate-100;
+  border: 1px solid @border-color;
+  border-radius: @radius-md;
+  padding: 0.6rem 1.6rem;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  letter-spacing: 0.1em;
+
+  &:hover {
+    background-color: @border-color;
+    color: @text-main;
+  }
+}
+
+// ─── PC 端下拉面板 ─────────────────────────────────────
+.dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 1000;
+  background: @bg-white;
+  border: 1px solid @border-color;
+  border-radius: @radius-lg;
+  box-shadow: 0 8px 32px fade(#1e293b, 14%), 0 2px 8px fade(#1e293b, 8%);
+  min-width: 34rem; // 三列比两列稍宽
+  padding: 1.2rem 0 0;
+  animation: dropdownIn 0.18s cubic-bezier(.22,.68,0,1.2) both;
+}
+
+.dropdownClosing {
+  animation: dropdownOut 0.15s ease-in both;
+}
+
+@keyframes dropdownIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes dropdownOut {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(-6px) scale(0.97); }
+}
+
+// ─── 移动端底部弹出 ────────────────────────────────────
+.mask {
+  position: fixed;
+  inset: 0;
+  background: fade(#000, 40%);
+  z-index: 9998;
+  animation: maskIn 0.2s ease both;
+}
+
+@keyframes maskIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.bottomSheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  background: @bg-white;
+  border-radius: 2rem 2rem 0 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(.32,.72,0,1);
+  will-change: transform;
+}
+
+.bottomSheetVisible {
+  transform: translateY(0);
+}
+
+.sheetHeader {
+  padding-top: 1.2rem;
+  padding-bottom: 0.4rem;
+}
+
+.sheetHandle {
+  width: 4rem;
+  height: 0.4rem;
+  background: @border-color;
+  border-radius: 9999px;
+  margin: 0 auto 1.2rem;
+}
+
+.sheetTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.6rem 0.8rem;
+  border-bottom: 1px solid @border-color;
+}
+
+.sheetCancelBtn {
+  font-size: 1.5rem;
+  color: @text-sub;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.4rem 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sheetTitle {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: @text-main;
+}
+
+.sheetHeaderRight {
+  width: 4rem;
+}

@@ -1,0 +1,24 @@
+// =============================================================================
+// VerticalMarquee Styles
+// =============================================================================
+
+.vmContainer {
+  position: relative;
+  overflow: hidden;
+
+  // Mask is strictly structural and visually dynamic, so we keep the variables dynamic 
+  // via inline style but structure here. We'll use CSS custom properties for the mask gradient.
+  // Or handle it in TSX if it's dynamic via props. We will keep mask structure in TSX if dynamic.
+}
+
+.vmTrack {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+

@@ -1,0 +1,95 @@
+@import (reference) '@styles/variables.less';
+
+// ─── RadioGroup 容器 ──────────────────────────────────────────
+.radioGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+// ─── 单个 Radio 项 ────────────────────────────────────────────
+.radioItem {
+  position: relative;
+}
+
+// 隐藏原生 input
+.radioInput {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+// 可点击的 label
+.radioLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  cursor: pointer;
+  font-size: 1.4rem;
+  font-weight: 400;
+  color: @text-main;
+  transition: color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+
+  &:hover .radioIndicator {
+    border-color: var(--radio-color, @primary);
+  }
+}
+
+// 圆形指示器（外环）
+.radioIndicator {
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 9999px;
+  border: 2px solid @border-color;
+  background-color: @bg-white;
+  flex-shrink: 0;
+  transition: border-color 0.15s, background-color 0.15s;
+  position: relative;
+
+  // 内部圆点（未选中时不可见）
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 9999px;
+    background-color: @bg-white;
+    transition: transform 0.15s;
+  }
+}
+
+// ─── 选中态 ───────────────────────────────────────────────────
+.radioInput:checked + .radioLabel {
+  color: var(--radio-color, @primary);
+
+  .radioIndicator {
+    border-color: var(--radio-color, @primary);
+    background-color: var(--radio-color, @primary);
+
+    &::after {
+      transform: translate(-50%, -50%) scale(1);
+    }
+  }
+}
+
+// ─── 错误态 ───────────────────────────────────────────────────
+.radioGroupError {
+  .radioIndicator {
+    border-color: @rose-500;
+  }
+}
+
+// ─── 禁用态 ───────────────────────────────────────────────────
+.radioInput:disabled + .radioLabel {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+

@@ -1,0 +1,75 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/mixins.less';
+
+// ─── 英雄统计卡片 ────────────────────────────────────────────────
+.heroCard {
+  position: relative;
+  background: linear-gradient(135deg, darken(@primary, 6%) 0%, @primary 100%);
+  border-radius: @radius-lg;
+  padding: 2rem 2rem 1.8rem;
+  overflow: hidden;
+  box-shadow:
+    0 8px 32px fade(@primary, 25%),
+    0 2px 8px fade(@primary, 15%);
+}
+
+.heroCardBg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 80% 20%, rgba(255,255,255,0.12) 0%, transparent 50%),
+    radial-gradient(circle at 20% 80%, rgba(255,255,255,0.06) 0%, transparent 40%);
+  pointer-events: none;
+}
+
+.heroCardContent {
+  position: relative;
+  z-index: 1;
+  .flex-col();
+  gap: 0.6rem;
+}
+
+.heroLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  letter-spacing: 0.02em;
+}
+
+.heroAmount {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin: 0.2rem 0;
+}
+
+.heroPrefix {
+  font-size: 2rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1;
+}
+
+.heroValue {
+  font-size: 3.6rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-family: 'Inter', 'Noto Sans SC', sans-serif;
+}
+
+.heroSubRow {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+}
+
+.heroSubText {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.7);
+}

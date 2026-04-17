@@ -1,0 +1,888 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/mixins.less';
+
+// ─── 断点 ──────────────────────────────────────────────────
+@bp-mobile: 768px;
+
+// ─── 包裹容器 ──────────────────────────────────────────────
+.wrapper {
+  position: relative;
+  width: 100%;
+}
+
+// ─── Trigger 触发区域 ──────────────────────────────────────
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  width: 100%;
+  height: 50px;
+  padding: 0 1.6rem;
+  border-radius: @radius-lg;
+  border: 1px solid @border-color;
+  background-color: @bg-white;
+  color: @text-main;
+  font-size: 1.6rem;
+  font-family: 'Inter', 'Noto Sans SC', sans-serif;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    border-color: @primary-fade;
+    background-color: @bg-slate-50;
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: @primary;
+    box-shadow: 0 0 0 1px @primary;
+    background-color: @bg-white;
+  }
+}
+
+.triggerOpen {
+  border-color: @primary;
+  box-shadow: 0 0 0 1px @primary;
+  background-color: @bg-white;
+}
+
+.triggerError {
+  border-color: @rose-500;
+  &:focus-visible, &.triggerOpen {
+    box-shadow: 0 0 0 1px @rose-500;
+  }
+}
+
+.triggerPrefix {
+  .flex-center();
+  flex-shrink: 0;
+}
+
+.calIcon {
+  color: @text-sub;
+  flex-shrink: 0;
+  transition: color 0.15s;
+
+  .trigger:hover &,
+  .triggerOpen & {
+    color: @primary;
+  }
+}
+
+.triggerText {
+  flex: 1;
+  font-size: 1.6rem;
+  color: @text-main;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+.triggerPlaceholder {
+  color: @text-slate-400;
+  font-size: 1.6rem;
+}
+
+.clearBtn {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  border: none;
+  background-color: @bg-slate-100;
+  color: @text-sub;
+  .flex-center();
+  cursor: pointer;
+  flex-shrink: 0;
+  opacity: 1;
+  transition: background-color 0.15s, color 0.15s, opacity 0.15s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    background-color: fade(@text-main, 12%);
+    color: @text-main;
+  }
+}
+
+.arrowPlaceholder {
+  display: inline-block;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+}
+
+// ─── 遮罩（移动端） ─────────────────────────────────────────
+.mask {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background-color: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  animation: maskIn 0.2s ease;
+}
+
+@keyframes maskIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+// ─── 底部弹出面板（移动端） ──────────────────────────────────
+.bottomSheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 201;
+  background-color: @bg-white;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.12);
+  transform: translateY(100%);
+  transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+  // 安全区域适配
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.bottomSheetVisible {
+  transform: translateY(0);
+}
+
+.sheetHeader {
+  .flex-col();
+  align-items: center;
+  padding: 1.2rem 2rem 0;
+}
+
+.sheetHandle {
+  width: 3.6rem;
+  height: 4px;
+  border-radius: 9999px;
+  background-color: @border-color;
+  margin-bottom: 1.2rem;
+}
+
+.sheetTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding-bottom: 1.2rem;
+  border-bottom: 1px solid @border-color;
+}
+
+.sheetCancelBtn {
+  padding: 0.4rem 0.6rem;
+  border: none;
+  background: transparent;
+  color: @text-sub;
+  font-size: 1.5rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+
+  &:active { opacity: 0.6; }
+}
+
+.sheetTitle {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: @text-main;
+}
+
+.sheetHeaderRight {
+  // 占位，使标题居中
+  width: 4rem;
+}
+
+// ─── PC 端下拉面板 ───────────────────────────────────────────
+.dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 300;
+  background-color: @bg-white;
+  border-radius: @radius-lg;
+  border: 1.5px solid @border-color;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  min-width: 30rem;
+  animation: dropdownIn 0.18s cubic-bezier(0.34, 1.3, 0.64, 1);
+  transform-origin: top left;
+}
+
+@keyframes dropdownIn {
+  from { opacity: 0; transform: scaleY(0.92) translateY(-6px); }
+  to   { opacity: 1; transform: scaleY(1) translateY(0); }
+}
+
+.dropdownClosing {
+  animation: dropdownOut 0.15s ease forwards;
+}
+
+@keyframes dropdownOut {
+  from { opacity: 1; transform: scaleY(1) translateY(0); }
+  to   { opacity: 0; transform: scaleY(0.92) translateY(-6px); }
+}
+
+// ─── 日历内容（共用） ────────────────────────────────────────
+.calendarInner {
+  .flex-col();
+  padding: 1.6rem;
+  gap: 1.2rem;
+  min-width: 28rem;
+
+  @media (max-width: @bp-mobile) {
+    padding: 1.6rem 2rem 2rem;
+  }
+}
+
+// ── 月份导航栏 ──
+.calNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.calNavBtn {
+  width: 3.2rem;
+  height: 3.2rem;
+  border-radius: @radius-md;
+  border: 1.5px solid @border-color;
+  background-color: @bg-white;
+  color: @text-sub;
+  .flex-center();
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    border-color: fade(@primary, 50%);
+    background-color: fade(@primary, 6%);
+    color: @primary;
+  }
+
+  &:active {
+    transform: scale(0.94);
+  }
+}
+
+.calNavTitle {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: @text-main;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.4rem 0.8rem;
+  border-radius: @radius-md;
+  transition: background-color 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    background-color: fade(@primary, 8%);
+    color: @primary;
+  }
+
+  svg { color: @text-sub; }
+  &:hover svg { color: @primary; }
+}
+
+// ── 星期行 ──
+.calWeekRow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.calWeekCell {
+  .flex-center();
+  height: 3.2rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: @text-sub;
+  letter-spacing: 0.02em;
+}
+
+// ── 日期格子网格 ──
+.calDayGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.calDayBlank {
+  display: block;
+}
+
+.calDayBtn {
+  .flex-center();
+  aspect-ratio: 1;
+  height: 3.4rem;
+  border-radius: @radius-md;
+  border: none;
+  background: transparent;
+  color: @text-main;
+  font-size: 1.4rem;
+  font-weight: 400;
+  cursor: pointer;
+  transition: background-color 0.12s, color 0.12s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+  font-variant-numeric: tabular-nums;
+
+  &:hover:not(:disabled) {
+    background-color: fade(@primary, 12%);
+    color: darken(@primary, 8%);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.88);
+    background-color: fade(@primary, 20%);
+  }
+}
+
+.calDayToday {
+  color: @primary;
+  font-weight: 700;
+  background-color: fade(@primary, 8%);
+  border: 1.5px solid fade(@primary, 30%);
+}
+
+.calDaySelected {
+  background-color: @primary !important;
+  color: #fff !important;
+  font-weight: 700;
+  box-shadow: 0 3px 10px fade(@primary, 40%);
+  border: none !important;
+
+  &:hover {
+    background-color: darken(@primary, 6%) !important;
+  }
+}
+
+.calDayDisabled {
+  color: @text-slate-400 !important;
+  cursor: not-allowed;
+  opacity: 0.4;
+
+  &:hover {
+    background: transparent !important;
+  }
+}
+
+// ─── 月份格子网格（picker="month" 模式）────────────────────────
+.monthGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.8rem;
+  padding: 0.4rem 0;
+}
+
+.monthCell {
+  .flex-center();
+  height: 5.2rem;
+  border-radius: @radius-md;
+  border: 1.5px solid transparent;
+  background: transparent;
+  color: @text-main;
+  font-size: 1.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.12s, color 0.12s, border-color 0.12s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover:not(:disabled) {
+    background-color: fade(@primary, 10%);
+    color: @primary;
+    border-color: fade(@primary, 30%);
+  }
+
+  &:active:not(:disabled) {
+    background-color: fade(@primary, 18%);
+  }
+}
+
+.monthCellToday {
+  color: @primary;
+  font-weight: 700;
+  border-color: fade(@primary, 40%);
+  background-color: fade(@primary, 6%);
+}
+
+.monthCellSelected {
+  background-color: @primary !important;
+  color: #fff !important;
+  font-weight: 700;
+  border-color: @primary !important;
+  box-shadow: 0 3px 10px fade(@primary, 35%);
+
+  &:hover {
+    background-color: darken(@primary, 6%) !important;
+  }
+}
+
+.monthCellDisabled {
+  color: @text-slate-400 !important;
+  cursor: not-allowed;
+  opacity: 0.4;
+
+  &:hover {
+    background: transparent !important;
+    border-color: transparent !important;
+  }
+}
+
+// ── 底部操作区 ──
+.calFooter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 1rem;
+  border-top: 1px solid @border-color;
+  margin-top: 0.4rem;
+}
+
+.calFooterClear {
+  padding: 0.5rem 0.8rem;
+  border: none;
+  background: transparent;
+  color: @text-sub;
+  font-size: 1.3rem;
+  cursor: pointer;
+  border-radius: @radius-md;
+  transition: background-color 0.12s, color 0.12s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    background-color: @bg-slate-100;
+    color: @text-main;
+  }
+}
+
+.calFooterToday {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: transparent;
+  color: @primary;
+  font-size: 1.3rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: @radius-md;
+  transition: background-color 0.12s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover:not(:disabled) {
+    background-color: fade(@primary, 10%);
+  }
+}
+
+.calFooterTodayDisabled {
+  color: @text-slate-400;
+  cursor: not-allowed;
+}
+
+// datetime 模式：底部两端分布（此刻 左，确认 右）
+.calFooterDatetime {
+  justify-content: space-between;
+}
+
+// 有清除/确定时：两端分布
+.calFooterSpread {
+  justify-content: space-between;
+}
+
+// 「此刻」按钮
+.calFooterNow {
+  padding: 0.5rem 0.8rem;
+  border: none;
+  background: transparent;
+  color: @text-sub;
+  font-size: 1.3rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: @radius-md;
+  transition: background-color 0.12s, color 0.12s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    background-color: @bg-slate-100;
+    color: @text-main;
+  }
+
+  &:active { opacity: 0.7; }
+}
+
+// 「确认」按钮（文字样式，居中）
+.calFooterConfirm {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: transparent;
+  color: @primary;
+  font-size: 1.3rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: @radius-md;
+  transition: background-color 0.12s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover:not(:disabled) {
+    background-color: fade(@primary, 10%);
+  }
+
+  &:active { opacity: 0.7; }
+}
+
+// ─── datetime 面板布局 ──────────────────────────────────────
+
+@item-h: 36px;   // 与 JS 中 ITEM_H 保持同步
+@visible: 5;     // 可见行数
+
+// PC 端 datetime 下拉：日历 + 时间列并排
+.dropdownDatetime {
+  min-width: unset;
+  width: auto;
+}
+
+// datetime 整体横向容器（PC）
+.datetimePanel {
+  display: flex;
+  align-items: stretch;
+
+  .calendarInner {
+    flex: 1;
+    min-width: 28rem;
+  }
+}
+
+.datetimeDivider {
+  width: 1px;
+  background-color: @border-color;
+  flex-shrink: 0;
+  margin: 1.2rem 0;
+}
+
+// mobile 端 sheet 右侧确定按钮
+.sheetConfirmBtn {
+  padding: 0.4rem 0.6rem;
+  border: none;
+  background: transparent;
+  color: @primary;
+  font-size: 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+
+  &:active { opacity: 0.6; }
+}
+
+// ─── 时间滚动列（PC 右侧 / Mobile 下方）────────────────────────
+
+// 时间面板：时列 + 冒号 + 分列
+.timePanel {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  padding: 1.2rem 1rem 1.2rem 0.6rem;
+  flex-shrink: 0;
+}
+
+.timeColon {
+  width: 1px;
+  align-self: stretch;
+  background-color: @border-color;
+  flex-shrink: 0;
+  margin: 0 0.4rem;
+}
+
+// 单列（时 or 分）
+.scrollCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  width: 5rem;
+}
+
+.scrollColLabel {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: @text-sub;
+  letter-spacing: 0.06em;
+  height: 2rem;
+  line-height: 2rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.scrollColWrap {
+  position: relative;
+  width: 100%;
+  height: ~"calc(@{item-h} * @{visible})";
+  overflow: hidden;
+}
+
+// 中间高亮选中框
+.scrollColHighlight {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  top: 50%;
+  height: @item-h;
+  transform: translateY(-50%);
+  background-color: fade(@primary, 10%);
+  border-radius: @radius-md;
+  border: 1.5px solid fade(@primary, 30%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+// 上下渐变遮罩（营造滚动感）
+.scrollColFadeTop,
+.scrollColFadeBottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: ~"calc(@{item-h} * 2)";
+  pointer-events: none;
+  z-index: 2;
+}
+
+.scrollColFadeTop {
+  top: 0;
+  background: linear-gradient(to bottom, @bg-white 20%, transparent);
+}
+
+.scrollColFadeBottom {
+  bottom: 0;
+  background: linear-gradient(to top, @bg-white 20%, transparent);
+}
+
+// 滚动列表
+.scrollColList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  cursor: grab;
+
+  &::-webkit-scrollbar { display: none; }
+  &:active { cursor: grabbing; }
+}
+
+// 占位项（首尾 padding，让第一/最后一项能居中）
+.scrollColPad {
+  height: @item-h;
+  flex-shrink: 0;
+  scroll-snap-align: start;
+  pointer-events: none;
+}
+
+// 每个数字项
+.scrollColItem {
+  height: @item-h;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: @text-sub;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition: color 0.12s, font-weight 0.12s;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    color: @primary;
+  }
+}
+
+.scrollColItemSelected {
+  color: @text-main !important;
+  font-weight: 700;
+  font-size: 1.6rem;
+}
+
+// ─── Mobile datetime：时间列显示在日历下方 ──────────────────────
+
+.bottomSheetDatetime {
+  // 内容自适应高度
+}
+
+@media (max-width: @bp-mobile) {
+  // Mobile datetime：日历 + 时间区竖排
+  .datetimePanel {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .datetimeDivider {
+    width: auto;
+    height: 1px;
+    margin: 0 1.6rem;
+  }
+
+  // Mobile 时间面板横排，占满宽度
+  .timePanel {
+    flex-direction: row;
+    justify-content: center;
+    align-items: stretch;
+    padding: 1.6rem 2rem;
+    gap: 0;
+  }
+
+  .scrollCol {
+    width: 7rem;
+  }
+
+  .scrollColWrap {
+    height: ~"calc(@{item-h} * @{visible})";
+  }
+
+  .timeColon {
+    width: 1px;
+    margin: 0 0.6rem;
+  }
+
+  .scrollColItem {
+    font-size: 1.8rem;
+  }
+
+  .scrollColItemSelected {
+    font-size: 2rem;
+  }
+}
+
+// ─── 年月选择面板 ───────────────────────────────────────────
+.ymPickerHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-bottom: 1.2rem;
+  border-bottom: 1px solid @border-color;
+}
+
+.ymBackBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem 0.4rem 0.4rem;
+  border: 1.5px solid @border-color;
+  border-radius: @radius-md;
+  background: transparent;
+  color: @text-sub;
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    border-color: fade(@primary, 40%);
+    color: @primary;
+    background-color: fade(@primary, 6%);
+  }
+}
+
+.ymPickerTitle {
+  flex: 1;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: @text-main;
+}
+
+.ymPickerBody {
+  display: flex;
+  gap: 1.2rem;
+  min-height: 24rem;
+}
+
+// 年份滚动列表
+.ymYearList {
+  .flex-col();
+  gap: 2px;
+  overflow-y: auto;
+  flex: 0 0 9rem;
+  max-height: 26rem;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: fade(@primary, 20%) transparent;
+
+  &::-webkit-scrollbar { width: 3px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background-color: fade(@primary, 20%); border-radius: 4px; }
+}
+
+.ymYearItem {
+  padding: 0.8rem 1rem;
+  border-radius: @radius-md;
+  border: none;
+  background: transparent;
+  color: @text-sub;
+  font-size: 1.4rem;
+  font-weight: 400;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.12s;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    background-color: fade(@primary, 8%);
+    color: @primary;
+  }
+}
+
+.ymYearItemActive {
+  background-color: @primary !important;
+  color: #fff !important;
+  font-weight: 700;
+  border-radius: @radius-md;
+}
+
+// 月份网格
+.ymMonthGrid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  align-content: start;
+}
+
+.ymMonthItem {
+  padding: 1rem 0.4rem;
+  border-radius: @radius-md;
+  border: 1.5px solid transparent;
+  background: transparent;
+  color: @text-sub;
+  font-size: 1.4rem;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.12s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    border-color: fade(@primary, 30%);
+    background-color: fade(@primary, 8%);
+    color: @primary;
+  }
+}
+
+.ymMonthItemActive {
+  background-color: @primary !important;
+  border-color: @primary !important;
+  color: #fff !important;
+  font-weight: 700;
+  box-shadow: 0 2px 8px fade(@primary, 35%);
+}

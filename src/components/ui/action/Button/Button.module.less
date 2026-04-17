@@ -1,0 +1,109 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/mixins.less';
+
+// ─── 基础样式 ────────────────────────────────────────────────
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: @radius-lg;
+  font-family: 'Inter', 'Noto Sans SC', sans-serif;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  border: none;
+  .btn-press-effect();
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    // 禁用时不应有缩放效果
+    &:active {
+      transform: none;
+      box-shadow: none;
+    }
+  }
+}
+
+// ─── 宽度 ────────────────────────────────────────────────────
+.block {
+  width: 100%;
+}
+
+// ─── 尺寸 ────────────────────────────────────────────────────
+.size-lg {
+  font-size: 1.8rem;
+  padding: 1.375rem 2rem;
+}
+
+.size-md {
+  font-size: 1.6rem;
+  padding: 1.1rem 1.6rem;
+}
+
+// ─── 变体：primary（绿色主按钮）────────────────────────────────
+.variant-primary {
+  color: #fff;
+  background-color: @primary;
+  box-shadow: 0 4px 12px fade(@primary, 30%);
+
+  &:hover:not(:disabled) {
+    background-color: darken(@primary, 5%);
+    box-shadow: 0 6px 16px fade(@primary, 40%);
+  }
+
+  &:active:not(:disabled) {
+    background-color: darken(@primary, 10%);
+  }
+}
+
+// ─── 变体：secondary（边框次级按钮）───────────────────────────
+.variant-secondary {
+  color: @text-sub;
+  background-color: transparent;
+  border: 1px solid @border-color;
+
+  &:hover:not(:disabled) {
+    background-color: @bg-slate-50;
+    color: @text-main;
+    border-color: @text-sub;
+  }
+}
+
+// ─── 变体：ghost（无背景文字按钮）─────────────────────────────
+.variant-ghost {
+  color: @primary;
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+
+  &:hover:not(:disabled) {
+    background-color: fade(@primary, 8%);
+  }
+
+  // ghost 按钮不需要光晕，覆盖 mixin 的 box-shadow
+  &:active:not(:disabled) {
+    box-shadow: none;
+  }
+}
+
+// ─── 加载状态 ────────────────────────────────────────────────
+.loading {
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+
+.loadingRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}

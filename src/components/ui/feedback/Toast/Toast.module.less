@@ -1,0 +1,147 @@
+@import (reference) '../../../../styles/variables.less';
+@import (reference) '../../../../styles/mixins.less';
+
+// Toast 容器：fixed 固定在顶部居中，管理所有弹出项的堆叠。
+.toastContainer {
+  position: fixed;
+  top: 2.4rem;
+
+  @media (max-width: 768px) {
+    top: max(1.6rem, env(safe-area-inset-top));
+  }
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  .flex-col();
+  align-items: center;
+  pointer-events: none;
+}
+
+// 外层 wrapper：仅负责占位动画（max-height + padding 收缩），对应 Ant Design 5 的 .ant-message-notice
+.toastWrapper {
+  overflow: hidden;
+  padding: 2rem; // 增加四周 padding，容纳阴影
+  margin: -1.4rem -2rem; // 抵消 padding 带来的额外空间，保留 0.6rem 的上下间距 (2rem - 0.6rem = 1.4rem)
+  // 入场：从 0 撑开到实际高度
+  animation: wrapperIn 0.3s cubic-bezier(0.78, 0.14, 0.15, 0.86) both;
+  will-change: max-height, padding, margin;
+
+  &.wrapperLeaving {
+    // 离场：空间收缩，下方 Toast 自动上移填位
+    animation: wrapperOut 0.3s cubic-bezier(0.78, 0.14, 0.15, 0.86) forwards;
+  }
+}
+
+// 单条 Toast 基础样式 (Glassmorphism & Modern UI)
+.toast {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.2rem 2rem 1.2rem 1.6rem;
+  border-radius: @radius-full;
+  font-size: 1.4rem;
+  font-weight: 500;
+  color: @text-main;
+  white-space: nowrap;
+  pointer-events: auto;
+
+  // 玻璃拟态背景与边框
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+
+  // 现代柔和多层阴影
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 10px 15px -3px rgba(0, 0, 0, 0.05),
+    0 0 0 1px rgba(0, 0, 0, 0.02);
+
+  will-change: transform, opacity;
+
+  // 入场：translateY 滑入 + opacity，对应 Ant Design 5 content 视觉动画
+  animation: toastIn 0.3s cubic-bezier(0.78, 0.14, 0.15, 0.86) both;
+
+  &.leaving {
+    // 离场：仅 opacity + translateY 上移淡出，空间由 wrapper 收缩负责
+    animation: toastOut 0.3s cubic-bezier(0.78, 0.14, 0.15, 0.86) forwards;
+  }
+}
+
+// 图标基础样式
+.icon {
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+}
+
+// 状态色仅用于图标点缀，保持整体高级感
+// default 无图标，无需额外图标色规则
+
+.success .icon {
+  color: #52c41a; // Ant Design 5 默认 success 绿
+}
+
+.error .icon {
+  color: #ff4d4f; // Ant Design 5 默认 error 红
+}
+
+.warning .icon {
+  color: #faad14; // Ant Design 5 默认 warning 黄
+}
+
+.info .icon {
+  color: #1677ff; // Ant Design 5 默认 info 蓝
+}
+
+// ── wrapper 关键帧：控制占位空间 ─────────────────────────────────────────────
+@keyframes wrapperIn {
+  0% {
+    max-height: 0;
+    padding-block: 0;
+    margin-block: 0;
+  }
+  100% {
+    max-height: 12rem; // 增加 max-height 以容纳 padding
+    padding-block: 2rem;
+    margin-block: -1.4rem;
+  }
+}
+
+@keyframes wrapperOut {
+  0% {
+    max-height: 12rem;
+    padding-block: 2rem;
+    margin-block: -1.4rem;
+    opacity: 1;
+  }
+  100% {
+    max-height: 0;
+    padding-block: 0;
+    margin-block: 0;
+    opacity: 0;
+  }
+}
+
+// ── toast content 关键帧：控制视觉动画 ────────────────────────────────────────
+@keyframes toastIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes toastOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+}

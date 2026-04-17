@@ -1,0 +1,45 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/mixins.less';
+
+// ─── 区块标题行 ───────────────────────────────────────────────────
+.sectionHeader {
+  .flex-between();
+  align-items: center;
+}
+
+.sectionTitle {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: @text-main;
+  margin: 0;
+}
+
+// ─── 展开/收起切换按钮 ────────────────────────────────────────────
+.toggleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: 9999px;
+  border: 1.5px solid @border-color;
+  background-color: @bg-white;
+  color: @text-sub;
+  font-size: 1.2rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    border-color: fade(@primary, 40%);
+    color: @primary;
+    background-color: fade(@primary, 6%);
+  }
+  &:active { transform: scale(0.93); }
+}
+
+.toggleBtnActive {
+  border-color: fade(@primary, 40%);
+  background-color: fade(@primary, 10%);
+  color: @primary;
+}

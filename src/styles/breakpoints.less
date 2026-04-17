@@ -1,0 +1,21 @@
+// =============================================================================
+// Breakpoints & Media Query Mixins
+// =============================================================================
+
+@bp-mobile: 768px;
+@bp-tablet: 1024px;
+@bp-desktop: 1280px;
+
+// Usage: .mobile({ ...styles... })
+.mobile(@rules) {
+  @media (max-width: @bp-mobile) {
+    @rules();
+  }
+}
+
+// Usage: .tablet({ ...styles... })
+.tablet(@rules) {
+  @media (min-width: @bp-tablet) {
+    @rules();
+  }
+}

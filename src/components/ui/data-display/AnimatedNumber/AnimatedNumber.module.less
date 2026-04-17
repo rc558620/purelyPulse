@@ -1,0 +1,53 @@
+.container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  // overflow: hidden;
+  vertical-align: bottom;
+  /* Add min-width or line-height to prevent jittering */
+  line-height: inherit;
+}
+
+.numberItem {
+  display: inline-flex;
+  white-space: nowrap;
+}
+
+.slideOut {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-100%);
+  animation: slideOutAnim 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+.slideIn {
+  animation: slideInAnim 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+@keyframes slideOutAnim {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+}
+
+@keyframes slideInAnim {
+  0% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

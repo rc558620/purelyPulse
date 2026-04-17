@@ -1,0 +1,338 @@
+/* src/components/CascaderView/CascaderView.module.less */
+
+@import (reference) '../../../styles/variables.less';
+
+/* 最外层容器，PC 下拉定位的锚点 */
+.cascader-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+/* 输入框触发区域 —— 对齐 Input.module.less 的 .inputWrapper 样式 */
+.cascader-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 50px;
+  background-color: @bg-white;
+  border: 1px solid @border-color;
+  border-radius: @radius-lg;
+  transition: border-color 0.2s, background-color 0.2s;
+  cursor: pointer;
+  padding: 0 1.6rem;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    border-color: @primary-fade;
+    background-color: @bg-slate-50;
+  }
+
+  /* PC 端面板展开时高亮边框 */
+  &-open {
+    border-color: @primary;
+
+    &:hover {
+      border-color: @primary;
+    }
+  }
+
+  /* 前缀插槽（图标等） */
+  &-prefix {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-right: 0.8rem;
+  }
+
+  &-text {
+    flex: 1;
+    font-size: 1.6rem;
+    color: @text-main;
+    line-height: 1.031;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &-placeholder {
+    flex: 1;
+    font-size: 1.6rem;
+    color: @text-slate-400;
+    line-height: 1.031;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &-arrow {
+    flex-shrink: 0;
+    margin-left: 0.8rem;
+    color: @text-slate-400;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* PC 端展开时箭头旋转 180°（朝上） */
+    &-open {
+      transform: rotate(180deg);
+      color: @primary;
+    }
+  }
+
+  &-error {
+    border-color: @rose-500;
+
+    &:hover,
+    &.cascader-input-open {
+      border-color: @rose-500;
+    }
+  }
+}
+
+/* 清除按钮 */
+.cascader-clear-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  margin-left: 0.4rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: @text-slate-400;
+  border-radius: 50%;
+  transition: color 0.15s, background-color 0.15s;
+
+  &:hover {
+    color: @text-sub;
+    background-color: @bg-slate-100;
+  }
+
+  &:active {
+    opacity: 0.7;
+  }
+}
+
+/* 遮罩 */
+.cascader-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 9998;
+}
+
+/* 选择器弹层（移动端底部弹出） */
+.cascade-picker-view {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: @bg-white;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
+  border-top-left-radius: @radius-lg;
+  border-top-right-radius: @radius-lg;
+  z-index: 9999;
+  transition: transform 0.3s ease-in-out;
+  transform: translateY(100%);
+  min-height: 35vh;
+  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+
+  &.visible {
+    transform: translateY(0);
+  }
+
+  .picker-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.4rem 1.6rem;
+    border-bottom: 1px solid @border-color;
+    flex-shrink: 0;
+  }
+
+  .picker-back-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 1.4rem;
+    color: @text-sub;
+    cursor: pointer;
+    min-width: 4rem;
+
+    &:active {
+      opacity: 0.6;
+    }
+  }
+
+  .picker-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: @text-main;
+  }
+
+  .picker-header-right {
+    min-width: 4rem;
+  }
+
+  .picker-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.8rem 0;
+  }
+
+  .cascader-items {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cascader-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.4rem 2rem;
+    font-size: 1.5rem;
+    color: @text-main;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+
+    &:active {
+      background-color: @bg-slate-50;
+    }
+
+    &.selected {
+      color: @primary;
+      font-weight: 500;
+    }
+
+    &.disabled {
+      color: @border-color;
+      cursor: not-allowed;
+
+      &:active {
+        background-color: transparent;
+      }
+    }
+  }
+
+  .cascader-item-arrow {
+    color: @border-color;
+    flex-shrink: 0;
+  }
+}
+
+/* ===== PC 端级联下拉面板 ===== */
+.cascader-dropdown-pc {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 1050;
+  background: @bg-white;
+  border: 1px solid @border-color;
+  border-radius: @radius-md;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08), 0 3px 6px rgba(0, 0, 0, 0.04);
+
+  // 入场：从顶部原点缩放展开（对齐 Ant Design 5 antSlideUpIn）
+  transform-origin: 0% 0%;
+  animation: cascaderSlideUpIn 0.2s cubic-bezier(0.23, 1, 0.32, 1) both;
+
+  @keyframes cascaderSlideUpIn {
+    0% {
+      transform: scaleY(0.8);
+      opacity: 0;
+    }
+    100% {
+      transform: scaleY(1);
+      opacity: 1;
+    }
+  }
+
+  // 退出动画：ease-in-quint，收缩 + 淡出
+  &.closing {
+    animation: cascaderSlideUpOut 0.2s cubic-bezier(0.755, 0.05, 0.855, 0.06) both;
+  }
+
+  @keyframes cascaderSlideUpOut {
+    0% {
+      transform: scaleY(1);
+      opacity: 1;
+    }
+    100% {
+      transform: scaleY(0.8);
+      opacity: 0;
+    }
+  }
+}
+
+/* 多列容器，横向排布 */
+.cascader-menus {
+  display: flex;
+  min-width: 160px;
+  max-height: 280px;
+}
+
+/* 单列菜单 */
+.cascader-menu {
+  min-width: 160px;
+  overflow-y: auto;
+  padding: 4px 0;
+
+  /* 相邻列之间的分隔线 */
+  & + .cascader-menu {
+    border-left: 1px solid @border-color;
+  }
+
+  /* 自定义滚动条 */
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: @border-color;
+    border-radius: 2px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+/* 列中的选项 */
+.cascader-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 16px;
+  font-size: 1.4rem;
+  color: @text-main;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background-color: @bg-slate-50;
+  }
+
+  &.active {
+    color: @primary;
+    font-weight: 500;
+    background-color: @bg-slate-50;
+  }
+
+  &.disabled {
+    color: @text-slate-400;
+    cursor: not-allowed;
+
+    &:hover {
+      background-color: transparent;
+    }
+  }
+}
+
+/* 子级展开箭头 */
+.cascader-menu-item-arrow {
+  color: @text-slate-400;
+  flex-shrink: 0;
+}

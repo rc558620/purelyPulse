@@ -1,0 +1,57 @@
+@import (reference) '../../styles/variables.less';
+
+.formItem {
+  width: 100%;
+  margin-bottom: 2.4rem; // Default spacing
+}
+
+.itemLabel {
+  display: block;
+  margin-bottom: 0.8rem;
+  margin-left: 0.4rem;
+  color: @text-main;
+  font-weight: 700;
+  font-size: 1.4rem;
+  letter-spacing: 0.025em;
+}
+
+.itemControl {
+  position: relative;
+  
+  &.hasError {
+    // Error state styles could be handled here or passed down
+    // For now, let input handle its own red border
+  }
+}
+
+.explainError {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  color: @rose-500;
+  font-size: 1.2rem;
+  margin-top: 0.4rem;
+  padding-left: 0.4rem;
+  animation: errorFadeIn 0.3s ease-in-out;
+}
+
+.explainErrorExit {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  color: @rose-500;
+  font-size: 1.2rem;
+  margin-top: 0.4rem;
+  padding-left: 0.4rem;
+  animation: errorFadeOut 0.3s ease-in-out forwards;
+}
+
+@keyframes errorFadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes errorFadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-5px); }
+}

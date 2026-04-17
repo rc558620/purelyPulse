@@ -1,0 +1,44 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/mixins.less';
+@import '@pages/auth/shared/authForm.module.less';
+
+// ─── 账号操作链接区（注册 / 找回密码） ──────────────────────
+.linksContainer {
+  .flex-between();
+  margin-top: 1.6rem;
+  padding: 0 0.4rem;
+
+  a {
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: @text-sub;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+
+    &:hover {
+      color: @primary;
+    }
+
+    &:focus {
+      outline: none;
+    }
+
+    &:focus-visible {
+      outline: 2px solid fade(@primary, 60%);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+
+    span {
+      transition: transform 0.15s;
+    }
+
+    &.registerLink:hover span {
+      transform: translateX(2px);
+    }
+  }
+}

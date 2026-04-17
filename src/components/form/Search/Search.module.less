@@ -1,0 +1,67 @@
+@import (reference) '../../../styles/variables.less';
+@import (reference) '../../../styles/mixins.less';
+
+.searchBar {
+  .flex-center();
+  width: 100%;
+  height: 4.16rem; /* 2.6rem × 1.6 = 41.6px */
+  border-radius: 9999px;
+  background-color: var(--input-bg);
+  overflow: hidden;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-color);
+  transition: all 0.2s;
+  position: relative;
+}
+
+.searchBar:focus-within {
+  box-shadow: 0 0 0 2px fade(@primary, 50%);
+}
+
+.searchIcon {
+  .flex-center();
+  padding-left: 1.6rem;  /* 16px */
+  padding-right: 0.8rem; /* 8px */
+  color: var(--text-secondary);
+}
+
+.searchInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  height: 100%;
+  font-size: 1.6rem; /* 16px */
+  color: var(--text-main);
+  outline: none;
+}
+
+.searchInput::placeholder {
+  color: var(--text-secondary);
+}
+
+.clearBtn {
+  .flex-center();
+  position: absolute;
+  right: 0.8rem; /* 8px */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.4rem;  /* 24px */
+  height: 2.4rem; /* 24px */
+  border-radius: 50%;
+  background-color: var(--item-hover);
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 0;
+  transition: all 0.2s;
+}
+
+.clearBtn:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+  color: var(--text-main);
+}
+
+.searchBarPending {
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}

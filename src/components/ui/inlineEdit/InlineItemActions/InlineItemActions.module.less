@@ -1,0 +1,44 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/mixins.less';
+
+.actions {
+  display: flex;
+  gap: 0.8rem;
+  flex-shrink: 0;
+}
+
+.editBtn,
+.deleteBtn {
+  padding: 0.8rem;
+  border-radius: @radius-md;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+
+  svg {
+    width: 1.8rem;
+    height: 1.8rem;
+  }
+}
+
+.editBtn {
+  color: @text-sub;
+
+  &:hover {
+    background-color: fade(@primary, 10%);
+    color: @primary;
+  }
+}
+
+.deleteBtn {
+  color: @text-sub;
+
+  &:hover {
+    background-color: fade(@rose-500, 10%);
+    color: @rose-500;
+  }
+}

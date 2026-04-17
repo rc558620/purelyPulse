@@ -1,0 +1,63 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/mixins.less';
+
+.emptyState {
+  .flex-col();
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  gap: 1rem;
+  min-height: 24rem;
+}
+
+.emptyIcon {
+  width: 8rem;
+  height: 8rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, fade(@primary, 10%) 0%, fade(@orange-500, 8%) 100%);
+  border: 1px solid fade(@primary, 15%);
+  .flex-center();
+  color: fade(@primary, 60%);
+  margin-bottom: 0.8rem;
+}
+
+.emptyTitle {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: @text-main;
+  margin: 0;
+  text-align: center;
+}
+
+.emptyDesc {
+  font-size: 1.4rem;
+  color: @text-sub;
+  margin: 0;
+  text-align: center;
+  line-height: 1.6;
+  max-width: 26rem;
+}
+
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.8rem;
+  padding: 1.1rem 2.4rem;
+  border-radius: @radius-lg;
+  border: none;
+  background-color: @primary;
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px fade(@primary, 30%);
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.2s, transform 0.15s, box-shadow 0.15s;
+
+  &:hover:not(:disabled) {
+    background-color: darken(@primary, 6%);
+    box-shadow: 0 6px 16px fade(@primary, 40%);
+  }
+  &:active { transform: scale(0.97); }
+}

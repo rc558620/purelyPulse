@@ -1,0 +1,36 @@
+@import (reference) '@styles/variables.less';
+
+// ─── 趋势徽标（上涨/下跌 + 百分比）────────────────────────────
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 1rem;
+  border-radius: 9999px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+// 上涨：绿色
+.up {
+  background-color: @emerald-100;
+  color: @green-600;
+  border: 1px solid fade(@emerald-500, 30%);
+}
+
+// 下跌：红色
+.down {
+  background-color: @rose-100;
+  color: @rose-500;
+  border: 1px solid fade(@rose-500, 30%);
+}
+
+// 持平/无数据：灰色
+.neutral {
+  background-color: @bg-slate-100;
+  color: @text-sub;
+  border: 1px solid @border-color;
+}

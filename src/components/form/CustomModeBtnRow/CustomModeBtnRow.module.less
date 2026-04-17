@@ -1,0 +1,44 @@
+@import (reference) '@styles/variables.less';
+
+// ─── 「选择年月日」+「日期范围」并排按钮行 ────────────────────────
+
+.customBtnRow {
+  display: flex;
+  gap: 0.8rem;
+}
+
+// 两个按钮平分全宽
+.customModeBtn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0 1rem;
+  height: 4rem;             // 40px 触控高度
+  border-radius: @radius-md;
+  border: 1.5px solid fade(@primary, 40%);
+  background-color: fade(@primary, 6%);
+  color: darken(@primary, 10%);
+  font-size: 1.3rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover:not(.customModeBtnActive) {
+    border-color: @primary;
+    color: darken(@primary, 15%);
+    background-color: fade(@primary, 12%);
+  }
+}
+
+// 激活态
+.customModeBtnActive {
+  border-color: @primary;
+  background-color: fade(@primary, 16%);
+  color: darken(@primary, 15%);
+  font-weight: 600;
+  box-shadow: 0 0 0 3px fade(@primary, 12%);
+}

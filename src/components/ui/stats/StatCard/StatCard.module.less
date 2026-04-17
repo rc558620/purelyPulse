@@ -1,0 +1,67 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/mixins.less';
+
+// ─── 统计卡片（通用）────────────────────────────────────────────
+// 颜色通过 CSS 变量 --card-color 注入；同时支持 variant 枚举类名
+
+.statCard {
+  background-color: @bg-white;
+  border-radius: @radius-lg;
+  border: 1px solid @border-color;
+  box-shadow: @shadow-sm;
+  padding: 1.4rem 1.6rem;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  transition: box-shadow 0.2s;
+
+  background-color: color-mix(in srgb, var(--card-color, @primary) 5%, transparent);
+  border-color: color-mix(in srgb, var(--card-color, @primary) 20%, transparent);
+
+  &:hover { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
+}
+
+// ─── 内置变体（旧 SummaryCard variant 兼容）─────────────────────
+.variantRose   { --card-color: @primary; }
+.variantIndigo { --card-color: @indigo-500; }
+.variantOrange { --card-color: @orange-500; }
+
+// ─── 图标容器 ────────────────────────────────────────────────────
+.statIcon {
+  width: 3.6rem;
+  height: 3.6rem;
+  border-radius: @radius-md;
+  background-color: color-mix(in srgb, var(--card-color, @primary) 12%, transparent);
+  color: var(--card-color, @primary);
+  .flex-center();
+  flex-shrink: 0;
+}
+
+// ─── 内容区 ──────────────────────────────────────────────────────
+.statContent  { .flex-col(); gap: 0.2rem; min-width: 0; }
+.statLabel    { font-size: 1.2rem; color: @text-sub; font-weight: 500; }
+
+// 金额模式（显示 ¥ 前缀）
+.statValue {
+  display: flex;
+  align-items: baseline;
+  gap: 0.2rem;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--card-color, @primary);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.statPrefix { font-size: 1.3rem; font-weight: 600; }
+
+// 纯文本模式（无前缀，字号统一）
+.statValueText {
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--card-color, @primary);
+}
+
+.statSubInfo { font-size: 1.1rem; color: @text-sub; margin-top: 0.2rem; }

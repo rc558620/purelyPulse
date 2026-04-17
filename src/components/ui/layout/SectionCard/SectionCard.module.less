@@ -1,0 +1,77 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/mixins.less';
+
+// ─── 卡片容器 ─────────────────────────────────────────────────
+// variant="default" —— 白底边框阴影卡（利润详情/报表中心通用）
+.card {
+  background-color: @bg-white;
+  border-radius: @radius-lg;
+  border: 1px solid @border-color;
+  box-shadow: @shadow-sm;
+  padding: 1.6rem;
+  .flex-col();
+  gap: 1.4rem;
+  overflow: hidden;
+
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+  }
+}
+
+// 全高版本：在 flex/grid 布局中撑满父容器高度
+.cardFull {
+  height: 100%;
+}
+
+// 无内边距版本：适用于 MenuRow 列表等内容自带 padding 的场景
+.cardNoPadding {
+  padding: 0;
+  gap: 0;
+}
+
+// ─── 标题行 ────────────────────────────────────────────────────
+.cardHeader {
+  .flex-between();
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+// ─── 带分割线列表 ──────────────────────────────────────────────
+// 配合 SectionCard.DividedList 使用：在 item 间自动插入 1px 分割线。
+.dividedList {
+  display: flex;
+  flex-direction: column;
+}
+
+.divider {
+  height: 1px;
+  background-color: #f0f0f0;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+// ─── 标题文字 ──────────────────────────────────────────────────
+.cardTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: @text-main;
+  margin: 0;
+  white-space: nowrap;
+
+  svg {
+    color: @text-sub;
+    flex-shrink: 0;
+  }
+
+  // emoji 图标支持
+  .titleEmoji {
+    font-size: 1.6rem;
+    line-height: 1;
+    flex-shrink: 0;
+    user-select: none;
+  }
+}

@@ -1,0 +1,181 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/mixins.less';
+
+// ─── 变体 A：pill 风格（胶囊/白底/毛玻璃，用于 购买管理/员工/成本管理等） ─────
+.pillContainer {
+  position: relative;
+  display: flex;
+  background-color: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 9999px;
+  padding: 4px;
+  gap: 0;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  transition: opacity 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  isolation: isolate;
+}
+
+.pillIndicator {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  // 初始几何由 JS 通过 CSS 变量注入，后续只动 transform（compositor-only）
+  left: var(--_ind-x, 4px);
+  width: var(--_ind-w, 25%);
+  border-radius: 9999px;
+  background-color: @bg-white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  transform-origin: left center;
+  will-change: transform;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.pillBtn {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+  padding: 0.8rem 0;
+  border-radius: 9999px;
+  border: none;
+  background: transparent;
+  color: @text-sub;
+  font-size: 1.3rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+
+  &:hover:not(.pillBtnActive) { color: @text-main; }
+}
+
+.pillBtnActive {
+  color: @primary;
+  font-weight: 700;
+}
+
+// ─── 变体 B：segment 风格（灰底/白色激活块，用于报表中心 period tabs） ───────
+.segmentContainer {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 4.4rem;
+  background-color: @bg-slate-100;
+  border-radius: @radius-md;
+  padding: 0.35rem;
+  gap: 0;
+  isolation: isolate;
+  transition: opacity 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.segmentIndicator {
+  position: absolute;
+  top: 0.35rem;
+  bottom: 0.35rem;
+  left: var(--_ind-x, 0.35rem);
+  width: var(--_ind-w, 25%);
+  background-color: @bg-white;
+  border-radius: 9px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  transform-origin: left center;
+  will-change: transform;
+  transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.segmentBtn {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 1.3rem;
+  font-weight: 500;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: @text-sub;
+  cursor: pointer;
+  transition: color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+  text-align: center;
+  gap: 0.5rem;
+
+  &:hover:not(.segmentBtnActive) { color: @text-main; }
+}
+
+.segmentBtnActive {
+  color: @primary;
+  font-weight: 700;
+}
+
+// ─── 变体 C：primary 风格（白底/绿色激活块+白字，用于报表 Tab 主栏） ─────────
+.primaryContainer {
+  position: relative;
+  display: flex;
+  background-color: @bg-white;
+  border: 1px solid @border-color;
+  border-radius: @radius-lg;
+  padding: 0.4rem;
+  gap: 0;
+  box-shadow: @shadow-sm;
+  isolation: isolate;
+  width: 100%;
+}
+
+.primaryIndicator {
+  position: absolute;
+  top: 0.4rem;
+  bottom: 0.4rem;
+  left: var(--_ind-x, 0.4rem);
+  width: var(--_ind-w, 25%);
+  background: linear-gradient(135deg, darken(@primary, 4%), @primary);
+  border-radius: @radius-md;
+  transform-origin: left center;
+  will-change: transform;
+  transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 0;
+  box-shadow: 0 2px 10px fade(@primary, 35%);
+}
+
+.primaryBtn {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.9rem 0.4rem;
+  border: none;
+  border-radius: @radius-md;
+  background: transparent;
+  color: @text-sub;
+  cursor: pointer;
+  transition: color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover:not(.primaryBtnActive) { color: @text-main; }
+}
+
+.primaryBtnActive {
+  color: #fff;
+}
+
+// ─── 通用：dimmed 状态 ────────────────────────────────────────────
+.dimmed {
+  opacity: 0.5;
+}

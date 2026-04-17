@@ -1,0 +1,87 @@
+// =============================================================================
+// Shared Mixins
+// =============================================================================
+
+@import (reference) './variables.less';
+
+// Flexbox Helpers
+.flex-center() {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between() {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flex-col() {
+  display: flex;
+  flex-direction: column;
+}
+
+// Card Base
+.card-base() {
+  background-color: @bg-white;
+  border-radius: @radius-lg;
+  box-shadow: @shadow-sm;
+  border: 1px solid @border-color;
+  overflow: hidden;
+  position: relative;
+  transition: all 0.3s;
+}
+
+// Button Press Effect（按压反馈：缩放 + 边框实线 + 光晕）
+.btn-press-effect() {
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:active {
+    transform: scale(0.97);
+    box-shadow: 0 0 0 3px fade(@primary, 18%);
+  }
+}
+
+// Icon Container Base
+.icon-base(@size: 48px, @radius: @radius-md) {
+  width: @size;
+  height: @size;
+  border-radius: @radius;
+  .flex-center(); // uses flex-center mixin
+  margin-bottom: 8px;
+  z-index: 10;
+}
+
+/**
+ * 利润金额颜色 class 集合（Additional 页面专用）
+ *
+ * 在需要这组颜色的 CSS Module 中调用：
+ *   .profit-color-classes();
+ *
+ * 生成以下 class：
+ *   .textZero / .textProfitGreen / .textProfitLightGreen /
+ *   .textProfitBlue / .textProfitOrange / .textProfitRed
+ */
+.profit-color-classes() {
+  .textZero {
+    color: @text-slate-400 !important;
+  }
+  .textProfitGreen {
+    color: @profit-green;
+  }
+  .textProfitLightGreen {
+    color: @profit-light-green;
+  }
+  .textProfitBlue {
+    color: @profit-blue;
+  }
+  .textProfitOrange {
+    color: @profit-orange;
+  }
+  .textProfitRed {
+    color: @profit-red;
+  }
+}

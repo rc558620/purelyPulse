@@ -1,0 +1,31 @@
+@import (reference) '@styles/variables.less';
+
+// ─── 输入框前缀图标容器 ───────────────────────────────────────
+.iconWrapper {
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+    z-index: 10;
+
+    // icon 为 string（img）时的样式
+    .inputIcon {
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+    }
+
+    // icon 为 ReactNode 时的包裹容器
+    .inputIconNode {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+        color: @text-sub;
+    }
+
+    .separator {
+        width: 1px;
+        height: 1.6rem;
+        background-color: @border-color;
+        margin: 0 1.2rem;
+    }
+}

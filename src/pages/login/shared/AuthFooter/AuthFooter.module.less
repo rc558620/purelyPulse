@@ -1,0 +1,36 @@
+@import (reference) '@styles/variables.less';
+
+// ─── 底部协议区 ───────────────────────────────────────────────
+.footer {
+  margin-top: auto;
+  padding-top: 4rem;
+  text-align: center;
+
+  p {
+    font-size: 1.2rem;
+    color: @text-slate-400;
+    font-weight: 500;
+
+    a {
+      color: @text-sub;
+      text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: color 0.15s;
+      margin: 0 0.4rem;
+
+      &:hover {
+        color: @primary;
+      }
+
+      &:focus {
+        outline: none;
+      }
+
+      &:focus-visible {
+        outline: 2px solid fade(@primary, 60%);
+        outline-offset: 2px;
+        border-radius: 4px;
+      }
+    }
+  }
+}

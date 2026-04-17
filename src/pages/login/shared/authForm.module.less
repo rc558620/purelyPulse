@@ -1,0 +1,22 @@
+// auth 系列表单页面共用样式。
+// 替代 LoginForm / RegisterForm / AddStoreForm / forgotPassword 各自重复定义的
+// .formContainer 和 .submitButton 两个 class。
+//
+// 使用方式：在各表单的 module.less 中引用本文件：
+//   @import (reference) '@pages/auth/shared/authForm.module.less';
+//   然后直接使用 .formContainer 和 .submitButton，
+//   或通过 composes 引入：composes: formContainer from './authForm.module.less';
+
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/mixins.less';
+
+// ─── 表单容器 ─────────────────────────────────────────────────
+.formContainer {
+    width: 100%;
+    .flex-col();
+}
+
+// ─── 提交按钮间距 ─────────────────────────────────────────────
+.submitButton {
+    margin-top: 3.2rem;
+}

@@ -1,0 +1,27 @@
+// 路由切换动画容器
+.routerContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+
+  // clip-path 替代 overflow:hidden：
+  //  - overflow:hidden 裁剪发生在 Paint 阶段（CPU），每帧重算裁剪区域。
+  //  - clip-path:inset(0) 裁剪发生在 Composite 阶段（GPU），跳过 Paint，性能更优。
+  clip-path: inset(0);
+
+  // isolation:isolate 明确隔离容器内部的合成边界：
+  //  - 动画进行时新旧两帧的 opacity 变化不参与外部（ToastContainer 等）的 Stacking Context 计算。
+  //  - 浏览器无需做跨层合并，减少 Compositor 工作量。
+  isolation: isolate;
+}
+
+// 每一帧动画页面的绝对定位层
+.animatedPage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  // 提前将元素提升到独立 GPU 合成层，动画从第一帧起就在 GPU 执行，脱离主线程。
+  // 避免浏览器在动画开始时临时提升合成层导致的首帧掉帧（约 16ms）。
+  will-change: transform;
+}

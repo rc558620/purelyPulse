@@ -1,0 +1,127 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/breakpoints.less';
+@import (reference) '@styles/mixins.less';
+
+// ─── 视图模式切换按钮（三档：详细 / 简约 / 极简）────────────────
+// 被 additional（销售追加）和 stocktaking（库存盘点）共同使用
+
+.modeSwitchBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+
+  @media (min-width: @bp-mobile) {
+    width: 4rem;
+    height: 4rem;
+  }
+
+  border-radius: 9999px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  color: @text-main;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Compact state (简约) */
+.modeSwitchCompact {
+  color: @primary;
+}
+
+/* Minimal state (极简) */
+.modeSwitchMinimal {
+  color: @profit-orange;
+}
+
+.iconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.morphIcon {
+  width: 2rem;
+  height: 2rem;
+
+  @media (min-width: @bp-mobile) {
+    width: 2.4rem;
+    height: 2.4rem;
+  }
+
+  fill: currentColor;
+}
+
+.barTop,
+.barBottom,
+.barMiddle {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: center;
+}
+
+/* Compact Mode State (简约——2条线：顶线和中线聚拢，底线隐藏) */
+.iconWrapperCompact .barTop {
+  transform: translateY(3px);
+}
+
+.iconWrapperCompact .barMiddle {
+  transform: translateY(3px);
+}
+
+.iconWrapperCompact .barBottom {
+  transform: translateY(-6px) scaleX(0) scaleY(0);
+  opacity: 0;
+}
+
+/* Minimal Mode State (极简——1条线：隐藏顶线和底线) */
+.iconWrapperMinimal .barTop {
+  transform: translateY(6px) scaleX(0) scaleY(0);
+  opacity: 0;
+}
+
+.iconWrapperMinimal .barBottom {
+  transform: translateY(-6px) scaleX(0) scaleY(0);
+  opacity: 0;
+}
+
+.iconWrapperMinimal .barMiddle {
+  transform: scaleX(1);
+}
+
+/* Hover effects */
+.modeSwitchBtn:hover .barTop {
+  transform: translateY(-1px);
+}
+
+.modeSwitchBtn:hover .barBottom {
+  transform: translateY(1px);
+}
+
+/* Compact hover: 稍微散开增加动效 */
+.iconWrapperCompact:hover .barTop {
+  transform: translateY(2px);
+}
+
+.iconWrapperCompact:hover .barMiddle {
+  transform: translateY(4px);
+}
+
+.iconWrapperCompact:hover .barBottom {
+  transform: translateY(-6px) scaleX(0) scaleY(0);
+  opacity: 0;
+}
+
+/* Minimal hover: keep 1 line, slightly scale for interaction */
+.iconWrapperMinimal:hover .barMiddle {
+  transform: scaleX(1.1);
+}
+
+.modeSwitchBtn:active .iconWrapper {
+  transform: scale(0.9);
+}

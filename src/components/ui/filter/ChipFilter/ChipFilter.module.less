@@ -1,0 +1,41 @@
+@import (reference) '@styles/variables.less';
+
+// ─── 横向滚动容器 ────────────────────────────────────────────────
+.filterScroll {
+  display: flex;
+  gap: 0.8rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 0.2rem;
+
+  // 隐藏横向滚动条（保留功能）
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+// ─── 分类 chip ───────────────────────────────────────────────────
+.chip {
+  flex-shrink: 0;
+  padding: 0.7rem 1.4rem;
+  border-radius: 9999px;
+  border: 1.5px solid @border-color;
+  background-color: @bg-white;
+  color: @text-sub;
+  font-size: 1.3rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: @shadow-sm;
+
+  &:hover { border-color: fade(@primary, 60%); color: @primary; }
+}
+
+.chipActive {
+  border-color: @primary;
+  background-color: fade(@primary, 10%);
+  color: @primary;
+  font-weight: 700;
+  box-shadow: 0 0 0 2px fade(@primary, 12%);
+}

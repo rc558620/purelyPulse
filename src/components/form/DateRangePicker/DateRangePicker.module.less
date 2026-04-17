@@ -1,0 +1,34 @@
+@import (reference) '@styles/variables.less';
+
+// ─── 日期范围双选择器行 ────────────────────────────────────────────
+
+.dateRangeRow {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.dateRangeItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.dateRangeLabel {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: @text-sub;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 0 0.2rem;
+}
+
+.dateRangeSep {
+  font-size: 1.4rem;
+  color: @text-slate-400;
+  flex-shrink: 0;
+  padding-top: 2.2rem; // 与 label + 间距对齐
+  user-select: none;
+}

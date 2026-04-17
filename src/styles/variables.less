@@ -1,0 +1,72 @@
+// =============================================================================
+// Design System Variables
+// =============================================================================
+
+// === Brand Colors ===
+@primary:        #84cc16;  // Lime-500
+@primary-light:  #dcfce7;  // Green-100 (used as primary-light in some contexts)
+@primary-fade:   fade(@primary, 50%); // Common fade variation
+@primary-fade-10: fade(@primary, 10%);
+@primary-fade-20: fade(@primary, 20%);
+
+// === Backgrounds ===
+@bg-light:       #f0fdf4;  // Green-50 (Page background)
+@bg-white:       #ffffff;  // Card background
+@bg-slate-50:    #f8fafc;
+@bg-slate-100:   #f1f5f9;
+
+// === Text Colors ===
+@text-main:      #1e293b;  // Slate-800
+@text-sub:       #64748b;  // Slate-500
+@text-slate-900: #0f172a;  // Darker text for stats
+@text-slate-700: #334155;  // Chart titles
+@text-slate-400: #94a3b8;  // Decimals
+
+// === Borders ===
+@border-color:   #e2e8f0;  // Slate-200
+
+// === Status Colors ===
+@green-600:      #16a34a;
+@green-100:      #dcfce7;
+@orange-600:     #ea580c;
+@orange-500:     #f97316;
+@orange-100:     #ffedd5;
+@rose-500:       #f43f5e;
+@rose-100:       #ffe4e6;
+@emerald-500:    #10b981;
+@emerald-100:    #d1fae5;
+@blue-500:       #3b82f6;
+@blue-100:       #dbeafe;
+@indigo-500:     #6366f1;
+@indigo-100:     #e0e7ff;
+@purple-500:     #a855f7;
+@purple-100:     #f3e8ff;
+@cyan-500:       #06b6d4;
+@cyan-100:       #cffafe;
+@slate-500:      #64748b;
+@slate-100:      #f1f5f9;
+
+// === Profit Colors ===
+@profit-green:       #84cc16;
+@profit-light-green: #4ade80;
+@profit-blue:        #0ea5e9;
+@profit-orange:      #f97316;
+@profit-red:         #ff5252;
+
+// === Layout ===
+@radius-md:      12px;
+@radius-lg:      16px;
+@radius-full:    9999px;
+
+// === Shadows ===
+@shadow-sm:      0 1px 2px 0 rgba(0, 0, 0, 0.05);
+
+// =============================================================================
+// rem Reference (base: 1rem = 10px, html font-size: 62.5%)
+// =============================================================================
+// 10px → 1rem    | 12px → 1.2rem  | 13px → 1.3rem  | 14px → 1.4rem
+// 16px → 1.6rem  | 18px → 1.8rem  | 20px → 2rem    | 24px → 2.4rem
+// 30px → 3rem    | 36px → 3.6rem  | 40px → 4rem    | 48px → 4.8rem
+// 56px → 5.6rem  | 64px → 6.4rem  | 128px → 12.8rem
+// ─────────────────────────────────────────────────────────────────────────────
+// 保留 px 的场景：border 宽度、box-shadow、blur、@media 断点、固定图标尺寸

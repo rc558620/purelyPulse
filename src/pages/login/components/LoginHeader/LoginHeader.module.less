@@ -1,0 +1,71 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/mixins.less';
+
+// ─── 品牌 Logo 区 ─────────────────────────────────────────────
+.logoSection {
+  .flex-col();
+  .flex-center();
+  margin-bottom: 4rem;
+
+  // Logo 外层包裹，提供 glow 光晕效果
+  .logoWrapper {
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: -0.4rem;
+      background: linear-gradient(to right, fade(@primary, 20%), fade(@primary, 10%));
+      border-radius: 18px;
+      filter: blur(8px);
+      opacity: 0.5;
+      transition: opacity 1s;
+    }
+
+    &:hover::before {
+      opacity: 0.8;
+      transition-duration: 0.2s;
+    }
+  }
+
+  // Logo 图标容器
+  .logoIcon {
+    position: relative;
+    width: 6.4rem;
+    height: 6.4rem;
+    border-radius: 18px;
+    border: 1px solid @border-color;
+    background: @bg-white;
+    margin-bottom: 1.6rem;
+    .flex-center();
+    box-shadow: @shadow-sm;
+
+    .logoImg {
+      width: 40px;
+      height: 40px;
+      filter: brightness(0) saturate(100%) invert(72%) sepia(69%) saturate(464%) hue-rotate(36deg) brightness(93%) contrast(88%);
+      will-change: filter;
+    }
+  }
+
+  h1 {
+    color: @text-main;
+    font-size: 2.4rem;
+    font-weight: 400;
+    letter-spacing: 0.025em;
+    margin-bottom: 0.8rem;
+    text-align: center;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.05));
+    font-family: 'Inter', 'Noto Sans SC', sans-serif;
+  }
+
+  p {
+    color: @text-sub;
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-align: center;
+    font-family: 'Inter', 'Noto Sans SC', sans-serif;
+  }
+}

@@ -1,0 +1,78 @@
+@import (reference) '../../../styles/variables.less';
+@import (reference) '../../../styles/mixins.less';
+
+// ─── 圆形按钮容器 ─────────────────────────────────────────────
+
+.avatarBtn {
+    display: block;
+    border-radius: 9999px;
+    border: 4px solid #fff;
+    background: #fff;
+    padding: 0;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s;
+    -webkit-tap-highlight-color: transparent;
+
+    &:active {
+        transform: scale(0.97);
+    }
+
+    &:hover {
+        transform: scale(1.03);
+    }
+}
+
+// ─── 有头像：图片填满 ──────────────────────────────────────────
+
+.avatarImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    border-radius: 9999px;
+}
+
+// ─── 无头像：猫咪占位 ──────────────────────────────────────────
+
+.avatarPlaceholder {
+    width: 100%;
+    height: 100%;
+    border-radius: 9999px;
+    background-color: fade(@primary, 10%);
+    .flex-center();
+    position: relative;
+    overflow: hidden;
+}
+
+.placeholderIcon {
+    color: @primary;
+    position: relative;
+    z-index: 1;
+    margin-top: 0.4rem;
+    transition: transform 0.3s ease;
+
+    .avatarBtn:hover & {
+        transform: scale(1.05);
+    }
+}
+
+// ─── 编辑遮罩（hover 时显现） ──────────────────────────────────
+
+.editOverlay {
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    background: rgba(0, 0, 0, 0.35);
+    .flex-center();
+    color: #fff;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+
+    .avatarBtn:hover & {
+        opacity: 1;
+    }
+}

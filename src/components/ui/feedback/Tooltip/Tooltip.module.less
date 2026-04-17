@@ -1,0 +1,140 @@
+@import (reference) '../../../../styles/breakpoints.less';
+
+.tooltipTrigger {
+  position: relative;
+  display: inline-flex;
+}
+
+/* Base tooltip styling */
+.tooltip {
+  position: absolute;
+  z-index: 1070;
+  display: none; // Hidden by default on mobile
+  width: max-content;
+  max-width: 250px;
+  /* Position bottom center relative to trigger */
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px) scale(0.8);
+  padding-top: 8px; /* space for arrow */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s cubic-bezier(0.23, 1, 0.32, 1), transform 0.15s cubic-bezier(0.23, 1, 0.32, 1);
+  transform-origin: 50% 0; /* Scale from the top edge */
+}
+
+/* Only enable on non-touch devices (min-width logic usually implies PC but hover is better) */
+@media (hover: hover) and (pointer: fine) {
+  .tooltip {
+    display: block; // Make block so visibility can be toggled via opacity/scale
+  }
+}
+
+/* Visibility state */
+.tooltipVisible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+
+/* The actual text bubble */
+.tooltipInner {
+  min-height: 32px;
+  padding: 6px 8px;
+  color: #fff;
+  text-align: left;
+  text-decoration: none;
+  word-wrap: break-word;
+  background-color: rgba(0, 0, 0, 0.85);
+  border-radius: 6px; /* AntD v5 roundness */
+  box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
+  font-size: 14px;
+  line-height: 1.5714285714285714;
+}
+
+/* The AntD arrow pointing up */
+.tooltipArrow {
+  position: absolute;
+  z-index: 1;
+  display: block;
+  pointer-events: none;
+  width: 16px;
+  height: 16px;
+  overflow: hidden;
+  left: 50%;
+  top: 8px; /* At the top of tooltip padding area */
+  transform: translateY(-100%) translateX(-50%); /* Move up by its own height */
+
+  &::before {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 16px;
+    height: 8px;
+    background-color: transparent;
+    content: '';
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    width: 8.970562748px;
+    height: 8.970562748px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+    border-radius: 0 0 2px 0;
+    transform: translateY(50%) rotate(-135deg);
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.05);
+    background: rgba(0, 0, 0, 0.85);
+  }
+}
+
+/* Predefined AntD Colors */
+.tooltip-orange {
+  .tooltipInner, .tooltipArrow::after {
+    background-color: #fa8c16;
+  }
+}
+
+.tooltip-cyan {
+  .tooltipInner, .tooltipArrow::after {
+    background-color: #13c2c2;
+  }
+}
+
+.tooltip-green {
+  .tooltipInner, .tooltipArrow::after {
+    background-color: #52c41a;
+  }
+}
+
+.tooltip-blue {
+  .tooltipInner, .tooltipArrow::after {
+    background-color: #1677ff;
+  }
+}
+
+.tooltip-volcano {
+  .tooltipInner, .tooltipArrow::after {
+    background-color: #fa541c;
+  }
+}
+
+.tooltip-magenta {
+  .tooltipInner, .tooltipArrow::after {
+    background-color: #eb2f96;
+  }
+}
+
+.tooltip-purple {
+  .tooltipInner, .tooltipArrow::after {
+    background-color: #722ed1;
+  }
+}
+
+.tooltip-red {
+  .tooltipInner, .tooltipArrow::after {
+    background-color: #f5222d;
+  }
+}

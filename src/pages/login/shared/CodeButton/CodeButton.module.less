@@ -1,0 +1,27 @@
+@import (reference) '@styles/variables.less';
+
+// ─── 验证码发送按钮 ───────────────────────────────────────────
+.codeButton {
+  background: none;
+  border: none;
+  color: @primary;
+  font-size: 1.4rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0 0.8rem;
+  transition: color 0.2s;
+  white-space: nowrap;
+
+  &:hover {
+    color: darken(@primary, 10%);
+  }
+
+  &:disabled {
+    color: @text-slate-400;
+    cursor: not-allowed;
+  }
+
+  &:focus {
+    outline: none;
+  }
+}

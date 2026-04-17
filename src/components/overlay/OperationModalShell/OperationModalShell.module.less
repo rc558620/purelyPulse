@@ -1,0 +1,178 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/breakpoints.less';
+@import (reference) '@styles/mixins.less';
+
+// ─── 遮罩 ─────────────────────────────────────────────────────
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+
+  @media (min-width: @bp-mobile) {
+    align-items: center;
+  }
+}
+
+// 居中模式（center variant）
+.overlayCenter {
+  align-items: center;
+  padding: 2rem 1.6rem;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+// ─── 弹窗卡片 ─────────────────────────────────────────────────
+.card {
+  background-color: @bg-white;
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-width: var(--modal-max-width, 52rem);
+  max-height: 92dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 -4px 40px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+
+  @media (min-width: @bp-mobile) {
+    border-radius: 20px;
+    max-height: 88dvh;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  }
+}
+
+// 居中模式卡片（圆角四角均等）
+.cardCenter {
+  border-radius: 20px;
+  max-height: unset;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.18), 0 8px 24px rgba(0, 0, 0, 0.1);
+  animation: cardUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cardUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+// ─── 标题行 ────────────────────────────────────────────────────
+.header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem 2rem 1.6rem;
+  border-bottom: 1px solid @border-color;
+  flex-shrink: 0;
+}
+
+.headerIcon {
+  width: 3.6rem;
+  height: 3.6rem;
+  border-radius: @radius-md;
+  background: linear-gradient(135deg, fade(@primary, 14%), fade(@orange-500, 10%));
+  border: 1px solid fade(@primary, 20%);
+  .flex-center();
+  color: @primary;
+  flex-shrink: 0;
+}
+
+.headerTitle {
+  flex: 1;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: @text-main;
+  margin: 0;
+}
+
+.closeBtn {
+  width: 3.2rem;
+  height: 3.2rem;
+  border-radius: 9999px;
+  border: none;
+  background-color: @bg-slate-100;
+  color: @text-sub;
+  .flex-center();
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+
+  &:hover { background-color: fade(@text-main, 10%); color: @text-main; }
+}
+
+// ─── 可滚动 body 插槽 ──────────────────────────────────────────
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.8rem 2rem;
+  .flex-col();
+  gap: 1.8rem;
+  -webkit-overflow-scrolling: touch;
+
+  scrollbar-width: thin;
+  scrollbar-color: fade(@primary, 20%) transparent;
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background-color: fade(@primary, 20%); border-radius: 4px; }
+}
+
+// body 最大高度限制（center variant）
+.bodyCenter {
+  max-height: 60vh;
+}
+
+// ─── 底部按钮区 ───────────────────────────────────────────────
+.actions {
+  display: flex;
+  gap: 1.2rem;
+  padding: 1.6rem 2rem 2rem;
+  border-top: 1px solid @border-color;
+  flex-shrink: 0;
+}
+
+.cancelBtn {
+  flex: 1;
+  padding: 1.3rem;
+  border-radius: @radius-lg;
+  background-color: @bg-slate-100;
+  border: 1.5px solid @border-color;
+  color: @text-sub;
+  font-size: 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  &:hover { background-color: @border-color; color: @text-main; }
+}
+
+.confirmBtn {
+  flex: 2;
+  padding: 1.3rem;
+  border-radius: @radius-lg;
+  background-color: @primary;
+  border: none;
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  box-shadow: 0 4px 12px fade(@primary, 35%);
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  &:hover { background-color: darken(@primary, 6%); box-shadow: 0 6px 16px fade(@primary, 45%); }
+  &:active { transform: scale(0.97); }
+}

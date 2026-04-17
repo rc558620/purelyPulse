@@ -1,0 +1,115 @@
+html, body, #root {
+  height: 100%;
+}
+
+html {
+  font-size: 62.5%; /* 1rem = 10px */
+}
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  margin: 0;
+  padding: 0;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* === Global Design Tokens === */
+  --color-primary:    #84cc16;  /* Lime-500 */
+  --color-bg-light:   #f0fdf4;  /* Green-50 */
+
+  --text-slate-900:   #1e293b;  /* Slate-800 */
+  --text-slate-700:   #334155;
+  --text-slate-600:   #475569;
+  --text-slate-500:   #64748b;  /* Slate-500 */
+  --text-slate-400:   #94a3b8;
+  --text-white:       #ffffff;
+
+  /* Default Theme (Light) */
+  --bg-page:          #f0fdf4;
+  --bg-card:          #ffffff;
+  --text-main:        #1e293b;
+  --text-secondary:   #64748b;
+  --text-sub:         #64748b;
+  --border-color:     #e2e8f0;  /* Slate-200 */
+  --input-bg:         #ffffff;
+  --tab-bg:           #ffffff;
+  --tab-text:         #334155;
+  --item-hover:       rgba(0, 0, 0, 0.05);
+  --price-color:      #1e293b;
+  --subtotal-color:   #84cc16;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-size: 1.6rem; /* restore to 16px */
+  overflow: hidden; /* 禁止 body 层滚动，页面内滚动由各页面容器自行管理 */
+}
+
+/*
+ * 移动端 300ms 点击延迟消除。
+ *
+ * touch-action: manipulation 告知浏览器该元素只支持「单击 + 双指缩放」，
+ * 不支持「双击缩放」，因此浏览器无需等待 300ms 来判断是否双击，click 事件立即触发。
+ *
+ * 对 PC / iPad 无任何副作用：
+ *  - PC 无触摸事件，该属性被忽略。
+ *  - iPad 双指缩放由 viewport user-scalable=no 控制，manipulation 不影响手势。
+ * 对 iOS Safari 有效（user-scalable=no 在 iOS 上不能完全消除延迟，需配合此属性）。
+ */
+* {
+  touch-action: manipulation;
+}
+
+/* ─── 全局滚动条样式（Webkit / Blink） ──────────────────────────────────
+ * Firefox 通过 scrollbar-color / scrollbar-width 控制（CSS Scrollbars 规范）。
+ * ─────────────────────────────────────────────────────────────────────── */
+
+/* 滚动条整体宽度 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+/* 滚动条轨道 */
+::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 9999px;
+}
+
+/* 滚动条滑块 */
+::-webkit-scrollbar-thumb {
+  background-color: rgba(132, 204, 22, 0.35); /* primary fade-35 */
+  border-radius: 9999px;
+  transition: background-color 0.2s;
+}
+
+/* 滚动条滑块 hover */
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(132, 204, 22, 0.6);
+}
+
+/* 滚动条滑块 active（按下） */
+::-webkit-scrollbar-thumb:active {
+  background-color: rgba(132, 204, 22, 0.85);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(132, 204, 22, 0.35) transparent;
+}
+
+/* 隐藏 number 输入框右侧 spinner 箭头 */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}

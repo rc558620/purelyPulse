@@ -1,0 +1,171 @@
+@import (reference) '../../../../styles/variables.less';
+@import (reference) '../../../../styles/breakpoints.less';
+@import (reference) '../../../../styles/mixins.less';
+
+// ─── 吸顶（默认）────────────────────────────────────────────────────────────
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 1.6rem;
+    background-color: transparent;
+    border-bottom: none;
+
+    @media (min-width: @bp-mobile) {
+        padding: 1.6rem 2.4rem;
+    }
+}
+
+// ─── sticky 透明变体（背景装饰页专用，如 Profile）──────────────────────────
+.headerTransparent {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 1.6rem;
+    background-color: transparent;
+    border-bottom: none;
+
+    @media (min-width: @bp-mobile) {
+        padding: 1.6rem 2.4rem;
+    }
+}
+
+// ─── absolute 定位变体（全屏居中布局专用）───────────────────────────────────
+.headerAbsolute {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 1.6rem;
+    background-color: transparent;
+    border-bottom: none;
+
+    @media (min-width: @bp-mobile) {
+        padding: 1.6rem 2.4rem;
+    }
+}
+
+// ─── relative 定位变体────────────────────────────────────────────────────────
+.headerRelative {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 1.6rem;
+    background-color: transparent;
+    border-bottom: none;
+
+    @media (min-width: @bp-mobile) {
+        padding: 1.6rem 2.4rem;
+    }
+}
+
+// ─── 标题 ────────────────────────────────────────────────────────────────────
+.title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: @text-main;
+    margin: 0;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-family: 'Inter', 'Noto Sans SC', sans-serif;
+    letter-spacing: 0.025em;
+}
+
+// ─── 左侧区域（返回按钮 + 可选的 leftExtra）──────────────────────────────────
+.left {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-shrink: 0;
+}
+
+// ─── 右侧占位（保持三栏对称）────────────────────────────────────────────────
+.right {
+    min-width: 3.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+
+    @media (min-width: @bp-mobile) {
+        min-width: 4rem;
+    }
+}
+
+// ─── 右侧文字按钮 ────────────────────────────────────────────────────────────
+.rightTextBtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: @primary;
+    padding: 0.4rem 0.2rem;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.2s;
+
+    &:hover {
+        opacity: 0.75;
+    }
+
+    &:active {
+        opacity: 0.5;
+    }
+}
+
+// ─── 返回按钮 ────────────────────────────────────────────────────────────────
+.backBtn {
+    .flex-center();
+    width: 3.6rem;
+    height: 3.6rem;
+    border-radius: 9999px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: @text-main;
+    transition: background-color 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+    flex-shrink: 0;
+
+    @media (min-width: @bp-mobile) {
+        width: 4rem;
+        height: 4rem;
+    }
+
+    &:hover {
+        background-color: fade(@text-main, 6%);
+    }
+
+    &:active {
+        background-color: fade(@text-main, 10%);
+    }
+
+    &:focus-visible {
+        box-shadow: 0 0 0 3px fade(@primary, 30%);
+    }
+
+    svg {
+        width: 2.2rem;
+        height: 2.2rem;
+
+        @media (min-width: @bp-mobile) {
+            width: 2.4rem;
+            height: 2.4rem;
+        }
+    }
+}

@@ -1,0 +1,251 @@
+@import (reference) '../../../styles/variables.less';
+@import (reference) '../../../styles/mixins.less';
+
+// ─── 弹窗遮罩隐藏态（保留 DOM，仅视觉 + 交互屏蔽） ────────────────────────────
+.hidden {
+  visibility: hidden;
+  pointer-events: none;
+  opacity: 0;
+}
+
+// ─── 弹窗遮罩 ─────────────────────────────────────────────────────────────────
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background-color: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  .flex-center();
+  padding: 2rem;
+  animation: fadeIn 0.2s ease;
+  will-change: opacity;
+
+  @media (min-width: 768px) {
+    padding: 3.2rem;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+// ─── 弹窗内容 ─────────────────────────────────────────────────────────────────
+.modalContent {
+  background-color: @bg-white;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 42rem;
+  .flex-col();
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2), 0 8px 24px rgba(0, 0, 0, 0.12);
+  animation: slideUp 0.25s ease;
+  will-change: transform, opacity;
+  transform: translateZ(0);
+
+  @media (min-width: 768px) {
+    max-width: 64rem;
+  }
+
+  @media (min-width: 1280px) {
+    max-width: 80rem;
+  }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+// ─── 头部 ─────────────────────────────────────────────────────────────────────
+.modalHeader {
+  padding: 2rem 2.4rem 1.6rem;
+  text-align: center;
+  border-bottom: 1px solid @border-color;
+  background-color: @bg-white;
+  // 防止标题区域被下层内容透出
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+.modalTitle {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: @text-main;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// ─── 裁剪区域 ─────────────────────────────────────────────────────────────────
+.cropContainer {
+  position: relative;
+  width: 100%;
+  // 手机默认高度
+  height: 30rem;
+  background-color: #000;
+
+  // iPad
+  @media (min-width: 768px) {
+    height: 44rem;
+  }
+
+  // PC 小屏
+  @media (min-width: 1024px) {
+    height: 52rem;
+  }
+
+  // PC 大屏
+  @media (min-width: 1280px) {
+    height: 60rem;
+  }
+}
+
+// ─── 缩放控制 ─────────────────────────────────────────────────────────────────
+.controls {
+  padding: 1.6rem 2.4rem;
+  border-bottom: 1px solid @border-color;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.zoomLabel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  color: @text-sub;
+  cursor: pointer;
+
+  svg {
+    flex-shrink: 0;
+  }
+}
+
+.centerBtn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.4rem;
+  height: 3.4rem;
+  border-radius: 50%;
+  border: 1px solid @border-color;
+  background-color: @bg-white;
+  color: @text-sub;
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    border-color: @primary;
+    color: @primary;
+    background-color: fade(@primary, 8%);
+  }
+
+  &:active {
+    transform: scale(0.92);
+  }
+}
+
+.zoomSlider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(to right, @primary 0%, @primary var(--slider-percent, 0%), @bg-slate-100 var(--slider-percent, 0%), @bg-slate-100 100%);
+  outline: none;
+  cursor: pointer;
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: @primary;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    transition: transform 0.15s;
+
+    &:active {
+      transform: scale(1.2);
+    }
+  }
+
+  &::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: @primary;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    transition: transform 0.15s;
+
+    &:active {
+      transform: scale(1.2);
+    }
+  }
+}
+
+// ─── 底部按钮 ─────────────────────────────────────────────────────────────────
+.modalFooter {
+  display: flex;
+  gap: 1.2rem;
+  padding: 2rem 2.4rem;
+}
+
+.cancelBtn,
+.originalBtn,
+.confirmBtn {
+  flex: 1;
+  padding: 1.2rem;
+  border-radius: @radius-lg;
+  font-size: 1.6rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  -webkit-tap-highlight-color: transparent;
+
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+.cancelBtn {
+  background-color: @bg-slate-100;
+  color: @text-sub;
+
+  &:hover {
+    background-color: @border-color;
+    color: @text-main;
+  }
+}
+
+.originalBtn {
+  background-color: #fff;
+  color: @primary;
+  border: 1px solid @primary;
+
+  &:hover {
+    background-color: fade(@primary, 8%);
+  }
+}
+
+.confirmBtn {
+  background-color: @primary;
+  color: #fff;
+  box-shadow: 0 4px 12px fade(@primary, 30%);
+
+  &:hover {
+    background-color: darken(@primary, 5%);
+    box-shadow: 0 6px 16px fade(@primary, 40%);
+  }
+}

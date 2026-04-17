@@ -1,0 +1,42 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/breakpoints.less';
+
+// ─── 页面悬浮操作按钮（FAB）──────────────────────────────────────
+.fab {
+  position: fixed;
+  bottom: 2.4rem;
+  right: 2rem;
+  z-index: 50;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 1.4rem 2rem;
+  border-radius: 9999px;
+  border: none;
+  background: linear-gradient(135deg, darken(@primary, 6%), @primary);
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow:
+    0 6px 24px fade(@primary, 35%),
+    0 2px 8px fade(@primary, 20%);
+  transition: transform 0.15s, box-shadow 0.15s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 10px 32px fade(@primary, 45%),
+      0 4px 12px fade(@primary, 30%);
+  }
+
+  &:active {
+    transform: scale(0.96);
+    box-shadow: 0 4px 16px fade(@primary, 30%);
+  }
+
+  @media (min-width: @bp-mobile) {
+    right: calc(50% - 37.6rem);
+  }
+}

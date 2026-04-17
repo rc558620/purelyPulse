@@ -1,0 +1,77 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/mixins.less';
+
+.emptyState {
+  .flex-col();
+  align-items: center;
+  gap: 1.2rem;
+  padding: 5.6rem 2rem;
+  text-align: center;
+}
+
+.emptyIcon {
+  width: 8rem;
+  height: 8rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, fade(@primary, 12%) 0%, fade(@primary, 5%) 100%);
+  border: 1px solid fade(@primary, 20%);
+  .flex-center();
+  color: fade(@primary, 60%);
+  box-shadow: 0 4px 20px fade(@primary, 10%);
+}
+
+.emptyTitle {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: @text-main;
+  margin: 0;
+}
+
+.emptyDesc {
+  font-size: 1.4rem;
+  color: @text-sub;
+  margin: 0;
+  line-height: 1.6;
+  max-width: 28rem;
+}
+
+// ─── 清除筛选按钮（次级，边框样式）────────────────────────────────
+.clearBtn {
+  padding: 1rem 2.4rem;
+  border-radius: @radius-lg;
+  border: 1.5px solid fade(@primary, 40%);
+  background-color: fade(@primary, 8%);
+  color: @primary;
+  font-size: 1.4rem;
+  font-weight: 600;
+  cursor: pointer;
+  .btn-press-effect();
+
+  &:hover { background-color: fade(@primary, 15%); border-color: @primary; }
+}
+
+// ─── 主操作按钮（实心样式）───────────────────────────────────────
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+  padding: 1.1rem 2.4rem;
+  border-radius: @radius-lg;
+  border: none;
+  background-color: @primary;
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px fade(@primary, 30%);
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.2s, transform 0.15s, box-shadow 0.15s;
+
+  &:hover:not(:disabled) {
+    background-color: darken(@primary, 6%);
+    box-shadow: 0 6px 16px fade(@primary, 40%);
+  }
+
+  &:active { transform: scale(0.97); }
+}

@@ -1,0 +1,40 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/mixins.less';
+
+// ─── 二步确认删除按钮（通用） ──────────────────────────────────
+// 调用方可通过 className / confirmClassName 覆盖布局相关样式（宽度/边框/flex方向）。
+// 颜色过渡、确认态统一由此文件定义。
+
+.deleteBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  border: none;
+  background: transparent;
+  color: @text-slate-400;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 600;
+  transition: background-color 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    background-color: fade(@rose-500, 8%);
+    color: @rose-500;
+  }
+
+  &:active {
+    background-color: fade(@rose-500, 14%);
+  }
+}
+
+.deleteBtnConfirm {
+  color: @rose-500;
+  background-color: fade(@rose-500, 10%);
+}
+
+.confirmText {
+  font-size: 1rem;
+  font-weight: 700;
+}

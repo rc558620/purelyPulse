@@ -1,0 +1,171 @@
+@import (reference) '../../../styles/variables.less';
+@import (reference) '../../../styles/mixins.less';
+
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background-color: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    .flex-center();
+    padding: 2rem;
+    animation: fadeIn 0.2s ease;
+    will-change: opacity;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.modalCard {
+    background-color: @bg-white;
+    border-radius: 20px;
+    padding: 2.8rem 2.4rem 2.4rem;
+    width: 100%;
+    max-width: 36rem;
+    .flex-col();
+    align-items: center;
+    gap: 0;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 24px rgba(0, 0, 0, 0.08);
+    animation: slideUp 0.25s ease;
+    will-change: transform, opacity;
+    transform: translateZ(0);
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modalIcon {
+    width: 6.4rem;
+    height: 6.4rem;
+    border-radius: 9999px;
+    .flex-center();
+    margin-bottom: 1.6rem;
+    background-color: fade(@blue-500, 10%);
+    color: @blue-500;
+}
+
+.modalIconDanger {
+    background-color: fade(@rose-500, 10%);
+    color: @rose-500;
+}
+
+.modalIconPrimary {
+    background-color: fade(@primary, 12%);
+    color: darken(@primary, 10%);
+}
+
+.modalIconWarning {
+    background-color: fade(@orange-500, 10%);
+    color: @orange-500;
+}
+
+.modalTitle {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: @text-main;
+    margin: 0 0 0.8rem;
+    text-align: center;
+}
+
+.modalDesc {
+    font-size: 1.4rem;
+    color: @text-sub;
+    text-align: center;
+    margin: 0 0 2.4rem;
+    line-height: 1.6;
+}
+
+.modalActions {
+    display: flex;
+    gap: 1.2rem;
+    width: 100%;
+}
+
+.modalCancelBtn {
+    flex: 1;
+    padding: 1.2rem;
+    border-radius: @radius-lg;
+    background-color: @bg-slate-100;
+    border: 1px solid @border-color;
+    color: @text-sub;
+    font-size: 1.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+
+    &:hover:not(:disabled) {
+        background-color: @border-color;
+        color: @text-main;
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+.modalConfirmBtn {
+    flex: 1;
+    padding: 1.2rem;
+    border-radius: @radius-lg;
+    background-color: @blue-500;
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px fade(@blue-500, 30%);
+    -webkit-tap-highlight-color: transparent;
+
+    &:hover:not(:disabled) {
+        background-color: darken(@blue-500, 6%);
+        box-shadow: 0 6px 16px fade(@blue-500, 40%);
+    }
+
+    &:active:not(:disabled) {
+        transform: scale(0.97);
+    }
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+}
+
+.modalConfirmBtnDanger {
+    background-color: @rose-500;
+    box-shadow: 0 4px 12px fade(@rose-500, 30%);
+
+    &:hover:not(:disabled) {
+        background-color: darken(@rose-500, 6%);
+        box-shadow: 0 6px 16px fade(@rose-500, 40%);
+    }
+}
+
+.modalConfirmBtnPrimary {
+    background-color: @primary;
+    box-shadow: 0 4px 12px fade(@primary, 30%);
+
+    &:hover:not(:disabled) {
+        background-color: darken(@primary, 6%);
+        box-shadow: 0 6px 16px fade(@primary, 40%);
+    }
+}
+
+.modalConfirmBtnWarning {
+    background-color: @orange-500;
+    box-shadow: 0 4px 12px fade(@orange-500, 30%);
+
+    &:hover:not(:disabled) {
+        background-color: darken(@orange-500, 6%);
+        box-shadow: 0 6px 16px fade(@orange-500, 40%);
+    }
+}

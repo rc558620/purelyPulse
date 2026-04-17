@@ -1,0 +1,81 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/mixins.less';
+
+// ─── 卡片基础样式 ────────────────────────────────────────────────
+.statCard {
+  .flex-col();
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.4rem 0.8rem 1.2rem;
+  background-color: @bg-white;
+  border-radius: @radius-lg;
+  border: 1.5px solid @border-color;
+  box-shadow: @shadow-sm;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+  .btn-press-effect();
+
+  &:hover {
+    border-color: fade(@primary, 60%);
+    box-shadow: 0 2px 8px fade(@primary, 12%);
+  }
+}
+
+// ─── variant 色彩变体 ────────────────────────────────────────────
+.statCardWarning {
+  border-color: fade(@orange-500, 30%);
+  background: linear-gradient(135deg, mix(@bg-white, @orange-100, 88%) 0%, @bg-white 100%);
+
+  .statIcon  { color: @orange-500; }
+  .statValue { color: @orange-600; }
+
+  &:hover { border-color: @orange-500; box-shadow: 0 2px 8px fade(@orange-500, 15%); }
+}
+
+.statCardDanger {
+  border-color: fade(@rose-500, 30%);
+  background: linear-gradient(135deg, mix(@bg-white, @rose-100, 90%) 0%, @bg-white 100%);
+
+  .statIcon  { color: @rose-500; }
+  .statValue { color: @rose-500; }
+
+  &:hover { border-color: @rose-500; box-shadow: 0 2px 8px fade(@rose-500, 15%); }
+}
+
+.statCardSuccess {
+  border-color: fade(@emerald-500, 30%);
+  background: linear-gradient(135deg, mix(@bg-white, @emerald-100, 90%) 0%, @bg-white 100%);
+
+  .statIcon  { color: @emerald-500; }
+  .statValue { color: darken(@emerald-500, 5%); }
+
+  &:hover { border-color: @emerald-500; box-shadow: 0 2px 8px fade(@emerald-500, 15%); }
+}
+
+// ─── 激活态（筛选选中） ─────────────────────────────────────────
+.statCardActive {
+  border-color: @primary;
+  box-shadow: 0 0 0 3px fade(@primary, 18%);
+}
+
+// ─── 内部元素 ────────────────────────────────────────────────────
+.statIcon {
+  color: @primary;
+  .flex-center();
+  flex-shrink: 0;
+}
+
+.statValue {
+  font-size: 2rem;
+  font-weight: 800;
+  color: @text-main;
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: 1.1rem;
+  color: @text-sub;
+  text-align: center;
+  white-space: nowrap;
+}
