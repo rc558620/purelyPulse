@@ -24,6 +24,7 @@ export const CascaderView: React.FC<CascadePickerViewProps> = ({
   prefix,
   allowClear = false,
   className,
+  inputStyle,
 }) => {
   // ── 设备类型（复用 _shared，mode prop 可强制覆盖） ────────────────────────
   const isMobile = useDeviceType(mode);
@@ -95,6 +96,7 @@ export const CascaderView: React.FC<CascadePickerViewProps> = ({
           status === 'error' && styles['cascader-input-error'],
           arrowOpen && styles['cascader-input-open'],
         )}
+        style={inputStyle}
         onClick={handleTriggerClick}
         onKeyDown={handleKeyDown}
         role="combobox"

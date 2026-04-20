@@ -35,6 +35,9 @@ export const routeDefinitions: AppRouteDefinition[] = [
     // 默认进入项目时，统一跳去登录页。
     { path: ROUTE_PATHS.root, element: <Navigate to={ROUTE_PATHS.login} replace /> },
 
-    { path: ROUTE_PATHS.login, page: pages.login },
-    { path: ROUTE_PATHS.home,  page: pages.home },
+    { path: ROUTE_PATHS.login,         page: pages.login },
+    { path: ROUTE_PATHS.home,           page: pages.home },
+    { path: ROUTE_PATHS.partnerReview,  page: pages.partnerReview },
+    { path: ROUTE_PATHS.revenueDetail,        page: pages.revenueDetail },
+    { path: ROUTE_PATHS.promotionRankDetail,  page: pages.promotionRankDetail },
 ];

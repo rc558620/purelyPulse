@@ -3,4 +3,7 @@ export const ROUTE_PATHS = {
     root: '/',
     login: '/login',
     home: '/home',
+    partnerReview: '/partner-review',
+    revenueDetail: '/revenue-detail',
+    promotionRankDetail: '/promotion-detail',
 } as const;

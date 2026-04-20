@@ -5,8 +5,13 @@ import SlidingTabBar from '@components/ui/filter/SlidingTabBar/SlidingTabBar';
 import CustomModeBtnRow from '@components/form/CustomModeBtnRow/CustomModeBtnRow';
 import DateRangePicker from '@components/form/DateRangePicker/DateRangePicker';
 import DayPicker from '@components/form/DayPicker';
+import { CascaderView } from '@components/form/CascaderView';
 import Echarts from '@components/business/Echarts/Echarts';
 import { fmtAmount } from '@utils/utils';
+import { REGION_DATA } from '@constants/regionData';
+import type { CascadeValue } from '@components/form/CascaderView/types';
+import { useAnimatedNavigate } from '@hooks/useAnimatedNavigate';
+import { ROUTE_PATHS } from '../../router/paths';
 import styles from './home.module.less';
 
 // ─── Mock 数据 ──────────────────────────────────────────────────
@@ -79,7 +84,11 @@ const REVENUE_SUMMARY: Record<RevenuePeriod, { total: number; avg: number; growt
 
 // ─── 组件 ──────────────────────────────────────────────────────
 
+// 合伙人申请待审核数（Mock）
+const PENDING_APPLICATION_COUNT = 5;
+
 const Home: React.FC = () => {
+  const navigate = useAnimatedNavigate();
   const [revenuePeriod, setRevenuePeriod] = useState<RevenuePeriod>('month');
 
   // 自定义日期模式
@@ -99,6 +108,23 @@ const Home: React.FC = () => {
   const [rangeEndYear,    setRangeEndYear]    = useState(now.getFullYear());
   const [rangeEndMonth,   setRangeEndMonth]   = useState(now.getMonth() + 1);
   const [rangeEndDay,     setRangeEndDay]     = useState(now.getDate());
+
+  // 推广排行 — 地区
+  const [rankRegion, setRankRegion] = useState<CascadeValue[]>([]);
+
+  // 地区显示文本（取最末级 label）
+  const regionDisplayText = useMemo(() => {
+    if (rankRegion.length === 0) return '全部地区';
+    const labels: string[] = [];
+    let nodes = REGION_DATA;
+    for (const val of rankRegion) {
+      const node = nodes.find(n => n.value === val);
+      if (!node) break;
+      labels.push(node.label);
+      nodes = node.children ?? [];
+    }
+    return labels.join(' · ');
+  }, [rankRegion]);
 
   const handleToggleCustomDate = useCallback(() => {
     setIsCustomDate(prev => !prev);
@@ -260,14 +286,30 @@ const Home: React.FC = () => {
 
           {/* 格 A：合伙人总数 */}
           <div className={`${styles.bentoCard} ${styles.bentoCardPurple}`}>
-            <div className={styles.bentoBadge} style={{ background: 'rgba(168,85,247,0.12)', color: '#a855f7' }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-              </svg>
-              合伙人
+            {/* 徽章行：左侧合伙人标签 + 右侧申请审核跳转 */}
+            <div className={styles.bentoBadgeRow}>
+              <div className={styles.bentoBadge} style={{ background: 'rgba(168,85,247,0.12)', color: '#a855f7' }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+                合伙人
+              </div>
+              {/* 申请审核跳转按钮 */}
+              <button
+                className={styles.bentoReviewBtn}
+                onClick={() => navigate('/partner-review')}
+                aria-label="查看合伙人申请审核"
+              >
+                合伙人申请审核
+                {PENDING_APPLICATION_COUNT > 0 && (
+                  <span className={styles.bentoReviewBadge} aria-label={`${PENDING_APPLICATION_COUNT}条待审核`}>
+                    {PENDING_APPLICATION_COUNT}
+                  </span>
+                )}
+              </button>
             </div>
             <div className={styles.bentoBigNum} style={{ color: '#a855f7' }}>
               <AnimatedNumber value={PARTNER_STATS.total} triggerKey="partner-total" />
@@ -327,6 +369,65 @@ const Home: React.FC = () => {
         </div>
 
         {/* ═══════════════════════════════════════════════════════════
+            充值收入 — 筛选区（卡片外）
+        ═══════════════════════════════════════════════════════════ */}
+        <div className={styles.revenueFilterBlock}>
+          {/* 地区选择 */}
+          <CascaderView
+            options={REGION_DATA}
+            value={rankRegion}
+            onChange={setRankRegion}
+            placeholder="选择省 / 市 / 区"
+            allowClear
+            inputStyle={{ height: '4rem', fontSize: '1.3rem' }}
+          />
+
+          <SlidingTabBar
+            options={REVENUE_TABS}
+            value={revenuePeriod}
+            onChange={(v) => setRevenuePeriod(v as RevenuePeriod)}
+            variant="pill"
+          />
+
+          {/* 选择年月日 + 日期范围 */}
+          <CustomModeBtnRow
+            isCustomDate={isCustomDate}
+            isCustomRange={isCustomRange}
+            extraBtnText={customDateBtnText}
+            onToggleCustomDate={handleToggleCustomDate}
+            onToggleCustomRange={handleToggleCustomRange}
+          />
+
+          {/* 单日 DayPicker */}
+          {isCustomDate && (
+            <div className={styles.revenueDayPickerWrap}>
+              <DayPicker
+                year={customYear}
+                month={customMonth}
+                day={customDay}
+                onChange={(y, m, d) => { setCustomYear(y); setCustomMonth(m); setCustomDay(d); }}
+                onClear={handleCustomDayClear}
+              />
+            </div>
+          )}
+
+          {/* 日期范围 */}
+          {isCustomRange && (
+            <DateRangePicker
+              startYear={rangeStartYear}
+              startMonth={rangeStartMonth}
+              startDay={rangeStartDay}
+              endYear={rangeEndYear}
+              endMonth={rangeEndMonth}
+              endDay={rangeEndDay}
+              onStartChange={(y, m, d) => { setRangeStartYear(y); setRangeStartMonth(m); setRangeStartDay(d); }}
+              onEndChange={(y, m, d) => { setRangeEndYear(y); setRangeEndMonth(m); setRangeEndDay(d); }}
+              onClear={() => setIsCustomRange(false)}
+            />
+          )}
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════════
             充值收入 — 折线图卡片
         ═══════════════════════════════════════════════════════════ */}
         <div className={styles.revenueCard}>
@@ -338,57 +439,21 @@ const Home: React.FC = () => {
                 <polyline points="16 7 22 7 22 13" />
               </svg>
             </div>
-            <div>
+            <div style={{ flex: 1 }}>
               <div className={styles.revenueTitle}>充值收入趋势</div>
               <div className={styles.revenueSub}>按时间周期查看收入变化</div>
             </div>
-          </div>
-
-          {/* 筛选行 1：今日 / 本周 / 本月 / 本季 */}
-          <div className={styles.revenueFilterBlock}>
-            <SlidingTabBar
-              options={REVENUE_TABS}
-              value={revenuePeriod}
-              onChange={(v) => setRevenuePeriod(v as RevenuePeriod)}
-              variant="pill"
-            />
-
-            {/* 筛选行 2：选择年月日 + 日期范围 */}
-            <CustomModeBtnRow
-              isCustomDate={isCustomDate}
-              isCustomRange={isCustomRange}
-              extraBtnText={customDateBtnText}
-              onToggleCustomDate={handleToggleCustomDate}
-              onToggleCustomRange={handleToggleCustomRange}
-            />
-
-            {/* 筛选行 3（条件）：单日 DayPicker */}
-            {isCustomDate && (
-              <div className={styles.revenueDayPickerWrap}>
-                <DayPicker
-                  year={customYear}
-                  month={customMonth}
-                  day={customDay}
-                  onChange={(y, m, d) => { setCustomYear(y); setCustomMonth(m); setCustomDay(d); }}
-                  onClear={handleCustomDayClear}
-                />
-              </div>
-            )}
-
-            {/* 筛选行 3（条件）：日期范围 */}
-            {isCustomRange && (
-              <DateRangePicker
-                startYear={rangeStartYear}
-                startMonth={rangeStartMonth}
-                startDay={rangeStartDay}
-                endYear={rangeEndYear}
-                endMonth={rangeEndMonth}
-                endDay={rangeEndDay}
-                onStartChange={(y, m, d) => { setRangeStartYear(y); setRangeStartMonth(m); setRangeStartDay(d); }}
-                onEndChange={(y, m, d) => { setRangeEndYear(y); setRangeEndMonth(m); setRangeEndDay(d); }}
-                onClear={() => setIsCustomRange(false)}
-              />
-            )}
+            <button
+              className={styles.revenueDetailBtn}
+              type="button"
+              aria-label="查看充值收入趋势详情"
+              onClick={() => navigate('/revenue-detail')}
+            >
+              详情
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </button>
           </div>
 
           {/* 汇总指标 3 格 */}
@@ -458,7 +523,19 @@ const Home: React.FC = () => {
               </div>
               推广排行 TOP 5
             </div>
-            <span className={styles.rankCardSub}>本月数据</span>
+            <div className={styles.rankCardHeaderRight}>
+              <span className={styles.rankCardSub}>{regionDisplayText}</span>
+              <button
+                className={styles.rankDetailBtn}
+                onClick={() => navigate(ROUTE_PATHS.promotionRankDetail)}
+                aria-label="查看推广详情"
+              >
+                查看详情
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           <div className={styles.rankList}>
@@ -494,6 +571,7 @@ const Home: React.FC = () => {
             ))}
           </div>
         </div>
+
 
       </main>
     </div>

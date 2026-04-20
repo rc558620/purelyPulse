@@ -59,6 +59,9 @@ export type LazyPage = ReturnType<typeof lazyWithPreload>;
  * - 这里不放路由 path，只放“页面资源”
  */
 export const pages = {
-  login: lazyWithPreload(() => import('../pages/login/login')),
-  home:  lazyWithPreload(() => import('../pages/home/home')),
+  login:         lazyWithPreload(() => import('../pages/login/login')),
+  home:          lazyWithPreload(() => import('../pages/home/home')),
+  partnerReview: lazyWithPreload(() => import('../pages/partnerReview/partnerReview')),
+  revenueDetail:        lazyWithPreload(() => import('../pages/revenueDetail/revenueDetail')),
+  promotionRankDetail:  lazyWithPreload(() => import('../pages/promotionDetail/promotionRankDetail')),
 } as const;

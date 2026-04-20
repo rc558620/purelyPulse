@@ -1,0 +1,433 @@
+@import (reference) '../../styles/variables.less';
+@import (reference) '../../styles/breakpoints.less';
+@import (reference) '../../styles/mixins.less';
+
+*, ::before, ::after { box-sizing: border-box; }
+
+// ─── 页面容器 ──────────────────────────────────────────────────
+.pageContainer {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  .flex-col();
+  background-color: @bg-light;
+  color: @text-main;
+  overflow-x: hidden;
+  font-family: 'Inter', 'Noto Sans SC', sans-serif;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at top, fade(#a855f7, 6%), transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+
+// ─── 背景光球 ──────────────────────────────────────────────────
+.blurOrb {
+  position: absolute;
+  top: 8%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 480px;
+  height: 480px;
+  background-color: fade(#a855f7, 5%);
+  border-radius: 9999px;
+  filter: blur(90px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+// ─── 内容区 ───────────────────────────────────────────────────
+.contentWrapper {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 2rem 1.6rem 6rem;
+  .flex-col();
+  gap: 1.4rem;
+
+  @media (min-width: @bp-mobile) {
+    max-width: 72rem;
+    padding: 2.8rem 2.4rem 6rem;
+    gap: 2rem;
+  }
+}
+
+// ─── 统计概览行 ───────────────────────────────────────────────
+.statsRow {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.statItem {
+  flex: 1;
+  .flex-col();
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 1.6rem 0.8rem;
+}
+
+.statNum {
+  font-size: 2.4rem;
+  font-weight: 900;
+  color: @text-main;
+  letter-spacing: -0.03em;
+  line-height: 1;
+
+  @media (min-width: @bp-mobile) { font-size: 3rem; }
+}
+
+.statNumPending  { color: #d97706; }
+.statNumApproved { color: #10b981; }
+.statNumRejected { color: @text-sub; }
+
+.statLabel {
+  font-size: 1.1rem;
+  color: @text-sub;
+  font-weight: 500;
+}
+
+.statDivider {
+  width: 1px;
+  background: @border-color;
+  flex-shrink: 0;
+  margin: 1.4rem 0;
+}
+
+// ─── 筛选 Tab ─────────────────────────────────────────────────
+.filterWrap {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.filterBtn {
+  padding: 0.6rem 1.4rem;
+  border-radius: 9999px;
+  border: 1px solid @border-color;
+  background: rgba(255, 255, 255, 0.85);
+  color: @text-sub;
+  font-size: 1.3rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    border-color: rgba(168, 85, 247, 0.4);
+    color: #a855f7;
+    background: rgba(168, 85, 247, 0.06);
+  }
+
+  &:active { transform: scale(0.96); }
+}
+
+.filterBtnActive {
+  background: rgba(168, 85, 247, 0.1);
+  border-color: rgba(168, 85, 247, 0.42);
+  color: #a855f7;
+  font-weight: 700;
+}
+
+// ─── 列表主卡片 ───────────────────────────────────────────────
+.listCard {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  overflow: hidden;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #a855f7, #c084fc, #818cf8);
+    border-radius: 20px 20px 0 0;
+  }
+}
+
+// ─── 空状态 ───────────────────────────────────────────────────
+.emptyState {
+  .flex-col();
+  align-items: center;
+  gap: 1rem;
+  padding: 5.6rem 2rem;
+  color: @text-slate-400;
+  font-size: 1.3rem;
+
+  svg { opacity: 0.35; }
+}
+
+// ─── 单条申请 ─────────────────────────────────────────────────
+.appItem {
+  border-bottom: 1px solid fade(@border-color, 55%);
+  transition: background-color 0.15s;
+
+  &:last-child { border-bottom: none; }
+}
+
+.appItemExpanded { background: fade(@bg-slate-50, 80%); }
+
+// 主信息行
+.appItemMain {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  padding: 1.6rem 2rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+
+  &:hover { background: fade(@bg-slate-50, 50%); }
+
+  @media (min-width: @bp-mobile) {
+    gap: 1.8rem;
+    padding: 1.8rem 2.4rem;
+  }
+}
+
+// 头像
+.appAvatar {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.18), rgba(168, 85, 247, 0.08));
+  border: 1.5px solid rgba(168, 85, 247, 0.28);
+  .flex-center();
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #a855f7;
+  flex-shrink: 0;
+
+  @media (min-width: @bp-mobile) {
+    width: 4.4rem;
+    height: 4.4rem;
+    font-size: 1.7rem;
+  }
+}
+
+.appAvatarApproved {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(16, 185, 129, 0.08));
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #10b981;
+}
+
+.appAvatarRejected {
+  background: linear-gradient(135deg, rgba(148, 163, 184, 0.12), rgba(148, 163, 184, 0.06));
+  border-color: rgba(148, 163, 184, 0.22);
+  color: @text-sub;
+}
+
+// 信息列
+.appInfo {
+  flex: 1;
+  min-width: 0;
+  .flex-col();
+  gap: 0.35rem;
+}
+
+.appNameRow {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.appName {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: @text-main;
+  white-space: nowrap;
+}
+
+.appCity {
+  font-size: 1.2rem;
+  color: @text-sub;
+  white-space: nowrap;
+}
+
+.appMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.2rem;
+  color: @text-slate-400;
+  flex-wrap: wrap;
+}
+
+.appMetaDot {
+  width: 3px;
+  height: 3px;
+  border-radius: 9999px;
+  background: @text-slate-400;
+  flex-shrink: 0;
+}
+
+// 状态 + 箭头
+.appStatusWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-shrink: 0;
+}
+
+.statusPending {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.9rem;
+  border-radius: 9999px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  white-space: nowrap;
+}
+
+.statusApproved {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: 9999px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.22);
+  white-space: nowrap;
+}
+
+.statusRejected {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: 9999px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  background: rgba(148, 163, 184, 0.1);
+  color: @text-sub;
+  border: 1px solid @border-color;
+  white-space: nowrap;
+}
+
+.expandArrow {
+  color: @text-slate-400;
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.expandArrowOpen {
+  transform: rotate(180deg);
+  color: #a855f7;
+}
+
+// ─── 展开详情区 ───────────────────────────────────────────────
+.appDetail {
+  padding: 0 2rem 1.8rem 6.2rem;
+  .flex-col();
+  gap: 1.2rem;
+  animation: detailIn 0.22s ease;
+
+  @keyframes detailIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (min-width: @bp-mobile) { padding: 0 2.4rem 2rem 7rem; }
+}
+
+.reasonLabel {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: @text-sub;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.reasonText {
+  font-size: 1.4rem;
+  color: @text-main;
+  line-height: 1.75;
+  margin: 0;
+  padding: 1.4rem 1.6rem;
+  background: @bg-slate-50;
+  border-radius: 12px;
+  border: 1px solid @border-color;
+  border-left: 3px solid rgba(168, 85, 247, 0.45);
+}
+
+// ─── 审核操作按钮 ─────────────────────────────────────────────
+.actionRow {
+  display: flex;
+  gap: 1rem;
+}
+
+.rejectBtn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.1rem 1.4rem;
+  border-radius: @radius-lg;
+  border: 1px solid @border-color;
+  background: @bg-white;
+  color: @text-sub;
+  font-size: 1.4rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+  .btn-press-effect();
+
+  &:hover {
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.05);
+  }
+}
+
+.approveBtn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.1rem 1.4rem;
+  border-radius: @radius-lg;
+  border: none;
+  background: linear-gradient(135deg, #a855f7, #9333ea);
+  color: #fff;
+  font-size: 1.4rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(168, 85, 247, 0.32);
+  transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+  .btn-press-effect();
+
+  &:hover {
+    background: linear-gradient(135deg, #9333ea, #7c3aed);
+    box-shadow: 0 6px 18px rgba(168, 85, 247, 0.42);
+  }
+}

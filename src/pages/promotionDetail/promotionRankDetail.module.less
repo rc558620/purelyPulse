@@ -1,0 +1,1285 @@
+@import (reference) '../../styles/variables.less';
+@import (reference) '../../styles/breakpoints.less';
+@import (reference) '../../styles/mixins.less';
+
+*, ::before, ::after { box-sizing: border-box; }
+
+// ─── 页面容器 ──────────────────────────────────────────────────
+.pageContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;          // 撑满动画容器（position:absolute inset:0）
+  overflow-y: auto;      // 自身作为滚动容器，接管纵向滚动
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  .flex-col();
+  background-color: @bg-light;
+  color: @text-main;
+  font-family: 'Inter', 'Noto Sans SC', sans-serif;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at top, fade(@primary, 8%), transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+
+// ─── 背景光球 ──────────────────────────────────────────────────
+.blurOrb {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 460px;
+  height: 460px;
+  background-color: fade(@primary, 6%);
+  border-radius: 9999px;
+  filter: blur(88px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+// ─── 面包屑导航 ───────────────────────────────────────────────
+.breadcrumb {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.8rem 1.6rem;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid fade(@border-color, 50%);
+}
+
+.breadcrumbItem {
+  display: inline-flex;
+  align-items: center;
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: @primary;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s;
+
+  &:hover { color: darken(@primary, 10%); text-decoration: underline; }
+}
+
+.breadcrumbSep {
+  color: @text-slate-400;
+  flex-shrink: 0;
+}
+
+.breadcrumbCurrent {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: @text-main;
+}
+
+// ─── 内容区 ───────────────────────────────────────────────────
+.contentWrapper {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 2rem 1.6rem 6rem;
+  .flex-col();
+  gap: 1.6rem;
+
+  @media (min-width: @bp-mobile) {
+    max-width: 72rem;
+    padding: 2.8rem 2.4rem 6rem;
+    gap: 2rem;
+  }
+}
+
+// ─── 表单卡片 ─────────────────────────────────────────────────
+.formCard {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  padding: 2rem;
+  overflow: hidden;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, @primary, darken(@primary, 8%), #10b981);
+    border-radius: 20px 20px 0 0;
+  }
+
+  @media (min-width: @bp-mobile) { padding: 2.4rem; }
+}
+
+// 表单卡片标题行
+.formCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.4rem;
+  border-bottom: 1px solid @border-color;
+}
+
+.formCardIcon {
+  width: 3.6rem;
+  height: 3.6rem;
+  border-radius: 10px;
+  background: linear-gradient(135deg, fade(@primary, 16%), fade(@primary, 7%));
+  border: 1px solid fade(@primary, 22%);
+  .flex-center();
+  color: @primary;
+  flex-shrink: 0;
+}
+
+.formCardTitle {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: @text-main;
+}
+
+// ─── 字段组 ───────────────────────────────────────────────────
+.fieldGroup {
+  .flex-col();
+  gap: 0.8rem;
+  margin-bottom: 1.6rem;
+
+  &:last-of-type { margin-bottom: 0; }
+}
+
+.fieldLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: @text-main;
+
+  svg { color: @primary; flex-shrink: 0; }
+}
+
+.fieldSubLabel {
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: @text-sub;
+  padding-left: 0.2rem;
+}
+
+// ─── 日期模式切换按钮 ─────────────────────────────────────────
+.modeSwitchRow {
+  display: flex;
+  gap: 0.8rem;
+}
+
+.modeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.6rem;
+  border-radius: 9999px;
+  border: 1.5px solid @border-color;
+  background: rgba(255, 255, 255, 0.8);
+  color: @text-sub;
+  font-size: 1.3rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+  .btn-press-effect();
+
+  &:hover {
+    border-color: fade(@primary, 45%);
+    color: @primary;
+    background: fade(@primary, 6%);
+  }
+}
+
+.modeBtnActive {
+  background: fade(@primary, 12%);
+  border-color: fade(@primary, 50%);
+  color: darken(@primary, 8%);
+  font-weight: 700;
+}
+
+// ─── 日期范围校验错误提示 ─────────────────────────────────────
+.dateRangeError {
+  font-size: 1.3rem;
+  color: @rose-500;
+  padding: 0.8rem 1.2rem;
+  background: fade(@rose-500, 8%);
+  border: 1px solid fade(@rose-500, 20%);
+  border-radius: 10px;
+}
+
+// ─── 表单操作按钮行 ───────────────────────────────────────────
+.formActions {
+  display: flex;
+  gap: 1.2rem;
+  margin-top: 2rem;
+  padding-top: 1.6rem;
+  border-top: 1px solid @border-color;
+}
+
+.resetBtn {
+  flex: 1;
+  padding: 1.2rem;
+  border-radius: @radius-lg;
+  border: 1.5px solid @border-color;
+  background: @bg-white;
+  color: @text-sub;
+  font-size: 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+  .btn-press-effect();
+
+  &:hover {
+    border-color: @text-sub;
+    background: @bg-slate-50;
+    color: @text-main;
+  }
+}
+
+.searchBtn {
+  flex: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1.2rem;
+  border-radius: @radius-lg;
+  border: none;
+  background: @primary;
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px fade(@primary, 32%);
+  transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+  .btn-press-effect();
+
+  &:hover {
+    background: darken(@primary, 6%);
+    box-shadow: 0 6px 18px fade(@primary, 42%);
+  }
+}
+
+// ─── 结果摘要条 ───────────────────────────────────────────────
+.resultSummary {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0 0.4rem;
+}
+
+.resultSummaryLeft {
+  .flex-col();
+  gap: 0.3rem;
+}
+
+.resultSummaryTitle {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: @text-main;
+}
+
+.resultSummaryMeta {
+  font-size: 1.2rem;
+  color: @text-sub;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.resultCount {
+  flex-shrink: 0;
+  padding: 0.3rem 1rem;
+  border-radius: 9999px;
+  background: fade(@primary, 12%);
+  border: 1px solid fade(@primary, 25%);
+  color: darken(@primary, 8%);
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+// ─── 汇总统计行 ───────────────────────────────────────────────
+.statsRow {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.statItem {
+  flex: 1;
+  .flex-col();
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 1.6rem 0.8rem;
+}
+
+.statNum {
+  font-size: 2rem;
+  font-weight: 900;
+  color: @text-main;
+  letter-spacing: -0.03em;
+  line-height: 1;
+
+  @media (min-width: @bp-mobile) { font-size: 2.4rem; }
+}
+
+.statNumOrders  { color: @primary; }
+.statNumRevenue { color: @emerald-500; }
+
+.statLabel {
+  font-size: 1.1rem;
+  color: @text-sub;
+  font-weight: 500;
+}
+
+.statDivider {
+  width: 1px;
+  background: @border-color;
+  flex-shrink: 0;
+  margin: 1.4rem 0;
+}
+
+// ─── 地区标题行 ───────────────────────────────────────────────
+.regionSectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: @text-sub;
+  padding: 0 0.4rem;
+
+  svg { color: @primary; flex-shrink: 0; }
+}
+
+// ─── 地区卡片网格 ─────────────────────────────────────────────
+.regionGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem;
+
+  @media (min-width: @bp-mobile) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.6rem;
+  }
+}
+
+// 地区卡片
+.regionCard {
+  position: relative;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 18px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.05);
+  padding: 1.4rem 1.2rem 1.2rem;
+  .flex-col();
+  gap: 1rem;
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.2s ease;
+  .btn-press-effect();
+
+  &:hover {
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.1);
+    border-color: fade(@primary, 30%);
+    transform: translateY(-1px);
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 18px;
+    background: linear-gradient(135deg, fade(@primary, 3%), transparent 60%);
+    pointer-events: none;
+  }
+}
+
+.regionCardTop {
+  border-color: fade(#f59e0b, 28%);
+  box-shadow: 0 4px 20px fade(#f59e0b, 10%);
+
+  &::after {
+    background: linear-gradient(135deg, fade(#f59e0b, 5%), transparent 60%);
+  }
+
+  &:hover {
+    border-color: fade(#f59e0b, 48%);
+    box-shadow: 0 8px 30px fade(#f59e0b, 18%);
+  }
+}
+
+// 排名徽标
+.regionRankBadge {
+  position: absolute;
+  top: -1px;
+  right: 1.2rem;
+  font-size: 1.0rem;
+  font-weight: 800;
+  padding: 0.2rem 0.7rem;
+  border-radius: 0 0 8px 8px;
+  letter-spacing: 0.02em;
+}
+
+.regionRankGold   { background: linear-gradient(135deg, #fde68a, #f59e0b); color: #92400e; }
+.regionRankSilver { background: linear-gradient(135deg, #e2e8f0, #94a3b8); color: #475569; }
+.regionRankBronze { background: linear-gradient(135deg, #fed7aa, #f97316); color: #7c2d12; }
+
+// 地区卡片头部行
+.regionCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.regionIconWrap {
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 8px;
+  background: linear-gradient(135deg, fade(@primary, 14%), fade(@primary, 6%));
+  border: 1px solid fade(@primary, 20%);
+  .flex-center();
+  color: @primary;
+  flex-shrink: 0;
+}
+
+.regionProvince {
+  flex: 1;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: @text-main;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.regionArrow {
+  color: @text-slate-400;
+  flex-shrink: 0;
+  transition: transform 0.2s;
+
+  .regionCard:hover & { transform: translateX(2px); color: @primary; }
+}
+
+// 合伙人数量大字
+.regionPartnerCount {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+}
+
+.regionPartnerNum {
+  font-size: 3rem;
+  font-weight: 900;
+  color: @primary;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.regionPartnerLabel {
+  font-size: 1.2rem;
+  color: @text-sub;
+  font-weight: 500;
+}
+
+// 底部数据行
+.regionStatsRow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding-top: 0.8rem;
+  border-top: 1px solid fade(@border-color, 60%);
+}
+
+.regionStatItem {
+  flex: 1;
+  .flex-col();
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.regionStatDivider {
+  width: 1px;
+  height: 2.4rem;
+  background: fade(@border-color, 70%);
+  flex-shrink: 0;
+}
+
+.regionStatVal {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: @text-main;
+  white-space: nowrap;
+}
+
+.regionStatRevenue { color: @emerald-500; }
+.regionGrowthHigh  { color: @emerald-500; }
+.regionGrowthNormal { color: @orange-500; }
+
+.regionStatLbl {
+  font-size: 1.0rem;
+  color: @text-slate-400;
+}
+
+// 进度条
+.regionProgressWrap {
+  height: 4px;
+  border-radius: 2px;
+  background: @bg-slate-100;
+  overflow: hidden;
+  margin-top: 0.2rem;
+}
+
+.regionProgressBar {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, @primary, darken(@primary, 5%));
+  transition: width 0.5s ease;
+}
+
+// ─── 提示卡片（未查询时） ─────────────────────────────────────
+.hintCard {
+  background: fade(@primary, 8%);
+  border: 1px solid fade(@primary, 18%);
+  border-radius: @radius-lg;
+  padding: 2.4rem 2rem;
+  .flex-col();
+  align-items: center;
+  gap: 1.2rem;
+  text-align: center;
+}
+
+.hintIcon {
+  width: 5.6rem;
+  height: 5.6rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, fade(@primary, 16%), fade(@primary, 7%));
+  border: 1px solid fade(@primary, 24%);
+  .flex-center();
+  color: @primary;
+  margin-bottom: 0.4rem;
+}
+
+.hintText {
+  font-size: 1.4rem;
+  color: darken(@primary, 14%);
+  font-weight: 500;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.hintList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  .flex-col();
+  gap: 0.4rem;
+
+  li {
+    font-size: 1.3rem;
+    color: darken(@primary, 8%);
+    padding-left: 1.4rem;
+    position: relative;
+    text-align: left;
+
+    &::before {
+      content: '•';
+      position: absolute;
+      left: 0;
+      color: @primary;
+      font-weight: 700;
+    }
+  }
+}
+
+// ─── 地区概况卡片（合伙人列表页） ────────────────────────────
+.regionSummaryCard {
+  background: linear-gradient(135deg, rgba(132, 204, 22, 0.12) 0%, rgba(16, 185, 129, 0.06) 100%);
+  border: 1px solid fade(@primary, 22%);
+  border-radius: @radius-lg;
+  padding: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.2rem;
+}
+
+.regionSummaryLeft {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.regionSummaryIcon {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, fade(@primary, 18%), fade(@primary, 8%));
+  border: 1px solid fade(@primary, 24%);
+  .flex-center();
+  color: @primary;
+  flex-shrink: 0;
+}
+
+.regionSummaryInfo {
+  .flex-col();
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.regionSummaryName {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: @text-main;
+}
+
+.regionSummaryDate {
+  font-size: 1.1rem;
+  color: @text-sub;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.regionSummaryStats {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  flex-shrink: 0;
+}
+
+.regionSummaryStatItem {
+  .flex-col();
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.regionSummaryNum {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: @text-main;
+  line-height: 1;
+}
+
+.regionSummaryLbl {
+  font-size: 1.0rem;
+  color: @text-sub;
+}
+
+// ─── 合伙人列表提示行 ─────────────────────────────────────────
+.partnerListHint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: @text-sub;
+  padding: 0 0.4rem;
+
+  svg { color: @primary; flex-shrink: 0; }
+}
+
+// ─── 合伙人列表 ───────────────────────────────────────────────
+.partnerList {
+  .flex-col();
+  gap: 0.8rem;
+}
+
+.partnerCard {
+  position: relative;
+  display: grid;
+  grid-template-columns: 3rem 3.6rem 1fr 4.5rem 1.6rem;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.4rem 1.4rem 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.18s ease;
+  .btn-press-effect();
+
+  &:hover {
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+    border-color: fade(@primary, 25%);
+    transform: translateX(2px);
+  }
+
+  @media (min-width: @bp-mobile) {
+    grid-template-columns: 3rem 4rem 1fr 5.5rem 1.6rem;
+    padding: 1.6rem;
+  }
+}
+
+.partnerCardTop {
+  border-color: fade(#f59e0b, 24%);
+  background: linear-gradient(135deg, rgba(253, 230, 138, 0.06), rgba(255, 255, 255, 0.9));
+
+  &:hover {
+    border-color: fade(#f59e0b, 42%);
+    box-shadow: 0 6px 24px fade(#f59e0b, 14%);
+  }
+}
+
+// 排名徽标
+.partnerRankBadge {
+  width: 2.8rem;
+  height: 2.8rem;
+  border-radius: 9999px;
+  background: @bg-slate-100;
+  .flex-center();
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: @text-sub;
+  flex-shrink: 0;
+  margin: 0 auto;
+}
+
+.partnerRankGold {
+  background: linear-gradient(135deg, #fde68a, #f59e0b);
+  color: #92400e;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
+}
+
+.partnerRankSilver {
+  background: linear-gradient(135deg, #e2e8f0, #94a3b8);
+  color: #475569;
+  box-shadow: 0 2px 8px rgba(148, 163, 184, 0.3);
+}
+
+.partnerRankBronze {
+  background: linear-gradient(135deg, #fed7aa, #f97316);
+  color: #7c2d12;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.28);
+}
+
+// 头像
+.partnerAvatar {
+  width: 3.6rem;
+  height: 3.6rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, fade(@primary, 18%), fade(@primary, 8%));
+  border: 1.5px solid fade(@primary, 28%);
+  .flex-center();
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: darken(@primary, 10%);
+  flex-shrink: 0;
+}
+
+.partnerAvatarGold {
+  background: linear-gradient(135deg, rgba(253, 230, 138, 0.5), rgba(245, 158, 11, 0.22));
+  border-color: rgba(245, 158, 11, 0.4);
+  color: #92400e;
+}
+
+.partnerAvatarSilver {
+  background: linear-gradient(135deg, rgba(226, 232, 240, 0.6), rgba(148, 163, 184, 0.25));
+  border-color: rgba(148, 163, 184, 0.45);
+  color: #475569;
+}
+
+.partnerAvatarBronze {
+  background: linear-gradient(135deg, rgba(254, 215, 170, 0.5), rgba(249, 115, 22, 0.22));
+  border-color: rgba(249, 115, 22, 0.38);
+  color: #7c2d12;
+}
+
+// 合伙人信息
+.partnerInfo {
+  .flex-col();
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.partnerInfoTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.partnerName {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: @text-main;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.partnerGrowth {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: @orange-500;
+  flex-shrink: 0;
+}
+
+.partnerGrowthHigh { color: @emerald-500; }
+
+.partnerLocation {
+  font-size: 1.1rem;
+  color: @text-sub;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.partnerStats {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.2rem;
+}
+
+.partnerStatItem {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0;
+}
+
+.partnerStatNum {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: @text-main;
+}
+
+.partnerStatLbl {
+  font-size: 1.1rem;
+  color: @text-sub;
+}
+
+.partnerStatSep {
+  font-size: 1.1rem;
+  color: @text-slate-400;
+}
+
+// 进度条
+.partnerBarWrap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  border-radius: 0 0 16px 16px;
+  background: @bg-slate-100;
+  overflow: hidden;
+}
+
+.partnerBar {
+  height: 100%;
+  border-radius: 0 0 16px 16px;
+  background: linear-gradient(90deg, @primary, darken(@primary, 5%));
+  transition: width 0.4s ease;
+}
+
+.partnerArrow {
+  color: @text-slate-400;
+  flex-shrink: 0;
+  transition: transform 0.15s, color 0.15s;
+
+  .partnerCard:hover & { transform: translateX(2px); color: @primary; }
+}
+
+// ─── 空状态 ───────────────────────────────────────────────────
+.emptyState {
+  .flex-col();
+  align-items: center;
+  gap: 1rem;
+  padding: 5.6rem 2rem;
+  color: @text-slate-400;
+  font-size: 1.3rem;
+
+  svg { opacity: 0.35; }
+}
+
+// ─── 通用颜色工具类 ───────────────────────────────────────────
+.colorGreen   { color: @primary !important; }
+.colorEmerald { color: @emerald-500 !important; }
+.colorOrange  { color: @orange-500 !important; }
+
+// ═══════════════════════════════════════════════════════════════
+// 视图三：合伙人推广详情
+// ═══════════════════════════════════════════════════════════════
+
+// ─── 合伙人英雄卡 ─────────────────────────────────────────────
+.partnerHeroCard {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  padding: 2rem 1.8rem;
+  border: 1px solid fade(@primary, 20%);
+  box-shadow: 0 4px 24px fade(@primary, 10%);
+}
+
+.partnerHeroBg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg,
+    fade(@primary, 10%) 0%,
+    rgba(16, 185, 129, 0.06) 50%,
+    rgba(255, 255, 255, 0.9) 100%
+  );
+  pointer-events: none;
+}
+
+.partnerHeroContent {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+}
+
+.partnerHeroAvatar {
+  width: 5.6rem;
+  height: 5.6rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, fade(@primary, 20%), fade(@primary, 10%));
+  border: 2px solid fade(@primary, 32%);
+  .flex-center();
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: darken(@primary, 12%);
+  flex-shrink: 0;
+  box-shadow: 0 4px 16px fade(@primary, 20%);
+}
+
+.partnerHeroInfo {
+  flex: 1;
+  min-width: 0;
+  .flex-col();
+  gap: 0.4rem;
+}
+
+.partnerHeroName {
+  font-size: 2rem;
+  font-weight: 800;
+  color: @text-main;
+  letter-spacing: -0.02em;
+}
+
+.partnerHeroMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.2rem;
+  font-size: 1.2rem;
+  color: @text-sub;
+}
+
+.partnerHeroGrowthBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  background: fade(@emerald-500, 12%);
+  border: 1px solid fade(@emerald-500, 24%);
+  color: @emerald-500;
+  font-size: 1.3rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+// ─── 时间维度 Tab ─────────────────────────────────────────────
+.periodTabRow {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 14px;
+  padding: 0.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+.periodTab {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem 1.2rem;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: @text-sub;
+  font-size: 1.4rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    background: fade(@primary, 8%);
+    color: darken(@primary, 8%);
+  }
+}
+
+.periodTabActive {
+  background: @primary;
+  color: #fff;
+  box-shadow: 0 3px 12px fade(@primary, 35%);
+
+  &:hover { background: darken(@primary, 6%); color: #fff; }
+}
+
+// ─── 详情汇总统计 ─────────────────────────────────────────────
+.detailStatsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem;
+}
+
+.detailStatCard {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 16px;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.05);
+  padding: 1.4rem 1.4rem 1.4rem 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  overflow: hidden;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px;
+    height: 100%;
+    background: @primary;
+    border-radius: 16px 0 0 16px;
+  }
+}
+
+.detailStatCard:last-child::before { background: @emerald-500; }
+
+.detailStatIcon {
+  width: 3.8rem;
+  height: 3.8rem;
+  border-radius: 11px;
+  background: linear-gradient(135deg, fade(@primary, 14%), fade(@primary, 6%));
+  border: 1px solid fade(@primary, 20%);
+  .flex-center();
+  color: @primary;
+  flex-shrink: 0;
+}
+
+.detailStatIconGreen {
+  background: linear-gradient(135deg, fade(@emerald-500, 14%), fade(@emerald-500, 6%));
+  border-color: fade(@emerald-500, 20%);
+  color: @emerald-500;
+}
+
+.detailStatBody {
+  .flex-col();
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.detailStatNum {
+  font-size: 2rem;
+  font-weight: 900;
+  color: @text-main;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  white-space: nowrap;
+
+  @media (min-width: @bp-mobile) { font-size: 2.4rem; }
+}
+
+.detailStatLbl {
+  font-size: 1.1rem;
+  color: @text-sub;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// ─── 图表卡片 ─────────────────────────────────────────────────
+.chartCard {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  overflow: hidden;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, @primary, #10b981);
+    border-radius: 20px 20px 0 0;
+  }
+}
+
+.chartCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.6rem 1.8rem 0.8rem;
+  border-bottom: 1px solid fade(@border-color, 50%);
+}
+
+.chartCardTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.chartCardIcon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 9px;
+  background: linear-gradient(135deg, fade(@primary, 14%), fade(@primary, 6%));
+  border: 1px solid fade(@primary, 20%);
+  .flex-center();
+  color: @primary;
+  flex-shrink: 0;
+}
+
+.chartCardTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: @text-main;
+}
+
+// ─── 明细列表卡片 ─────────────────────────────────────────────
+.detailListCard {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 20px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.detailListHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.4rem 1.8rem;
+  border-bottom: 1px solid fade(@border-color, 50%);
+}
+
+.detailListTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: @text-main;
+}
+
+.detailListCount {
+  padding: 0.2rem 0.8rem;
+  border-radius: 9999px;
+  background: fade(@primary, 10%);
+  border: 1px solid fade(@primary, 20%);
+  color: darken(@primary, 8%);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+// 表头
+.detailListTableHead {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  padding: 0.8rem 1.8rem;
+  background: @bg-slate-50;
+  border-bottom: 1px solid fade(@border-color, 40%);
+}
+
+.detailThPeriod,
+.detailThOrders,
+.detailThRevenue {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: @text-sub;
+  letter-spacing: 0.03em;
+}
+
+.detailThOrders  { text-align: center; }
+.detailThRevenue { text-align: right; }
+
+// 列表
+.detailList {
+  .flex-col();
+}
+
+.detailListItem {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: center;
+  padding: 1.1rem 1.8rem;
+  border-bottom: 1px solid fade(@border-color, 40%);
+  transition: background-color 0.12s;
+
+  &:last-child { border-bottom: none; }
+  &:hover { background: fade(@bg-slate-50, 70%); }
+}
+
+.detailItemPeriod {
+  font-size: 1.3rem;
+  color: @text-sub;
+  font-weight: 500;
+}
+
+.detailItemOrders {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: @text-main;
+  text-align: center;
+}
+
+.detailItemRevenue {
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-align: right;
+}
