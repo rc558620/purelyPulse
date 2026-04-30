@@ -1,0 +1,276 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/mixins.less';
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 0.4rem 0;
+}
+
+// ─── 用户信息卡 ─────────────────────────────────────────────────────
+.userCard {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1.4rem 1.6rem;
+  background: @bg-light;
+  border-radius: 1.2rem;
+  border: 1px solid @border-color;
+}
+
+.userAvatar {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #84cc16, #4ade80);
+  color: #fff;
+  font-size: 1.6rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.userInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.userName {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: @text-main;
+}
+
+.userPhone {
+  font-size: 1.2rem;
+  color: @text-sub;
+}
+
+.balanceBox {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+}
+
+.balanceVal {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: @primary;
+}
+
+.balanceLbl {
+  font-size: 1.1rem;
+  color: @text-sub;
+}
+
+// ─── 表单字段 ────────────────────────────────────────────────────────
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.fieldLabel {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: @text-main;
+}
+
+// ─── 方向选择 ────────────────────────────────────────────────────────
+.dirRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.dirBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1.1rem;
+  border-radius: 1rem;
+  border: 1.5px solid @border-color;
+  background: transparent;
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: @text-sub;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    border-color: @primary;
+    color: @text-main;
+  }
+
+  &Active {
+    border-color: var(--dir-color, @primary);
+    background: var(--dir-color-bg, rgba(132, 204, 22, 0.08));
+    color: @text-main;
+    font-weight: 600;
+  }
+}
+
+.dirSign {
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1;
+  color: @text-sub;
+  transition: color 0.15s;
+}
+
+// ─── 数量输入 ────────────────────────────────────────────────────────
+.amountRow {
+  position: relative;
+}
+
+.amountInput {
+  width: 100%;
+  height: 4.8rem;
+  padding: 0 1.6rem;
+  border-radius: 1rem;
+  border: 1.5px solid @border-color;
+  background: @bg-light;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: @text-main;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+
+  &::placeholder {
+    font-size: 1.4rem;
+    font-weight: 400;
+    color: @text-slate-400;
+  }
+
+  &:focus {
+    border-color: @primary;
+  }
+}
+
+.presetRow {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.presetBtn {
+  padding: 0.5rem 1.4rem;
+  border-radius: 2rem;
+  border: 1.5px solid @border-color;
+  background: transparent;
+  font-size: 1.2rem;
+  color: @text-sub;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: @primary;
+    color: @text-main;
+  }
+
+  &Active {
+    border-color: @primary;
+    background: rgba(132, 204, 22, 0.1);
+    color: @primary;
+    font-weight: 600;
+  }
+}
+
+// ─── 原因输入 ────────────────────────────────────────────────────────
+.reasonInput {
+  width: 100%;
+  padding: 1.2rem 1.4rem;
+  border-radius: 1rem;
+  border: 1.5px solid @border-color;
+  background: @bg-light;
+  font-size: 1.3rem;
+  color: @text-main;
+  outline: none;
+  resize: none;
+  box-sizing: border-box;
+  font-family: inherit;
+  line-height: 1.5;
+  transition: border-color 0.15s;
+
+  &::placeholder {
+    color: @text-slate-400;
+  }
+
+  &:focus {
+    border-color: @primary;
+  }
+}
+
+.reasonPresets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.reasonPresetBtn {
+  padding: 0.4rem 1rem;
+  border-radius: 2rem;
+  border: 1.5px solid @border-color;
+  background: transparent;
+  font-size: 1.1rem;
+  color: @text-sub;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: @primary;
+    color: @text-main;
+  }
+
+  &Active {
+    border-color: @primary;
+    background: rgba(132, 204, 22, 0.1);
+    color: @primary;
+  }
+}
+
+// ─── 预览卡 ──────────────────────────────────────────────────────────
+.previewCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.2rem 1.6rem;
+  background: rgba(132, 204, 22, 0.06);
+  border-radius: 1rem;
+  border: 1px solid rgba(132, 204, 22, 0.2);
+}
+
+.previewLabel {
+  font-size: 1.2rem;
+  color: @text-sub;
+}
+
+.previewRow {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.previewOld {
+  font-size: 1.4rem;
+  color: @text-sub;
+  text-decoration: line-through;
+}
+
+.previewNew {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.previewUnit {
+  font-size: 1.2rem;
+  color: @text-sub;
+}

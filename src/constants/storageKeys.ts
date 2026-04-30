@@ -33,4 +33,6 @@ export const STORAGE_KEYS = {
   POSITIONS: 'purely_profit_positions',
   /** 部门列表，存于 localStorage。 */
   DEPARTMENTS: 'purely_profit_departments',
+  /** 销售订单列表，存于 localStorage。 */
+  SALES_ORDERS: 'purely_profit_sales_orders',
 } as const;

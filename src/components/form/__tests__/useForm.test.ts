@@ -176,6 +176,17 @@ describe('useForm – 校验规则', () => {
             });
         });
 
+        it('值为空数组时报必填错误', async () => {
+            const form = setup();
+            act(() => {
+                form.registerField('region', [{ required: true, message: '请选择地区' }]);
+                form.setFieldValue('region', []);
+            });
+            await act(async () => {
+                await expect(form.validateFields()).rejects.toMatchObject({ region: '请选择地区' });
+            });
+        });
+
         it('值为 null 时报必填错误', async () => {
             const form = setup();
             act(() => {

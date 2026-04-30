@@ -327,63 +327,6 @@
 .bentoCardEmerald::before { background: linear-gradient(90deg, #10b981, #34d399); }
 .bentoCardBlue::before { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
 
-// 格 A 顶部行：左侧徽章 + 右侧审核入口
-.bentoBadgeRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
-  width: 100%;
-}
-
-// 合伙人申请审核跳转按钮
-.bentoReviewBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.3rem 0.7rem;
-  border-radius: 9999px;
-  border: 1px solid rgba(168, 85, 247, 0.28);
-  background: rgba(168, 85, 247, 0.08);
-  color: #a855f7;
-  font-size: 1rem;
-  font-weight: 700;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  white-space: nowrap;
-  transition: background 0.15s, border-color 0.15s, transform 0.15s;
-
-  &:hover {
-    background: rgba(168, 85, 247, 0.14);
-    border-color: rgba(168, 85, 247, 0.5);
-  }
-
-  &:active {
-    transform: scale(0.95);
-  }
-
-  @media (min-width: @bp-mobile) {
-    font-size: 1.1rem;
-  }
-}
-
-// 待审核数量小红点
-.bentoReviewBadge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.6rem;
-  height: 1.6rem;
-  padding: 0 0.4rem;
-  border-radius: 9999px;
-  background: linear-gradient(135deg, #ef4444, #f87171);
-  color: #fff;
-  font-size: 0.9rem;
-  font-weight: 800;
-  box-shadow: 0 1px 6px rgba(239, 68, 68, 0.4);
-  flex-shrink: 0;
-}
-
 // 格内徽章
 .bentoBadge {
   display: inline-flex;
@@ -466,6 +409,414 @@
   width: 100%;
   height: 100%;
   transform: rotate(-90deg);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 管理快捷入口卡片：QuickNav
+// ═══════════════════════════════════════════════════════════════
+
+.quickNavCard {
+  .cardBase();
+  padding: 1.8rem 1.6rem;
+  .flex-col();
+  gap: 1.4rem;
+
+  // 顶部渐变线条
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2.5px;
+    background: linear-gradient(90deg, @primary 0%, #10b981 35%, #a855f7 65%, #3b82f6 100%);
+    border-radius: 20px 20px 0 0;
+  }
+
+  position: relative;
+  overflow: hidden;
+
+  @media (min-width: @bp-mobile) {
+    grid-column: 1 / -1;
+    padding: 2.4rem 2.4rem;
+    gap: 1.8rem;
+    border-radius: 20px;
+  }
+}
+
+// 卡片标题行
+.quickNavHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.quickNavHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.quickNavHeaderIcon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 10px;
+  background: linear-gradient(135deg, fade(@primary, 14%), fade(@primary, 7%));
+  border: 1px solid fade(@primary, 22%);
+  .flex-center();
+  color: darken(@primary, 8%);
+  flex-shrink: 0;
+
+  @media (min-width: @bp-mobile) {
+    width: 3.4rem;
+    height: 3.4rem;
+  }
+}
+
+.quickNavHeaderTitle {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: @text-main;
+  letter-spacing: -0.01em;
+
+  @media (min-width: @bp-mobile) {
+    font-size: 1.7rem;
+  }
+}
+
+.quickNavHeaderSub {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: @text-slate-400;
+}
+
+// 2×2 入口网格
+.quickNavGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+
+  @media (min-width: @bp-mobile) {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1.4rem;
+  }
+}
+
+// 每个入口条目（button）
+.quickNavItem {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.4rem 1.2rem;
+  border-radius: 16px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+  position: relative;
+  overflow: hidden;
+
+  // 右侧微光遮罩（hover 时加深）
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+    pointer-events: none;
+  }
+
+  &:hover {
+    transform: translateY(-2px) scale(1.015);
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.08),
+      0 2px 8px rgba(0, 0, 0, 0.04);
+
+    &::after {
+      opacity: 1;
+    }
+  }
+
+  &:active {
+    transform: scale(0.97);
+    transition-duration: 0.08s;
+  }
+
+  @media (min-width: @bp-mobile) {
+    padding: 1.2rem 1rem;
+    gap: 0.8rem;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  @media (min-width: @bp-tablet) {
+    padding: 1.6rem 1.4rem;
+    gap: 1.2rem;
+  }
+}
+
+// 绿色变体（打款）
+.quickNavItemGreen {
+  background: linear-gradient(135deg, rgba(132, 204, 22, 0.1) 0%, rgba(132, 204, 22, 0.05) 100%);
+  border: 1px solid rgba(132, 204, 22, 0.25);
+
+  &::after {
+    background: linear-gradient(135deg, rgba(132, 204, 22, 0.06) 0%, rgba(132, 204, 22, 0.01) 100%);
+  }
+
+  &:hover {
+    border-color: rgba(132, 204, 22, 0.45);
+    box-shadow:
+      0 8px 24px rgba(132, 204, 22, 0.15),
+      0 2px 8px rgba(132, 204, 22, 0.08);
+  }
+}
+
+// 紫色变体（申请审核）
+.quickNavItemPurple {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%);
+  border: 1px solid rgba(168, 85, 247, 0.22);
+
+  &::after {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.06) 0%, rgba(168, 85, 247, 0.01) 100%);
+  }
+
+  &:hover {
+    border-color: rgba(168, 85, 247, 0.42);
+    box-shadow:
+      0 8px 24px rgba(168, 85, 247, 0.14),
+      0 2px 8px rgba(168, 85, 247, 0.08);
+  }
+}
+
+// 琥珀变体（纯利豆）
+.quickNavItemAmber {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.22);
+
+  &::after {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.06) 0%, rgba(245, 158, 11, 0.01) 100%);
+  }
+
+  &:hover {
+    border-color: rgba(245, 158, 11, 0.42);
+    box-shadow:
+      0 8px 24px rgba(245, 158, 11, 0.14),
+      0 2px 8px rgba(245, 158, 11, 0.08);
+  }
+}
+
+// 蓝色变体（积分）
+.quickNavItemBlue {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.22);
+
+  &::after {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(59, 130, 246, 0.01) 100%);
+  }
+
+  &:hover {
+    border-color: rgba(59, 130, 246, 0.42);
+    box-shadow:
+      0 8px 24px rgba(59, 130, 246, 0.14),
+      0 2px 8px rgba(59, 130, 246, 0.08);
+  }
+}
+
+// 图标圆形容器
+.quickNavIconWrap {
+  width: 4.2rem;
+  height: 4.2rem;
+  border-radius: 14px;
+  .flex-center();
+  flex-shrink: 0;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  .quickNavItem:hover & {
+    transform: scale(1.08) rotate(-3deg);
+  }
+
+  @media (min-width: @bp-mobile) {
+    width: 3.8rem;
+    height: 3.8rem;
+    border-radius: 12px;
+  }
+
+  @media (min-width: @bp-tablet) {
+    width: 4.6rem;
+    height: 4.6rem;
+    border-radius: 16px;
+  }
+}
+
+.quickNavIconGreen {
+  background: linear-gradient(135deg, rgba(132, 204, 22, 0.18), rgba(132, 204, 22, 0.1));
+  border: 1px solid rgba(132, 204, 22, 0.3);
+  color: #65a30d;
+}
+
+.quickNavIconPurple {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.18), rgba(168, 85, 247, 0.1));
+  border: 1px solid rgba(168, 85, 247, 0.28);
+  color: #a855f7;
+}
+
+.quickNavIconAmber {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.18), rgba(245, 158, 11, 0.1));
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  color: #d97706;
+}
+
+.quickNavIconBlue {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(59, 130, 246, 0.1));
+  border: 1px solid rgba(59, 130, 246, 0.28);
+  color: #3b82f6;
+}
+
+// 红色变体（封禁管理）
+.quickNavItemRed {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.22);
+
+  &::after {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.06) 0%, rgba(239, 68, 68, 0.01) 100%);
+  }
+
+  &:hover {
+    border-color: rgba(239, 68, 68, 0.42);
+    box-shadow:
+      0 8px 24px rgba(239, 68, 68, 0.14),
+      0 2px 8px rgba(239, 68, 68, 0.08);
+  }
+}
+
+.quickNavIconRed {
+background: linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(239, 68, 68, 0.1));
+border: 1px solid rgba(239, 68, 68, 0.28);
+color: #ef4444;
+}
+
+// 青绿色变体（会员列表）
+.quickNavItemTeal {
+background: linear-gradient(135deg, rgba(20, 184, 166, 0.1) 0%, rgba(20, 184, 166, 0.05) 100%);
+border: 1px solid rgba(20, 184, 166, 0.22);
+
+&::after {
+background: linear-gradient(135deg, rgba(20, 184, 166, 0.06) 0%, rgba(20, 184, 166, 0.01) 100%);
+}
+
+&:hover {
+border-color: rgba(20, 184, 166, 0.42);
+box-shadow:
+0 8px 24px rgba(20, 184, 166, 0.14),
+0 2px 8px rgba(20, 184, 166, 0.08);
+}
+}
+
+.quickNavIconTeal {
+background: linear-gradient(135deg, rgba(20, 184, 166, 0.18), rgba(20, 184, 166, 0.1));
+border: 1px solid rgba(20, 184, 166, 0.28);
+color: #0d9488;
+}
+
+// 文字内容区（标题 + 描述）
+.quickNavItemContent {
+  flex: 1;
+  min-width: 0;
+  .flex-col();
+  gap: 0.3rem;
+
+  @media (min-width: @bp-mobile) {
+    gap: 0.4rem;
+  }
+}
+
+.quickNavItemTitle {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: @text-main;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+
+  @media (min-width: @bp-mobile) {
+    font-size: 1.3rem;
+  }
+
+  @media (min-width: @bp-tablet) {
+    font-size: 1.5rem;
+  }
+}
+
+.quickNavItemDesc {
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: @text-slate-400;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  @media (min-width: @bp-mobile) {
+    font-size: 1.05rem;
+    white-space: nowrap;
+  }
+
+  @media (min-width: @bp-tablet) {
+    font-size: 1.15rem;
+    white-space: normal;
+  }
+}
+
+// 右侧箭头
+.quickNavArrow {
+  color: @text-slate-400;
+  flex-shrink: 0;
+  transition: transform 0.18s ease, color 0.18s ease;
+  display: flex;
+  align-items: center;
+
+  .quickNavItem:hover & {
+    transform: translateX(3px);
+    color: @text-sub;
+  }
+
+  @media (min-width: @bp-mobile) {
+    // PC 端 column 布局时隐藏箭头，入口更像卡片
+    display: none;
+  }
+}
+
+// 待处理数量徽标
+.quickNavBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.8rem;
+  height: 1.8rem;
+  padding: 0 0.5rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #ef4444, #f87171);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 800;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+  flex-shrink: 0;
+  animation: quickNavBadgePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+
+  @media (min-width: @bp-mobile) {
+    position: absolute;
+    top: 1.2rem;
+    right: 1.2rem;
+  }
+}
+
+@keyframes quickNavBadgePop {
+  0%   { transform: scale(0.5); opacity: 0; }
+  60%  { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 // ═══════════════════════════════════════════════════════════════

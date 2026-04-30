@@ -15,7 +15,7 @@
  * />
  * ```
  */
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { cx } from '@utils/utils';
 import styles from './CustomModeBtnRow.module.less';
 

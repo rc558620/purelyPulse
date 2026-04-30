@@ -1,5 +1,5 @@
 // 图片裁剪弹窗：基于 react-easy-crop，支持自由比例/固定比例/圆形裁剪
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Cropper from 'react-easy-crop';
 import type { Area, Point } from 'react-easy-crop';
@@ -65,6 +65,17 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
     setZoom(INITIAL_ZOOM);
     setCroppedAreaPixels(null);
   }, []);
+
+  // 记录上一次 visible，用于检测 false → true 的变化
+  const prevVisibleRef = useRef(visible);
+  useEffect(() => {
+    const prev = prevVisibleRef.current;
+    prevVisibleRef.current = visible;
+    // 弹窗重新打开（false → true）时重置裁剪状态
+    if (!prev && visible) {
+      resetState();
+    }
+  }, [visible, resetState]);
 
   const onCropComplete = useCallback((_croppedArea: Area, croppedPixels: Area) => {
     setCroppedAreaPixels(croppedPixels);

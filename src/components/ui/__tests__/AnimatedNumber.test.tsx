@@ -29,7 +29,7 @@
 import React, { act } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import AnimatedNumber from '../AnimatedNumber/AnimatedNumber';
+import AnimatedNumber from '../data-display/AnimatedNumber/AnimatedNumber';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 辅助函数

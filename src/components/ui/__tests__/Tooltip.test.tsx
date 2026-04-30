@@ -38,7 +38,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
-import Tooltip from '../Tooltip/Tooltip';
+import Tooltip from '../feedback/Tooltip/Tooltip';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 辅助函数
@@ -91,7 +91,6 @@ describe('Tooltip – title 为空时', () => {
 
     it('title 为 null 时直接返回 children', () => {
         const { container } = render(
-            // @ts-expect-error 故意传 null 测试边界
             <Tooltip title={null}>
                 <span data-testid="child-null">内容</span>
             </Tooltip>,

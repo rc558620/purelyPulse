@@ -34,7 +34,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import PageHeader from '../PageHeader/index';
+import PageHeader from '../layout/PageHeader/index';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // mock react-router-dom useNavigate
@@ -132,11 +132,14 @@ describe('PageHeader – rightExtra', () => {
     });
 
     it('不传 rightExtra 时右侧区域为空（div 存在但无子节点）', () => {
-        const { container } = renderHeader({ title: '测试' });
+        renderHeader({ title: '测试' });
         const header = screen.getByRole('banner');
-        const rightDiv = Array.from(header.children).find((el) =>
-            el.tagName === 'DIV',
-        ) as HTMLElement;
+        // The right div is the LAST div child (after left div and h1 title)
+        const divChildren = Array.from(header.children).filter((el) => el.tagName === 'DIV');
+        // There should be 2 divs: left and right
+        expect(divChildren).toHaveLength(2);
+        // The right (last) div should have no children when no rightExtra is passed
+        const rightDiv = divChildren[divChildren.length - 1] as HTMLElement;
         expect(rightDiv).toBeTruthy();
         expect(rightDiv.children).toHaveLength(0);
     });

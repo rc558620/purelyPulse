@@ -195,3 +195,76 @@ describe('IconAvatarEdit – SVG 内容（相机图标结构）', () => {
         expect(val).toBe('round');
     });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 通用 SVGProps 透传：data-* 与 style
+// ─────────────────────────────────────────────────────────────────────────────
+describe('IconAvatarPlaceholder – data-* 与 style 透传', () => {
+    it('data-testid 透传到 svg', () => {
+        const { container } = render(<IconAvatarPlaceholder data-testid="placeholder-icon" />);
+        expect(container.querySelector('svg')).toHaveAttribute('data-testid', 'placeholder-icon');
+    });
+
+    it('自定义 data-* 属性透传到 svg', () => {
+        const { container } = render(<IconAvatarPlaceholder data-type="cat" />);
+        expect(container.querySelector('svg')).toHaveAttribute('data-type', 'cat');
+    });
+
+    it('style 属性透传到 svg', () => {
+        const { container } = render(
+            <IconAvatarPlaceholder style={{ color: 'red', opacity: 0.5 }} />,
+        );
+        const svg = container.querySelector('svg') as HTMLElement;
+        expect(svg.style.color).toBe('red');
+        expect(svg.style.opacity).toBe('0.5');
+    });
+
+    it('同时透传 className、style、data-* 不冲突', () => {
+        const { container } = render(
+            <IconAvatarPlaceholder
+                className="combo-test"
+                style={{ fontSize: '12px' }}
+                data-role="avatar-icon"
+            />,
+        );
+        const svg = container.querySelector('svg') as HTMLElement;
+        expect(svg).toHaveClass('combo-test');
+        expect(svg.style.fontSize).toBe('12px');
+        expect(svg).toHaveAttribute('data-role', 'avatar-icon');
+    });
+});
+
+describe('IconAvatarEdit – data-* 与 style 透传', () => {
+    it('data-testid 透传到 svg', () => {
+        const { container } = render(<IconAvatarEdit data-testid="edit-icon" />);
+        expect(container.querySelector('svg')).toHaveAttribute('data-testid', 'edit-icon');
+    });
+
+    it('自定义 data-* 属性透传到 svg', () => {
+        const { container } = render(<IconAvatarEdit data-action="edit" />);
+        expect(container.querySelector('svg')).toHaveAttribute('data-action', 'edit');
+    });
+
+    it('style 属性透传到 svg', () => {
+        const { container } = render(
+            <IconAvatarEdit style={{ color: 'white', opacity: 0.8 }} />,
+        );
+        const svg = container.querySelector('svg') as HTMLElement;
+        expect(svg.style.color).toBe('white');
+        expect(svg.style.opacity).toBe('0.8');
+    });
+
+    it('同时透传 className、style、data-* 不冲突', () => {
+        const { container } = render(
+            <IconAvatarEdit
+                className="edit-combo"
+                style={{ cursor: 'pointer' }}
+                data-icon="camera"
+            />,
+        );
+        const svg = container.querySelector('svg') as HTMLElement;
+        expect(svg).toHaveClass('edit-combo');
+        expect(svg.style.cursor).toBe('pointer');
+        expect(svg).toHaveAttribute('data-icon', 'camera');
+    });
+});

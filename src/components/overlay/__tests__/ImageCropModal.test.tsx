@@ -87,12 +87,12 @@ vi.mock('../ImageCropModal/cropImageUtils', () => ({
 // ─────────────────────────────────────────────────────────────────────────────
 describe('ZoomControls – 基本渲染', () => {
   it('渲染 range input（缩放滑块）', () => {
-    render(<ZoomControls zoom={1} onZoomChange={vi.fn()} onCenter={vi.fn()} />);
+    render(<ZoomControls zoom={1} onZoomChange={vi.fn()} onCenter={vi.fn()} onResetZoom={vi.fn()} />);
     expect(screen.getByRole('slider')).toBeInTheDocument();
   });
 
   it('range input 具有正确的 min/max/step 属性', () => {
-    render(<ZoomControls zoom={1} onZoomChange={vi.fn()} onCenter={vi.fn()} />);
+    render(<ZoomControls zoom={1} onZoomChange={vi.fn()} onCenter={vi.fn()} onResetZoom={vi.fn()} />);
     const slider = screen.getByRole('slider');
     expect(slider).toHaveAttribute('min', '0.1');
     expect(slider).toHaveAttribute('max', '3');
@@ -100,22 +100,22 @@ describe('ZoomControls – 基本渲染', () => {
   });
 
   it('range input 的 aria-label 为「调整缩放比例」', () => {
-    render(<ZoomControls zoom={1} onZoomChange={vi.fn()} onCenter={vi.fn()} />);
+    render(<ZoomControls zoom={1} onZoomChange={vi.fn()} onCenter={vi.fn()} onResetZoom={vi.fn()} />);
     expect(screen.getByRole('slider')).toHaveAttribute('aria-label', '调整缩放比例');
   });
 
   it('传入 zoom=1.5 时 input value 为 1.5', () => {
-    render(<ZoomControls zoom={1.5} onZoomChange={vi.fn()} onCenter={vi.fn()} />);
+    render(<ZoomControls zoom={1.5} onZoomChange={vi.fn()} onCenter={vi.fn()} onResetZoom={vi.fn()} />);
     expect(screen.getByRole('slider')).toHaveValue('1.5');
   });
 
   it('传入 zoom=0.1（最小值）时 input value 为 0.1', () => {
-    render(<ZoomControls zoom={0.1} onZoomChange={vi.fn()} onCenter={vi.fn()} />);
+    render(<ZoomControls zoom={0.1} onZoomChange={vi.fn()} onCenter={vi.fn()} onResetZoom={vi.fn()} />);
     expect(screen.getByRole('slider')).toHaveValue('0.1');
   });
 
   it('传入 zoom=3（最大值）时 input value 为 3', () => {
-    render(<ZoomControls zoom={3} onZoomChange={vi.fn()} onCenter={vi.fn()} />);
+    render(<ZoomControls zoom={3} onZoomChange={vi.fn()} onCenter={vi.fn()} onResetZoom={vi.fn()} />);
     expect(screen.getByRole('slider')).toHaveValue('3');
   });
 });
@@ -123,7 +123,7 @@ describe('ZoomControls – 基本渲染', () => {
 describe('ZoomControls – 交互', () => {
   it('拖动滑块触发 onZoomChange（传入数值）', () => {
     const onZoomChange = vi.fn();
-    render(<ZoomControls zoom={1} onZoomChange={onZoomChange} onCenter={vi.fn()} />);
+    render(<ZoomControls zoom={1} onZoomChange={onZoomChange} onCenter={vi.fn()} onResetZoom={vi.fn()} />);
     const slider = screen.getByRole('slider');
     fireEvent.change(slider, { target: { value: '2' } });
     expect(onZoomChange).toHaveBeenCalledWith(2);
@@ -131,34 +131,34 @@ describe('ZoomControls – 交互', () => {
 
   it('onZoomChange 接收的是 Number 类型', () => {
     const onZoomChange = vi.fn();
-    render(<ZoomControls zoom={1} onZoomChange={onZoomChange} onCenter={vi.fn()} />);
+    render(<ZoomControls zoom={1} onZoomChange={onZoomChange} onCenter={vi.fn()} onResetZoom={vi.fn()} />);
     fireEvent.change(screen.getByRole('slider'), { target: { value: '1.5' } });
     expect(typeof onZoomChange.mock.calls[0][0]).toBe('number');
     expect(onZoomChange.mock.calls[0][0]).toBeCloseTo(1.5);
   });
 
   it('居中按钮存在且 aria-label 为「重置图片位置」', () => {
-    render(<ZoomControls zoom={1} onZoomChange={vi.fn()} onCenter={vi.fn()} />);
+    render(<ZoomControls zoom={1} onZoomChange={vi.fn()} onCenter={vi.fn()} onResetZoom={vi.fn()} />);
     expect(screen.getByRole('button', { name: '重置图片位置' })).toBeInTheDocument();
   });
 
   it('点击居中按钮触发 onCenter', async () => {
     const user = userEvent.setup();
     const onCenter = vi.fn();
-    render(<ZoomControls zoom={1} onZoomChange={vi.fn()} onCenter={onCenter} />);
+    render(<ZoomControls zoom={1} onZoomChange={vi.fn()} onCenter={onCenter} onResetZoom={vi.fn()} />);
     await user.click(screen.getByRole('button', { name: '重置图片位置' }));
     expect(onCenter).toHaveBeenCalledTimes(1);
   });
 
   it('居中按钮具有 type="button"', () => {
-    render(<ZoomControls zoom={1} onZoomChange={vi.fn()} onCenter={vi.fn()} />);
+    render(<ZoomControls zoom={1} onZoomChange={vi.fn()} onCenter={vi.fn()} onResetZoom={vi.fn()} />);
     expect(screen.getByRole('button', { name: '重置图片位置' })).toHaveAttribute('type', 'button');
   });
 });
 
 describe('ZoomControls – CSS 变量', () => {
   it('zoom=1 时 --slider-percent 约为 31.03%（(1-0.1)/(3-0.1)*100）', () => {
-    render(<ZoomControls zoom={1} onZoomChange={vi.fn()} onCenter={vi.fn()} />);
+    render(<ZoomControls zoom={1} onZoomChange={vi.fn()} onCenter={vi.fn()} onResetZoom={vi.fn()} />);
     const slider = screen.getByRole('slider');
     const pct = parseFloat((slider as HTMLElement).style.getPropertyValue('--slider-percent'));
     // (1-0.1)/(3-0.1)*100 ≈ 31.03
@@ -166,14 +166,14 @@ describe('ZoomControls – CSS 变量', () => {
   });
 
   it('zoom=0.1（最小）时 --slider-percent 为 0%', () => {
-    render(<ZoomControls zoom={0.1} onZoomChange={vi.fn()} onCenter={vi.fn()} />);
+    render(<ZoomControls zoom={0.1} onZoomChange={vi.fn()} onCenter={vi.fn()} onResetZoom={vi.fn()} />);
     const slider = screen.getByRole('slider');
     const pct = parseFloat((slider as HTMLElement).style.getPropertyValue('--slider-percent'));
     expect(pct).toBeCloseTo(0, 1);
   });
 
   it('zoom=3（最大）时 --slider-percent 为 100%', () => {
-    render(<ZoomControls zoom={3} onZoomChange={vi.fn()} onCenter={vi.fn()} />);
+    render(<ZoomControls zoom={3} onZoomChange={vi.fn()} onCenter={vi.fn()} onResetZoom={vi.fn()} />);
     const slider = screen.getByRole('slider');
     const pct = parseFloat((slider as HTMLElement).style.getPropertyValue('--slider-percent'));
     expect(pct).toBeCloseTo(100, 1);
@@ -348,7 +348,7 @@ describe('ImageCropModal – 按钮交互', () => {
 });
 
 describe('ImageCropModal – visible 切换与重置', () => {
-  it('visible true→false 后弹窗通过 style 隐藏（DOM 保留）', async () => {
+  it('visible true→false 后弹窗通过 CSS class 隐藏（DOM 保留）', async () => {
     const onCancel = vi.fn();
     const onConfirm = vi.fn();
     // 先打开
@@ -364,13 +364,14 @@ describe('ImageCropModal – visible 切换与重置', () => {
         onConfirm={onConfirm}
       />,
     );
-    // DOM 不销毁（hasBeenOpen=true），但 overlay 包含 visibility:hidden
+    // DOM 不销毁（hasBeenOpen=true），overlay 通过 CSS Modules hidden class 隐藏
     const overlay = document.body.querySelector('[class*="modalOverlay"]') as HTMLElement;
     expect(overlay).not.toBeNull();
-    expect(overlay.style.visibility).toBe('hidden');
+    // CSS Modules 类名含 hash，但 class 字符串中一定同时含有 modalOverlay 和 hidden
+    expect(overlay.className).toMatch(/hidden/);
   });
 
-  it('visible false→true 后弹窗重新可见（无 visibility:hidden）', () => {
+  it('visible false→true 后弹窗重新可见（无 hidden class）', () => {
     const onCancel = vi.fn();
     const onConfirm = vi.fn();
     // 先打开再关闭
@@ -394,7 +395,8 @@ describe('ImageCropModal – visible 切换与重置', () => {
     );
     const overlay = document.body.querySelector('[class*="modalOverlay"]') as HTMLElement;
     expect(overlay).not.toBeNull();
-    expect(overlay.style.visibility).not.toBe('hidden');
+    // 重新打开后不再有 hidden class
+    expect(overlay.className).not.toMatch(/hidden/);
   });
 
   it('visible 关闭再打开后 zoom slider 重置回 1', async () => {
@@ -531,5 +533,237 @@ describe('ImageCropModal – 卸载清理', () => {
     expect(document.body.querySelector('[class*="modalOverlay"]')).not.toBeNull();
     unmount();
     expect(screen.queryByText('裁剪图片')).toBeNull();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ZoomControls 严格边界补全
+// ─────────────────────────────────────────────────────────────────────────────
+describe('ZoomControls – 边界值', () => {
+  it('zoom=0.1（最小值）时 slider value 正确', () => {
+    render(<ZoomControls zoom={0.1} onZoomChange={vi.fn()} onCenter={vi.fn()} onResetZoom={vi.fn()} />);
+    expect(screen.getByRole('slider')).toHaveValue('0.1');
+  });
+
+  it('zoom=3（最大值）时 slider value 正确', () => {
+    render(<ZoomControls zoom={3} onZoomChange={vi.fn()} onCenter={vi.fn()} onResetZoom={vi.fn()} />);
+    expect(screen.getByRole('slider')).toHaveValue('3');
+  });
+
+  it('zoom=1.999 浮点值时 slider value 正确', () => {
+    render(<ZoomControls zoom={1.999} onZoomChange={vi.fn()} onCenter={vi.fn()} onResetZoom={vi.fn()} />);
+    expect(screen.getByRole('slider')).toHaveValue('1.999');
+  });
+
+  it('点击居中按钮不触发 onZoomChange', async () => {
+    const user = userEvent.setup();
+    const onZoomChange = vi.fn();
+    render(<ZoomControls zoom={1} onZoomChange={onZoomChange} onCenter={vi.fn()} onResetZoom={vi.fn()} />);
+    await user.click(screen.getByRole('button', { name: '重置图片位置' }));
+    expect(onZoomChange).not.toHaveBeenCalled();
+  });
+
+  it('点击居中按钮同时触发 onCenter 和 onResetZoom', async () => {
+    const user = userEvent.setup();
+    const onCenter = vi.fn();
+    const onResetZoom = vi.fn();
+    render(<ZoomControls zoom={1} onZoomChange={vi.fn()} onCenter={onCenter} onResetZoom={onResetZoom} />);
+    await user.click(screen.getByRole('button', { name: '重置图片位置' }));
+    expect(onCenter).toHaveBeenCalledTimes(1);
+    expect(onResetZoom).toHaveBeenCalledTimes(1);
+  });
+
+  it('滑块 onChange 不触发 onCenter 和 onResetZoom', () => {
+    const onCenter = vi.fn();
+    const onResetZoom = vi.fn();
+    render(<ZoomControls zoom={1} onZoomChange={vi.fn()} onCenter={onCenter} onResetZoom={onResetZoom} />);
+    fireEvent.change(screen.getByRole('slider'), { target: { value: '2' } });
+    expect(onCenter).not.toHaveBeenCalled();
+    expect(onResetZoom).not.toHaveBeenCalled();
+  });
+
+  it('rerender 更换 zoom 值时 slider value 正确更新', () => {
+    const { rerender } = render(
+      <ZoomControls zoom={1} onZoomChange={vi.fn()} onCenter={vi.fn()} onResetZoom={vi.fn()} />,
+    );
+    expect(screen.getByRole('slider')).toHaveValue('1');
+    rerender(
+      <ZoomControls zoom={2.5} onZoomChange={vi.fn()} onCenter={vi.fn()} onResetZoom={vi.fn()} />,
+    );
+    expect(screen.getByRole('slider')).toHaveValue('2.5');
+  });
+
+  it('onZoomChange 被调用的值类型为 number 而非 string', () => {
+    const onZoomChange = vi.fn();
+    render(<ZoomControls zoom={1} onZoomChange={onZoomChange} onCenter={vi.fn()} onResetZoom={vi.fn()} />);
+    fireEvent.change(screen.getByRole('slider'), { target: { value: '0.5' } });
+    expect(typeof onZoomChange.mock.calls[0][0]).toBe('number');
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CropModalFooter 补全边界
+// ─────────────────────────────────────────────────────────────────────────────
+describe('CropModalFooter – 按钮顺序与组合', () => {
+  it('三个按钮同时存在时顺序：取消 -> 使用原图 -> 确定裁剪', () => {
+    render(
+      <CropModalFooter onCancel={vi.fn()} onConfirm={vi.fn()} onUseOriginal={vi.fn()} />,
+    );
+    const buttons = screen.getAllByRole('button');
+    expect(buttons).toHaveLength(3);
+    expect(buttons[0]).toHaveTextContent('取消');
+    expect(buttons[1]).toHaveTextContent('使用原图');
+    expect(buttons[2]).toHaveTextContent('确定裁剪');
+  });
+
+  it('两个按钮（无 onUseOriginal）时顺序：取消 -> 确定裁剪', () => {
+    render(<CropModalFooter onCancel={vi.fn()} onConfirm={vi.fn()} />);
+    const buttons = screen.getAllByRole('button');
+    expect(buttons).toHaveLength(2);
+    expect(buttons[0]).toHaveTextContent('取消');
+    expect(buttons[1]).toHaveTextContent('确定裁剪');
+  });
+
+  it('点击「确定裁剪」不触发 onCancel 和 onUseOriginal', async () => {
+    const user = userEvent.setup();
+    const onCancel = vi.fn();
+    const onUseOriginal = vi.fn();
+    render(
+      <CropModalFooter onCancel={onCancel} onConfirm={vi.fn()} onUseOriginal={onUseOriginal} />,
+    );
+    await user.click(screen.getByRole('button', { name: '确定裁剪' }));
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(onUseOriginal).not.toHaveBeenCalled();
+  });
+
+  it('点击「使用原图」不触发 onCancel 和 onConfirm', async () => {
+    const user = userEvent.setup();
+    const onCancel = vi.fn();
+    const onConfirm = vi.fn();
+    render(
+      <CropModalFooter onCancel={onCancel} onConfirm={onConfirm} onUseOriginal={vi.fn()} />,
+    );
+    await user.click(screen.getByRole('button', { name: '使用原图' }));
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it('多次点击「确定裁剪」触发对应次数', async () => {
+    const user = userEvent.setup();
+    const onConfirm = vi.fn();
+    render(<CropModalFooter onCancel={vi.fn()} onConfirm={onConfirm} />);
+    await user.click(screen.getByRole('button', { name: '确定裁剪' }));
+    await user.click(screen.getByRole('button', { name: '确定裁剪' }));
+    expect(onConfirm).toHaveBeenCalledTimes(2);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ImageCropModal 补全：prop 透传、状态重置、连续切换
+// ─────────────────────────────────────────────────────────────────────────────
+describe('ImageCropModal – prop 透传', () => {
+  it('不传 aspect 时 Cropper 不接收 aspect prop', () => {
+    renderCropModal({ aspect: undefined });
+    // mock-cropper 正常渲染，不抛出
+    expect(screen.getByTestId('mock-cropper')).toBeInTheDocument();
+  });
+
+  it('传 aspect 时渲染正常', () => {
+    renderCropModal({ aspect: 1 });
+    expect(screen.getByTestId('mock-cropper')).toBeInTheDocument();
+  });
+
+  it('cropShape="round" 时正常渲染（不抛出）', () => {
+    expect(() => renderCropModal({ cropShape: 'round' })).not.toThrow();
+  });
+
+  it('cropShape="rect" 时正常渲染', () => {
+    expect(() => renderCropModal({ cropShape: 'rect' })).not.toThrow();
+  });
+});
+
+describe('ImageCropModal – 连续 visible 切换稳定性', () => {
+  it('连续多次 visible 切换不报错', () => {
+    const onCancel = vi.fn();
+    const onConfirm = vi.fn();
+    const { rerender } = renderCropModal({ visible: true });
+    expect(() => {
+      for (let i = 0; i < 5; i++) {
+        rerender(
+          <ImageCropModal
+            visible={i % 2 === 0}
+            imageSrc="data:image/png;base64,abc"
+            onCancel={onCancel}
+            onConfirm={onConfirm}
+          />,
+        );
+      }
+    }).not.toThrow();
+  });
+
+  it('imageSrc 改变后再次裁剪时 getCroppedImg 使用最新 src', async () => {
+    const user = userEvent.setup();
+    mockGetCroppedImg.mockResolvedValue('blob:new');
+    const onConfirm = vi.fn();
+    const newSrc = 'data:image/jpeg;base64,NEW';
+
+    const { rerender } = renderCropModal({ imageSrc: 'data:image/png;base64,OLD', onConfirm });
+
+    // 触发 croppedAreaPixels
+    fireEvent.click(screen.getByTestId('mock-cropper'));
+
+    // 更换 src
+    rerender(
+      <ImageCropModal
+        visible={true}
+        imageSrc={newSrc}
+        onCancel={vi.fn()}
+        onConfirm={onConfirm}
+      />,
+    );
+
+    // 重新触发 croppedAreaPixels（src 已更换）
+    fireEvent.click(screen.getByTestId('mock-cropper'));
+
+    await act(async () => {
+      await user.click(screen.getByRole('button', { name: '确定裁剪' }));
+    });
+
+    await vi.waitFor(() => {
+      expect(mockGetCroppedImg).toHaveBeenCalledWith(newSrc, expect.anything());
+    });
+  });
+
+  it('取消后重新打开时 croppedAreaPixels 已重置，确认不调用 getCroppedImg', async () => {
+    const user = userEvent.setup();
+    mockGetCroppedImg.mockResolvedValue('blob:test');
+    const onConfirm = vi.fn();
+    const onCancel = vi.fn();
+    const { rerender } = renderCropModal({ onConfirm, onCancel });
+
+    // 触发裁剪区域
+    fireEvent.click(screen.getByTestId('mock-cropper'));
+
+    // 点击取消（重置状态）
+    await user.click(screen.getByRole('button', { name: '取消' }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+
+    // 重新打开
+    rerender(
+      <ImageCropModal
+        visible={true}
+        imageSrc="data:image/png;base64,abc"
+        onCancel={onCancel}
+        onConfirm={onConfirm}
+      />,
+    );
+
+    // 不再触发 onCropComplete，直接点击确定
+    await act(async () => {
+      await user.click(screen.getByRole('button', { name: '确定裁剪' }));
+    });
+
+    // croppedAreaPixels 已重置，不应调用
+    expect(onConfirm).not.toHaveBeenCalled();
   });
 });

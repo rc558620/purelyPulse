@@ -386,3 +386,146 @@ describe('AvatarUploader – ImageCropModal props', () => {
         expect(modal).toHaveAttribute('data-image-src', 'data:image/jpeg;base64,props-test');
     });
 });
+
+// ─── 9. pendingCropSrc 正确传给 ImageCropModal ────────────────────────────────
+describe('AvatarUploader – pendingCropSrc 传递', () => {
+    beforeEach(() => {
+        mockShowToast.mockClear();
+        mockValidateImageFile.mockReturnValue({ ok: true });
+    });
+
+    it('打开 modal 后 imageSrc 与 readFileAsDataURL resolve 值一致', async () => {
+        const dataUrl = 'data:image/png;base64,unique-content-xyz';
+        mockReadFileAsDataURL.mockResolvedValue(dataUrl);
+        const { container } = renderUploader();
+        const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+
+        await act(async () => {
+            fireEvent.change(input, { target: { files: [new File(['d'], 'a.png', { type: 'image/png' })] } });
+            await Promise.resolve();
+        });
+
+        const modal = screen.getByTestId('mock-crop-modal');
+        expect(modal).toHaveAttribute('data-image-src', dataUrl);
+    });
+
+    it('取消后再次选文件，新 imageSrc 覆盖旧值', async () => {
+        const dataUrl1 = 'data:image/jpeg;base64,first-url';
+        const dataUrl2 = 'data:image/jpeg;base64,second-url';
+        const { container } = renderUploader();
+        const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+
+        mockReadFileAsDataURL.mockResolvedValue(dataUrl1);
+        await act(async () => {
+            fireEvent.change(input, { target: { files: [new File(['d'], 'a.jpg', { type: 'image/jpeg' })] } });
+            await Promise.resolve();
+        });
+        expect(screen.getByTestId('mock-crop-modal')).toHaveAttribute('data-image-src', dataUrl1);
+
+        // 取消
+        const user = userEvent.setup();
+        await user.click(screen.getByRole('button', { name: '取消' }));
+        expect(screen.queryByTestId('mock-crop-modal')).toBeNull();
+
+        // 第二次
+        mockReadFileAsDataURL.mockResolvedValue(dataUrl2);
+        await act(async () => {
+            fireEvent.change(input, { target: { files: [new File(['d'], 'b.jpg', { type: 'image/jpeg' })] } });
+            await Promise.resolve();
+        });
+        expect(screen.getByTestId('mock-crop-modal')).toHaveAttribute('data-image-src', dataUrl2);
+    });
+});
+
+// ─── 10. 流程可重复（确认后能再次上传） ──────────────────────────────────────
+describe('AvatarUploader – 流程可重复', () => {
+    beforeEach(() => {
+        mockShowToast.mockClear();
+        mockValidateImageFile.mockReturnValue({ ok: true });
+        mockReadFileAsDataURL.mockResolvedValue('data:image/jpeg;base64,repeat');
+    });
+
+    it('第一次确认裁剪后，再次选文件仍能打开 modal', async () => {
+        const user = userEvent.setup();
+        const onAvatarChange = vi.fn();
+        const { container } = renderUploader({ onAvatarChange });
+        const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+
+        // 第一次流程
+        await act(async () => {
+            fireEvent.change(input, { target: { files: [new File(['d'], 'a.jpg', { type: 'image/jpeg' })] } });
+            await Promise.resolve();
+        });
+        await user.click(screen.getByRole('button', { name: '确定裁剪' }));
+        expect(onAvatarChange).toHaveBeenCalledTimes(1);
+        expect(screen.queryByTestId('mock-crop-modal')).toBeNull();
+
+        // 第二次选文件
+        await act(async () => {
+            fireEvent.change(input, { target: { files: [new File(['d'], 'b.jpg', { type: 'image/jpeg' })] } });
+            await Promise.resolve();
+        });
+        expect(screen.getByTestId('mock-crop-modal')).toBeInTheDocument();
+    });
+
+    it('多次完整流程，onAvatarChange 每次都被调用', async () => {
+        const user = userEvent.setup();
+        const onAvatarChange = vi.fn();
+        const { container } = renderUploader({ onAvatarChange });
+        const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+
+        for (let i = 0; i < 3; i++) {
+            await act(async () => {
+                fireEvent.change(input, { target: { files: [new File(['d'], 'a.jpg', { type: 'image/jpeg' })] } });
+                await Promise.resolve();
+            });
+            await user.click(screen.getByRole('button', { name: '确定裁剪' }));
+        }
+
+        expect(onAvatarChange).toHaveBeenCalledTimes(3);
+    });
+});
+
+// ─── 11. modal 反复开关状态一致性 ─────────────────────────────────────────────
+describe('AvatarUploader – modal 反复开关', () => {
+    beforeEach(() => {
+        mockShowToast.mockClear();
+        mockValidateImageFile.mockReturnValue({ ok: true });
+        mockReadFileAsDataURL.mockResolvedValue('data:image/jpeg;base64,toggle');
+    });
+
+    it('打开 → 取消 → 打开 → 取消，modal 始终正确出现/消失', async () => {
+        const user = userEvent.setup();
+        const { container } = renderUploader();
+        const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+
+        for (let i = 0; i < 2; i++) {
+            await act(async () => {
+                fireEvent.change(input, { target: { files: [new File(['d'], 'a.jpg', { type: 'image/jpeg' })] } });
+                await Promise.resolve();
+            });
+            expect(screen.getByTestId('mock-crop-modal')).toBeInTheDocument();
+            await user.click(screen.getByRole('button', { name: '取消' }));
+            expect(screen.queryByTestId('mock-crop-modal')).toBeNull();
+        }
+    });
+
+    it('打开 → 确认 → 打开 → 确认，modal 始终正确出现/消失', async () => {
+        const user = userEvent.setup();
+        const onAvatarChange = vi.fn();
+        const { container } = renderUploader({ onAvatarChange });
+        const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+
+        for (let i = 0; i < 2; i++) {
+            await act(async () => {
+                fireEvent.change(input, { target: { files: [new File(['d'], 'a.jpg', { type: 'image/jpeg' })] } });
+                await Promise.resolve();
+            });
+            expect(screen.getByTestId('mock-crop-modal')).toBeInTheDocument();
+            await user.click(screen.getByRole('button', { name: '确定裁剪' }));
+            expect(screen.queryByTestId('mock-crop-modal')).toBeNull();
+        }
+
+        expect(onAvatarChange).toHaveBeenCalledTimes(2);
+    });
+});

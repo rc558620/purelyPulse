@@ -36,7 +36,13 @@
     box-shadow: 0 4px 16px fade(@primary, 30%);
   }
 
+  // iPad：贴紧 page-width-wide 容器右内边缘（max-width: 80rem，半宽 40rem）
   @media (min-width: @bp-mobile) {
-    right: calc(50% - 37.6rem);
+    right: calc(50% - 40rem + 2rem);
+  }
+
+  // PC：贴紧 page-width-wide 容器右内边缘（max-width: 120rem，半宽 60rem）
+  @media (min-width: @bp-desktop) {
+    right: calc(50% - 60rem + 2rem);
   }
 }

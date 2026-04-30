@@ -1,0 +1,488 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/mixins.less';
+@import (reference) '@styles/breakpoints.less';
+
+// ─── 页面容器 ──────────────────────────────────────────────────────
+.pageContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: @bg-light;
+  color: @text-main;
+  font-family: 'Inter', 'Noto Sans SC', sans-serif;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+// 背景光球
+.blurOrb {
+  position: fixed;
+  top: -12rem;
+  right: -8rem;
+  width: 40rem;
+  height: 40rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(132, 204, 22, 0.1), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+// ─── 内容区 ───────────────────────────────────────────────────────
+.contentWrapper {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  padding: 1.6rem 1.6rem 4rem;
+  max-width: 48rem;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+
+  @media (min-width: @bp-mobile) {
+    max-width: 72rem;
+    padding: 2.4rem 3.2rem 4rem;
+    gap: 1.8rem;
+  }
+
+  @media (min-width: @bp-tablet) {
+    max-width: 96rem;
+    padding: 3.2rem 4.8rem 4rem;
+    gap: 2.2rem;
+  }
+}
+
+// 404
+.notFound {
+  padding: 6rem 2rem;
+  text-align: center;
+  color: @text-slate-400;
+  font-size: 1.4rem;
+}
+
+// ─── 会员信息横幅 ─────────────────────────────────────────────────
+.heroBanner {
+  display: flex;
+  align-items: center;
+  gap: 1.6rem;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.07);
+
+  @media (min-width: @bp-mobile) {
+    padding: 2.4rem;
+    border-radius: 2.4rem;
+    gap: 2rem;
+  }
+}
+
+.heroAvatar {
+  position: relative;
+  width: 6.4rem;
+  height: 6.4rem;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 2.4rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+
+  @media (min-width: @bp-mobile) {
+    width: 7.2rem;
+    height: 7.2rem;
+    font-size: 2.8rem;
+  }
+}
+
+.heroPartnerDot {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: #16a34a;
+  border: 2.5px solid #fff;
+}
+
+.heroInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.heroNameRow {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.heroName {
+  margin: 0;
+  font-size: 1.9rem;
+  font-weight: 900;
+  color: @text-main;
+  letter-spacing: -0.01em;
+
+  @media (min-width: @bp-mobile) { font-size: 2.2rem; }
+}
+
+// 等级徽章
+.heroLevelBadge {
+  padding: 0.2rem 0.8rem;
+  border-radius: 9999px;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.hlevel_free      { background: rgba(148, 163, 184, 0.15); color: @text-slate-400; }
+.hlevel_monthly   { background: rgba(59, 130, 246, 0.12);  color: #3b82f6; }
+.hlevel_quarterly { background: rgba(132, 204, 22, 0.14);  color: darken(#84cc16, 12%); }
+.hlevel_annual    { background: rgba(245, 158, 11, 0.14);  color: #d97706; }
+
+.heroPartnerBadge {
+  padding: 0.2rem 0.8rem;
+  border-radius: 9999px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.heroPhone {
+  font-size: 1.3rem;
+  color: @text-sub;
+}
+
+.heroBottomRow {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  font-size: 1.15rem;
+}
+
+.heroStatus {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.8rem;
+  border-radius: 9999px;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.statusActive   { background: rgba(22, 163, 74, 0.1);  color: #16a34a; }
+.statusInactive { background: rgba(148, 163, 184, 0.13); color: @text-slate-400; }
+.statusBanned   { background: rgba(225, 29, 72, 0.1);  color: #e11d48; }
+
+.heroJoined,
+.heroActive {
+  font-size: 1.15rem;
+  color: @text-slate-400;
+}
+
+// ─── 核心数据卡网格 ────────────────────────────────────────────────
+.metricsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem;
+
+  @media (min-width: @bp-mobile) {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.6rem;
+  }
+}
+
+.metricCard {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  padding: 1.6rem;
+  border-radius: 1.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  cursor: default;
+
+  @media (min-width: @bp-mobile) {
+    padding: 2rem;
+    border-radius: 2rem;
+    gap: 0.6rem;
+  }
+
+  &[type="button"] {
+    cursor: pointer;
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    }
+    &:active { transform: translateY(0); }
+  }
+}
+
+// 积分卡
+.metricCardPoints {
+  background: linear-gradient(135deg, rgba(132, 204, 22, 0.1), rgba(74, 222, 128, 0.08));
+  border-color: rgba(132, 204, 22, 0.25);
+}
+
+// 纯利豆卡
+.metricCardBeans {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(192, 132, 252, 0.08));
+  border-color: rgba(168, 85, 247, 0.25);
+}
+
+// 充值卡
+.metricCardRecharge {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(251, 191, 36, 0.07));
+  border-color: rgba(245, 158, 11, 0.25);
+}
+
+// 推广卡
+.metricCardInvite {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(96, 165, 250, 0.07));
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+// 图标包裹
+.metricIconWrap {
+  width: 3.2rem;
+  height: 3.2rem;
+  border-radius: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.6rem;
+
+  .metricCardPoints & { background: rgba(132, 204, 22, 0.18); color: darken(#84cc16, 8%); }
+  .metricCardBeans  & { background: rgba(168, 85, 247, 0.16); color: #9333ea; }
+  .metricCardRecharge & { background: rgba(245, 158, 11, 0.16); color: #d97706; }
+  .metricCardInvite &  { background: rgba(59, 130, 246, 0.16);  color: #3b82f6; }
+
+  @media (min-width: @bp-mobile) {
+    width: 3.8rem;
+    height: 3.8rem;
+  }
+}
+
+.metricValue {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: @text-main;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+
+  @media (min-width: @bp-mobile) { font-size: 2.6rem; }
+}
+
+.metricLabel {
+  font-size: 1.2rem;
+  color: @text-sub;
+  font-weight: 600;
+}
+
+.metricSub {
+  font-size: 1.05rem;
+  color: @text-slate-400;
+  font-weight: 500;
+}
+
+// 可操作卡片右上角提示
+.metricEditHint {
+  position: absolute;
+  top: 1.2rem;
+  right: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 1.05rem;
+  color: @text-slate-400;
+  font-weight: 600;
+
+  @media (min-width: @bp-mobile) {
+    top: 1.6rem;
+    right: 1.6rem;
+  }
+}
+
+// ─── 充值记录卡 ───────────────────────────────────────────────────
+.rechargeCard {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 1.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+
+  @media (min-width: @bp-mobile) { border-radius: 2.2rem; }
+}
+
+.rechargeCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.4rem 1.8rem;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.7);
+
+  @media (min-width: @bp-mobile) { padding: 1.6rem 2.4rem; }
+}
+
+.rechargeCardTitle {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: @text-main;
+}
+
+.rechargeCardCount {
+  font-size: 1.2rem;
+  color: @text-slate-400;
+  font-weight: 500;
+}
+
+.rechargeEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 4rem 2rem;
+  color: @text-slate-400;
+  font-size: 1.3rem;
+}
+
+// ─── 充值记录行 ───────────────────────────────────────────────────
+.rechargeRow {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1.4rem 1.8rem;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.55);
+  transition: background 0.12s;
+
+  &:hover { background: rgba(248, 250, 252, 0.8); }
+
+  @media (min-width: @bp-mobile) { padding: 1.6rem 2.4rem; }
+}
+
+.rechargeRowLast {
+  border-bottom: none;
+}
+
+.rechargeIcon {
+  width: 3.6rem;
+  height: 3.6rem;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(248, 250, 252, 0.9);
+  flex-shrink: 0;
+}
+
+.rechargeInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.rechargePlanName {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: @text-main;
+}
+
+.rechargeMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.15rem;
+}
+
+.rechargeChannel {
+  font-weight: 600;
+}
+
+.rechargeDot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: @text-slate-400;
+  flex-shrink: 0;
+}
+
+.rechargeDate {
+  color: @text-slate-400;
+}
+
+.rechargeRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.rechargeAmtValue {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: @text-main;
+  letter-spacing: -0.01em;
+}
+
+.rechargePoints {
+  font-size: 1.1rem;
+  color: darken(#84cc16, 8%);
+  font-weight: 600;
+}
+
+// ─── 备注卡 ───────────────────────────────────────────────────────
+.remarkCard {
+  padding: 1.4rem 1.8rem;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 1.4rem;
+  border: 1px dashed rgba(245, 158, 11, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+
+  @media (min-width: @bp-mobile) { padding: 1.6rem 2.4rem; }
+}
+
+.remarkLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #d97706;
+}
+
+.remarkText {
+  margin: 0;
+  font-size: 1.25rem;
+  color: @text-sub;
+  line-height: 1.6;
+}
+
+

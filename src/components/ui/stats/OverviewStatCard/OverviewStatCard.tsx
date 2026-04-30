@@ -37,6 +37,7 @@ const OverviewStatCard: React.FC<OverviewStatCardProps> = memo(({
     type="button"
     className={cx(
       styles.statCard,
+      variant === 'default' && !active && styles.statCardDefault,
       variant === 'warning' && styles.statCardWarning,
       variant === 'danger'  && styles.statCardDanger,
       variant === 'success' && styles.statCardSuccess,

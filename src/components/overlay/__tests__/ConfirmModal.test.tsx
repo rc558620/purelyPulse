@@ -350,3 +350,126 @@ describe('ConfirmModal – 卸载清理', () => {
     expect(screen.queryByText('确认操作')).toBeNull();
   });
 });
+
+// ─── 10. 严格边界测试 ─────────────────────────────────────────────────────────
+describe('ConfirmModal – 严格边界', () => {
+  it('children 与 description 同时存在时均正常渲染', () => {
+    renderConfirm({
+      description: '这是描述',
+      children: <div data-testid="extra">额外内容</div>,
+    });
+    expect(screen.getByText('这是描述')).toBeInTheDocument();
+    expect(screen.getByTestId('extra')).toBeInTheDocument();
+  });
+
+  it('title 为复杂 ReactNode 时 aria-labelledby 仍能指向标题节点', () => {
+    renderConfirm({ title: <span data-testid="rich-title-span">富文本标题</span> });
+    const dialog = screen.getByRole('dialog');
+    const labelledById = dialog.getAttribute('aria-labelledby');
+    expect(labelledById).toBe('confirm-modal-title');
+    const titleNode = document.getElementById('confirm-modal-title');
+    expect(titleNode).not.toBeNull();
+    expect(titleNode).toContainElement(screen.getByTestId('rich-title-span'));
+  });
+
+  it('不同 variant 下 cancelText/confirmText 不受影响', () => {
+    renderConfirm({
+      variant: 'danger',
+      cancelText: '我再想想',
+      confirmText: '强制删除',
+    });
+    expect(screen.getByRole('button', { name: '我再想想' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '强制删除' })).toBeInTheDocument();
+  });
+
+  it('多次点击确认触发对应次数', async () => {
+    const user = userEvent.setup();
+    const onConfirm = vi.fn();
+    renderConfirm({ onConfirm });
+    await user.click(screen.getByRole('button', { name: '确定' }));
+    await user.click(screen.getByRole('button', { name: '确定' }));
+    expect(onConfirm).toHaveBeenCalledTimes(2);
+  });
+
+  it('多次点击取消触发对应次数', async () => {
+    const user = userEvent.setup();
+    const onCancel = vi.fn();
+    renderConfirm({ onCancel });
+    await user.click(screen.getByRole('button', { name: '取消' }));
+    await user.click(screen.getByRole('button', { name: '取消' }));
+    await user.click(screen.getByRole('button', { name: '取消' }));
+    expect(onCancel).toHaveBeenCalledTimes(3);
+  });
+
+  it('rerender 更换 onConfirm 后点击确定调用新回调', async () => {
+    const user = userEvent.setup();
+    const onConfirm1 = vi.fn();
+    const onConfirm2 = vi.fn();
+    const { rerender } = renderConfirm({ onConfirm: onConfirm1 });
+    rerender(
+      <ConfirmModal
+        visible={true}
+        title="确认操作"
+        onCancel={vi.fn()}
+        onConfirm={onConfirm2}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: '确定' }));
+    expect(onConfirm1).not.toHaveBeenCalled();
+    expect(onConfirm2).toHaveBeenCalledTimes(1);
+  });
+
+  it('rerender 更换 onCancel 后点击取消调用新回调', async () => {
+    const user = userEvent.setup();
+    const onCancel1 = vi.fn();
+    const onCancel2 = vi.fn();
+    const { rerender } = renderConfirm({ onCancel: onCancel1 });
+    rerender(
+      <ConfirmModal
+        visible={true}
+        title="确认操作"
+        onCancel={onCancel2}
+        onConfirm={vi.fn()}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: '取消' }));
+    expect(onCancel1).not.toHaveBeenCalled();
+    expect(onCancel2).toHaveBeenCalledTimes(1);
+  });
+
+  it('所有有效 variant 下标题仍可被渲染', () => {
+    const variants: ConfirmModalVariant[] = ['default', 'danger', 'primary', 'warning'];
+    variants.forEach((v) => {
+      const { unmount } = renderConfirm({ variant: v, title: `标题-${v}` });
+      expect(screen.getByText(`标题-${v}`)).toBeInTheDocument();
+      unmount();
+    });
+  });
+
+  it('description 为 ReactNode 时与 children 共存顺序正确（描述在前）', () => {
+    const { container } = renderConfirm({
+      description: <p data-testid="desc-p">描述段落</p>,
+      children: <div data-testid="children-div">子内容</div>,
+    });
+    const card = container.ownerDocument.body.querySelector('[class*="modalCard"]') as HTMLElement;
+    expect(card).not.toBeNull();
+    const desc = card.querySelector('[data-testid="desc-p"]');
+    const child = card.querySelector('[data-testid="children-div"]');
+    expect(desc).not.toBeNull();
+    expect(child).not.toBeNull();
+    // desc 在 children 之前（compareDocumentPosition: FOLLOWING）
+    expect(desc!.compareDocumentPosition(child!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it('variant="danger" 同时有 icon、description、children 时均正常渲染', () => {
+    renderConfirm({
+      variant: 'danger',
+      icon: <span data-testid="d-icon">❌</span>,
+      description: '危险操作',
+      children: <input data-testid="d-input" />,
+    });
+    expect(screen.getByTestId('d-icon')).toBeInTheDocument();
+    expect(screen.getByText('危险操作')).toBeInTheDocument();
+    expect(screen.getByTestId('d-input')).toBeInTheDocument();
+  });
+});

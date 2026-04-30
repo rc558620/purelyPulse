@@ -30,6 +30,8 @@ interface ProtectedRouteProps {
     check: () => boolean;
     /** 校验不通过时跳转的目标路径。 */
     fallback: string;
+    /** 校验不通过时提前预加载 fallback 页面 chunk。 */
+    preloadFallback?: () => void;
     /** 校验不通过时展示的 Toast 提示文案。 */
     message?: string;
     /** 被守卫的子页面。 */
@@ -39,18 +41,30 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     check,
     fallback,
+    preloadFallback,
     message = '访问受限，请重新操作',
     children,
 }) => {
     const allowed = check();
     const hasShownToast = useRef(false);
+    const hasPreloadedFallback = useRef(false);
 
     useEffect(() => {
-        if (!allowed && !hasShownToast.current) {
+        if (allowed) {
+            hasPreloadedFallback.current = false;
+            return;
+        }
+
+        if (!hasShownToast.current) {
             hasShownToast.current = true;
             showToast({ message, type: 'warning' });
         }
-    }, [allowed, message]);
+
+        if (!hasPreloadedFallback.current) {
+            hasPreloadedFallback.current = true;
+            preloadFallback?.();
+        }
+    }, [allowed, message, preloadFallback]);
 
     if (!allowed) {
         return <Navigate to={fallback} replace />;

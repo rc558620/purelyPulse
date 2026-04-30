@@ -1,0 +1,129 @@
+@import (reference) '@styles/variables.less';
+
+.checkbox {
+  --checkbox-color: @primary;
+  --checkbox-radius: 12px;
+
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 4.4rem;
+  cursor: pointer;
+  color: @text-main;
+  font-size: 1.4rem;
+  line-height: 1.5;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.box {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  border: 1.5px solid @border-color;
+  border-radius: var(--checkbox-radius);
+  background-color: @bg-white;
+  box-shadow: @shadow-sm;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.icon {
+  width: 1.4rem;
+  height: 1.4rem;
+  color: @bg-white;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.label {
+  color: inherit;
+}
+
+.checkbox:hover .box {
+  border-color: var(--checkbox-color);
+  transform: translateY(-1px);
+}
+
+.input:focus-visible + .box {
+  border-color: var(--checkbox-color);
+  box-shadow: 0 0 0 3px fade(@primary, 18%);
+}
+
+.input:checked + .box {
+  border-color: var(--checkbox-color);
+  background-color: var(--checkbox-color);
+}
+
+.input:checked + .box .icon {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.checkboxIndeterminate .box {
+  border-color: var(--checkbox-color);
+  background-color: fade(@primary, 10%);
+}
+
+.checkboxIndeterminate .box::after {
+  content: '';
+  width: 1rem;
+  height: 2px;
+  border-radius: 9999px;
+  background-color: var(--checkbox-color);
+}
+
+.checkboxIndeterminate .icon {
+  display: none;
+}
+
+.checkboxError .box {
+  border-color: @rose-500;
+}
+
+.checkboxError .input:focus-visible + .box {
+  border-color: @rose-500;
+  box-shadow: 0 0 0 3px fade(@rose-500, 18%);
+}
+
+.checkboxDisabled {
+  cursor: not-allowed;
+}
+
+.checkboxDisabled .box,
+.input:disabled + .box {
+  background-color: @bg-slate-100;
+  border-color: @border-color;
+  box-shadow: none;
+  transform: none;
+}
+
+.checkboxDisabled .label,
+.input:disabled ~ .label {
+  color: @text-sub;
+}
+
+.checkboxDisabled,
+.input:disabled ~ .label {
+  opacity: 0.65;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .box,
+  .icon {
+    transition: none;
+  }
+}

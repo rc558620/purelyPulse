@@ -5,6 +5,7 @@ import { STORAGE_KEYS } from '@constants/storageKeys';
 interface CategoryGuardProps {
   children: React.ReactNode;
   fallback?: string;
+  preloadFallback?: () => void;
   message?: string;
 }
 
@@ -28,9 +29,15 @@ const hasCategoryAccess = (): boolean => readStoredCategories().length > 0;
 const CategoryGuard: React.FC<CategoryGuardProps> = ({
   children,
   fallback = CATEGORY_GUARD_FALLBACK,
+  preloadFallback,
   message = CATEGORY_GUARD_MESSAGE,
 }) => (
-  <ProtectedRoute check={hasCategoryAccess} fallback={fallback} message={message}>
+  <ProtectedRoute
+    check={hasCategoryAccess}
+    fallback={fallback}
+    preloadFallback={preloadFallback}
+    message={message}
+  >
     {children}
   </ProtectedRoute>
 );

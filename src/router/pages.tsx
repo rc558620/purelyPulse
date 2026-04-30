@@ -62,6 +62,14 @@ export const pages = {
   login:         lazyWithPreload(() => import('../pages/login/login')),
   home:          lazyWithPreload(() => import('../pages/home/home')),
   partnerReview: lazyWithPreload(() => import('../pages/partnerReview/partnerReview')),
+  partnerPayout: lazyWithPreload(() => import('../pages/partnerPayout/partnerPayout')),
   revenueDetail:        lazyWithPreload(() => import('../pages/revenueDetail/revenueDetail')),
   promotionRankDetail:  lazyWithPreload(() => import('../pages/promotionDetail/promotionRankDetail')),
+  // ─── 会员管理 ───────────────────────────────────────────────────────
+  memberPoints: lazyWithPreload(() => import('../pages/memberPoints/memberPoints')),
+  partnerBeans: lazyWithPreload(() => import('../pages/partnerBeans/partnerBeans')),
+  memberList:   lazyWithPreload(() => import('../pages/memberList/memberList')),
+  memberDetail: lazyWithPreload(() => import('../pages/memberList/memberDetail')),
+  // ─── 用户管理 ───────────────────────────────────────────────────────
+  banManagement: lazyWithPreload(() => import('../pages/banManagement/banManagement')),
 } as const;

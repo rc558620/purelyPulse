@@ -18,7 +18,7 @@
  * <TrendBadge value={null} />
  * ```
  */
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { cx, safeNum } from '@utils/utils';
 import styles from './TrendBadge.module.less';
 

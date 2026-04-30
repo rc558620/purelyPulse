@@ -66,7 +66,10 @@ export const useForm = <T extends FormValues = FormValues>(): [FormInstance<T>] 
     /** 校验单个字段并返回错误信息。 */
     const validateField = async (value: unknown, fieldRules: ValidatorRule[]): Promise<string | null> => {
         for (const rule of fieldRules) {
-            if (rule.required && (value === undefined || value === null || value === '')) {
+            if (
+                rule.required &&
+                (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0))
+            ) {
                 return rule.message || '该字段为必填项';
             }
             if (rule.pattern && typeof value === 'string' && !rule.pattern.test(value)) {

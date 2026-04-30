@@ -18,6 +18,8 @@ import styles from './Form.module.less';
 interface FormItemChildProps {
     /** 输入值。 */
     value?: unknown;
+    /** 复选类组件的受控选中态。 */
+    checked?: boolean;
     /** 值变化回调。 */
     onChange?: (event: unknown) => void;
     /** 输入状态。 */
@@ -32,6 +34,8 @@ export interface FormItemProps<T extends FormValues = Record<string, unknown>> {
     label?: string;
     /** 字段校验规则。 */
     rules?: ValidatorRule[];
+    /** 受控字段注入的属性名，默认使用 value。 */
+    valuePropName?: 'value' | 'checked';
     /** 子组件节点。 */
     children: ReactNode;
     /** 自定义样式类名。 */
@@ -49,7 +53,11 @@ const isInputChangeEvent = (event: unknown): event is ChangeEvent<HTMLInputEleme
 /** 从事件对象中提取字段值。 */
 const extractFieldValue = (event: unknown): unknown => {
     if (isInputChangeEvent(event)) {
-        return event.target.value;
+        const target = event.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+        if ('type' in target && target.type === 'checkbox') {
+            return (target as HTMLInputElement).checked;
+        }
+        return target.value;
     }
     return event;
 };
@@ -73,6 +81,7 @@ const FormItemInner = <T extends FormValues = Record<string, unknown>>({
     name,
     label,
     rules = [],
+    valuePropName = 'value',
     children,
     className,
 }: FormItemProps<T>): React.JSX.Element => {
@@ -153,17 +162,19 @@ const FormItemInner = <T extends FormValues = Record<string, unknown>>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [setFieldValue]);
 
-    // undefined → '' 保持 Input 兼容；null 保留（让 DatePicker 等区分"未设置"和"主动清空"）
+    // 默认 value 使用空字符串保持受控；checked 模式则回退到 false。
     const rawFieldValue = getFieldValue(name as string);
-    const fieldValue = rawFieldValue === undefined ? '' : rawFieldValue;
+    const fieldValue = rawFieldValue === undefined
+        ? (valuePropName === 'checked' ? false : '')
+        : rawFieldValue;
     const childStatus: 'error' | undefined = error ? 'error' : undefined;
 
     const childNode = React.isValidElement<FormItemChildProps>(children)
         ? React.cloneElement(children, {
-              value: fieldValue,
+              [valuePropName]: fieldValue,
               onChange: handleChange,
               status: childStatus,
-          })
+          } as FormItemChildProps)
         : children;
 
     return (

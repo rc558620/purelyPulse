@@ -41,8 +41,8 @@ import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import MenuRow from '../MenuRow/MenuRow';
-import type { BadgeVariant } from '../MenuRow/MenuRow';
+import MenuRow from '../layout/MenuRow/MenuRow';
+import type { BadgeVariant } from '../layout/MenuRow/MenuRow';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 辅助函数：渲染带默认 props 的 MenuRow

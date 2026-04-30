@@ -38,6 +38,14 @@ export const routeDefinitions: AppRouteDefinition[] = [
     { path: ROUTE_PATHS.login,         page: pages.login },
     { path: ROUTE_PATHS.home,           page: pages.home },
     { path: ROUTE_PATHS.partnerReview,  page: pages.partnerReview },
+    { path: ROUTE_PATHS.partnerPayout,  page: pages.partnerPayout },
     { path: ROUTE_PATHS.revenueDetail,        page: pages.revenueDetail },
     { path: ROUTE_PATHS.promotionRankDetail,  page: pages.promotionRankDetail },
+    // ─── 会员管理 ──────────────────────────────────────────────────────
+    { path: ROUTE_PATHS.memberPoints, page: pages.memberPoints },
+    { path: ROUTE_PATHS.partnerBeans, page: pages.partnerBeans },
+    { path: ROUTE_PATHS.memberList,             page: pages.memberList   },
+    { path: `${ROUTE_PATHS.memberDetail}/:id`,  page: pages.memberDetail },
+    // ─── 用户管理 ──────────────────────────────────────────────────────
+    { path: ROUTE_PATHS.banManagement, page: pages.banManagement },
 ];

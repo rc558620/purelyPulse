@@ -237,3 +237,102 @@ describe('Modal – 卸载清理', () => {
     expect(screen.queryByText('测试标题')).toBeNull();
   });
 });
+
+// ─── 8. 严格边界测试 ──────────────────────────────────────────────────────────
+describe('Modal – 严格边界', () => {
+  it('多次点击「取消」回调被调用对应次数', async () => {
+    const user = userEvent.setup();
+    const onCancel = vi.fn();
+    renderModal({ onCancel });
+    await user.click(screen.getByRole('button', { name: '取消' }));
+    await user.click(screen.getByRole('button', { name: '取消' }));
+    await user.click(screen.getByRole('button', { name: '取消' }));
+    expect(onCancel).toHaveBeenCalledTimes(3);
+  });
+
+  it('多次点击「确定」回调被调用对应次数', async () => {
+    const user = userEvent.setup();
+    const onConfirm = vi.fn();
+    renderModal({ onConfirm });
+    await user.click(screen.getByRole('button', { name: '确定' }));
+    await user.click(screen.getByRole('button', { name: '确定' }));
+    expect(onConfirm).toHaveBeenCalledTimes(2);
+  });
+
+  it('多次点击遮罩 onCancel 被调用对应次数', () => {
+    const onCancel = vi.fn();
+    renderModal({ onCancel });
+    const overlay = document.body.querySelector('[class*="modalOverlay"]') as HTMLElement;
+    fireEvent.click(overlay);
+    fireEvent.click(overlay);
+    expect(onCancel).toHaveBeenCalledTimes(2);
+  });
+
+  it('children 为 null 时不渲染 body 内容但弹窗正常出现', () => {
+    renderModal({ children: null });
+    expect(screen.getByText('测试标题')).toBeInTheDocument();
+  });
+
+  it('cancelText 与 confirmText 相同时两个按钮都渲染', () => {
+    renderModal({ cancelText: '关闭', confirmText: '关闭' });
+    const buttons = screen.getAllByRole('button', { name: '关闭' });
+    expect(buttons).toHaveLength(2);
+  });
+
+  it('rerender 更换 onConfirm 后点击确定调用新回调', async () => {
+    const user = userEvent.setup();
+    const onConfirm1 = vi.fn();
+    const onConfirm2 = vi.fn();
+    const { rerender } = renderModal({ onConfirm: onConfirm1 });
+    rerender(
+      <Modal
+        visible={true}
+        title="测试标题"
+        onCancel={vi.fn()}
+        onConfirm={onConfirm2}
+      >
+        <span>内容</span>
+      </Modal>,
+    );
+    await user.click(screen.getByRole('button', { name: '确定' }));
+    expect(onConfirm1).not.toHaveBeenCalled();
+    expect(onConfirm2).toHaveBeenCalledTimes(1);
+  });
+
+  it('rerender 更换 onCancel 后点击取消调用新回调', async () => {
+    const user = userEvent.setup();
+    const onCancel1 = vi.fn();
+    const onCancel2 = vi.fn();
+    const { rerender } = renderModal({ onCancel: onCancel1 });
+    rerender(
+      <Modal
+        visible={true}
+        title="测试标题"
+        onCancel={onCancel2}
+        onConfirm={vi.fn()}
+      >
+        <span>内容</span>
+      </Modal>,
+    );
+    await user.click(screen.getByRole('button', { name: '取消' }));
+    expect(onCancel1).not.toHaveBeenCalled();
+    expect(onCancel2).toHaveBeenCalledTimes(1);
+  });
+
+  it('title 为复杂 ReactNode + children 同时存在时均正常渲染', () => {
+    renderModal({
+      title: <em data-testid="complex-title">复杂标题</em>,
+      children: <strong data-testid="complex-body">复杂内容</strong>,
+    });
+    expect(screen.getByTestId('complex-title')).toBeInTheDocument();
+    expect(screen.getByTestId('complex-body')).toBeInTheDocument();
+  });
+
+  it('空 cancelText 渲染按钮但文案为空', () => {
+    renderModal({ cancelText: '' });
+    // 按钮仍然存在（DOM 节点保留），只是文字为空
+    const footer = document.body.querySelector('[class*="modalFooter"]') as HTMLElement;
+    expect(footer).not.toBeNull();
+    expect(footer.querySelectorAll('button').length).toBe(2);
+  });
+});

@@ -6,6 +6,7 @@ interface AnimatedNumberProps {
   value: React.ReactNode;
   triggerKey: string;
   className?: string;
+  itemClassName?: string;
 }
 
 interface AnimatedItem {
@@ -56,7 +57,12 @@ const reducer = (state: State, action: Action): State => {
   }
 };
 
-const AnimatedNumber: React.FC<AnimatedNumberProps> = ({ value, triggerKey, className }): React.ReactElement => {
+const AnimatedNumber: React.FC<AnimatedNumberProps> = ({
+  value,
+  triggerKey,
+  className,
+  itemClassName,
+}): React.ReactElement => {
   const [state, dispatch] = useReducer(reducer, {
     items: [{ key: triggerKey, value }],
     lastTriggerKey: triggerKey,
@@ -93,8 +99,9 @@ const AnimatedNumber: React.FC<AnimatedNumberProps> = ({ value, triggerKey, clas
             key={item.key}
             className={cx(
               styles.numberItem,
+              itemClassName,
               isOld && styles.slideOut,
-              isNew && styles.slideIn
+              isNew && styles.slideIn,
             )}
             aria-hidden={isOld ? 'true' : 'false'}
           >

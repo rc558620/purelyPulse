@@ -14,7 +14,7 @@
  * />
  * ```
  */
-import React, { memo, useCallback } from 'react';
+import { memo, useCallback } from 'react';
 import DayPicker from '@components/form/DayPicker';
 import styles from './DateRangePicker.module.less';
 

@@ -41,8 +41,8 @@
 import React, { createRef, act } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { VerticalMarquee } from '../VerticalMarquee/index';
-import type { VerticalMarqueeHandle } from '../VerticalMarquee/index';
+import { VerticalMarquee } from '../data-display/VerticalMarquee/index';
+import type { VerticalMarqueeHandle } from '../data-display/VerticalMarquee/index';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mock ResizeObserver（jsdom 不实现 ResizeObserver）
@@ -115,17 +115,17 @@ describe('VerticalMarquee – renderItem', () => {
     it('传入 renderItem 时使用自定义渲染函数', () => {
         renderMarquee({
             items: ['A', 'B'],
-            renderItem: (item) => <span data-testid={`item-${item}`}>{item}</span>,
+            renderItem: (item: unknown) => <span data-testid={`item-${item}`}>{String(item)}</span>,
         });
         expect(screen.getAllByTestId('item-A')).toHaveLength(2); // 原始 + 克隆
         expect(screen.getAllByTestId('item-B')).toHaveLength(2);
     });
 
     it('renderItem 接收正确的 item 和 index 参数', () => {
-        const renderItem = vi.fn((item: string, index: number) => (
-            <span key={index}>{item}</span>
+        const renderItem = vi.fn((item: unknown, index: number) => (
+            <span key={index}>{String(item)}</span>
         ));
-        renderMarquee({ items: ['X', 'Y'], renderItem });
+        renderMarquee({ items: ['X', 'Y'] as string[], renderItem });
         // 调用次数 = items.length * 2（原始 + 克隆）
         expect(renderItem).toHaveBeenCalledWith('X', 0);
         expect(renderItem).toHaveBeenCalledWith('Y', 1);

@@ -1,0 +1,554 @@
+@import (reference) '../../styles/variables.less';
+@import (reference) '../../styles/breakpoints.less';
+@import (reference) '../../styles/mixins.less';
+
+@accent:        #84cc16;
+@accent-dark:   #65a30d;
+@accent-deeper: #4d7c0f;
+
+*, ::before, ::after { box-sizing: border-box; }
+
+// ─── 页面容器 ─────────────────────────────────────────────────
+.pageContainer {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  .flex-col();
+  background-color: @bg-light;
+  color: @text-main;
+  overflow-x: hidden;
+  font-family: 'Inter', 'Noto Sans SC', sans-serif;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at top, fade(@accent, 7%), transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+
+// ─── 背景光球 ─────────────────────────────────────────────────
+.blurOrb {
+  position: absolute;
+  top: 6%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 520px;
+  height: 520px;
+  background-color: fade(@accent, 5%);
+  border-radius: 9999px;
+  filter: blur(100px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+// ─── 内容区 ───────────────────────────────────────────────────
+.contentWrapper {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 2rem 1.6rem 6rem;
+  .flex-col();
+  gap: 1.4rem;
+
+  @media (min-width: @bp-mobile) {
+    max-width: 72rem;
+    padding: 2.8rem 2.4rem 6rem;
+    gap: 2rem;
+  }
+}
+
+// ─── 汇总统计栏 ───────────────────────────────────────────────
+.summaryBar {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2.5px;
+    background: linear-gradient(90deg, @accent, #a3e635, #bef264);
+    border-radius: 16px 16px 0 0;
+  }
+}
+
+.summaryItem {
+  flex: 1;
+  .flex-col();
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 1.6rem 0.8rem;
+}
+
+.summaryVal {
+  font-size: 2rem;
+  font-weight: 900;
+  color: @text-main;
+  letter-spacing: -0.03em;
+  line-height: 1;
+
+  @media (min-width: @bp-mobile) { font-size: 2.4rem; }
+}
+
+.summaryValPending { color: #d97706; }
+
+.summaryLabel {
+  font-size: 1.1rem;
+  color: @text-sub;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.summaryDivider {
+  width: 1px;
+  background: @border-color;
+  flex-shrink: 0;
+  margin: 1.4rem 0;
+}
+
+// ─── 筛选 Tab ────────────────────────────────────────────────
+.filterWrap {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.filterBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.6rem 1.4rem;
+  border-radius: 9999px;
+  border: 1px solid @border-color;
+  background: rgba(255, 255, 255, 0.85);
+  color: @text-sub;
+  font-size: 1.3rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    border-color: fade(@accent, 45%);
+    color: @accent-dark;
+    background: fade(@accent, 7%);
+  }
+
+  &:active { transform: scale(0.96); }
+}
+
+.filterBtnActive {
+  background: fade(@accent, 10%);
+  border-color: fade(@accent, 45%);
+  color: @accent-dark;
+  font-weight: 700;
+}
+
+// 筛选 Tab 上的待处理数角标
+.filterBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6rem;
+  height: 1.6rem;
+  padding: 0 0.38rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #ef4444, #f87171);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 800;
+  box-shadow: 0 1px 6px rgba(239, 68, 68, 0.4);
+}
+
+// ─── 列表容器 ─────────────────────────────────────────────────
+.listWrap {
+  .flex-col();
+  gap: 1rem;
+}
+
+// ─── 单张申请卡片 ─────────────────────────────────────────────
+.card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 18px;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  overflow: hidden;
+  transition: box-shadow 0.18s, transform 0.18s;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    border-radius: 18px 18px 0 0;
+    background: linear-gradient(90deg, fade(@accent, 40%), fade(@accent, 18%));
+  }
+
+  &:hover {
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+  }
+}
+
+.cardExpanded {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+
+  &::before {
+    background: linear-gradient(90deg, @accent, #a3e635);
+    height: 2.5px;
+  }
+}
+
+// ─── 卡片主行（可点击） ───────────────────────────────────────
+.cardMain {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1.4rem 1.6rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  transition: background-color 0.15s;
+
+  &:hover { background: rgba(240, 253, 244, 0.6); }
+
+  @media (min-width: @bp-mobile) {
+    gap: 1.6rem;
+    padding: 1.6rem 2rem;
+  }
+}
+
+// ─── 头像 ─────────────────────────────────────────────────────
+.avatar {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, fade(@accent, 18%), fade(@accent, 8%));
+  border: 1.5px solid fade(@accent, 30%);
+  .flex-center();
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: @accent-dark;
+  flex-shrink: 0;
+
+  @media (min-width: @bp-mobile) {
+    width: 4.4rem;
+    height: 4.4rem;
+    font-size: 1.7rem;
+  }
+}
+
+.avatar_paid {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(16, 185, 129, 0.08));
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #10b981;
+}
+
+.avatar_rejected {
+  background: linear-gradient(135deg, rgba(148, 163, 184, 0.12), rgba(148, 163, 184, 0.06));
+  border-color: rgba(148, 163, 184, 0.22);
+  color: @text-sub;
+}
+
+.avatar_approved {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(59, 130, 246, 0.08));
+  border-color: rgba(59, 130, 246, 0.28);
+  color: #3b82f6;
+}
+
+// ─── 信息列 ───────────────────────────────────────────────────
+.cardInfo {
+  flex: 1;
+  min-width: 0;
+  .flex-col();
+  gap: 0.35rem;
+}
+
+.cardNameRow {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.cardName {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: @text-main;
+  white-space: nowrap;
+}
+
+.cardCity {
+  font-size: 1.2rem;
+  color: @text-sub;
+  white-space: nowrap;
+}
+
+.cardMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.2rem;
+  color: @text-slate-400;
+  flex-wrap: wrap;
+}
+
+.metaDot {
+  width: 3px;
+  height: 3px;
+  border-radius: 9999px;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+// ─── 卡片右侧：金额 + 状态 + 箭头 ───────────────────────────
+.cardRight {
+  .flex-col();
+  align-items: flex-end;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.cardAmount {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: @text-main;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+// ─── 状态标签 ─────────────────────────────────────────────────
+.statusPending {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 9999px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  white-space: nowrap;
+}
+
+.statusApproved {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 9999px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.22);
+  white-space: nowrap;
+}
+
+.statusPaid {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 9999px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  background: fade(@accent, 10%);
+  color: @accent-dark;
+  border: 1px solid fade(@accent, 28%);
+  white-space: nowrap;
+}
+
+.statusRejected {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 9999px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  background: rgba(148, 163, 184, 0.1);
+  color: @text-sub;
+  border: 1px solid @border-color;
+  white-space: nowrap;
+}
+
+// ─── 展开箭头 ─────────────────────────────────────────────────
+.expandArrow {
+  color: @text-slate-400;
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.expandArrowOpen {
+  transform: rotate(180deg);
+  color: @accent-dark;
+}
+
+// ─── 展开详情区 ───────────────────────────────────────────────
+.cardDetail {
+  padding: 0 1.6rem 1.8rem;
+  .flex-col();
+  gap: 1.2rem;
+  animation: detailIn 0.22s ease;
+
+  @keyframes detailIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (min-width: @bp-mobile) { padding: 0 2rem 2rem; }
+}
+
+.detailDivider {
+  height: 1px;
+  background: @border-color;
+  border-radius: 9999px;
+}
+
+// ─── 收款信息网格 ─────────────────────────────────────────────
+.detailGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 1.4rem;
+  padding: 1.4rem 1.6rem;
+  background: rgba(240, 253, 244, 0.55);
+  border: 1px solid fade(@accent, 18%);
+  border-radius: 12px;
+
+  @media (min-width: @bp-mobile) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.detailItem {
+  .flex-col();
+  gap: 0.3rem;
+}
+
+.detailLabel {
+  font-size: 1.05rem;
+  color: @text-slate-400;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.detailVal {
+  font-size: 1.3rem;
+  color: @text-main;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.detailValAmount {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: @accent-dark;
+}
+
+// ─── 拒绝原因 tip ─────────────────────────────────────────────
+.rejectTip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 1.1rem 1.4rem;
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  border-left: 3px solid rgba(239, 68, 68, 0.45);
+  border-radius: 10px;
+  font-size: 1.3rem;
+  color: #b91c1c;
+  line-height: 1.65;
+
+  svg { flex-shrink: 0; margin-top: 0.15rem; }
+}
+
+// ─── 操作按钮行 ───────────────────────────────────────────────
+.actionRow {
+  display: flex;
+  gap: 1rem;
+}
+
+.rejectBtn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.1rem 1.4rem;
+  border-radius: 12px;
+  border: 1px solid @border-color;
+  background: @bg-white;
+  color: @text-sub;
+  font-size: 1.4rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+  .btn-press-effect();
+
+  &:hover {
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.05);
+  }
+}
+
+.approveBtn {
+  flex: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1.1rem 1.4rem;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, @accent, @accent-dark);
+  color: #fff;
+  font-size: 1.4rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px fade(@accent, 35%);
+  transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+  .btn-press-effect();
+
+  &:hover {
+    background: linear-gradient(135deg, @accent-dark, @accent-deeper);
+    box-shadow: 0 6px 18px fade(@accent, 45%);
+  }
+}
+
+// ─── 空状态 ───────────────────────────────────────────────────
+.emptyState {
+  .flex-col();
+  align-items: center;
+  gap: 1.2rem;
+  padding: 6rem 2rem;
+  color: @text-slate-400;
+  font-size: 1.3rem;
+
+  svg {
+    opacity: 0.3;
+    color: @accent-dark;
+  }
+}

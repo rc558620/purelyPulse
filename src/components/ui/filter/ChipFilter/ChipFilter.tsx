@@ -1,7 +1,7 @@
 // 通用横向可滚动 Chip 筛选组：支持"全部" + 动态分类单选切换。
 // 适用于：库存盘点分类筛、商品额外分类筛、报表分类筛等场景。
 import React, { memo } from 'react';
-import { cx, isNonEmptyArray } from '@utils/utils';
+import { cx } from '@utils/utils';
 import styles from './ChipFilter.module.less';
 
 export interface ChipFilterOption {
@@ -26,7 +26,7 @@ export interface ChipFilterProps {
 
 /** 将 string[] 或 ChipFilterOption[] 统一归一化为 ChipFilterOption[] */
 function normalizeOptions(options: ChipFilterOption[] | string[]): ChipFilterOption[] {
-  if (!isNonEmptyArray(options)) return [];
+  if (!Array.isArray(options) || options.length === 0) return [];
   return (options as Array<string | ChipFilterOption>).map(opt =>
     typeof opt === 'string' ? { label: opt, value: opt } : opt,
   );

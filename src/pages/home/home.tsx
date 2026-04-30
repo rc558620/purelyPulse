@@ -1,5 +1,4 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import PageHeader from '@components/ui/layout/PageHeader';
 import AnimatedNumber from '@components/ui/data-display/AnimatedNumber/AnimatedNumber';
 import SlidingTabBar from '@components/ui/filter/SlidingTabBar/SlidingTabBar';
 import CustomModeBtnRow from '@components/form/CustomModeBtnRow/CustomModeBtnRow';
@@ -237,8 +236,6 @@ const Home: React.FC = () => {
       <div className={styles.bgOrb2} aria-hidden="true" />
       <div className={styles.bgGrid} aria-hidden="true" />
 
-      <PageHeader title="数据看板" variant="transparent" />
-
       <main className={styles.contentWrapper}>
 
         {/* ═══════════════════════════════════════════════════════════
@@ -286,30 +283,15 @@ const Home: React.FC = () => {
 
           {/* 格 A：合伙人总数 */}
           <div className={`${styles.bentoCard} ${styles.bentoCardPurple}`}>
-            {/* 徽章行：左侧合伙人标签 + 右侧申请审核跳转 */}
-            <div className={styles.bentoBadgeRow}>
-              <div className={styles.bentoBadge} style={{ background: 'rgba(168,85,247,0.12)', color: '#a855f7' }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
-                合伙人
-              </div>
-              {/* 申请审核跳转按钮 */}
-              <button
-                className={styles.bentoReviewBtn}
-                onClick={() => navigate('/partner-review')}
-                aria-label="查看合伙人申请审核"
-              >
-                合伙人申请审核
-                {PENDING_APPLICATION_COUNT > 0 && (
-                  <span className={styles.bentoReviewBadge} aria-label={`${PENDING_APPLICATION_COUNT}条待审核`}>
-                    {PENDING_APPLICATION_COUNT}
-                  </span>
-                )}
-              </button>
+            {/* 徽章行：仅左侧合伙人标签 */}
+            <div className={styles.bentoBadge} style={{ background: 'rgba(168,85,247,0.12)', color: '#a855f7' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+              合伙人
             </div>
             <div className={styles.bentoBigNum} style={{ color: '#a855f7' }}>
               <AnimatedNumber value={PARTNER_STATS.total} triggerKey="partner-total" />
@@ -365,6 +347,186 @@ const Home: React.FC = () => {
             <div className={styles.bentoTag} style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>
               {PARTNER_STATS.totalOrders.toLocaleString('zh-CN')} 单
             </div>
+          </div>
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════════
+            管理快捷入口：打款 / 申请审核 / 纯利豆 / 积分
+        ═══════════════════════════════════════════════════════════ */}
+        <div className={styles.quickNavCard}>
+          {/* 卡片标题行 */}
+          <div className={styles.quickNavHeader}>
+            <div className={styles.quickNavHeaderLeft}>
+              <div className={styles.quickNavHeaderIcon} aria-hidden="true">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                  <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                  <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                  <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                </svg>
+              </div>
+              <span className={styles.quickNavHeaderTitle}>管理入口</span>
+            </div>
+            <span className={styles.quickNavHeaderSub}>快速跳转</span>
+          </div>
+
+          {/* 2×2 入口网格 */}
+          <div className={styles.quickNavGrid}>
+
+            {/* 打款管理 */}
+            <button
+              type="button"
+              className={`${styles.quickNavItem} ${styles.quickNavItemGreen}`}
+              onClick={() => navigate(ROUTE_PATHS.partnerPayout)}
+              aria-label="合伙人打款管理"
+            >
+              <div className={`${styles.quickNavIconWrap} ${styles.quickNavIconGreen}`} aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="2" y="5" width="20" height="14" rx="2.5" />
+                  <line x1="2" y1="10" x2="22" y2="10" />
+                  <line x1="6" y1="15" x2="10" y2="15" />
+                </svg>
+              </div>
+              <div className={styles.quickNavItemContent}>
+                <span className={styles.quickNavItemTitle}>打款管理</span>
+                <span className={styles.quickNavItemDesc}>合伙人收益发放</span>
+              </div>
+              <div className={styles.quickNavArrow} aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+              </div>
+            </button>
+
+            {/* 申请审核 */}
+            <button
+              type="button"
+              className={`${styles.quickNavItem} ${styles.quickNavItemPurple}`}
+              onClick={() => navigate(ROUTE_PATHS.partnerReview)}
+              aria-label="合伙人申请审核"
+            >
+              <div className={`${styles.quickNavIconWrap} ${styles.quickNavIconPurple}`} aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 11l3 3L22 4" />
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                </svg>
+              </div>
+              <div className={styles.quickNavItemContent}>
+                <span className={styles.quickNavItemTitle}>申请审核</span>
+                <span className={styles.quickNavItemDesc}>合伙人申请处理</span>
+              </div>
+              {PENDING_APPLICATION_COUNT > 0 && (
+                <span className={styles.quickNavBadge} aria-label={`${PENDING_APPLICATION_COUNT}条待处理`}>
+                  {PENDING_APPLICATION_COUNT}
+                </span>
+              )}
+              <div className={styles.quickNavArrow} aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+              </div>
+            </button>
+
+            {/* 纯利豆 */}
+            <button
+              type="button"
+              className={`${styles.quickNavItem} ${styles.quickNavItemAmber}`}
+              onClick={() => navigate(ROUTE_PATHS.partnerBeans)}
+              aria-label="纯利豆管理"
+            >
+              <div className={`${styles.quickNavIconWrap} ${styles.quickNavIconAmber}`} aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M8.5 8.5c.8-1 2-1.5 3.5-1.5 2.5 0 4 1.5 4 3.5 0 1.5-.8 2.5-2 3" />
+                  <path d="M15.5 15.5c-.8 1-2 1.5-3.5 1.5-2.5 0-4-1.5-4-3.5 0-1.5.8-2.5 2-3" />
+                  <line x1="12" y1="6" x2="12" y2="7.5" />
+                  <line x1="12" y1="16.5" x2="12" y2="18" />
+                </svg>
+              </div>
+              <div className={styles.quickNavItemContent}>
+                <span className={styles.quickNavItemTitle}>纯利豆</span>
+                <span className={styles.quickNavItemDesc}>合伙人豆管理</span>
+              </div>
+              <div className={styles.quickNavArrow} aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+              </div>
+            </button>
+
+            {/* 积分 */}
+            <button
+              type="button"
+              className={`${styles.quickNavItem} ${styles.quickNavItemBlue}`}
+              onClick={() => navigate(ROUTE_PATHS.memberPoints)}
+              aria-label="会员积分管理"
+            >
+              <div className={`${styles.quickNavIconWrap} ${styles.quickNavIconBlue}`} aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+              </div>
+              <div className={styles.quickNavItemContent}>
+                <span className={styles.quickNavItemTitle}>积分管理</span>
+                <span className={styles.quickNavItemDesc}>会员积分增减</span>
+              </div>
+              <div className={styles.quickNavArrow} aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+              </div>
+            </button>
+
+            {/* 封禁管理 */}
+            <button
+              type="button"
+              className={`${styles.quickNavItem} ${styles.quickNavItemRed}`}
+              onClick={() => navigate(ROUTE_PATHS.banManagement)}
+              aria-label="用户封禁管理"
+            >
+              <div className={`${styles.quickNavIconWrap} ${styles.quickNavIconRed}`} aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M4.93 4.93l14.14 14.14" />
+                </svg>
+              </div>
+              <div className={styles.quickNavItemContent}>
+                <span className={styles.quickNavItemTitle}>封禁管理</span>
+                <span className={styles.quickNavItemDesc}>用户封禁与解封</span>
+              </div>
+              <div className={styles.quickNavArrow} aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+              </div>
+            </button>
+
+            {/* 会员列表 */}
+            <button
+              type="button"
+              className={`${styles.quickNavItem} ${styles.quickNavItemTeal}`}
+              onClick={() => navigate(ROUTE_PATHS.memberList)}
+              aria-label="会员列表"
+            >
+              <div className={`${styles.quickNavIconWrap} ${styles.quickNavIconTeal}`} aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+              </div>
+              <div className={styles.quickNavItemContent}>
+                <span className={styles.quickNavItemTitle}>会员列表</span>
+                <span className={styles.quickNavItemDesc}>查看与管理全部会员</span>
+              </div>
+              <div className={styles.quickNavArrow} aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+              </div>
+            </button>
+
           </div>
         </div>
 

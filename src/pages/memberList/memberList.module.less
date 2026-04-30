@@ -1,0 +1,501 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/mixins.less';
+@import (reference) '@styles/breakpoints.less';
+
+// ─── 页面容器 ──────────────────────────────────────────────────────
+.pageContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: @bg-light;
+  color: @text-main;
+  font-family: 'Inter', 'Noto Sans SC', sans-serif;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+// 背景光球
+.blurOrb {
+  position: fixed;
+  top: -10rem;
+  right: -8rem;
+  width: 36rem;
+  height: 36rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(132, 204, 22, 0.1), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.blurOrb2 {
+  position: fixed;
+  bottom: 0;
+  left: -6rem;
+  width: 28rem;
+  height: 28rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.07), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+// ─── 内容区 ───────────────────────────────────────────────────────
+.contentWrapper {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  padding: 1.6rem 1.6rem 8rem;
+  max-width: 48rem;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+
+  @media (min-width: @bp-mobile) {
+    max-width: 72rem;
+    padding: 2.4rem 3.2rem 8rem;
+    gap: 1.8rem;
+  }
+
+  @media (min-width: @bp-tablet) {
+    max-width: 96rem;
+    padding: 3.2rem 4.8rem 8rem;
+    gap: 2.2rem;
+  }
+}
+
+// ─── 统计概览 ─────────────────────────────────────────────────────
+.statsRow {
+  display: flex;
+  align-items: center;
+  padding: 1.6rem;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 1.6rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+
+  @media (min-width: @bp-mobile) {
+    padding: 2rem 2.4rem;
+    border-radius: 2rem;
+  }
+}
+
+.statItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.statNum {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: @text-main;
+  line-height: 1;
+  letter-spacing: -0.02em;
+
+  @media (min-width: @bp-mobile) { font-size: 2.6rem; }
+}
+
+.statNumGreen   { color: #16a34a; }
+.statNumAmber   { color: #d97706; }
+.statNumRed     { color: #e11d48; }
+
+.statLabel {
+  font-size: 1.1rem;
+  color: @text-sub;
+  font-weight: 500;
+
+  @media (min-width: @bp-mobile) { font-size: 1.25rem; }
+}
+
+.statDivider {
+  width: 1px;
+  height: 3.2rem;
+  background: @border-color;
+  flex-shrink: 0;
+}
+
+// ─── 搜索框 ───────────────────────────────────────────────────────
+.searchWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 1.4rem;
+  color: @text-slate-400;
+  pointer-events: none;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.searchInput {
+  width: 100%;
+  height: 4.6rem;
+  padding: 0 4.4rem 0 4.2rem;
+  border-radius: 1.4rem;
+  border: 1.5px solid @border-color;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  font-size: 1.3rem;
+  color: @text-main;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &::placeholder { color: @text-slate-400; }
+
+  &:focus {
+    border-color: @primary;
+    box-shadow: 0 0 0 3px rgba(132, 204, 22, 0.12);
+  }
+
+  // 隐藏原生 search 清除按钮
+  &::-webkit-search-cancel-button { display: none; }
+}
+
+.searchClear {
+  position: absolute;
+  right: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.07);
+  color: @text-sub;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover { background: rgba(0, 0, 0, 0.12); }
+}
+
+// ─── 状态 Tab ─────────────────────────────────────────────────────
+.tabRow {
+  display: flex;
+  gap: 0.6rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+.tabBtn {
+  flex-shrink: 0;
+  padding: 0.6rem 1.4rem;
+  border-radius: 9999px;
+  border: 1.5px solid @border-color;
+  background: rgba(255, 255, 255, 0.85);
+  color: @text-sub;
+  font-size: 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s;
+  white-space: nowrap;
+
+  &:hover {
+    border-color: rgba(132, 204, 22, 0.45);
+    color: darken(#84cc16, 10%);
+  }
+}
+
+.tabBtnActive {
+  border-color: @primary;
+  background: rgba(132, 204, 22, 0.1);
+  color: darken(#84cc16, 10%);
+  box-shadow: 0 0 0 3px rgba(132, 204, 22, 0.1);
+}
+
+// ─── 等级 Chip ────────────────────────────────────────────────────
+.chipRow {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.chipBtn {
+  padding: 0.4rem 1rem;
+  border-radius: 9999px;
+  border: 1px solid @border-color;
+  background: rgba(255, 255, 255, 0.75);
+  color: @text-sub;
+  font-size: 1.15rem;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s;
+  white-space: nowrap;
+
+  &:hover {
+    border-color: rgba(59, 130, 246, 0.4);
+    color: #3b82f6;
+  }
+}
+
+.chipBtnActive {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+// ─── 列表卡片 ─────────────────────────────────────────────────────
+.listCard {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 1.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+
+  @media (min-width: @bp-mobile) { border-radius: 2.2rem; }
+}
+
+.listHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.4rem 1.8rem;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.7);
+
+  @media (min-width: @bp-mobile) { padding: 1.6rem 2.4rem; }
+}
+
+.listTitle {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: @text-main;
+}
+
+.listCount {
+  font-size: 1.2rem;
+  color: @text-slate-400;
+  font-weight: 500;
+}
+
+// ─── 空状态 ───────────────────────────────────────────────────────
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 5rem 2rem;
+  color: @text-slate-400;
+  font-size: 1.3rem;
+}
+
+// ─── 会员列表容器 ─────────────────────────────────────────────────
+.memberList {
+  display: flex;
+  flex-direction: column;
+}
+
+// ─── 会员卡片 ─────────────────────────────────────────────────────
+.memberCard {
+  all: unset;
+  box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1.4rem 1.8rem;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.14s;
+
+  &:last-child { border-bottom: none; }
+
+  &:hover {
+    background: rgba(132, 204, 22, 0.04);
+  }
+
+  &:active {
+    background: rgba(132, 204, 22, 0.08);
+  }
+
+  @media (min-width: @bp-mobile) {
+    padding: 1.6rem 2.4rem;
+    gap: 1.6rem;
+  }
+}
+
+// 头像
+.memberAvatar {
+  position: relative;
+  width: 4.4rem;
+  height: 4.4rem;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 1.6rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
+
+  @media (min-width: @bp-mobile) {
+    width: 5rem;
+    height: 5rem;
+    font-size: 1.8rem;
+  }
+}
+
+// 合伙人绿点
+.partnerDot {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  background: #16a34a;
+  border: 2px solid #fff;
+}
+
+// 基本信息
+.memberInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.memberNameRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.memberName {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: @text-main;
+  white-space: nowrap;
+
+  @media (min-width: @bp-mobile) { font-size: 1.5rem; }
+}
+
+// 等级徽章
+.levelBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.level_free      { background: rgba(148, 163, 184, 0.15); color: @text-slate-400; }
+.level_monthly   { background: rgba(59, 130, 246, 0.12);  color: #3b82f6; }
+.level_quarterly { background: rgba(132, 204, 22, 0.14);  color: darken(#84cc16, 10%); }
+.level_annual    { background: rgba(245, 158, 11, 0.14);  color: #d97706; }
+
+// 合伙人徽章
+.partnerBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.memberPhone {
+  font-size: 1.2rem;
+  color: @text-sub;
+}
+
+.memberMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 1.1rem;
+  color: @text-sub;
+  font-weight: 500;
+}
+
+.metaItemTime {
+  font-size: 1.05rem;
+  color: @text-slate-400;
+}
+
+// 右侧：金额 + 状态点 + 箭头
+.memberRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.memberRecharge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+}
+
+.rechargeAmt {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: @text-main;
+  letter-spacing: -0.01em;
+
+  @media (min-width: @bp-mobile) { font-size: 1.7rem; }
+}
+
+.rechargeLabel {
+  font-size: 1.05rem;
+  color: @text-slate-400;
+  font-weight: 500;
+}
+
+.statusDot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status_active   { background: #16a34a; box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2); }
+.status_inactive { background: @text-slate-400; }
+.status_banned   { background: #e11d48; box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.18); }
+
+.memberArrow {
+  color: @text-slate-400;
+  margin-top: 0.2rem;
+  transition: transform 0.15s ease, color 0.15s;
+
+  .memberCard:hover & {
+    transform: translateX(2px);
+    color: @text-sub;
+  }
+}

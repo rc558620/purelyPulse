@@ -80,7 +80,6 @@ function SlidingTabBarInner<T extends string = string>({
     variant === 'pill'    && styles.pillContainer,
     variant === 'segment' && styles.segmentContainer,
     variant === 'primary' && styles.primaryContainer,
-    dimmed && styles.dimmed,
     className,
   );
 
@@ -106,7 +105,7 @@ function SlidingTabBarInner<T extends string = string>({
     >
       <div
         className={indicatorCls}
-        style={dimmed ? undefined : indicatorStyle}
+        style={indicatorStyle}
         aria-hidden="true"
       />
       {options.map((opt, index) => {
@@ -117,8 +116,8 @@ function SlidingTabBarInner<T extends string = string>({
             ref={setTabRef(index)}
             type="button"
             role="tab"
-            aria-selected={!dimmed && isActive}
-            className={cx(btnCls, !dimmed && isActive && btnActive, btnClassName)}
+            aria-selected={isActive}
+            className={cx(btnCls, isActive && btnActive, dimmed && styles.btnDimmed, btnClassName)}
             onClick={() => onChange(opt.value)}
           >
             {renderLabel ? renderLabel(opt, isActive) : opt.label}

@@ -30,6 +30,4 @@ export interface CascadePickerViewProps {
   allowClear?: boolean;
   /** 自定义根节点 className */
   className?: string;
-  /** 自定义输入框内联样式（如调整高度） */
-  inputStyle?: React.CSSProperties;
 }

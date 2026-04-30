@@ -220,3 +220,77 @@ describe('AvatarTrigger – className 透传', () => {
         expect(cls).toMatch(/avatarBtn|avatar/i);
     });
 });
+
+// ─── 8. name 边界值 ────────────────────────────────────────────────────────────
+describe('AvatarTrigger – name 边界值', () => {
+    const avatarUrl = 'https://example.com/avatar.jpg';
+
+    it('name="" 空字符串时 alt 为「的头像」（不崩溃）', () => {
+        renderTrigger({ avatar: avatarUrl, name: '' });
+        expect(screen.getByRole('img')).toHaveAttribute('alt', '的头像');
+    });
+
+    it('name 为长字符串时 alt 正确拼接', () => {
+        renderTrigger({ avatar: avatarUrl, name: 'VeryLongUserName123456' });
+        expect(screen.getByRole('img')).toHaveAttribute('alt', 'VeryLongUserName123456的头像');
+    });
+
+    it('name 含特殊字符时 alt 正确拼接', () => {
+        renderTrigger({ avatar: avatarUrl, name: '用户<test>' });
+        expect(screen.getByRole('img')).toHaveAttribute('alt', '用户<test>的头像');
+    });
+});
+
+// ─── 9. 键盘交互 ──────────────────────────────────────────────────────────────
+describe('AvatarTrigger – 键盘交互', () => {
+    it('按 Enter 键触发 onClick', async () => {
+        const user = userEvent.setup();
+        const onClick = vi.fn();
+        renderTrigger({ onClick });
+        screen.getByRole('button').focus();
+        await user.keyboard('{Enter}');
+        expect(onClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('按 Space 键触发 onClick', async () => {
+        const user = userEvent.setup();
+        const onClick = vi.fn();
+        renderTrigger({ onClick });
+        screen.getByRole('button').focus();
+        await user.keyboard(' ');
+        expect(onClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('Tab 键可聚焦到 button', async () => {
+        const user = userEvent.setup();
+        renderTrigger();
+        await user.tab();
+        expect(screen.getByRole('button')).toHaveFocus();
+    });
+});
+
+// ─── 10. 纯渲染无副作用 ───────────────────────────────────────────────────────
+describe('AvatarTrigger – 纯渲染无副作用', () => {
+    it('渲染时不调用 onClick', () => {
+        const onClick = vi.fn();
+        renderTrigger({ onClick });
+        expect(onClick).not.toHaveBeenCalled();
+    });
+
+    it('props 不变时 rerender 不触发 onClick', () => {
+        const onClick = vi.fn();
+        const { rerender } = renderTrigger({ onClick });
+        rerender(<AvatarTrigger onClick={onClick} />);
+        expect(onClick).not.toHaveBeenCalled();
+    });
+
+    it('渲染后 DOM 只有一个 button', () => {
+        renderTrigger();
+        expect(screen.getAllByRole('button')).toHaveLength(1);
+    });
+
+    it('有 avatar 时 DOM 只有一个 img', () => {
+        renderTrigger({ avatar: 'https://example.com/a.jpg' });
+        expect(screen.getAllByRole('img')).toHaveLength(1);
+    });
+});

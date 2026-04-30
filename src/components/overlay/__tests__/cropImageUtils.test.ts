@@ -274,3 +274,103 @@ describe('getCroppedImg – 不同 pixelCrop', () => {
     expect(urlSpy).toHaveBeenCalledTimes(2);
   });
 });
+
+// ─── 6. 非方形裁剪区域 ────────────────────────────────────────────────────────
+describe('getCroppedImg – 非方形裁剪区域', () => {
+  it('宽大于高（横屏）时 canvas 尺寸正确', async () => {
+    const crop: Area = { x: 0, y: 0, width: 200, height: 100 };
+    await getCroppedImg(IMAGE_SRC, crop);
+    expect(lastCanvas?.width).toBe(200);
+    expect(lastCanvas?.height).toBe(100);
+  });
+
+  it('高大于宽（竖屏）时 canvas 尺寸正确', async () => {
+    const crop: Area = { x: 0, y: 0, width: 100, height: 300 };
+    await getCroppedImg(IMAGE_SRC, crop);
+    expect(lastCanvas?.width).toBe(100);
+    expect(lastCanvas?.height).toBe(300);
+  });
+
+  it('非方形时 drawImage 参数宽高与裁剪区一致', async () => {
+    const crop: Area = { x: 5, y: 10, width: 320, height: 180 };
+    await getCroppedImg(IMAGE_SRC, crop);
+    expect(drawImageArgs[3]).toBe(320); // sw
+    expect(drawImageArgs[4]).toBe(180); // sh
+    expect(drawImageArgs[7]).toBe(320); // dw
+    expect(drawImageArgs[8]).toBe(180); // dh
+  });
+});
+
+// ─── 7. 浮点裁剪值 ───────────────────────────────────────────────────────────
+describe('getCroppedImg – 浮点裁剪值', () => {
+  it('浮点 x/y 时 drawImage sx/sy 使用原始浮点值', async () => {
+    const crop: Area = { x: 0.5, y: 1.25, width: 100, height: 80 };
+    await getCroppedImg(IMAGE_SRC, crop);
+    expect(drawImageArgs[1]).toBe(0.5);
+    expect(drawImageArgs[2]).toBe(1.25);
+  });
+
+  it('浮点 width/height 时 canvas 尺寸被截断为整数（HTMLCanvasElement.width 是整数属性）', async () => {
+    // HTMLCanvasElement.width/height 是 unsigned long 整数，浮点赋值会被截断
+    const crop: Area = { x: 0, y: 0, width: 99.5, height: 79.75 };
+    await getCroppedImg(IMAGE_SRC, crop);
+    // 99.5 → 99，79.75 → 79（浏览器/JSDOM 均截断）
+    expect(lastCanvas?.width).toBe(Math.trunc(99.5));
+    expect(lastCanvas?.height).toBe(Math.trunc(79.75));
+  });
+
+  it('浮点裁剪值最终仍返回 blob URL', async () => {
+    const crop: Area = { x: 3.3, y: 7.7, width: 50.5, height: 40.2 };
+    const result = await getCroppedImg(IMAGE_SRC, crop);
+    expect(result).toMatch(/^blob:/);
+  });
+});
+
+// ─── 8. 大尺寸裁剪区域 ───────────────────────────────────────────────────────
+describe('getCroppedImg – 大尺寸裁剪区域', () => {
+  it('4K 级尺寸（3840x2160）时正常处理', async () => {
+    const crop: Area = { x: 0, y: 0, width: 3840, height: 2160 };
+    const result = await getCroppedImg(IMAGE_SRC, crop);
+    expect(result).toBeTruthy();
+    expect(lastCanvas?.width).toBe(3840);
+    expect(lastCanvas?.height).toBe(2160);
+  });
+
+  it('大尺寸 drawImage 参数正确', async () => {
+    const crop: Area = { x: 100, y: 200, width: 1920, height: 1080 };
+    await getCroppedImg(IMAGE_SRC, crop);
+    expect(drawImageArgs[1]).toBe(100);
+    expect(drawImageArgs[2]).toBe(200);
+    expect(drawImageArgs[3]).toBe(1920);
+    expect(drawImageArgs[4]).toBe(1080);
+  });
+});
+
+// ─── 9. 多次调用独立性 ────────────────────────────────────────────────────────
+describe('getCroppedImg – 多次调用独立性', () => {
+  it('连续两次调用各自独立，不共享 canvas', async () => {
+    const crop1: Area = { x: 0, y: 0, width: 50, height: 50 };
+    const crop2: Area = { x: 10, y: 10, width: 100, height: 80 };
+
+    await getCroppedImg(IMAGE_SRC, crop1);
+    const canvas1Size = { w: lastCanvas!.width, h: lastCanvas!.height };
+
+    await getCroppedImg(IMAGE_SRC, crop2);
+    const canvas2Size = { w: lastCanvas!.width, h: lastCanvas!.height };
+
+    expect(canvas1Size).toEqual({ w: 50, h: 50 });
+    expect(canvas2Size).toEqual({ w: 100, h: 80 });
+  });
+
+  it('连续调用 drawImage 各自携带自己的坐标', async () => {
+    const crop1: Area = { x: 5, y: 5, width: 40, height: 40 };
+    const crop2: Area = { x: 20, y: 30, width: 60, height: 70 };
+
+    await getCroppedImg(IMAGE_SRC, crop1);
+    expect(drawImageArgs[1]).toBe(5);
+
+    await getCroppedImg(IMAGE_SRC, crop2);
+    expect(drawImageArgs[1]).toBe(20);
+    expect(drawImageArgs[2]).toBe(30);
+  });
+});

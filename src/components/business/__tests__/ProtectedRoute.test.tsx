@@ -305,7 +305,45 @@ describe('ProtectedRoute – showToast 幂等性', () => {
     });
 });
 
-// ─── 7. 多种 fallback 路径 ────────────────────────────────────────────────────
+// ─── 7. fallback preload ─────────────────────────────────────────────────────
+describe('ProtectedRoute – fallback preload', () => {
+    beforeEach(() => {
+        mockShowToast.mockClear();
+    });
+
+    it('校验通过时不预加载 fallback 页面', () => {
+        const preloadFallback = vi.fn();
+        renderRoute({ check: () => true, preloadFallback });
+        expect(preloadFallback).not.toHaveBeenCalled();
+    });
+
+    it('校验失败时预加载 fallback 页面', () => {
+        const preloadFallback = vi.fn();
+        renderRoute({ check: () => false, preloadFallback });
+        expect(preloadFallback).toHaveBeenCalledTimes(1);
+    });
+
+    it('check=false 的情况下多次 rerender，fallback preload 不重复调用', () => {
+        const preloadFallback = vi.fn();
+        const { rerender } = renderRoute({ check: () => false, preloadFallback });
+        expect(preloadFallback).toHaveBeenCalledTimes(1);
+
+        rerender(
+            <MemoryRouter>
+                <ProtectedRoute
+                    check={() => false}
+                    fallback="/login"
+                    preloadFallback={preloadFallback}
+                >
+                    <span data-testid="protected-content">受保护内容</span>
+                </ProtectedRoute>
+            </MemoryRouter>,
+        );
+        expect(preloadFallback).toHaveBeenCalledTimes(1);
+    });
+});
+
+// ─── 8. 多种 fallback 路径 ────────────────────────────────────────────────────
 describe('ProtectedRoute – 多种 fallback 路径', () => {
     beforeEach(() => {
         mockShowToast.mockClear();
@@ -321,7 +359,7 @@ describe('ProtectedRoute – 多种 fallback 路径', () => {
     });
 });
 
-// ─── 8. 不同 children 类型 ────────────────────────────────────────────────────
+// ─── 9. 不同 children 类型 ────────────────────────────────────────────────────
 describe('ProtectedRoute – 不同 children 类型', () => {
     beforeEach(() => {
         mockShowToast.mockClear();
@@ -341,5 +379,164 @@ describe('ProtectedRoute – 不同 children 类型', () => {
         expect(() => {
             renderRoute({ check: () => true, children: null });
         }).not.toThrow();
+    });
+});
+
+// ─── 10. false → true → false 状态迁移（toast 重置行为） ─────────────────────
+describe('ProtectedRoute – false→true→false 状态迁移', () => {
+    beforeEach(() => {
+        mockShowToast.mockClear();
+    });
+
+    /**
+     * 关键行为说明：
+     *
+     * ProtectedRoute 内部用 hasShownToast ref 保护 toast 的重复调用。
+     * 当 allowed 变为 true 时，hasPreloadedFallback 会被重置，但 hasShownToast **不会重置**。
+     * 所以：false → true → false 的完整迁移后，toast **不会再次触发**。
+     *
+     * 这是当前实现的既定行为。以下测试确认该行为是明确的、稳定的。
+     * 如果产品需求改成"重新拦截时也要提示"，则 ProtectedRoute 实现需同步修改。
+     */
+
+    it('false → true 后 Navigate 消失，children 出现', () => {
+        let allowed = false;
+        const { rerender } = renderRoute({ check: () => allowed });
+        expect(screen.getByTestId('mock-navigate')).toBeInTheDocument();
+        expect(screen.queryByTestId('protected-content')).toBeNull();
+
+        allowed = true;
+        rerender(
+            <MemoryRouter>
+                <ProtectedRoute check={() => allowed} fallback="/login">
+                    <span data-testid="protected-content">受保护内容</span>
+                </ProtectedRoute>
+            </MemoryRouter>,
+        );
+
+        expect(screen.queryByTestId('mock-navigate')).toBeNull();
+        expect(screen.getByTestId('protected-content')).toBeInTheDocument();
+    });
+
+    it('false → true 后 showToast 不再重复调用', () => {
+        let allowed = false;
+        const { rerender } = renderRoute({ check: () => allowed, message: '迁移测试' });
+        expect(mockShowToast).toHaveBeenCalledTimes(1);
+
+        allowed = true;
+        rerender(
+            <MemoryRouter>
+                <ProtectedRoute check={() => allowed} fallback="/login" message="迁移测试">
+                    <span data-testid="protected-content">受保护内容</span>
+                </ProtectedRoute>
+            </MemoryRouter>,
+        );
+        // 变为 allowed=true，不应新增 toast 调用
+        expect(mockShowToast).toHaveBeenCalledTimes(1);
+    });
+
+    it('false → true → false：由于 hasShownToast 不重置，toast 不再触发（当前实现行为）', () => {
+        let allowed = false;
+        const { rerender } = renderRoute({ check: () => allowed, message: '三段迁移' });
+        expect(mockShowToast).toHaveBeenCalledTimes(1);
+
+        // → true
+        allowed = true;
+        rerender(
+            <MemoryRouter>
+                <ProtectedRoute check={() => allowed} fallback="/login" message="三段迁移">
+                    <span data-testid="protected-content">受保护内容</span>
+                </ProtectedRoute>
+            </MemoryRouter>,
+        );
+        expect(mockShowToast).toHaveBeenCalledTimes(1);
+
+        // → false 再次
+        allowed = false;
+        rerender(
+            <MemoryRouter>
+                <ProtectedRoute check={() => allowed} fallback="/login" message="三段迁移">
+                    <span data-testid="protected-content">受保护内容</span>
+                </ProtectedRoute>
+            </MemoryRouter>,
+        );
+
+        // 当前实现：hasShownToast 未重置，toast 不再调用
+        // 如果你的需求是"再次拦截时仍要提示"，请修改 ProtectedRoute 并更新此断言
+        expect(mockShowToast).toHaveBeenCalledTimes(1);
+        expect(screen.getByTestId('mock-navigate')).toBeInTheDocument();
+        expect(screen.queryByTestId('protected-content')).toBeNull();
+    });
+
+    it('false → true → false：hasPreloadedFallback 在 true 时被重置，false 时再次预加载', () => {
+        const preloadFallback = vi.fn();
+        let allowed = false;
+
+        const { rerender } = renderRoute({ check: () => allowed, preloadFallback });
+        expect(preloadFallback).toHaveBeenCalledTimes(1);
+
+        // → true（hasPreloadedFallback 重置）
+        allowed = true;
+        rerender(
+            <MemoryRouter>
+                <ProtectedRoute
+                    check={() => allowed}
+                    fallback="/login"
+                    preloadFallback={preloadFallback}
+                >
+                    <span data-testid="protected-content">受保护内容</span>
+                </ProtectedRoute>
+            </MemoryRouter>,
+        );
+
+        // → false（hasPreloadedFallback 已重置，应再次预加载）
+        allowed = false;
+        rerender(
+            <MemoryRouter>
+                <ProtectedRoute
+                    check={() => allowed}
+                    fallback="/login"
+                    preloadFallback={preloadFallback}
+                >
+                    <span data-testid="protected-content">受保护内容</span>
+                </ProtectedRoute>
+            </MemoryRouter>,
+        );
+
+        // hasPreloadedFallback 在 true 时被重置，所以这次 false 应再次触发 preload
+        expect(preloadFallback).toHaveBeenCalledTimes(2);
+    });
+});
+
+// ─── 11. check 函数本身可以有副作用（同步执行，渲染时调用） ──────────────────
+describe('ProtectedRoute – check 函数调用时机', () => {
+    beforeEach(() => {
+        mockShowToast.mockClear();
+    });
+
+    it('check 在渲染期间同步调用', () => {
+        const check = vi.fn(() => true);
+        renderRoute({ check });
+        expect(check).toHaveBeenCalled();
+    });
+
+    it('rerender 时 check 再次被调用', () => {
+        const check = vi.fn(() => true);
+        const { rerender } = renderRoute({ check });
+        const callsBefore = check.mock.calls.length;
+
+        rerender(
+            <MemoryRouter>
+                <ProtectedRoute check={check} fallback="/login">
+                    <span data-testid="protected-content">受保护内容</span>
+                </ProtectedRoute>
+            </MemoryRouter>,
+        );
+        expect(check.mock.calls.length).toBeGreaterThan(callsBefore);
+    });
+
+    it('check 抛出异常时，异常向上冒泡（不被静默吞掉）', () => {
+        const check = () => { throw new Error('check error'); };
+        expect(() => renderRoute({ check })).toThrow('check error');
     });
 });

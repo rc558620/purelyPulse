@@ -54,8 +54,8 @@ import React, { act } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { showToast, ToastContainer } from '../Toast/index';
-import { TOAST_EVENT, DEFAULT_DURATION, LEAVE_DURATION } from '../Toast/constants';
+import { showToast, ToastContainer } from '../feedback/Toast/index';
+import { TOAST_EVENT, DEFAULT_DURATION, LEAVE_DURATION } from '../feedback/Toast/constants';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 辅助：触发 showToast 并等待 React 状态更新
@@ -77,40 +77,40 @@ describe('showToast – 命令式触发', () => {
     });
 
     it('event detail 包含正确的 message', () => {
-        const listener = vi.fn<[Event]>();
-        window.addEventListener(TOAST_EVENT, listener);
+        const listener = vi.fn();
+        window.addEventListener(TOAST_EVENT, listener as EventListener);
         showToast({ message: '你好世界' });
         const detail = (listener.mock.calls[0][0] as CustomEvent).detail;
         expect(detail.message).toBe('你好世界');
-        window.removeEventListener(TOAST_EVENT, listener);
+        window.removeEventListener(TOAST_EVENT, listener as EventListener);
     });
 
     it('自定义 type 在 event detail 中正确传递', () => {
-        const listener = vi.fn<[Event]>();
-        window.addEventListener(TOAST_EVENT, listener);
+        const listener = vi.fn();
+        window.addEventListener(TOAST_EVENT, listener as EventListener);
         showToast({ message: 'ok', type: 'success' });
         const detail = (listener.mock.calls[0][0] as CustomEvent).detail;
         expect(detail.type).toBe('success');
-        window.removeEventListener(TOAST_EVENT, listener);
+        window.removeEventListener(TOAST_EVENT, listener as EventListener);
     });
 
     it('duration 在 event detail 中正确传递', () => {
-        const listener = vi.fn<[Event]>();
-        window.addEventListener(TOAST_EVENT, listener);
+        const listener = vi.fn();
+        window.addEventListener(TOAST_EVENT, listener as EventListener);
         showToast({ message: 'ok', duration: 5000 });
         const detail = (listener.mock.calls[0][0] as CustomEvent).detail;
         expect(detail.duration).toBe(5000);
-        window.removeEventListener(TOAST_EVENT, listener);
+        window.removeEventListener(TOAST_EVENT, listener as EventListener);
     });
 
     it('icon 在 event detail 中正确传递', () => {
-        const listener = vi.fn<[Event]>();
-        window.addEventListener(TOAST_EVENT, listener);
+        const listener = vi.fn();
+        window.addEventListener(TOAST_EVENT, listener as EventListener);
         const icon = <span>★</span>;
         showToast({ message: 'ok', icon });
         const detail = (listener.mock.calls[0][0] as CustomEvent).detail;
         expect(detail.icon).toBe(icon);
-        window.removeEventListener(TOAST_EVENT, listener);
+        window.removeEventListener(TOAST_EVENT, listener as EventListener);
     });
 });
 

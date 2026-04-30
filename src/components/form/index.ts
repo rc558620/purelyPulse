@@ -4,5 +4,6 @@ export * from './useForm';
 export * from './context';
 export * from './types';
 export * from './FormItem';
+export { default as Checkbox } from './Checkbox';
 export { default as TimePicker } from './TimePicker';
 export { default as MonthPicker } from './MonthPicker';

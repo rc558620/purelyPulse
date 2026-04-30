@@ -1,0 +1,20 @@
+@import (reference) '@styles/variables.less';
+
+.chartSkeleton {
+  width: 100%;
+  min-height: 200px;
+  border-radius: @radius-md;
+  background: linear-gradient(
+    90deg,
+    fade(@text-slate-400, 6%) 25%,
+    fade(@text-slate-400, 12%) 50%,
+    fade(@text-slate-400, 6%) 75%
+  );
+  background-size: 200% 100%;
+  animation: chartSkeletonShimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes chartSkeletonShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
