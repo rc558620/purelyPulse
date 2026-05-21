@@ -8,6 +8,7 @@ import { createPortal } from 'react-dom';
 import type { CascadeOption, CascadeValue } from './types';
 import styles from './CascaderView.module.less';
 import { cx } from '@utils/utils';
+import { ChevronRightIcon } from '@components/form/_shared/icons';
 
 // ─── 移动端单个选项条目 ───────────────────────────────────────────────────────
 
@@ -28,16 +29,7 @@ const MobileCascaderItem = memo(({ option, isSelected, onSelect }: MobileItemPro
   >
     <span>{option.label}</span>
     {!!option.children?.length && (
-      <svg
-        className={styles['cascader-item-arrow']}
-        width="16"
-        height="16"
-        viewBox="0 0 16 16"
-        fill="currentColor"
-        aria-hidden="true"
-      >
-        <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="2" fill="none" />
-      </svg>
+      <ChevronRightIcon className={styles['cascader-item-arrow']} />
     )}
   </div>
 ));

@@ -20,34 +20,8 @@
  */
 import { memo } from 'react';
 import { cx, safeNum } from '@utils/utils';
+import { IconTrendUp, IconTrendDown } from '@components/ui/_shared/icons';
 import styles from './TrendBadge.module.less';
-
-// 内联 SVG：避免外部图标依赖，保持组件自洽
-const IconUp = (
-  <svg
-    aria-hidden="true" width="12" height="12"
-    viewBox="0 0 24 24" fill="none"
-    stroke="currentColor" strokeWidth="2.5"
-    strokeLinecap="round" strokeLinejoin="round"
-    style={{ flexShrink: 0 }}
-  >
-    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
-    <polyline points="17 6 23 6 23 12" />
-  </svg>
-);
-
-const IconDown = (
-  <svg
-    aria-hidden="true" width="12" height="12"
-    viewBox="0 0 24 24" fill="none"
-    stroke="currentColor" strokeWidth="2.5"
-    strokeLinecap="round" strokeLinejoin="round"
-    style={{ flexShrink: 0 }}
-  >
-    <polyline points="23 18 13.5 8.5 8.5 13.5 1 6" />
-    <polyline points="17 18 23 18 23 12" />
-  </svg>
-);
 
 export interface TrendBadgeProps {
   /**
@@ -104,7 +78,7 @@ const TrendBadge = memo<TrendBadgeProps>(({
         className,
       )}
     >
-      {isUp ? IconUp : IconDown}
+      {isUp ? <IconTrendUp /> : <IconTrendDown />}
       {isUp ? '+' : ''}{abs}%
       {suffix && <span style={{ marginLeft: '0.2rem' }}>{suffix}</span>}
     </span>

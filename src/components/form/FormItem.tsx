@@ -32,6 +32,8 @@ export interface FormItemProps<T extends FormValues = Record<string, unknown>> {
     name: FormFieldName<T>;
     /** 字段标签。 */
     label?: string;
+    /** 是否强制展示为必填。默认按 rules.required 推断。 */
+    required?: boolean;
     /** 字段校验规则。 */
     rules?: ValidatorRule[];
     /** 受控字段注入的属性名，默认使用 value。 */
@@ -80,6 +82,7 @@ ErrorMessage.displayName = 'ErrorMessage';
 const FormItemInner = <T extends FormValues = Record<string, unknown>>({
     name,
     label,
+    required,
     rules = [],
     valuePropName = 'value',
     children,
@@ -92,18 +95,20 @@ const FormItemInner = <T extends FormValues = Record<string, unknown>>({
         getFieldValue,
         setFieldValue,
         subscribeField,
+        requiredMark,
     } = useFormContext();
 
     useEffect(() => {
         registerField(name, rules);
+    }, [name, registerField, rules]);
+
+    useEffect(() => {
         return () => unregisterField(name);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [name]);
+    }, [name, unregisterField]);
 
     // ── 订阅该字段的变更，useSyncExternalStore 确保 concurrent 模式下撕裂安全 ──
     const subscribe = useCallback(
         (onStoreChange: () => void) => subscribeField(name as string, onStoreChange),
-        // eslint-disable-next-line react-hooks/exhaustive-deps
         [name, subscribeField],
     );
 
@@ -158,8 +163,6 @@ const FormItemInner = <T extends FormValues = Record<string, unknown>>({
     const handleChange = useCallback((event: unknown) => {
         childOriginalOnChangeRef.current?.(event);
         setFieldValue(nameRef.current, extractFieldValue(event));
-    // setFieldValue 来自 context ref 稳定，无需列为依赖
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [setFieldValue]);
 
     // 默认 value 使用空字符串保持受控；checked 模式则回退到 false。
@@ -177,9 +180,19 @@ const FormItemInner = <T extends FormValues = Record<string, unknown>>({
           } as FormItemChildProps)
         : children;
 
+    const isRequired = required ?? rules.some((rule) => rule.required);
+    const showRequiredMark = label && requiredMark !== false && isRequired;
+    const showOptionalMark = label && requiredMark === 'optional' && !isRequired;
+
     return (
         <div className={cx(styles.formItem, className)}>
-            {label && <label className={styles.itemLabel}>{label}</label>}
+            {label && (
+                <label className={styles.itemLabel}>
+                    {showRequiredMark && <span className={styles.requiredMark} aria-hidden="true">*</span>}
+                    <span>{label}</span>
+                    {showOptionalMark && <span className={styles.optionalMark}>Optional</span>}
+                </label>
+            )}
             <div className={cx(styles.itemControl, error && styles.hasError)}>
                 {childNode}
                 <ErrorMessage displayError={displayError} exiting={exiting} />

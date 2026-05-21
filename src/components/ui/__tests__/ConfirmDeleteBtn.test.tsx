@@ -86,10 +86,10 @@ describe('ConfirmDeleteBtn – 进入确认态', () => {
         expect(screen.getByRole('button').className).toMatch(/deleteBtnConfirm/);
     });
 
-    it('点击后渲染确认文字（默认"确认"）', () => {
+    it('点击后渲染确认文字（默认"确认删除"）', () => {
         renderBtn();
         act(() => { fireEvent.click(screen.getByRole('button')); });
-        expect(screen.getByText('确认')).toBeInTheDocument();
+        expect(screen.getByText('确认删除')).toBeInTheDocument();
     });
 
     it('点击后 aria-label 变为"确认删除"', () => {
@@ -119,13 +119,19 @@ describe('ConfirmDeleteBtn – 执行删除', () => {
         expect(onDelete).toHaveBeenCalledTimes(1);
     });
 
-    it('确认态点击删除后按钮退出确认态（deleteBtnConfirm 消失）', () => {
+    it('确认态点击删除后按钮立即退出确认态并恢复图标', () => {
         const onDelete = vi.fn();
-        renderBtn({ onDelete });
+        const { container } = renderBtn({ onDelete });
         act(() => { fireEvent.click(screen.getByRole('button')); });
+        expect(screen.getByRole('button').className).toMatch(/deleteBtnConfirm/);
+        expect(screen.queryByText('确认删除')).toBeInTheDocument();
+
         act(() => { fireEvent.click(screen.getByRole('button')); });
-        // 执行删除后状态应重置（onDelete 已触发，组件内部 state confirming 通过 onDelete 后外部卸载/更新）
+
         expect(onDelete).toHaveBeenCalledTimes(1);
+        expect(screen.getByRole('button').className).not.toMatch(/deleteBtnConfirm/);
+        expect(screen.queryByText('确认删除')).toBeNull();
+        expect(container.querySelector('svg')).toBeInTheDocument();
     });
 });
 
@@ -234,10 +240,10 @@ describe('ConfirmDeleteBtn – React.memo', () => {
 
 // ─── 9. userEvent 完整交互流 ──────────────────────────────────────────────────
 describe('ConfirmDeleteBtn – userEvent 交互流', () => {
-    it('两次点击完成删除确认流程', async () => {
+    it('两次点击完成删除确认流程后恢复到初始 icon 态', async () => {
         const user = userEvent.setup();
         const onDelete = vi.fn();
-        renderBtn({ onDelete });
+        const { container } = renderBtn({ onDelete });
         // 第一次点击
         await user.click(screen.getByRole('button'));
         expect(onDelete).not.toHaveBeenCalled();
@@ -245,5 +251,7 @@ describe('ConfirmDeleteBtn – userEvent 交互流', () => {
         // 第二次点击
         await user.click(screen.getByRole('button'));
         expect(onDelete).toHaveBeenCalledTimes(1);
+        expect(screen.getByRole('button').className).not.toMatch(/deleteBtnConfirm/);
+        expect(container.querySelector('svg')).toBeInTheDocument();
     });
 });

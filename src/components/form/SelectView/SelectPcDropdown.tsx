@@ -2,111 +2,29 @@
 //
 // 绝对定位，通过 CSS 动画控制入场/退场（antSlideUpIn / antSlideUpOut）。
 // 自身只负责 UI 渲染，状态由父组件（SelectView）通过 props 注入。
+// 支持 optionRender 自定义每行选项内容（类似 Ant Design）。
 
 import React, { memo } from 'react';
-import type { SelectOption, SelectValue, SelectPcDropdownProps } from './types';
-import styles from './SelectView.module.less';
+import { CheckIcon, SearchIcon, SmallCloseIcon } from '@components/form/_shared/icons';
 import { cx } from '@utils/utils';
+import { SelectOptionRowFactory } from './SelectMobilePanel';
+import styles from './SelectView.module.less';
+import type {
+  SelectPcDropdownProps,
+  SelectOptionRowProps,
+} from './types';
 
-// ─── 搜索关键词高亮 ────────────────────────────────────────────────────────────
-
-const HighlightText = memo(({ text, keyword }: { text: string; keyword: string }) => {
-  if (!keyword.trim()) return <>{text}</>;
-
-  const lowerText    = text.toLowerCase();
-  const lowerKeyword = keyword.trim().toLowerCase();
-  const index        = lowerText.indexOf(lowerKeyword);
-
-  if (index === -1) return <>{text}</>;
-
-  return (
-    <>
-      {text.slice(0, index)}
-      <mark className={styles['highlight']}>
-        {text.slice(index, index + lowerKeyword.length)}
-      </mark>
-      {text.slice(index + lowerKeyword.length)}
-    </>
-  );
-});
-HighlightText.displayName = 'HighlightText';
-
-// ─── PC 端选项条目 ─────────────────────────────────────────────────────────────
-
-interface PcOptionItemProps {
-  option: SelectOption;
-  isSelected: boolean;
-  isMultiple: boolean;
-  keyword: string;
-  onSingleSelect: (val: SelectValue) => void;
-  onMultiToggle: (val: SelectValue) => void;
-}
-
-const PcOptionItem = memo(({
-  option,
-  isSelected,
-  isMultiple,
-  keyword,
-  onSingleSelect,
-  onMultiToggle,
-}: PcOptionItemProps) => {
-  const handleClick = () => {
-    if (option.disabled) return;
-    if (isMultiple) {
-      onMultiToggle(option.value);
-    } else {
-      onSingleSelect(option.value);
-    }
-  };
-
-  return (
-    <div
-      className={cx(
-        styles['pc-option-item'],
-        isSelected && styles['active'],
-        option.disabled && styles['disabled'],
-      )}
-      onClick={handleClick}
-    >
-      <span>
-        <HighlightText text={option.label} keyword={keyword} />
-      </span>
-
-      {isMultiple ? (
-        <div className={cx(styles['checkbox'], isSelected && styles['checked'])}>
-          {isSelected && (
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 10 10"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              aria-hidden="true"
-            >
-              <path d="M1.5 5l2.5 2.5 4.5-4.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          )}
-        </div>
-      ) : (
-        isSelected && (
-          <svg
-            className={styles['check-icon']}
-            width="14"
-            height="14"
-            viewBox="0 0 16 16"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            aria-hidden="true"
-          >
-            <path d="M2.5 8l3.5 3.5 7-7" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        )
-      )}
-    </div>
-  );
-});
+const PcOptionItem = memo((props: SelectOptionRowProps) => (
+  <SelectOptionRowFactory
+    {...props}
+    rowClassName={styles['pc-option-item']}
+    selectedClassName={styles.active}
+    disabledClassName={styles.disabled}
+    customRowClassName={styles['pc-option-item-custom']}
+    customContentClassName={styles['pc-option-custom-content']}
+    renderSingleSelectedIcon={() => <CheckIcon className={styles['check-icon']} size={14} />}
+  />
+));
 PcOptionItem.displayName = 'PcOptionItem';
 
 // ─── 下拉面板 ──────────────────────────────────────────────────────────────────
@@ -127,28 +45,17 @@ const SelectPcDropdown: React.FC<SelectPcDropdownProps> = ({
   onAnimationEnd,
   onSearchChange,
   onSearchClear,
+  optionRender,
 }) => (
   <div
-    className={cx(styles['select-dropdown-pc'], isClosing && styles['closing'])}
+    className={cx(styles['select-dropdown-pc'], isClosing && styles.closing)}
     onAnimationEnd={onAnimationEnd}
     role="listbox"
   >
     {/* 搜索框 */}
     {searchable && (
       <div className={styles['pc-search-box']}>
-        <svg
-          className={styles['search-icon']}
-          width="13"
-          height="13"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          aria-hidden="true"
-        >
-          <circle cx="11" cy="11" r="8" />
-          <path d="M21 21l-4.35-4.35" />
-        </svg>
+        <SearchIcon className={styles['search-icon']} size={13} />
         <input
           className={styles['pc-search-input']}
           type="text"
@@ -165,9 +72,7 @@ const SelectPcDropdown: React.FC<SelectPcDropdownProps> = ({
             onClick={onSearchClear}
             aria-label="清除搜索"
           >
-            <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
-              <path d="M6 5.293L10.146 1.146a.5.5 0 01.708.708L6.707 6l4.147 4.146a.5.5 0 01-.708.708L6 6.707l-4.146 4.147a.5.5 0 01-.708-.708L5.293 6 1.146 1.854a.5.5 0 01.708-.708L6 5.293z" />
-            </svg>
+            <SmallCloseIcon size={11} />
           </button>
         )}
       </div>
@@ -181,15 +86,17 @@ const SelectPcDropdown: React.FC<SelectPcDropdownProps> = ({
       {filteredOptions.length === 0 ? (
         <div className={styles['picker-empty']}>暂无匹配结果</div>
       ) : (
-        filteredOptions.map(option => (
+        filteredOptions.map((option, idx) => (
           <PcOptionItem
             key={String(option.value)}
             option={option}
+            index={idx}
             isSelected={isSelected(option.value)}
             isMultiple={isMultiple}
             keyword={deferredSearch}
             onSingleSelect={onSingleSelect}
             onMultiToggle={onMultiToggle}
+            optionRender={optionRender}
           />
         ))
       )}

@@ -138,6 +138,10 @@
   line-height: 1;
   color: @text-sub;
   transition: color 0.15s;
+
+  &Active {
+    color: var(--sign-color, #f59e0b);
+  }
 }
 
 // ─── 数量输入 ────────────────────────────────────────────────────────
@@ -279,6 +283,14 @@
 .previewNew {
   font-size: 1.6rem;
   font-weight: 700;
+
+  &Add {
+    color: #f59e0b;
+  }
+
+  &Sub {
+    color: #ef4444;
+  }
 }
 
 .previewUnit {

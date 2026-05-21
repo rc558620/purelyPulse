@@ -31,6 +31,7 @@ import {
   buildDatetimeValue,
 } from './utils';
 import styles from './DatePicker.module.less';
+import { CalendarIcon, SmallCloseIcon } from '@components/form/_shared/icons';
 
 // ─── 设备类型 hook ─────────────────────────────────────────────
 
@@ -95,6 +96,17 @@ export interface DatePickerProps {
   hideToday?: boolean;
   /** 在底部显示「确定」关闭按钮，默认 false */
   showConfirm?: boolean;
+  /**
+   * 返回需要禁用的小时数组（0-23），仅 `picker="datetime"` 时生效。
+   * @example disabledHours={() => [0, 1, 2, 3, 22, 23]}
+   */
+  disabledHours?: () => number[];
+  /**
+   * 返回需要禁用的分钟数组（0-59），仅 `picker="datetime"` 时生效。
+   * 接收当前选中的小时作为参数，可用于联动禁用。
+   * @example disabledMinutes={(h) => h === 8 ? [0, 1, 2, 3, 4] : []}
+   */
+  disabledMinutes?: (hour: number) => number[];
 }
 
 // ─── DatePicker 主组件 ────────────────────────────────────────
@@ -114,6 +126,8 @@ const DatePicker: React.FC<DatePickerProps> = ({
   prefix,
   hideToday     = false,
   showConfirm   = false,
+  disabledHours,
+  disabledMinutes,
 }) => {
   const isMonthMode    = picker === 'month';
   const isDatetimeMode = picker === 'datetime';
@@ -266,6 +280,8 @@ const DatePicker: React.FC<DatePickerProps> = ({
     showConfirm,
     // 无已选值时默认预选「明年今日」；有值则用已有值（由 CalendarView 内部 initPending 处理）
     defaultPending: showConfirm && !isDatetimeMode && !currentValue ? nextYearToday : undefined,
+    disabledHours,
+    disabledMinutes,
   };
 
   // ── 日历 / 月份面板（PC 和 Mobile 共用，封装成函数避免重复） ──
@@ -305,12 +321,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
         {prefix ? (
           <div className={styles.triggerPrefix}>{prefix}</div>
         ) : (
-          <svg className={styles.calIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-            <line x1="16" y1="2" x2="16" y2="6" />
-            <line x1="8"  y1="2" x2="8"  y2="6" />
-            <line x1="3"  y1="10" x2="21" y2="10" />
-          </svg>
+          <CalendarIcon className={styles.calIcon} />
         )}
 
         {/* 文本 */}
@@ -321,9 +332,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
         {/* 清除 / 占位 */}
         {allowClear && currentValue ? (
           <button type="button" className={styles.clearBtn} onClick={handleClearClick} aria-label="清除日期">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-              <path d="M6 5.293L10.146 1.146a.5.5 0 01.708.708L6.707 6l4.147 4.146a.5.5 0 01-.708.708L6 6.707l-4.146 4.147a.5.5 0 01-.708-.708L5.293 6 1.146 1.854a.5.5 0 01.708-.708L6 5.293z" />
-            </svg>
+            <SmallCloseIcon />
           </button>
         ) : (
           <span className={styles.arrowPlaceholder} aria-hidden="true" />

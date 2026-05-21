@@ -28,9 +28,9 @@ export interface ImageCropModalProps {
   cropShape?: 'rect' | 'round';
   /**
    * 点击「使用原图」回调，传入则显示该按钮，不传则隐藏。
-   * 调用方可直接将原始 imageSrc 作为最终值使用。
+   * 回调会拿到当前原始图片地址，避免调用方读取到过期的临时态。
    */
-  onUseOriginal?: () => void;
+  onUseOriginal?: (originalImageSrc: string) => void;
 }
 
 const INITIAL_CROP: Point = { x: 0, y: 0 };
@@ -108,11 +108,11 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
     }
   }, [croppedAreaPixels, imageSrc, onConfirm]);
 
-  /** 使用原图：重置裁剪状态后调用外部 onUseOriginal */
+  /** 使用原图：重置裁剪状态后把当前原图地址回传给外部 */
   const handleUseOriginal = useCallback(() => {
     resetState();
-    onUseOriginal?.();
-  }, [resetState, onUseOriginal]);
+    onUseOriginal?.(imageSrc);
+  }, [imageSrc, resetState, onUseOriginal]);
 
   // 首次未打开时不渲染，节省初始资源
   if (!hasBeenOpen) return null;

@@ -13,13 +13,43 @@ import type { CascadeOption, CascadeValue } from './types';
 // ─── 纯工具函数 ───────────────────────────────────────────────────────────────
 
 /** 按 value 路径收集各级 label，用于 trigger 展示文本 */
+const isSameValuePath = (left: CascadeValue[], right: CascadeValue[]): boolean => (
+  left.length === right.length && left.every((item, index) => item === right[index])
+);
+
+const findOptionByValuePath = (
+  options: CascadeOption[],
+  values: CascadeValue[],
+): CascadeOption | undefined => (
+  options.find(option => option.valuePath && isSameValuePath(option.valuePath, values))
+);
+
+const findOptionAtLevel = (
+  options: CascadeOption[],
+  values: CascadeValue[],
+  level: number,
+): CascadeOption | undefined => (
+  options.find(option => option.value === values[level])
+  ?? findOptionByValuePath(options, values)
+);
+
+export const isOptionSelected = (
+  option: CascadeOption,
+  values: CascadeValue[],
+  level: number,
+): boolean => (
+  option.value === values[level]
+  || Boolean(option.valuePath && isSameValuePath(option.valuePath, values))
+);
+
 export function resolveLabels(options: CascadeOption[], values: CascadeValue[]): string[] {
   const labels: string[] = [];
   let current = options;
-  for (const val of values) {
-    const found = current.find(o => o.value === val);
+  for (let level = 0; level < values.length; level += 1) {
+    const found = findOptionAtLevel(current, values, level);
     if (!found) break;
     labels.push(found.label);
+    if (found.valuePath) break;
     if (!found.children?.length) break;
     current = found.children;
   }
@@ -30,10 +60,11 @@ export function resolveLabels(options: CascadeOption[], values: CascadeValue[]):
 export function resolveAllLevels(options: CascadeOption[], values: CascadeValue[]): CascadeOption[][] {
   const levels: CascadeOption[][] = [options];
   let current = options;
-  for (const val of values) {
-    const found = current.find(o => o.value === val);
+  for (let level = 0; level < values.length; level += 1) {
+    const found = findOptionAtLevel(current, values, level);
     if (!found?.children?.length) break;
     levels.push(found.children);
+    if (found.valuePath) break;
     current = found.children;
   }
   return levels;
@@ -152,13 +183,14 @@ export function useCascaderState({
       const newValue = [...internalValue.slice(0, currentLevel), val];
       const selectedOption = currentLevelOptions.find(o => o.value === val);
       const hasChildren = !!selectedOption?.children?.length;
+      const selectedPath = selectedOption?.valuePath ?? newValue;
 
       if (hasChildren) {
         setInternalValue(newValue);
         setCurrentLevel(l => l + 1);
       } else {
-        if (!isControlled) setInternalValue(newValue);
-        onChange?.(newValue);
+        if (!isControlled) setInternalValue(selectedPath);
+        onChange?.(selectedPath);
         onClose();
       }
     },
@@ -181,11 +213,12 @@ export function useCascaderState({
       const levelOptions = allLevels[level];
       const selectedOption = levelOptions?.find(o => o.value === val);
       const hasChildren = !!selectedOption?.children?.length;
+      const selectedPath = selectedOption?.valuePath ?? newValue;
 
-      setInternalValue(newValue);
+      setInternalValue(selectedPath);
 
       if (!hasChildren) {
-        onChange?.(newValue);
+        onChange?.(selectedPath);
         onClose();
       }
     },

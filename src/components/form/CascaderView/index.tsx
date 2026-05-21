@@ -4,6 +4,7 @@
 // 状态由 useCascaderState / usePickerPopup / useDeviceType 分别管理
 
 import React, { useCallback, useEffect, useRef } from 'react';
+import { SmallCloseIcon, ChevronDownIcon } from '@components/form/_shared/icons';
 import type { CascadePickerViewProps } from './types';
 import styles from './CascaderView.module.less';
 import { cx } from '@utils/utils';
@@ -57,6 +58,7 @@ export const CascaderView: React.FC<CascadePickerViewProps> = ({
   // ── 选中值状态 + 选择逻辑 ─────────────────────────────────────────────────
   const {
     selectedValue,
+    internalValue,
     displayText,
     currentLevel,
     currentLevelOptions,
@@ -121,25 +123,16 @@ export const CascaderView: React.FC<CascadePickerViewProps> = ({
             onClick={handleClear}
             aria-label="清除选择"
           >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-              <path d="M6 5.293L10.146 1.146a.5.5 0 01.708.708L6.707 6l4.147 4.146a.5.5 0 01-.708.708L6 6.707l-4.146 4.147a.5.5 0 01-.708-.708L5.293 6 1.146 1.854a.5.5 0 01.708-.708L6 5.293z" />
-            </svg>
+            <SmallCloseIcon />
           </button>
         )}
 
-        <svg
+        <ChevronDownIcon
           className={cx(
             styles['cascader-input-arrow'],
             arrowOpen && styles['cascader-input-arrow-open'],
           )}
-          width="12"
-          height="12"
-          viewBox="0 0 12 12"
-          fill="currentColor"
-          aria-hidden="true"
-        >
-          <path d="M6 8L2 4h8z" />
-        </svg>
+        />
       </div>
 
       {isMobile ? (
@@ -148,7 +141,7 @@ export const CascaderView: React.FC<CascadePickerViewProps> = ({
           visible={visible}
           currentLevel={currentLevel}
           currentLevelOptions={currentLevelOptions}
-          selectedValue={selectedValue}
+          selectedValue={internalValue}
           onSelect={handleMobileSelect}
           onBack={handleMobileBack}
           onMaskClick={handleCloseWithReset}
@@ -159,7 +152,7 @@ export const CascaderView: React.FC<CascadePickerViewProps> = ({
           <CascaderPcDropdown
             isClosing={isClosing}
             allLevels={allLevels}
-            selectedValue={selectedValue}
+            selectedValue={internalValue}
             onSelect={handlePcSelect}
             onAnimationEnd={handleAnimationEnd}
           />

@@ -2,42 +2,8 @@
 // 适用于：库存商品列表行、库存调整弹窗标题区等场景。
 import React, { memo } from 'react';
 import { cx, safeStr } from '@utils/utils';
+import { IconProductBag, IconBadgeAlert } from '@components/ui/_shared/icons';
 import styles from './ProductAvatar.module.less';
-
-// ─── 内置 SVG 图标 ───────────────────────────────────────────────
-
-/** 商品默认占位图标：购物袋 */
-const IconProductBag: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-    {...props}
-  >
-    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-    <line x1="3" y1="6" x2="21" y2="6" />
-    <path d="M16 10a4 4 0 0 1-8 0" />
-  </svg>
-);
-
-/** 预警角标：三角形警告 */
-const IconBadgeAlert: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg
-    width="8" height="8"
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    aria-hidden="true"
-    {...props}
-  >
-    <path d="M12 2L2 19h20L12 2z" />
-    <line x1="12" y1="10" x2="12" y2="14" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
-    <circle cx="12" cy="17" r="1" fill="#fff" />
-  </svg>
-);
 
 // ─── 类型定义 ────────────────────────────────────────────────────
 

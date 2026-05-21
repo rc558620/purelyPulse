@@ -2,6 +2,7 @@
 import React, { memo } from 'react';
 import { MONTH_NAMES } from './utils';
 import styles from './DatePicker.module.less';
+import { ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon } from '@components/form/_shared/icons';
 
 export interface CalendarNavProps {
   viewYear: number;
@@ -16,9 +17,7 @@ const CalendarNav: React.FC<CalendarNavProps> = memo(({
 }) => (
   <div className={styles.calNav}>
     <button type="button" className={styles.calNavBtn} onClick={onPrevMonth} aria-label="上个月">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M15 18l-6-6 6-6" />
-      </svg>
+      <ChevronLeftIcon />
     </button>
     <button
       type="button"
@@ -27,14 +26,10 @@ const CalendarNav: React.FC<CalendarNavProps> = memo(({
       aria-label="选择年月"
     >
       {viewYear}年{MONTH_NAMES[viewMonth]}
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" style={{ marginLeft: 4 }}>
-        <path d="M6 8L2 4h8z" />
-      </svg>
+      <ChevronDownIcon style={{ marginLeft: 4 }} />
     </button>
     <button type="button" className={styles.calNavBtn} onClick={onNextMonth} aria-label="下个月">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M9 18l6-6-6-6" />
-      </svg>
+      <ChevronRightIcon />
     </button>
   </div>
 ));

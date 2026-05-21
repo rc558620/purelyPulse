@@ -7,6 +7,8 @@ import React, { memo } from 'react';
 import type { CascadeOption, CascadeValue } from './types';
 import styles from './CascaderView.module.less';
 import { cx } from '@utils/utils';
+import { ChevronRightIcon } from '@components/form/_shared/icons';
+import { isOptionSelected } from './useCascaderState';
 
 // ─── PC 端单列选项条目 ────────────────────────────────────────────────────────
 
@@ -28,16 +30,7 @@ const PcCascaderMenuItem = memo(({ option, isActive, onSelect, level }: PcMenuIt
   >
     <span>{option.label}</span>
     {!!option.children?.length && (
-      <svg
-        className={styles['cascader-menu-item-arrow']}
-        width="12"
-        height="12"
-        viewBox="0 0 12 12"
-        fill="currentColor"
-        aria-hidden="true"
-      >
-        <path d="M5 3l3 3-3 3" stroke="currentColor" strokeWidth="1.5" fill="none" />
-      </svg>
+      <ChevronRightIcon className={styles['cascader-menu-item-arrow']} size={12} />
     )}
   </div>
 ));
@@ -76,7 +69,7 @@ const CascaderPcDropdown: React.FC<CascaderPcDropdownProps> = ({
             <PcCascaderMenuItem
               key={String(option.value)}
               option={option}
-              isActive={selectedValue[levelIndex] === option.value}
+              isActive={isOptionSelected(option, selectedValue, levelIndex)}
               onSelect={onSelect}
               level={levelIndex}
             />

@@ -1,6 +1,7 @@
 import React, { memo, useEffect, useId, useMemo, useRef } from 'react';
 import { cx } from '@utils/utils';
 import styles from './Checkbox.module.less';
+import { CheckboxCheckIcon } from '@components/form/_shared/icons';
 
 const radiusMap = {
     sm: '8px',
@@ -99,9 +100,7 @@ const CheckboxInner: React.FC<CheckboxProps> = ({
                 className={styles.input}
             />
             <span className={cx(styles.box, boxClassName)} aria-hidden="true">
-                <svg className={styles.icon} viewBox="0 0 16 16" fill="none">
-                    <path d="M3.5 8.25L6.5 11.25L12.5 5.25" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+            <CheckboxCheckIcon className={styles.icon} />
             </span>
             {children ? <span className={styles.label}>{children}</span> : null}
         </label>

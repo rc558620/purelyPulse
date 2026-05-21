@@ -51,3 +51,11 @@
     opacity: 1;
   }
 }
+
+// 无障碍：用户开启「减少动效」时禁用所有帧动画
+@media (prefers-reduced-motion: reduce) {
+  .slideOut,
+  .slideIn {
+    animation: none;
+  }
+}

@@ -1,8 +1,9 @@
-@import (reference) '@styles/variables.less';
-@import (reference) '@styles/mixins.less';
+@import (reference) "@styles/variables.less";
+@import (reference) "@styles/mixins.less";
 
 @item-h: 44px;
 @visible-rows: 7;
+@bp-mobile: 768px;
 
 // ─── 包裹容器 ──────────────────────────────────────────────
 .wrapper {
@@ -16,17 +17,19 @@
   align-items: center;
   gap: 0.8rem;
   width: 100%;
-  height: 5rem;
+  height: 4rem;
   padding: 0 1.6rem;
   border-radius: @radius-lg;
   border: 1px solid @border-color;
   background-color: @bg-white;
   color: @text-main;
-  font-size: 1.6rem;
-  font-family: 'Inter', 'Noto Sans SC', sans-serif;
+  font-family: "Inter", "Noto Sans SC", sans-serif;
   cursor: pointer;
   user-select: none;
-  transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s,
+    background-color 0.3s;
   -webkit-tap-highlight-color: transparent;
 
   &:hover {
@@ -61,10 +64,12 @@
 
 .triggerText {
   flex: 1;
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   color: @text-main;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.05em;
+  position: relative;
+  top: -0.05rem;
 }
 
 .arrowPlaceholder {
@@ -79,17 +84,23 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 2.4rem;
-  height: 2.4rem;
+  width: 2.2rem;
+  height: 2.2rem;
   border-radius: 9999px;
   border: none;
   background-color: fade(@text-sub, 10%);
   color: @text-sub;
   cursor: pointer;
   padding: 0;
-  transition: background-color 0.15s, color 0.15s, transform 0.1s;
+  transition:
+    background-color 0.15s,
+    color 0.15s,
+    transform 0.1s;
   -webkit-tap-highlight-color: transparent;
-
+  svg {
+    width: 1.3rem;
+    height: 1.3rem;
+  }
   &:hover {
     background-color: fade(@primary, 14%);
     color: darken(@primary, 10%);
@@ -196,7 +207,9 @@
   color: @text-sub;
   cursor: pointer;
   scroll-snap-align: center;
-  transition: color 0.15s, font-weight 0.15s;
+  transition:
+    color 0.15s,
+    font-weight 0.15s;
   user-select: none;
   font-variant-numeric: tabular-nums;
   position: relative;
@@ -250,7 +263,9 @@
   border-radius: @radius-md;
   padding: 0.6rem 1.6rem;
   cursor: pointer;
-  transition: background-color 0.15s, color 0.15s;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
   -webkit-tap-highlight-color: transparent;
   letter-spacing: 0.1em;
 
@@ -269,10 +284,12 @@
   background: @bg-white;
   border: 1px solid @border-color;
   border-radius: @radius-lg;
-  box-shadow: 0 8px 32px fade(#1e293b, 14%), 0 2px 8px fade(#1e293b, 8%);
+  box-shadow:
+    0 8px 32px fade(#1e293b, 14%),
+    0 2px 8px fade(#1e293b, 8%);
   min-width: 34rem; // 三列比两列稍宽
   padding: 1.2rem 0 0;
-  animation: dropdownIn 0.18s cubic-bezier(.22,.68,0,1.2) both;
+  animation: dropdownIn 0.18s cubic-bezier(0.22, 0.68, 0, 1.2) both;
 }
 
 .dropdownClosing {
@@ -280,13 +297,25 @@
 }
 
 @keyframes dropdownIn {
-  from { opacity: 0; transform: translateY(-8px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 @keyframes dropdownOut {
-  from { opacity: 1; transform: translateY(0) scale(1); }
-  to   { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
 }
 
 // ─── 移动端底部弹出 ────────────────────────────────────
@@ -299,8 +328,12 @@
 }
 
 @keyframes maskIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .bottomSheet {
@@ -313,7 +346,7 @@
   border-radius: 2rem 2rem 0 0;
   padding-bottom: env(safe-area-inset-bottom, 0px);
   transform: translateY(100%);
-  transition: transform 0.3s cubic-bezier(.32,.72,0,1);
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
   will-change: transform;
 }
 
@@ -360,4 +393,26 @@
 
 .sheetHeaderRight {
   width: 4rem;
+}
+@media (max-width: @bp-mobile) {
+  .trigger {
+    padding: 0 0.6rem;
+    border-radius: 12px;
+  }
+  .calIcon {
+    width: 1.2rem;
+    height: 1.2rem;
+  }
+  .triggerText {
+    font-size: 1.2rem;
+    top: -0.05rem;
+  }
+  .clearBtn {
+    width: 2rem;
+    height: 2rem;
+    svg {
+      width: 1.2rem;
+      height: 1.2rem;
+    }
+  }
 }

@@ -1,0 +1,68 @@
+@import (reference) '../../../../styles/variables.less';
+@import (reference) '../../../../styles/breakpoints.less';
+
+@accent: #84cc16;
+
+.summaryBar {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2.5px;
+    background: linear-gradient(90deg, @accent, #a3e635, #bef264);
+    border-radius: 16px 16px 0 0;
+  }
+}
+
+.summaryItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 1.6rem 0.8rem;
+}
+
+.summaryVal {
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: @text-main;
+
+  @media (min-width: @bp-mobile) {
+    font-size: 2.4rem;
+  }
+}
+
+.summaryValPending {
+  color: #d97706;
+}
+
+.summaryLabel {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: @text-sub;
+  white-space: nowrap;
+}
+
+.summaryDivider {
+  width: 1px;
+  margin: 1.4rem 0;
+  flex-shrink: 0;
+  background: @border-color;
+}

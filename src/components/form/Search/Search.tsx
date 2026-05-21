@@ -1,6 +1,7 @@
 import React, { memo, useRef, useCallback, useTransition } from 'react';
 import styles from './Search.module.less';
 import { cx } from '@utils/utils';
+import { SearchIcon, CloseIcon } from '@components/form/_shared/icons';
 
 interface SearchProps {
     value: string;
@@ -44,19 +45,7 @@ export const Search: React.FC<SearchProps> = memo(({
     return (
         <div className={cx(styles.searchBar, isPending && styles.searchBarPending, className)}>
             <div className={styles.searchIcon}>
-                <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                >
-                    <circle cx="11" cy="11" r="8" />
-                    <path d="M21 21l-4.35-4.35" />
-                </svg>
+                <SearchIcon />
             </div>
 
             <input
@@ -70,19 +59,7 @@ export const Search: React.FC<SearchProps> = memo(({
 
             {value && (
                 <button className={styles.clearBtn} onClick={onClear}>
-                    <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                    >
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
+                    <CloseIcon />
                 </button>
             )}
         </div>

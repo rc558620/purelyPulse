@@ -2,6 +2,7 @@
 import React, { memo, useMemo, useRef, useEffect } from 'react';
 import { MONTH_NAMES, buildYearList } from './utils';
 import styles from './DatePicker.module.less';
+import { ChevronLeftIcon } from '@components/form/_shared/icons';
 
 export interface YearMonthPickerProps {
   viewYear: number;
@@ -33,9 +34,7 @@ const YearMonthPicker: React.FC<YearMonthPickerProps> = memo(({
           onClick={onBack}
           aria-label="返回日历"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
+          <ChevronLeftIcon />
           返回
         </button>
         <span className={styles.ymPickerTitle}>选择年月</span>

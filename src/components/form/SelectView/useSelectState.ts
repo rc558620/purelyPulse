@@ -1,121 +1,120 @@
-// useSelectState — SelectView 的选中值状态管理
-//
-// 职责：
-//   - 受控 / 非受控统一（value 存在时走受控，否则用 internalValues）
-//   - 多选：维护"草稿"（draftValues），点确定才提交
-//   - 搜索：searchText / deferredSearch / filteredOptions
-//   - 单选选中 / 多选切换 / 多选确定 / 清除
-
 import { useState, useCallback, useDeferredValue, useMemo } from 'react';
-import type { SelectValue, SelectOption, UseSelectStateOptions, UseSelectStateReturn } from './types';
+import type {
+  SelectChangeValue,
+  SelectMode,
+  SelectOption,
+  SelectValue,
+  UseSelectStateOptions,
+  UseSelectStateReturn,
+} from './types';
 
-// ────────────────────────────────────────────────────────────────────
-// 辅助：将任意形式的 value 规范化为 SelectValue[]
-// ────────────────────────────────────────────────────────────────────
-export const normalizeValue = (val?: SelectValue | SelectValue[]): SelectValue[] => {
+type SelectLooseValue = SelectValue | '' | null | undefined;
+
+export const normalizeValue = <M extends SelectMode>(
+  val?: SelectChangeValue<M> | SelectLooseValue | SelectLooseValue[],
+): SelectValue[] => {
   if (val === undefined || val === null || val === '') return [];
   return Array.isArray(val)
-    ? val.filter(v => v !== '' && v !== undefined && v !== null)
-    : [val];
+    ? (val.filter((v): v is SelectValue => v !== '' && v !== undefined && v !== null) as SelectValue[])
+    : [val as SelectValue];
 };
 
-const useSelectState = ({
+const toChangeValue = <M extends SelectMode>(
+  nextValues: SelectValue[],
+  mode: M,
+): SelectChangeValue<M> => (
+  mode === 'multiple'
+    ? nextValues
+    : (nextValues[0] ?? '')
+) as SelectChangeValue<M>;
+
+const useSelectState = <M extends SelectMode>({
   options,
   value,
   defaultValue,
   onChange,
-  isMultiple,
+  mode,
   onClose,
-}: UseSelectStateOptions): UseSelectStateReturn => {
-  // 非受控内部值
+}: UseSelectStateOptions<M>): UseSelectStateReturn => {
+  const isMultiple = mode === 'multiple';
+  const isControlled = value !== undefined;
+
   const [internalValues, setInternalValues] = useState<SelectValue[]>(
     () => normalizeValue(defaultValue),
   );
-
-  // 多选草稿（开弹窗时从 selectedValues 复制，关闭前不提交）
   const [draftValues, setDraftValues] = useState<SelectValue[]>([]);
-
-  // 搜索关键词
   const [searchText, setSearchText] = useState('');
 
-  // 受控 / 非受控统一
   const selectedValues = useMemo(
-    () => (value !== undefined ? normalizeValue(value) : internalValues),
-    [value, internalValues],
+    () => (isControlled ? normalizeValue(value) : internalValues),
+    [internalValues, isControlled, value],
   );
 
-  // 展示文本
   const displayText = useMemo((): string => {
     if (selectedValues.length === 0) return '';
     return selectedValues
-      .map(v => options.find(o => o.value === v)?.label ?? String(v))
+      .map(currentValue => options.find(option => option.value === currentValue)?.label ?? String(currentValue))
       .join('、');
-  }, [selectedValues, options]);
+  }, [options, selectedValues]);
 
-  // useDeferredValue 使搜索输入优先响应，过滤计算低优先级执行
   const deferredSearch = useDeferredValue(searchText);
   const isStale = searchText !== deferredSearch;
 
-  // 过滤选项
   const filteredOptions = useMemo((): SelectOption[] => {
     const keyword = deferredSearch.trim().toLowerCase();
     if (!keyword) return options;
-    return options.filter(opt => opt.label.toLowerCase().includes(keyword));
+    return options.filter(option => option.label.toLowerCase().includes(keyword));
   }, [deferredSearch, options]);
 
-  // 判断选项是否选中（多选看草稿，单选看 selectedValues）
   const isSelected = useCallback(
-    (val: SelectValue): boolean =>
-      isMultiple ? draftValues.includes(val) : selectedValues.includes(val),
-    [isMultiple, draftValues, selectedValues],
+    (nextValue: SelectValue): boolean => (
+      isMultiple ? draftValues.includes(nextValue) : selectedValues.includes(nextValue)
+    ),
+    [draftValues, isMultiple, selectedValues],
   );
 
-  // 搜索
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => setSearchText(e.target.value),
     [],
   );
+
   const handleSearchClear = useCallback(() => setSearchText(''), []);
   const resetSearch = useCallback(() => setSearchText(''), []);
 
-  // 打开面板时将 selectedValues 同步到草稿
   const syncDraftToSelected = useCallback(() => {
-    setDraftValues(selectedValues);
+    setDraftValues([...selectedValues]);
   }, [selectedValues]);
 
-  // 单选：直接确认并关闭
-  const handleSingleSelect = useCallback(
-    (val: SelectValue) => {
-      setInternalValues([val]);
-      onChange?.(val);
+  const commitValue = useCallback((nextValues: SelectValue[], closeAfterCommit = false) => {
+    if (!isControlled) {
+      setInternalValues(nextValues);
+    }
+    onChange?.(toChangeValue(nextValues, mode));
+    if (closeAfterCommit) {
       onClose();
-    },
-    [onChange, onClose],
-  );
+    }
+  }, [isControlled, mode, onChange, onClose]);
 
-  // 多选：切换草稿
-  const handleMultiToggle = useCallback((val: SelectValue) => {
-    setDraftValues(prev =>
-      prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val],
-    );
+  const handleSingleSelect = useCallback((nextValue: SelectValue) => {
+    commitValue([nextValue], true);
+  }, [commitValue]);
+
+  const handleMultiToggle = useCallback((nextValue: SelectValue) => {
+    setDraftValues(prevValues => (
+      prevValues.includes(nextValue)
+        ? prevValues.filter(valueItem => valueItem !== nextValue)
+        : [...prevValues, nextValue]
+    ));
   }, []);
 
-  // 多选确定：提交草稿
   const handleMultiConfirm = useCallback(() => {
-    setInternalValues(draftValues);
-    onChange?.(draftValues);
-    onClose();
-  }, [draftValues, onChange, onClose]);
+    commitValue(draftValues, true);
+  }, [commitValue, draftValues]);
 
-  // 清除
-  const handleClear = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      setInternalValues([]);
-      onChange?.(isMultiple ? [] : ('' as SelectValue));
-    },
-    [isMultiple, onChange],
-  );
+  const handleClear = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    commitValue([]);
+  }, [commitValue]);
 
   return {
     displayText,

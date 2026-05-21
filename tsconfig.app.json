@@ -22,19 +22,23 @@
     "noFallthroughCasesInSwitch": true,
 
     /* Path aliases */
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@utils/*": ["src/utils/*"],
-      "@assets/*": ["src/assets/*"],
-      "@components/*": ["src/components/*"],
-      "@constants/*": ["src/constants/*"],
-      "@contexts": ["src/contexts"],
-      "@contexts/*": ["src/contexts/*"],
-      "@hooks/*": ["src/hooks/*"],
-      "@pages/*": ["src/pages/*"],
-      "@styles/*": ["src/styles/*"]
+      "@/*": ["./src/*"],
+      "@utils/*": ["./src/utils/*"],
+      "@assets/*": ["./src/assets/*"],
+      "@components/*": ["./src/components/*"],
+      "@constants/*": ["./src/constants/*"],
+      "@contexts": ["./src/contexts"],
+      "@contexts/*": ["./src/contexts/*"],
+      "@hooks/*": ["./src/hooks/*"],
+      "@pages/*": ["./src/pages/*"],
+      "@router": ["./src/router"],
+      "@router/*": ["./src/router/*"],
+      "@stores": ["./src/stores"],
+      "@stores/*": ["./src/stores/*"],
+      "@styles/*": ["./src/styles/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/**/__tests__/**", "src/**/*.{test,spec}.ts", "src/**/*.{test,spec}.tsx"]
 }

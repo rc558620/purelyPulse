@@ -3,6 +3,10 @@
  * 避免 key 字符串散落在业务代码中，修改时一处生效、全局一致。
  */
 export const STORAGE_KEYS = {
+  /** 登录态 accessToken，优先存 sessionStorage，降级 localStorage。 */
+  ACCESS_TOKEN: 'pp_access_token',
+  /** 当前登录用户信息缓存，存于 sessionStorage。 */
+  USER_INFO: 'purely_profit_user_info',
   /** 注册流程第一步（账号信息）完成标记，存于 sessionStorage。 */
   REGISTER_STEP1_DONE: 'registerStep1Done',
   /** 商品分类列表，存于 localStorage。 */

@@ -1,0 +1,30 @@
+@import (reference) '../../../../styles/variables.less';
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: 9999px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.statusBadgeActive {
+  background: rgba(16, 185, 129, 0.1);
+  color: @emerald-500;
+  border: 1px solid rgba(16, 185, 129, 0.22);
+}
+
+.statusBadgeInactive {
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.22);
+}
+
+.statusBadgeBanned {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.22);
+}

@@ -1,0 +1,16 @@
+@import (reference) '../../../../styles/breakpoints.less';
+@import (reference) '../../../../styles/mixins.less';
+
+.revenueFilterBlock {
+  .flex-col();
+  gap: 1rem;
+
+  @media (min-width: @bp-mobile) {
+    gap: 1.2rem;
+    grid-column: 1 / -1;
+  }
+}
+
+.revenueDayPickerWrap {
+  width: 100%;
+}

@@ -2,24 +2,10 @@
 import React, { useState, useCallback, memo } from 'react';
 import { showToast } from '@components/ui/feedback/Toast';
 import { cx } from '@utils/utils';
+import { IconCheckmark, IconClose } from '@components/ui/_shared/icons';
 import styles from './InlineEditForm.module.less';
 
 const NAME_MAX_LENGTH = 20;
-
-// ─── 图标（内联 SVG，不依赖各模块 Icons 文件）──────────────────
-
-const IconCheckmark: React.FC = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="20 6 9 17 4 12" />
-  </svg>
-);
-
-const IconClose: React.FC = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-    <line x1="18" y1="6" x2="6" y2="18" />
-    <line x1="6" y1="6" x2="18" y2="18" />
-  </svg>
-);
 
 // ─── Props ──────────────────────────────────────────────────────
 

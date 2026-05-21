@@ -1,11 +1,11 @@
 // 头像上传状态管理 hook：封装文件校验、FileReader 读取、裁剪弹窗生命周期
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { showToast } from '@components/ui/feedback/Toast';
 import { validateImageFile, readFileAsDataURL } from '@utils/imageValidation';
 
 interface UseAvatarUploadOptions {
-    /** 裁剪完成后的回调，参数为裁剪后的 blob URL */
-    onAvatarChange: (url: string) => void;
+    /** 裁剪完成后的回调，参数为裁剪后的 blob URL。 */
+    onAvatarChange: (url: string) => void | Promise<void>;
 }
 
 interface UseAvatarUploadReturn {
@@ -31,11 +31,11 @@ const useAvatarUpload = ({ onAvatarChange }: UseAvatarUploadOptions): UseAvatarU
     const [cropVisible, setCropVisible] = useState(false);
     const [pendingCropSrc, setPendingCropSrc] = useState('');
 
-    const openFilePicker = (): void => {
+    const openFilePicker = useCallback((): void => {
         fileInputRef.current?.click();
-    };
+    }, []);
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>): void => {
         const file = e.target.files?.[0];
         // 清空 value，确保选择同一文件仍可再次触发 onChange
         e.target.value = '';
@@ -53,19 +53,25 @@ const useAvatarUpload = ({ onAvatarChange }: UseAvatarUploadOptions): UseAvatarU
             .catch(() => {
                 showToast({ message: '图片读取失败，请重试', type: 'error' });
             });
-    };
+    }, []);
 
-    const handleCropConfirm = (croppedUrl: string): void => {
+    const handleCropConfirm = useCallback((croppedUrl: string): void => {
+        void Promise.resolve()
+            .then(() => onAvatarChange(croppedUrl))
+            .then(() => {
+                setCropVisible(false);
+                setPendingCropSrc('');
+                showToast({ message: '头像更新成功', type: 'success' });
+            })
+            .catch(() => {
+                // 接口失败时保留裁剪弹窗，方便用户继续重试。
+            });
+    }, [onAvatarChange]);
+
+    const handleCropCancel = useCallback((): void => {
         setCropVisible(false);
         setPendingCropSrc('');
-        onAvatarChange(croppedUrl);
-        showToast({ message: '头像更新成功', type: 'success' });
-    };
-
-    const handleCropCancel = (): void => {
-        setCropVisible(false);
-        setPendingCropSrc('');
-    };
+    }, []);
 
     return {
         fileInputRef,

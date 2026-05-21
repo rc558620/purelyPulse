@@ -54,7 +54,6 @@ const DateRangePicker = memo<DateRangePickerProps>(({
   return (
     <div className={styles.dateRangeRow}>
       <div className={styles.dateRangeItem}>
-        <span className={styles.dateRangeLabel}>开始日期</span>
         <DayPicker
           year={startYear}
           month={startMonth}
@@ -65,7 +64,6 @@ const DateRangePicker = memo<DateRangePickerProps>(({
       </div>
       <div className={styles.dateRangeSep} aria-hidden="true">→</div>
       <div className={styles.dateRangeItem}>
-        <span className={styles.dateRangeLabel}>结束日期</span>
         <DayPicker
           year={endYear}
           month={endMonth}

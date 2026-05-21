@@ -265,6 +265,33 @@ describe('CascaderView – PC 模式级联交互', () => {
         });
     });
 
+    it('受控模式切换父级时 active 高亮跟随当前草稿路径', async () => {
+        const user = userEvent.setup();
+        const { container } = render(
+            <CascaderView
+                options={OPTIONS}
+                value={['北京', '朝阳']}
+                onChange={vi.fn()}
+                mode="pc"
+            />,
+        );
+
+        await user.click(container.querySelector('[role="combobox"]')!);
+
+        const beijingItem = screen.getByText('北京市').closest('div');
+        expect(beijingItem?.className).toMatch(/active/);
+
+        await user.click(screen.getByText('广东省'));
+
+        const guangdongItem = screen.getByText('广东省').closest('div');
+        expect(guangdongItem?.className).toMatch(/active/);
+        expect(beijingItem?.className).not.toMatch(/active/);
+
+        await waitFor(() => {
+            expect(screen.getByText('广州市')).toBeInTheDocument();
+        });
+    });
+
     it('选中叶节点后触发 onChange 并关闭面板', async () => {
         const user = userEvent.setup();
         const onChange = vi.fn();

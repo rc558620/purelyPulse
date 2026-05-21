@@ -56,8 +56,12 @@ export interface FormInstance<T extends FormValues = FormValues> {
     reset: () => void;
 }
 
+export type FormRequiredMark = boolean | 'optional';
+
 /** 表单上下文能力。 */
 export interface FormContextType {
+    /** 全局必填标识展示策略。 */
+    requiredMark: FormRequiredMark;
     /** 注册字段及其校验规则。 */
     registerField: (name: string, rules: ValidatorRule[]) => void;
     /** 注销字段。 */

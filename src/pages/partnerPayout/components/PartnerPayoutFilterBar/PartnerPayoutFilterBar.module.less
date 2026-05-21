@@ -1,0 +1,65 @@
+@import (reference) '../../../../styles/variables.less';
+
+@accent: #84cc16;
+@accent-dark: #65a30d;
+
+.filterWrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.filterBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.6rem 1.4rem;
+  border: 1px solid @border-color;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.85);
+  color: @text-sub;
+  font-size: 1.3rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    border-color: fade(@accent, 45%);
+    color: @accent-dark;
+    background: fade(@accent, 7%);
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+.filterBtnActive {
+  border-color: fade(@accent, 45%);
+  background: fade(@accent, 10%);
+  color: @accent-dark;
+  font-weight: 700;
+}
+
+.filterBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6rem;
+  height: 1.6rem;
+  padding: 0 0.38rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #ef4444, #f87171);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 800;
+  box-shadow: 0 1px 6px rgba(239, 68, 68, 0.4);
+}

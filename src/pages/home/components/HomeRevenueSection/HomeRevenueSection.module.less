@@ -1,0 +1,250 @@
+@import (reference) '../../../../styles/variables.less';
+@import (reference) '../../../../styles/breakpoints.less';
+@import (reference) '../../../../styles/mixins.less';
+
+.revenueCard {
+  position: relative;
+  overflow: hidden;
+  padding: 2rem 1.6rem;
+  .flex-col();
+  gap: 2rem;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 20px;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.05),
+    0 1px 4px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #f97316, #fb923c);
+    border-radius: 20px 20px 0 0;
+  }
+
+  @media (min-width: @bp-mobile) {
+    grid-column: 1 / -1;
+    padding: 2.8rem 2.8rem 2.4rem;
+    border-radius: 20px;
+
+    &::before {
+      border-radius: 20px 20px 0 0;
+    }
+  }
+}
+
+.revenueTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.revenueTitleIcon {
+  width: 3.6rem;
+  height: 3.6rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, fade(#f97316, 15%), fade(#f97316, 8%));
+  border: 1px solid fade(#f97316, 25%);
+  .flex-center();
+  color: #f97316;
+  flex-shrink: 0;
+}
+
+.revenueTitleContent {
+  flex: 1;
+}
+
+.revenueTitle {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: @text-main;
+  line-height: 1.2;
+
+  @media (min-width: @bp-mobile) {
+    font-size: 1.8rem;
+  }
+}
+
+.revenueSub {
+  font-size: 1.2rem;
+  color: @text-sub;
+  margin-top: 0.2rem;
+}
+
+.revenueDetailBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.5rem 1rem 0.5rem 1.2rem;
+  border-radius: 9999px;
+  border: 1px solid fade(#f97316, 30%);
+  background: fade(#f97316, 8%);
+  color: #f97316;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  .btn-press-effect();
+
+  &:hover {
+    background: fade(#f97316, 14%);
+    border-color: fade(#f97316, 50%);
+  }
+}
+
+.revenueSummary {
+  display: flex;
+  align-items: stretch;
+  background: @bg-slate-50;
+  border: 1px solid @border-color;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.revenueSummaryItem {
+  flex: 1;
+  .flex-col();
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 1.4rem 0.8rem;
+}
+
+.revenueSummaryVal {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: @text-main;
+  letter-spacing: -0.02em;
+
+  @media (min-width: @bp-mobile) {
+    font-size: 2.2rem;
+  }
+}
+
+.revenueSummaryGreen {
+  color: darken(@primary, 8%);
+}
+
+.revenueSummaryLbl {
+  font-size: 1.1rem;
+  color: @text-sub;
+  font-weight: 500;
+
+  @media (min-width: @bp-mobile) {
+    font-size: 1.2rem;
+  }
+}
+
+.revenueSummaryDivider {
+  width: 1px;
+  background: @border-color;
+  flex-shrink: 0;
+}
+
+.revenueChartWrap {
+  width: 100%;
+}
+
+.revenueChartCanvas {
+  width: 100%;
+}
+
+.revenueTypeGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem;
+
+  @media (min-width: @bp-mobile) {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.6rem;
+  }
+}
+
+.revenueTypeItem {
+  .flex-col();
+  gap: 0.6rem;
+}
+
+.revenueTypeTop {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.revenueTypeDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.revenueTypeLabel {
+  font-size: 1.2rem;
+  color: @text-sub;
+  font-weight: 500;
+  flex: 1;
+}
+
+.revenueTypePct {
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.revenueTypeTrack {
+  width: 100%;
+  height: 5px;
+  background: @bg-slate-100;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.revenueTypeFill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.revenueTypeToneLime {
+  .revenueTypeDot,
+  .revenueTypePct,
+  .revenueTypeFill {
+    color: #84cc16;
+    background-color: #84cc16;
+  }
+}
+
+.revenueTypeToneEmerald {
+  .revenueTypeDot,
+  .revenueTypePct,
+  .revenueTypeFill {
+    color: #10b981;
+    background-color: #10b981;
+  }
+}
+
+.revenueTypeToneBlue {
+  .revenueTypeDot,
+  .revenueTypePct,
+  .revenueTypeFill {
+    color: #3b82f6;
+    background-color: #3b82f6;
+  }
+}
+
+.revenueTypeToneSlate {
+  .revenueTypeDot,
+  .revenueTypePct,
+  .revenueTypeFill {
+    color: #94a3b8;
+    background-color: #94a3b8;
+  }
+}

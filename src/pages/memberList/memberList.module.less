@@ -299,6 +299,23 @@
   font-size: 1.3rem;
 }
 
+.retryBtn {
+  padding: 0.7rem 1.4rem;
+  border: 1px solid rgba(132, 204, 22, 0.35);
+  border-radius: 9999px;
+  background: rgba(132, 204, 22, 0.1);
+  color: darken(#84cc16, 12%);
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: rgba(132, 204, 22, 0.16);
+    border-color: rgba(132, 204, 22, 0.6);
+  }
+}
+
 // ─── 会员列表容器 ─────────────────────────────────────────────────
 .memberList {
   display: flex;
@@ -356,6 +373,13 @@
     font-size: 1.8rem;
   }
 }
+
+&.avatarColor_0 { background: linear-gradient(135deg, #84cc16, #4ade80); }
+&.avatarColor_1 { background: linear-gradient(135deg, #3b82f6, #60a5fa); }
+&.avatarColor_2 { background: linear-gradient(135deg, #a855f7, #c084fc); }
+&.avatarColor_3 { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+&.avatarColor_4 { background: linear-gradient(135deg, #10b981, #34d399); }
+&.avatarColor_5 { background: linear-gradient(135deg, #f43f5e, #fb7185); }
 
 // 合伙人绿点
 .partnerDot {

@@ -3,49 +3,36 @@
  *
  * 这个文件只回答一个问题：
  * “系统里有哪些路由，它们分别对应哪个页面，需要套什么守卫？”
- *
- * 它不处理：
- * - preload 查找
- * - RouteObject 组装
- * - 动态路由匹配
- *
- * 这些运行时逻辑都交给 index.tsx。
  */
-
 import { Navigate } from 'react-router-dom';
+import ProtectedRoute from '@components/business/ProtectedRoute';
+import { getPersistedAccessToken } from '@pages/login/shared/authSession';
 import { ROUTE_PATHS } from './paths';
 import { pages } from './pages';
-import type { AppRouteDefinition } from './types';
+import type { AppRouteDefinition, RouteWrapper } from './types';
 
-/**
- * 全量路由定义。
- *
- * 阅读方式：
- * - path：浏览器地址
- * - page：真正要渲染的懒加载页面
- * - wrap：进入页面前额外包裹的守卫
- * - element：特殊节点，比如重定向
- *
- * 维护建议：
- * - 新增页面：先在 pages.tsx 注册，再来这里声明 path
- * - 需要守卫：直接加 wrap
- * - 纯重定向：直接写 element，不需要 page
- */
+const withAuthGuard: RouteWrapper = (page) => (
+    <ProtectedRoute
+        check={() => Boolean(getPersistedAccessToken())}
+        fallback={ROUTE_PATHS.login}
+        preloadFallback={pages.login.preload}
+        message="请先登录后再访问"
+    >
+        {page}
+    </ProtectedRoute>
+);
+
 export const routeDefinitions: AppRouteDefinition[] = [
-    // 默认进入项目时，统一跳去登录页。
     { path: ROUTE_PATHS.root, element: <Navigate to={ROUTE_PATHS.login} replace /> },
-
-    { path: ROUTE_PATHS.login,         page: pages.login },
-    { path: ROUTE_PATHS.home,           page: pages.home },
-    { path: ROUTE_PATHS.partnerReview,  page: pages.partnerReview },
-    { path: ROUTE_PATHS.partnerPayout,  page: pages.partnerPayout },
-    { path: ROUTE_PATHS.revenueDetail,        page: pages.revenueDetail },
-    { path: ROUTE_PATHS.promotionRankDetail,  page: pages.promotionRankDetail },
-    // ─── 会员管理 ──────────────────────────────────────────────────────
-    { path: ROUTE_PATHS.memberPoints, page: pages.memberPoints },
-    { path: ROUTE_PATHS.partnerBeans, page: pages.partnerBeans },
-    { path: ROUTE_PATHS.memberList,             page: pages.memberList   },
-    { path: `${ROUTE_PATHS.memberDetail}/:id`,  page: pages.memberDetail },
-    // ─── 用户管理 ──────────────────────────────────────────────────────
-    { path: ROUTE_PATHS.banManagement, page: pages.banManagement },
+    { path: ROUTE_PATHS.login, page: pages.login },
+    { path: ROUTE_PATHS.home, page: pages.home, wrap: withAuthGuard },
+    { path: ROUTE_PATHS.partnerReview, page: pages.partnerReview, wrap: withAuthGuard },
+    { path: ROUTE_PATHS.partnerPayout, page: pages.partnerPayout, wrap: withAuthGuard },
+    { path: ROUTE_PATHS.revenueDetail, page: pages.revenueDetail, wrap: withAuthGuard },
+    { path: ROUTE_PATHS.promotionDetail, page: pages.promotionDetail, wrap: withAuthGuard },
+    { path: ROUTE_PATHS.memberPoints, page: pages.memberPoints, wrap: withAuthGuard },
+    { path: ROUTE_PATHS.partnerBeans, page: pages.partnerBeans, wrap: withAuthGuard },
+    { path: ROUTE_PATHS.memberList, page: pages.memberList, wrap: withAuthGuard },
+    { path: `${ROUTE_PATHS.memberDetail}/:id`, page: pages.memberDetail, wrap: withAuthGuard },
+    { path: ROUTE_PATHS.banManagement, page: pages.banManagement, wrap: withAuthGuard },
 ];

@@ -1,6 +1,7 @@
 // 通用主按钮组件，统一全站 CTA 按钮的视觉风格与点击效果。
 import React, { memo } from 'react';
 import { cx } from '@utils/utils';
+import { IconSpinner } from '@components/ui/_shared/icons';
 import styles from './Button.module.less';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost';
@@ -20,25 +21,6 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
     /** 自定义类名 */
     className?: string;
 }
-
-/** 加载 Spinner — 静态节点，避免每次渲染重建 */
-const Spinner = memo(function Spinner() {
-    return (
-        <svg
-            className={styles.spinner}
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            aria-hidden="true"
-        >
-            <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-        </svg>
-    );
-});
 
 /** 全站通用主按钮 */
 const Button = memo(function Button({
@@ -70,7 +52,7 @@ const Button = memo(function Button({
         >
             {loading ? (
                 <span className={styles.loadingRow}>
-                    <Spinner />
+                    <IconSpinner className={styles.spinner} />
                     {children}
                 </span>
             ) : (

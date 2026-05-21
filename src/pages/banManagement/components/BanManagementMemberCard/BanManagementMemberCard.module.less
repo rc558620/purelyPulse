@@ -1,0 +1,331 @@
+@import (reference) '../../../../styles/variables.less';
+@import (reference) '../../../../styles/breakpoints.less';
+@import (reference) '../../../../styles/mixins.less';
+
+.memberItem {
+  border-bottom: 1px solid fade(@border-color, 55%);
+  transition: background-color 0.15s;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.memberItemBanned {
+  background: rgba(254, 242, 242, 0.5);
+}
+
+.memberItemExpanded {
+  background: fade(@bg-slate-50, 80%);
+}
+
+.memberMain {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  padding: 1.6rem 2rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  user-select: none;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.018);
+  }
+
+  @media (min-width: @bp-mobile) {
+    gap: 1.6rem;
+    padding: 1.8rem 2.4rem;
+  }
+}
+
+.memberAvatar {
+  position: relative;
+  width: 4.2rem;
+  height: 4.2rem;
+  border-radius: 9999px;
+  .flex-center();
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+  letter-spacing: -0.02em;
+
+  @media (min-width: @bp-mobile) {
+    width: 4.6rem;
+    height: 4.6rem;
+    font-size: 1.7rem;
+  }
+}
+
+.avatarColor_0 {
+  background: linear-gradient(135deg, #84cc16, #4ade80);
+}
+
+.avatarColor_1 {
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+}
+
+.avatarColor_2 {
+  background: linear-gradient(135deg, #a855f7, #c084fc);
+}
+
+.avatarColor_3 {
+  background: linear-gradient(135deg, #f59e0b, #fbbf24);
+}
+
+.avatarColor_4 {
+  background: linear-gradient(135deg, #10b981, #34d399);
+}
+
+.avatarColor_5 {
+  background: linear-gradient(135deg, #f43f5e, #fb7185);
+}
+
+.memberAvatarBanned {
+  background: linear-gradient(135deg, rgba(148, 163, 184, 0.25), rgba(148, 163, 184, 0.12)) !important;
+  border: 1.5px solid rgba(148, 163, 184, 0.3);
+  color: @text-sub;
+}
+
+.memberAvatarBanIcon {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 9999px;
+  background: #ef4444;
+  border: 2px solid @bg-white;
+  .flex-center();
+  color: #fff;
+}
+
+.memberInfo {
+  flex: 1;
+  min-width: 0;
+  .flex-col();
+  gap: 0.35rem;
+}
+
+.memberNameRow {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.memberName {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: @text-main;
+  white-space: nowrap;
+}
+
+.memberNameBanned {
+  color: @text-sub;
+  text-decoration: line-through;
+  text-decoration-color: rgba(239, 68, 68, 0.45);
+}
+
+.partnerBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.7rem;
+  border-radius: 9999px;
+  font-size: 1rem;
+  font-weight: 700;
+  background: rgba(168, 85, 247, 0.1);
+  color: #a855f7;
+  border: 1px solid rgba(168, 85, 247, 0.22);
+  white-space: nowrap;
+}
+
+.levelBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.7rem;
+  border-radius: 9999px;
+  font-size: 1rem;
+  font-weight: 700;
+  background: rgba(132, 204, 22, 0.1);
+  color: darken(#84cc16, 8%);
+  border: 1px solid rgba(132, 204, 22, 0.25);
+  white-space: nowrap;
+}
+
+.memberMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.2rem;
+  color: @text-slate-400;
+  flex-wrap: wrap;
+}
+
+.memberMetaDot {
+  width: 3px;
+  height: 3px;
+  border-radius: 9999px;
+  background: @text-slate-400;
+  flex-shrink: 0;
+}
+
+.memberRight {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-shrink: 0;
+}
+
+.expandArrow {
+  color: @text-slate-400;
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.expandArrowOpen {
+  transform: rotate(180deg);
+  color: #ef4444;
+}
+
+.memberDetail {
+  padding: 0 2rem 2rem;
+  .flex-col();
+  gap: 1.2rem;
+  animation: detailIn 0.22s ease;
+
+  @keyframes detailIn {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (min-width: @bp-mobile) {
+    padding: 0 2.4rem 2rem;
+  }
+}
+
+.detailStats {
+  display: flex;
+  align-items: stretch;
+  background: @bg-slate-50;
+  border-radius: 12px;
+  border: 1px solid @border-color;
+  overflow: hidden;
+}
+
+.detailStatItem {
+  flex: 1;
+  .flex-col();
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 1.2rem 0.4rem;
+}
+
+.detailStatVal {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: @text-main;
+  letter-spacing: -0.02em;
+  line-height: 1;
+
+  @media (min-width: @bp-mobile) {
+    font-size: 1.8rem;
+  }
+}
+
+.detailStatLabel {
+  font-size: 1.1rem;
+  color: @text-slate-400;
+  font-weight: 500;
+}
+
+.detailStatDivider {
+  width: 1px;
+  background: @border-color;
+  flex-shrink: 0;
+  margin: 1rem 0;
+}
+
+.detailMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.2rem;
+  color: @text-slate-400;
+}
+
+.banRemarkWrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 1.1rem 1.4rem;
+  background: rgba(254, 242, 242, 0.8);
+  border-radius: 10px;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-left: 3px solid rgba(239, 68, 68, 0.5);
+}
+
+.banRemarkIcon {
+  color: #ef4444;
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.banRemarkText {
+  font-size: 1.3rem;
+  color: #ef4444;
+  line-height: 1.6;
+}
+
+.actionRow {
+  display: flex;
+  gap: 1rem;
+}
+
+.banBtn,
+.unbanBtn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1.1rem 1.4rem;
+  border-radius: @radius-lg;
+  border: none;
+  color: #fff;
+  font-size: 1.4rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+  .btn-press-effect();
+}
+
+.banBtn {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+
+  &:hover {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    box-shadow: 0 6px 18px rgba(239, 68, 68, 0.4);
+  }
+}
+
+.unbanBtn {
+  background: linear-gradient(135deg, @emerald-500, #059669);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+
+  &:hover {
+    background: linear-gradient(135deg, #059669, #047857);
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.4);
+  }
+}

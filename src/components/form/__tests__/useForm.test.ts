@@ -17,15 +17,20 @@
  *  - 返回格式（数组第一项为 FormInstance）
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useForm } from '../useForm';
-import type { ValidatorRule } from '../types';
+import type { FormContextType, FormInstance, FormValues, ValidatorRule } from '../types';
+
+type TestFormInstance<T extends FormValues = Record<string, unknown>> = FormInstance<T> & Pick<
+    FormContextType,
+    'registerField' | 'unregisterField' | 'subscribeField'
+>;
 
 // ─── 辅助：渲染并拿到 formInstance ────────────────────────────────────────────
-function setup<T extends object = Record<string, unknown>>() {
+function setup<T extends FormValues = Record<string, unknown>>(): TestFormInstance<T> {
     const { result } = renderHook(() => useForm<T>());
-    return result.current[0];
+    return result.current[0] as TestFormInstance<T>;
 }
 
 // ─── 1. 基本结构 ────────────────────────────────────────────────────────────
@@ -105,14 +110,15 @@ describe('useForm – registerField / unregisterField', () => {
         expect(form.getFieldValue('email')).toBe('test@test.com');
     });
 
-    it('unregisterField 后字段值被清除', () => {
+    it('unregisterField 后字段值被保留（支持条件渲染字段 re-mount 后回填）', () => {
         const form = setup();
         act(() => {
             form.registerField('phone', []);
             form.setFieldValue('phone', '13800138000');
         });
         act(() => { form.unregisterField('phone'); });
-        expect(form.getFieldValue('phone')).toBeUndefined();
+        // 值保留，以便条件渲染字段 re-mount 时仍能读到已回填的值
+        expect(form.getFieldValue('phone')).toBe('13800138000');
     });
 
     it('unregisterField 后字段错误被清除', async () => {
@@ -273,7 +279,7 @@ describe('useForm – 校验规则', () => {
             act(() => {
                 form.registerField('age', [
                     {
-                        validator: async (val) => {
+                        validator: async (val: unknown) => {
                             if ((val as number) < 18) throw new Error('年龄不足18岁');
                         },
                     },
@@ -335,7 +341,7 @@ describe('useForm – 校验规则', () => {
             const form = setup();
             act(() => {
                 form.registerField('email', [
-                    { validator: async (val) => { if (!(val as string).includes('@')) throw new Error('邮箱格式错误'); } },
+                    { validator: async (val: unknown) => { if (!(val as string).includes('@')) throw new Error('邮箱格式错误'); } },
                 ]);
                 form.setFieldValue('email', 'a@b.com');
             });

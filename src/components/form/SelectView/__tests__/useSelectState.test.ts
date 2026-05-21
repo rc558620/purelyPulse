@@ -72,7 +72,7 @@ function setup(overrides?: Partial<UseSelectStateOptions>) {
         {
             initialProps: {
                 options: OPTIONS,
-                isMultiple: false,
+                mode: 'single',
                 onClose,
                 onChange,
                 ...overrides,
@@ -106,7 +106,7 @@ describe('useSelectState – 初始状态', () => {
     });
 
     it('draftValues 初始为 []', () => {
-        const { result } = setup({ isMultiple: true });
+        const { result } = setup({ mode: 'multiple' });
         expect(result.current.draftValues).toEqual([]);
     });
 });
@@ -130,7 +130,7 @@ describe('useSelectState – 受控模式', () => {
 
         rerender({
             options: OPTIONS,
-            isMultiple: false,
+            mode: 'single',
             onClose: vi.fn(),
             onChange: vi.fn(),
             value: 'c',
@@ -148,7 +148,7 @@ describe('useSelectState – displayText', () => {
     });
 
     it('多选：displayText 为所有选中 label 用"、"连接', () => {
-        const { result } = setup({ value: ['a', 'c'], isMultiple: true });
+        const { result } = setup({ value: ['a', 'c'], mode: 'multiple' });
         expect(result.current.displayText).toBe('选项 A、选项 C');
     });
 
@@ -184,20 +184,20 @@ describe('useSelectState – handleSingleSelect', () => {
 
 describe('useSelectState – handleMultiToggle', () => {
     it('切换：未选中项加入草稿', () => {
-        const { result } = setup({ isMultiple: true });
+        const { result } = setup({ mode: 'multiple' });
         act(() => { result.current.handleMultiToggle('a'); });
         expect(result.current.draftValues).toContain('a');
     });
 
     it('切换：已在草稿中的项被移除', () => {
-        const { result } = setup({ isMultiple: true });
+        const { result } = setup({ mode: 'multiple' });
         act(() => { result.current.handleMultiToggle('a'); });
         act(() => { result.current.handleMultiToggle('a'); });
         expect(result.current.draftValues).not.toContain('a');
     });
 
     it('多项切换累积', () => {
-        const { result } = setup({ isMultiple: true });
+        const { result } = setup({ mode: 'multiple' });
         act(() => { result.current.handleMultiToggle('a'); });
         act(() => { result.current.handleMultiToggle('c'); });
         expect(result.current.draftValues).toEqual(['a', 'c']);
@@ -208,7 +208,7 @@ describe('useSelectState – handleMultiToggle', () => {
 
 describe('useSelectState – handleMultiConfirm', () => {
     it('提交草稿后 selectedValues 更新', () => {
-        const { result } = setup({ isMultiple: true });
+        const { result } = setup({ mode: 'multiple' });
         act(() => {
             result.current.handleMultiToggle('a');
             result.current.handleMultiToggle('b');
@@ -218,14 +218,14 @@ describe('useSelectState – handleMultiConfirm', () => {
     });
 
     it('触发 onChange([...])', () => {
-        const { result, onChange } = setup({ isMultiple: true });
+        const { result, onChange } = setup({ mode: 'multiple' });
         act(() => { result.current.handleMultiToggle('c'); });
         act(() => { result.current.handleMultiConfirm(); });
         expect(onChange).toHaveBeenCalledWith(['c']);
     });
 
     it('触发 onClose', () => {
-        const { result, onClose } = setup({ isMultiple: true });
+        const { result, onClose } = setup({ mode: 'multiple' });
         act(() => { result.current.handleMultiConfirm(); });
         expect(onClose).toHaveBeenCalledTimes(1);
     });
@@ -242,7 +242,7 @@ describe('useSelectState – handleClear', () => {
     });
 
     it('多选 handleClear：onChange 收到 []', () => {
-        const { result, onChange } = setup({ value: ['a', 'b'], isMultiple: true });
+        const { result, onChange } = setup({ value: ['a', 'b'], mode: 'multiple' });
         const mockEvent = { stopPropagation: vi.fn() } as unknown as React.MouseEvent;
         act(() => { result.current.handleClear(mockEvent); });
         expect(onChange).toHaveBeenCalledWith([]);
@@ -314,7 +314,7 @@ describe('useSelectState – isSelected', () => {
     });
 
     it('多选：草稿中的值返回 true', () => {
-        const { result } = setup({ isMultiple: true });
+        const { result } = setup({ mode: 'multiple' });
         act(() => { result.current.handleMultiToggle('a'); });
         expect(result.current.isSelected('a')).toBe(true);
         expect(result.current.isSelected('b')).toBe(false);
@@ -325,13 +325,13 @@ describe('useSelectState – isSelected', () => {
 
 describe('useSelectState – syncDraftToSelected', () => {
     it('将 selectedValues 同步到 draftValues', () => {
-        const { result } = setup({ value: ['a', 'c'], isMultiple: true });
+        const { result } = setup({ value: ['a', 'c'], mode: 'multiple' });
         act(() => { result.current.syncDraftToSelected(); });
         expect(result.current.draftValues).toEqual(['a', 'c']);
     });
 
     it('无选中时 draftValues 变为 []', () => {
-        const { result } = setup({ isMultiple: true });
+        const { result } = setup({ mode: 'multiple' });
         act(() => {
             result.current.handleMultiToggle('b'); // 先加
         });

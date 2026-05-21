@@ -1,19 +1,21 @@
-// ─── 会员积分 / 纯利豆管理模块 — 类型定义 ────────────────────────────
+// memberPoints 页面共享类型定义。
+import { safeNum } from '@utils/utils';
 
-// ─── 积分体系 ────────────────────────────────────────────────────────
+/** UI 安全数字类型 */
+type SafeNumber = ReturnType<typeof safeNum>;
 
-/** 积分变动类型 */
-export type PointsChangeType = 'earn' | 'spend' | 'expire';
+/** 积分记录变动类型 */
+export type MemberPointsChangeType = 'earn' | 'spend' | 'expire';
 
-/** 积分来源 */
-export type PointsSource =
-  | 'purchase_bonus'  // 充值购买奖励
-  | 'deduct_payment'  // 抵扣支付消耗
-  | 'admin_adjust'    // 管理员手动调整
-  | 'expire';         // 积分过期
+/** 积分记录来源 */
+export type MemberPointsSource = 'purchase_bonus' | 'deduct_payment' | 'admin_adjust' | 'expire';
 
-/** 积分记录 */
-export interface PointsRecord {
+/** 积分调整方向 */
+export type MemberPointsAdjustDir = 'add' | 'subtract';
+
+/** 会员积分记录 */
+export interface MemberPointsRecord {
+  /** 记录 ID */
   id: string;
   /** 用户 ID */
   userId: string;
@@ -22,80 +24,62 @@ export interface PointsRecord {
   /** 用户手机（脱敏） */
   userPhone: string;
   /** 变动数量：正数=获得，负数=消耗/扣除 */
-  amount: number;
-  type: PointsChangeType;
-  source: PointsSource;
+  amount: SafeNumber;
+  /** 变动类型 */
+  type: MemberPointsChangeType;
+  /** 变动来源 */
+  source: MemberPointsSource;
   /** 变动说明 */
   description: string;
-  createdAt: number;
+  /** 创建时间戳 */
+  createdAt: SafeNumber;
   /** 积分过期时间（可选） */
-  expireAt?: number;
+  expireAt?: SafeNumber;
 }
 
-/** 管理员调整积分的入参 */
+/** 管理员调整积分入参 */
 export interface AdjustPointsPayload {
-  userId: string;
-  /** 正数=增加，负数=减少 */
-  delta: number;
-  reason: string;
-}
-
-// ─── 纯利豆体系 ──────────────────────────────────────────────────────
-
-/** 纯利豆变动类型 */
-export type BeanChangeType = 'earn' | 'spend' | 'withdraw';
-
-/** 纯利豆来源 */
-export type BeanSource =
-  | 'promo_reward'    // 推广奖励
-  | 'deduct_payment'  // 抵扣充值费用
-  | 'withdrawal'      // 提现扣除
-  | 'admin_adjust';   // 管理员手动调整
-
-/** 纯利豆记录 */
-export interface BeanRecord {
-  id: string;
   /** 用户 ID */
   userId: string;
-  /** 用户姓名（脱敏） */
-  userName: string;
-  /** 用户手机（脱敏） */
-  userPhone: string;
-  /** 变动数量：正数=获得，负数=消耗/提现 */
-  amount: number;
-  type: BeanChangeType;
-  source: BeanSource;
-  /** 变动说明 */
-  description: string;
-  /** 关联推广记录 ID */
-  relatedPromoId?: string;
-  /** 关联被推广用户 */
-  relatedUser?: string;
-  createdAt: number;
-}
-
-/** 管理员调整纯利豆的入参 */
-export interface AdjustBeanPayload {
-  userId: string;
   /** 正数=增加，负数=减少 */
-  delta: number;
+  delta: SafeNumber;
+  /** 调整原因 */
   reason: string;
 }
 
-// ─── 通用 ─────────────────────────────────────────────────────────────
-
-/** 积分/纯利豆调整方向 */
-export type AdjustDir = 'add' | 'subtract';
-
 /** 用户信息快照（列表/弹窗中使用） */
-export interface UserSnapshot {
+export interface MemberPointsPageUser {
+  /** 用户 ID */
   id: string;
+  /** 用户姓名 */
   name: string;
+  /** 用户手机号 */
   phone: string;
   /** 当前积分余额 */
-  availablePoints: number;
+  availablePoints: SafeNumber;
   /** 当前纯利豆余额 */
-  beanBalance: number;
+  beanBalance: SafeNumber;
   /** 是否是合伙人 */
   isPartner: boolean;
+}
+
+/** 页面概览统计 */
+export interface MemberPointsStats {
+  /** 总记录数 */
+  totalRecords: SafeNumber;
+  /** 管理员调整次数 */
+  adminAdjustCount: SafeNumber;
+  /** 今日变动次数 */
+  todayChangeCount: SafeNumber;
+}
+
+/** 页面筛选项值 */
+export type MemberPointsFilterTab = 'all' | 'admin' | 'earn' | 'spend';
+
+/** 页面筛选项 */
+export interface MemberPointsTabOption {
+  /** Tab 值 */
+  value: MemberPointsFilterTab;
+  /** Tab 文案 */
+  label: string;
 }

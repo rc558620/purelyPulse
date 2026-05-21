@@ -1,0 +1,221 @@
+@import (reference) '../../../../styles/variables.less';
+@import (reference) '../../../../styles/breakpoints.less';
+@import (reference) '../../../../styles/mixins.less';
+
+.rankCard {
+  padding: 2rem 1.6rem;
+  .flex-col();
+  gap: 1.6rem;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 20px;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.05),
+    0 1px 4px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+
+  @media (min-width: @bp-mobile) {
+    grid-column: 1 / -1;
+    padding: 2.8rem 2.4rem;
+    border-radius: 20px;
+  }
+}
+
+.rankCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rankCardTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: @text-main;
+
+  @media (min-width: @bp-mobile) {
+    font-size: 1.7rem;
+  }
+}
+
+.rankTitleIcon {
+  width: 3.2rem;
+  height: 3.2rem;
+  border-radius: 10px;
+  background: linear-gradient(135deg, fade(#f59e0b, 15%), fade(#f59e0b, 8%));
+  border: 1px solid fade(#f59e0b, 25%);
+  .flex-center();
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.rankCardSub {
+  font-size: 1.1rem;
+  color: @text-slate-400;
+  font-weight: 500;
+}
+
+.rankCardHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.rankDetailBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: 9999px;
+  border: 1.5px solid fade(@primary, 38%);
+  background: fade(@primary, 8%);
+  color: darken(@primary, 8%);
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+  .btn-press-effect();
+
+  &:hover {
+    background: fade(@primary, 16%);
+    border-color: fade(@primary, 55%);
+    color: darken(@primary, 12%);
+  }
+}
+
+.rankList {
+  .flex-col();
+  gap: 0;
+}
+
+.rankItem {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1.2rem 0;
+  border-bottom: 1px solid fade(@border-color, 60%);
+  transition: background-color 0.15s;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  @media (min-width: @bp-mobile) {
+    gap: 1.6rem;
+    padding: 1.4rem 0;
+  }
+}
+
+.rankIdx {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 8px;
+  background: @bg-slate-100;
+  .flex-center();
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: @text-sub;
+  flex-shrink: 0;
+
+  @media (min-width: @bp-mobile) {
+    width: 2.8rem;
+    height: 2.8rem;
+    font-size: 1.3rem;
+  }
+}
+
+.rankIdxTop {
+  background: linear-gradient(135deg, #f59e0b, #fbbf24);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
+}
+
+.rankAvatar {
+  width: 3.2rem;
+  height: 3.2rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, fade(@primary, 20%), fade(@primary, 10%));
+  border: 1.5px solid fade(@primary, 30%);
+  .flex-center();
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: darken(@primary, 15%);
+  flex-shrink: 0;
+
+  @media (min-width: @bp-mobile) {
+    width: 3.6rem;
+    height: 3.6rem;
+    font-size: 1.4rem;
+  }
+}
+
+.rankInfo {
+  .flex-col();
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.rankName {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: @text-main;
+  white-space: nowrap;
+
+  @media (min-width: @bp-mobile) {
+    font-size: 1.4rem;
+  }
+}
+
+.rankCity {
+  font-size: 1.1rem;
+  color: @text-slate-400;
+}
+
+.rankBarWrap {
+  flex: 1;
+  height: 6px;
+  background-color: @bg-slate-100;
+  border-radius: 9999px;
+  overflow: hidden;
+  min-width: 40px;
+}
+
+.rankBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, @primary, darken(@primary, 5%));
+  border-radius: 9999px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rankRight {
+  .flex-col();
+  align-items: flex-end;
+  gap: 0.2rem;
+  flex-shrink: 0;
+}
+
+.rankRevenue {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: @text-main;
+
+  @media (min-width: @bp-mobile) {
+    font-size: 1.4rem;
+  }
+}
+
+.rankOrders {
+  font-size: 1.1rem;
+  color: @text-sub;
+}
+
+.rankEmptyState {
+  padding: 1.6rem 0 0.4rem;
+}

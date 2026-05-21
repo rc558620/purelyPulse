@@ -1,44 +1,22 @@
-/**
- * AdjustPointsModal —— 积分增减弹窗
- *
- * 功能：
- *  - 选择调整方向（增加 / 减少）
- *  - 输入调整数量
- *  - 填写调整原因
- *  - 显示当前余额与操作后预览余额
- */
+// 积分调整弹窗：负责积分增减、原因填写与余额预览。
 import React, { useCallback, useState } from 'react';
 import OperationModalShell from '@components/overlay/OperationModalShell/OperationModalShell';
-import type { AdjustDir, UserSnapshot } from '../../memberPoints.types';
+import { cx, isNonEmptyArray, safeNum } from '@utils/utils';
+import {
+  IconMemberPointsBadge,
+  IconMemberPointsConfirm,
+  IconMemberPointsPreviewArrow,
+} from '../MemberPointsIcons/MemberPointsIcons';
+import type {
+  AdjustPointsDirButtonStyle,
+  AdjustPointsDirOption,
+  AdjustPointsDirSignStyle,
+  AdjustPointsModalProps,
+} from './AdjustPointsModal.types';
 import styles from './AdjustPointsModal.module.less';
 
-// ─── 图标 ─────────────────────────────────────────────────────────────
-
-const IconPoints: React.FC = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-    <circle cx="12" cy="12" r="10" />
-    <path d="M8 12h8M12 8v8" />
-  </svg>
-);
-
-const IconCheck: React.FC = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-    <polyline points="20 6 9 17 4 12" />
-  </svg>
-);
-
-// ─── Props ────────────────────────────────────────────────────────────
-
-export interface AdjustPointsModalProps {
-  user: UserSnapshot;
-  onClose: () => void;
-  onConfirm: (userId: string, delta: number, reason: string) => void;
-}
-
-// ─── 常量 ─────────────────────────────────────────────────────────────
-
-const DIR_OPTIONS: { value: AdjustDir; label: string; sign: string; color: string }[] = [
-  { value: 'add',      label: '增加积分', sign: '+', color: '#84cc16' },
+const DIR_OPTIONS: AdjustPointsDirOption[] = [
+  { value: 'add', label: '增加积分', sign: '+', color: '#84cc16' },
   { value: 'subtract', label: '减少积分', sign: '-', color: '#f97316' },
 ];
 
@@ -52,43 +30,52 @@ const REASON_PRESETS = [
   '系统错误修正',
 ];
 
-// ─── 组件 ─────────────────────────────────────────────────────────────
-
-const AdjustPointsModal: React.FC<AdjustPointsModalProps> = ({ user, onClose, onConfirm }) => {
-  const [dir, setDir]       = useState<AdjustDir>('add');
+const AdjustPointsModal: React.FC<AdjustPointsModalProps> = ({
+  user,
+  onClose,
+  onConfirm,
+  isSubmitting = false,
+}) => {
+  const [dir, setDir] = useState<AdjustPointsDirOption['value']>('add');
   const [amount, setAmount] = useState('');
   const [reason, setReason] = useState('');
 
   const parsedAmount = Math.max(0, parseInt(amount, 10) || 0);
-  const delta        = dir === 'add' ? parsedAmount : -parsedAmount;
+  const delta = dir === 'add' ? parsedAmount : -parsedAmount;
   const previewBalance = user.availablePoints + delta;
   const isValid = parsedAmount > 0 && reason.trim().length > 0;
 
-  const handleConfirm = useCallback(() => {
-    if (!isValid) return;
-    onConfirm(user.id, delta, reason.trim());
-  }, [isValid, user.id, delta, reason, onConfirm]);
+  const handleConfirm = useCallback((): void => {
+    if (!isValid || isSubmitting) {
+      return;
+    }
 
-  const handleAmountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const v = e.target.value.replace(/\D/g, '');
-    setAmount(v);
+    void onConfirm(user.id, delta, reason.trim());
+  }, [delta, isSubmitting, isValid, onConfirm, reason, user.id]);
+
+  const handleAmountChange = useCallback((event: React.ChangeEvent<HTMLInputElement>): void => {
+    const nextValue = event.target.value.replace(/\D/g, '');
+    setAmount(nextValue);
   }, []);
+
+  const confirmText = isSubmitting
+    ? '提交中...'
+    : `确认${dir === 'add' ? '增加' : '减少'}${parsedAmount > 0 ? ` ${parsedAmount} ` : ' '}积分`;
 
   return (
     <OperationModalShell
       ariaLabel="调整用户积分"
-      icon={<IconPoints />}
+      icon={<IconMemberPointsBadge />}
       title="调整积分"
-      confirmText="确认调整"
-      confirmIcon={<IconCheck />}
+      confirmText={confirmText}
+      confirmIcon={<IconMemberPointsConfirm />}
       onClose={onClose}
       onConfirm={handleConfirm}
+      confirmDisabled={!isValid || isSubmitting}
       variant="center"
       maxWidth="44rem"
     >
       <div className={styles.body}>
-
-        {/* 用户信息 */}
         <div className={styles.userCard}>
           <div className={styles.userAvatar} aria-hidden="true">
             {user.name[0]}
@@ -98,37 +85,39 @@ const AdjustPointsModal: React.FC<AdjustPointsModalProps> = ({ user, onClose, on
             <span className={styles.userPhone}>{user.phone}</span>
           </div>
           <div className={styles.balanceBox}>
-            <span className={styles.balanceVal}>{user.availablePoints.toLocaleString('zh-CN')}</span>
+            <span className={styles.balanceVal}>{safeNum(user.availablePoints).toLocaleString('zh-CN')}</span>
             <span className={styles.balanceLbl}>当前积分</span>
           </div>
         </div>
 
-        {/* 方向选择 */}
         <div className={styles.field}>
           <label className={styles.fieldLabel}>调整方向</label>
           <div className={styles.dirRow}>
-            {DIR_OPTIONS.map(opt => (
+            {isNonEmptyArray(DIR_OPTIONS) ? DIR_OPTIONS.map((option) => (
               <button
-                key={opt.value}
+                key={option.value}
                 type="button"
-                className={`${styles.dirBtn} ${dir === opt.value ? styles.dirBtnActive : ''}`}
-                style={dir === opt.value ? ({
-                  '--dir-color': opt.color,
-                  '--dir-color-bg': `${opt.color}15`,
-                } as React.CSSProperties) : undefined}
-                onClick={() => setDir(opt.value)}
-                aria-pressed={dir === opt.value}
+                className={cx(styles.dirBtn, dir === option.value && styles.dirBtnActive)}
+                style={dir === option.value ? ({
+                  '--dir-color': option.color,
+                  '--dir-color-bg': `${option.color}15`,
+                } as AdjustPointsDirButtonStyle) : undefined}
+                onClick={() => setDir(option.value)}
+                aria-pressed={dir === option.value}
+                disabled={isSubmitting}
               >
-                <span className={styles.dirSign} style={{ color: dir === opt.value ? opt.color : undefined }}>
-                  {opt.sign}
+                <span
+                  className={cx(styles.dirSign, dir === option.value && styles.dirSignActive)}
+                  style={dir === option.value ? ({ '--sign-color': option.color } as AdjustPointsDirSignStyle) : undefined}
+                >
+                  {option.sign}
                 </span>
-                {opt.label}
+                {option.label}
               </button>
-            ))}
+            )) : null}
           </div>
         </div>
 
-        {/* 数量输入 */}
         <div className={styles.field}>
           <label className={styles.fieldLabel} htmlFor="adjust-points-amount">
             调整数量
@@ -144,24 +133,24 @@ const AdjustPointsModal: React.FC<AdjustPointsModalProps> = ({ user, onClose, on
               onChange={handleAmountChange}
               maxLength={6}
               aria-label="积分调整数量"
+              disabled={isSubmitting}
             />
           </div>
-          {/* 快捷预设 */}
           <div className={styles.presetRow}>
-            {PRESET_AMOUNTS.map(v => (
+            {isNonEmptyArray(PRESET_AMOUNTS) ? PRESET_AMOUNTS.map((presetAmount) => (
               <button
-                key={v}
+                key={presetAmount}
                 type="button"
-                className={`${styles.presetBtn} ${amount === String(v) ? styles.presetBtnActive : ''}`}
-                onClick={() => setAmount(String(v))}
+                className={cx(styles.presetBtn, amount === String(presetAmount) && styles.presetBtnActive)}
+                onClick={() => setAmount(String(presetAmount))}
+                disabled={isSubmitting}
               >
-                {v}
+                {presetAmount}
               </button>
-            ))}
+            )) : null}
           </div>
         </div>
 
-        {/* 调整原因 */}
         <div className={styles.field}>
           <label className={styles.fieldLabel} htmlFor="adjust-points-reason">
             调整原因
@@ -171,46 +160,40 @@ const AdjustPointsModal: React.FC<AdjustPointsModalProps> = ({ user, onClose, on
             className={styles.reasonInput}
             placeholder="请输入调整原因..."
             value={reason}
-            onChange={e => setReason(e.target.value)}
+            onChange={(event) => setReason(event.target.value)}
             maxLength={100}
             rows={2}
             aria-label="积分调整原因"
+            disabled={isSubmitting}
           />
-          {/* 快捷原因 */}
           <div className={styles.reasonPresets}>
-            {REASON_PRESETS.map(r => (
+            {isNonEmptyArray(REASON_PRESETS) ? REASON_PRESETS.map((presetReason) => (
               <button
-                key={r}
+                key={presetReason}
                 type="button"
-                className={`${styles.reasonPresetBtn} ${reason === r ? styles.reasonPresetBtnActive : ''}`}
-                onClick={() => setReason(r)}
+                className={cx(styles.reasonPresetBtn, reason === presetReason && styles.reasonPresetBtnActive)}
+                onClick={() => setReason(presetReason)}
+                disabled={isSubmitting}
               >
-                {r}
+                {presetReason}
               </button>
-            ))}
+            )) : null}
           </div>
         </div>
 
-        {/* 操作后预览 */}
-        {parsedAmount > 0 && (
+        {parsedAmount > 0 ? (
           <div className={styles.previewCard}>
             <span className={styles.previewLabel}>操作后余额预览</span>
             <div className={styles.previewRow}>
-              <span className={styles.previewOld}>{user.availablePoints.toLocaleString('zh-CN')}</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" aria-hidden="true">
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-              <span
-                className={styles.previewNew}
-                style={{ color: dir === 'add' ? '#84cc16' : '#f97316' }}
-              >
-                {Math.max(0, previewBalance).toLocaleString('zh-CN')}
+              <span className={styles.previewOld}>{safeNum(user.availablePoints).toLocaleString('zh-CN')}</span>
+              <IconMemberPointsPreviewArrow color="#94a3b8" />
+              <span className={cx(styles.previewNew, dir === 'add' ? styles.previewNewAdd : styles.previewNewSub)}>
+                {safeNum(previewBalance).toLocaleString('zh-CN')}
               </span>
               <span className={styles.previewUnit}>积分</span>
             </div>
           </div>
-        )}
-
+        ) : null}
       </div>
     </OperationModalShell>
   );

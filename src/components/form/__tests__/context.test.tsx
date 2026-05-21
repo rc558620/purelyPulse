@@ -19,6 +19,7 @@ import type { FormContextType } from '../types';
 // ─── 辅助：创建 mock FormContext value ──────────────────────────────────────
 function createMockCtx(overrides: Partial<FormContextType> = {}): FormContextType {
     return {
+        requiredMark: true,
         registerField: vi.fn(),
         unregisterField: vi.fn(),
         setFieldValue: vi.fn(),
@@ -79,21 +80,21 @@ describe('useFormContext – 正常使用', () => {
             return <span data-testid="val">{val}</span>;
         };
 
-        const Wrapper = ({ ctx }: { ctx: FormContextType }) => {
+        const Wrapper = () => {
             const c = useFormContext();
             return <Consumer val={String(c.getFieldValue('f'))} />;
         };
 
         const { rerender } = render(
             <FormContext.Provider value={ctx1}>
-                <Wrapper ctx={ctx1} />
+                <Wrapper />
             </FormContext.Provider>,
         );
         expect(screen.getByTestId('val').textContent).toBe('v1');
 
         rerender(
             <FormContext.Provider value={ctx2}>
-                <Wrapper ctx={ctx2} />
+                <Wrapper />
             </FormContext.Provider>,
         );
         expect(screen.getByTestId('val').textContent).toBe('v2');
@@ -143,11 +144,9 @@ describe('FormContext – 多层嵌套', () => {
         const outerCtx = createMockCtx({ getFieldValue: vi.fn().mockReturnValue('outer') });
         const innerCtx = createMockCtx({ getFieldValue: vi.fn().mockReturnValue('inner') });
 
-        let capturedValue: unknown;
         const Consumer = () => {
             const ctx = useFormContext();
-            capturedValue = ctx.getFieldValue('x');
-            return null;
+            return <span data-testid="inner-val">{String(ctx.getFieldValue('x'))}</span>;
         };
 
         render(
@@ -158,6 +157,6 @@ describe('FormContext – 多层嵌套', () => {
             </FormContext.Provider>,
         );
 
-        expect(capturedValue).toBe('inner');
+        expect(screen.getByTestId('inner-val').textContent).toBe('inner');
     });
 });

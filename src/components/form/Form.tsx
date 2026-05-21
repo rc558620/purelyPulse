@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useMemo, useCallback, type FormEvent, type ReactNode } from 'react';
 import { FormContext } from './context';
 import { useForm } from './useForm';
-import type { FormContextType, FormErrorMap, FormInstance, FormValues } from './types';
+import type { FormContextType, FormErrorMap, FormInstance, FormRequiredMark, FormValues } from './types';
 /** 表单组件属性。 */
 export interface FormProps<T extends FormValues = FormValues> {
     /** 外部传入的表单实例。 */
@@ -15,6 +15,8 @@ export interface FormProps<T extends FormValues = FormValues> {
     children: ReactNode;
     /** 自定义样式类名。 */
     className?: string;
+    /** 全局必填标识策略，行为对齐 antd 5。 */
+    requiredMark?: FormRequiredMark;
 }
 
 /** 内部表单组件实现。 */
@@ -24,6 +26,7 @@ const InternalForm = <T extends FormValues = FormValues>({
     onFinishFailed,
     children,
     className,
+    requiredMark = true,
 }: FormProps<T>): React.JSX.Element => {
     const [internalForm] = useForm<T>();
     const formInstance = form ?? internalForm;
@@ -68,9 +71,10 @@ const InternalForm = <T extends FormValues = FormValues>({
         () => ({
             ...(formInstance as unknown as FormContextType),
             submit: stableSubmit,
+            requiredMark,
         }),
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [formInstance, stableSubmit],
+        [formInstance, requiredMark, stableSubmit],
     );
 
     return (

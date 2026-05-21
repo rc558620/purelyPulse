@@ -22,14 +22,18 @@
  *  - Form + FormItem 集成
  */
 
-import React from 'react';
-import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, expectTypeOf, vi, beforeAll, afterAll } from 'vitest';
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SelectView } from '../index';
 import { Form } from '../../Form';
 import { FormItem } from '../../FormItem';
-import type { SelectOption } from '../types';
+import type {
+    MultipleSelectViewProps,
+    SelectOption,
+    SelectValue,
+    SingleSelectViewProps,
+} from '../types';
 
 beforeAll(() => {
     vi.setSystemTime(new Date('2024-06-15T12:00:00'));
@@ -43,6 +47,67 @@ const OPTIONS: SelectOption[] = [
     { value: 'b', label: '选项 B' },
     { value: 'c', label: '选项 C' },
 ];
+
+const verifySelectViewTypeContracts = () => {
+    const validSingleValueElement = (
+        <SelectView options={OPTIONS} value="a" displayMode="pc" />
+    );
+    void validSingleValueElement;
+
+    const validMultipleValueElement = (
+        <SelectView options={OPTIONS} mode="multiple" value={['a']} displayMode="pc" />
+    );
+    void validMultipleValueElement;
+
+    const validSingleDefaultValueElement = (
+        <SelectView
+            options={OPTIONS}
+            defaultValue="a"
+            displayMode="pc"
+            onChange={(value) => {
+                expectTypeOf(value).toEqualTypeOf<SelectValue>();
+            }}
+        />
+    );
+    void validSingleDefaultValueElement;
+
+    const validMultipleDefaultValueElement = (
+        <SelectView
+            options={OPTIONS}
+            mode="multiple"
+            defaultValue={['a']}
+            displayMode="pc"
+            onChange={(value) => {
+                expectTypeOf(value).toEqualTypeOf<SelectValue[]>();
+            }}
+        />
+    );
+    void validMultipleDefaultValueElement;
+
+    const invalidMultipleValueElement = (
+        // @ts-expect-error mode="multiple" 时 value 应为数组
+        <SelectView options={OPTIONS} mode="multiple" value="a" displayMode="pc" />
+    );
+    void invalidMultipleValueElement;
+
+    const invalidMultipleDefaultValueElement = (
+        // @ts-expect-error mode="multiple" 时 defaultValue 应为数组
+        <SelectView options={OPTIONS} mode="multiple" defaultValue="a" displayMode="pc" />
+    );
+    void invalidMultipleDefaultValueElement;
+
+    const singleOnChange: NonNullable<SingleSelectViewProps['onChange']> = (value) => {
+        expectTypeOf(value).toEqualTypeOf<SelectValue>();
+    };
+    void singleOnChange;
+
+    const multipleOnChange: NonNullable<MultipleSelectViewProps['onChange']> = (value) => {
+        expectTypeOf(value).toEqualTypeOf<SelectValue[]>();
+    };
+    void multipleOnChange;
+};
+
+verifySelectViewTypeContracts();
 
 // ─── 1. trigger 展示 ─────────────────────────────────────────────────────────
 

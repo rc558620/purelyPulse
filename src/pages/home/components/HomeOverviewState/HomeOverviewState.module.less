@@ -1,0 +1,31 @@
+@import (reference) '../../../../styles/variables.less';
+
+.statusCard {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 20px;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.05),
+    0 1px 4px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  padding: 3.2rem 2rem;
+  min-height: 24rem;
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+  text-align: center;
+}
+
+.statusTitle {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: @text-main;
+}
+
+.statusDesc {
+  font-size: 1.3rem;
+  color: @text-sub;
+}

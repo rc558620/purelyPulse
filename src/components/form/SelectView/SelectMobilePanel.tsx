@@ -2,55 +2,68 @@
 //
 // 通过 createPortal 挂到 body，规避父容器 overflow:hidden 裁剪。
 // 自身只负责 UI 渲染，状态由父组件（SelectView）通过 props 注入。
+// 支持 optionRender 自定义每行选项内容（类似 Ant Design）。
 
 import React, { memo } from 'react';
-import { createPortal } from 'react-dom';
-import type { SelectOption, SelectValue, SelectMobilePanelProps } from './types';
-import styles from './SelectView.module.less';
+import { CheckIcon, SearchIcon, SmallCheckIcon, SmallCloseIcon } from '@components/form/_shared/icons';
 import { cx } from '@utils/utils';
+import { createPortal } from 'react-dom';
+import styles from './SelectView.module.less';
+import type {
+  SelectMobilePanelProps,
+  SelectOptionRowProps,
+} from './types';
 
-// ─── 搜索关键词高亮 ────────────────────────────────────────────────────────────
+interface SelectOptionLabelProps {
+  text: string;
+  keyword: string;
+}
 
-const HighlightText = memo(({ text, keyword }: { text: string; keyword: string }) => {
-  if (!keyword.trim()) return <>{text}</>;
+interface SelectOptionRowFactoryProps extends SelectOptionRowProps {
+  rowClassName: string;
+  selectedClassName: string;
+  disabledClassName: string;
+  customRowClassName: string;
+  customContentClassName: string;
+  renderSingleSelectedIcon: () => React.ReactNode;
+}
 
-  const lowerText    = text.toLowerCase();
-  const lowerKeyword = keyword.trim().toLowerCase();
-  const index        = lowerText.indexOf(lowerKeyword);
+export const SelectOptionLabel = memo(({ text, keyword }: SelectOptionLabelProps) => {
+  const normalizedKeyword = keyword.trim().toLowerCase();
+  if (!normalizedKeyword) return <>{text}</>;
 
-  if (index === -1) return <>{text}</>;
+  const normalizedText = text.toLowerCase();
+  const matchIndex = normalizedText.indexOf(normalizedKeyword);
+  if (matchIndex === -1) return <>{text}</>;
 
   return (
     <>
-      {text.slice(0, index)}
-      <mark className={styles['highlight']}>
-        {text.slice(index, index + lowerKeyword.length)}
+      {text.slice(0, matchIndex)}
+      <mark className={styles.highlight}>
+        {text.slice(matchIndex, matchIndex + normalizedKeyword.length)}
       </mark>
-      {text.slice(index + lowerKeyword.length)}
+      {text.slice(matchIndex + normalizedKeyword.length)}
     </>
   );
 });
-HighlightText.displayName = 'HighlightText';
+SelectOptionLabel.displayName = 'SelectOptionLabel';
 
-// ─── 移动端选项条目 ────────────────────────────────────────────────────────────
-
-interface MobileOptionItemProps {
-  option: SelectOption;
-  isSelected: boolean;
-  isMultiple: boolean;
-  keyword: string;
-  onSingleSelect: (val: SelectValue) => void;
-  onMultiToggle: (val: SelectValue) => void;
-}
-
-const MobileOptionItem = memo(({
+export const SelectOptionRowFactory = memo(({
   option,
+  index,
   isSelected,
   isMultiple,
   keyword,
   onSingleSelect,
   onMultiToggle,
-}: MobileOptionItemProps) => {
+  optionRender,
+  rowClassName,
+  selectedClassName,
+  disabledClassName,
+  customRowClassName,
+  customContentClassName,
+  renderSingleSelectedIcon,
+}: SelectOptionRowFactoryProps) => {
   const handleClick = () => {
     if (option.disabled) return;
     if (isMultiple) {
@@ -63,51 +76,49 @@ const MobileOptionItem = memo(({
   return (
     <div
       className={cx(
-        styles['select-item'],
-        isSelected && styles['selected'],
-        option.disabled && styles['disabled'],
+        rowClassName,
+        isSelected && selectedClassName,
+        option.disabled && disabledClassName,
+        optionRender && customRowClassName,
       )}
       onClick={handleClick}
+      role="option"
+      aria-selected={isSelected}
     >
-      <span>
-        <HighlightText text={option.label} keyword={keyword} />
-      </span>
-
-      {isMultiple ? (
-        <div className={cx(styles['checkbox'], isSelected && styles['checked'])}>
-          {isSelected && (
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 10 10"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              aria-hidden="true"
-            >
-              <path d="M1.5 5l2.5 2.5 4.5-4.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          )}
+      {optionRender ? (
+        <div className={customContentClassName}>
+          {optionRender(option, { index, keyword, isSelected })}
         </div>
       ) : (
-        isSelected && (
-          <svg
-            className={styles['check-icon']}
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            aria-hidden="true"
-          >
-            <path d="M2.5 8l3.5 3.5 7-7" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        )
+        <>
+          <span>
+            <SelectOptionLabel text={option.label} keyword={keyword} />
+          </span>
+          {isMultiple ? (
+            <div className={cx(styles.checkbox, isSelected && styles.checked)}>
+              {isSelected && <SmallCheckIcon />}
+            </div>
+          ) : (
+            isSelected && renderSingleSelectedIcon()
+          )}
+        </>
       )}
     </div>
   );
 });
+SelectOptionRowFactory.displayName = 'SelectOptionRowFactory';
+
+const MobileOptionItem = memo((props: SelectOptionRowProps) => (
+  <SelectOptionRowFactory
+    {...props}
+    rowClassName={styles['select-item']}
+    selectedClassName={styles.selected}
+    disabledClassName={styles.disabled}
+    customRowClassName={styles['select-item-custom']}
+    customContentClassName={styles['select-item-custom-content']}
+    renderSingleSelectedIcon={() => <CheckIcon className={styles['check-icon']} />}
+  />
+));
 MobileOptionItem.displayName = 'MobileOptionItem';
 
 // ─── 底部弹层面板 ──────────────────────────────────────────────────────────────
@@ -128,6 +139,7 @@ const SelectMobilePanel: React.FC<SelectMobilePanelProps> = ({
   onClose,
   onSearchChange,
   onSearchClear,
+  optionRender,
 }) => (
   <>
     {/* 遮罩：仅 visible 时渲染 */}
@@ -139,7 +151,7 @@ const SelectMobilePanel: React.FC<SelectMobilePanelProps> = ({
 
     {/* 弹层：常驻 DOM，通过 CSS transform 控制显隐（保证入场动画流畅） */}
     {createPortal(
-      <div className={cx(styles['select-picker'], visible && styles['visible'])}>
+      <div className={cx(styles['select-picker'], visible && styles.visible)}>
         {/* 头部 */}
         <div className={styles['picker-header']}>
           <button
@@ -153,19 +165,7 @@ const SelectMobilePanel: React.FC<SelectMobilePanelProps> = ({
           {/* 搜索框 / 标题 */}
           {searchable ? (
             <div className={styles['picker-search-box']}>
-              <svg
-                className={styles['search-icon']}
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                aria-hidden="true"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <path d="M21 21l-4.35-4.35" />
-              </svg>
+              <SearchIcon className={styles['search-icon']} size={14} />
               <input
                 className={styles['picker-search-input']}
                 type="text"
@@ -181,9 +181,7 @@ const SelectMobilePanel: React.FC<SelectMobilePanelProps> = ({
                   onClick={onSearchClear}
                   aria-label="清除搜索"
                 >
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
-                    <path d="M6 5.293L10.146 1.146a.5.5 0 01.708.708L6.707 6l4.147 4.146a.5.5 0 01-.708.708L6 6.707l-4.146 4.147a.5.5 0 01-.708-.708L5.293 6 1.146 1.854a.5.5 0 01.708-.708L6 5.293z" />
-                  </svg>
+                  <SmallCloseIcon />
                 </button>
               )}
             </div>
@@ -214,15 +212,17 @@ const SelectMobilePanel: React.FC<SelectMobilePanelProps> = ({
               className={styles['select-items']}
               style={{ opacity: isStale ? 0.5 : 1, transition: 'opacity 0.15s' }}
             >
-              {filteredOptions.map(option => (
+              {filteredOptions.map((option, idx) => (
                 <MobileOptionItem
                   key={String(option.value)}
                   option={option}
+                  index={idx}
                   isSelected={isSelected(option.value)}
                   isMultiple={isMultiple}
                   keyword={deferredSearch}
                   onSingleSelect={onSingleSelect}
                   onMultiToggle={onMultiToggle}
+                  optionRender={optionRender}
                 />
               ))}
             </div>

@@ -26,6 +26,14 @@
   padding: 2rem 1.6rem;
 }
 
+// 桌面端顶部锚定：用于内容高度变化较频繁的弹窗，避免居中回流造成整体抖动
+.overlayDesktopTop {
+  @media (min-width: @bp-mobile) {
+    align-items: flex-start;
+    padding: 2.4rem 1.6rem;
+  }
+}
+
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 // ─── 弹窗卡片 ─────────────────────────────────────────────────
@@ -143,25 +151,29 @@
 
 .cancelBtn {
   flex: 1;
+  min-height: 4.8rem;
   padding: 1.3rem;
   border-radius: @radius-lg;
   background-color: @bg-slate-100;
   border: 1.5px solid @border-color;
+  box-sizing: border-box;
   color: @text-sub;
   font-size: 1.5rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
   -webkit-tap-highlight-color: transparent;
   &:hover { background-color: @border-color; color: @text-main; }
 }
 
 .confirmBtn {
   flex: 2;
+  min-height: 4.8rem;
   padding: 1.3rem;
   border-radius: @radius-lg;
   background-color: @primary;
-  border: none;
+  border: 1.5px solid transparent;
+  box-sizing: border-box;
   color: #fff;
   font-size: 1.5rem;
   font-weight: 700;
@@ -171,8 +183,19 @@
   justify-content: center;
   gap: 0.6rem;
   box-shadow: 0 4px 12px fade(@primary, 35%);
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
   -webkit-tap-highlight-color: transparent;
   &:hover { background-color: darken(@primary, 6%); box-shadow: 0 6px 16px fade(@primary, 45%); }
   &:active { transform: scale(0.97); }
+}
+
+.confirmBtnDisabled {
+  background-color: @bg-slate-100;
+  color: @text-slate-400;
+  border-color: @border-color;
+  box-shadow: none;
+  cursor: not-allowed;
+  pointer-events: none;
+  &:hover { background-color: @bg-slate-100; box-shadow: none; }
+  &:active { transform: none; }
 }

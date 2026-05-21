@@ -11,8 +11,8 @@ export interface AvatarUploaderProps {
     avatar?: string;
     /** 用户昵称，用于 alt 文案，默认"用户" */
     name?: string;
-    /** 头像变更回调，参数为裁剪后的 blob URL */
-    onAvatarChange: (url: string) => void;
+    /** 头像变更回调，参数为裁剪后的 blob URL。 */
+    onAvatarChange: (url: string) => void | Promise<void>;
     /** 自定义类名 */
     className?: string;
     /** 头像尺寸（rem），默认 10 */

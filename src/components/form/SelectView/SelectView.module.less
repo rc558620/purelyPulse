@@ -330,6 +330,18 @@
       background-color: transparent;
     }
   }
+
+  // 自定义渲染：行高更大，内容更宽松
+  &.select-item-custom {
+    padding: 1.2rem 2rem;
+    align-items: center;
+  }
+}
+
+/* 自定义渲染时，内容区撑满剩余宽度 */
+.select-item-custom-content {
+  flex: 1;
+  min-width: 0;
 }
 
 /* 勾选图标 */
@@ -488,6 +500,18 @@
       background-color: transparent;
     }
   }
+
+  // 自定义渲染：内容区填满，padding 稍大，行高更舒适
+  &.pc-option-item-custom {
+    padding: 9px 12px;
+    align-items: center;
+  }
+}
+
+/* 自定义渲染时，内容区撑满剩余宽度 */
+.pc-option-custom-content {
+  flex: 1;
+  min-width: 0;
 }
 
 /* PC 底部按钮 */

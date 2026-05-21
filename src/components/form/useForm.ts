@@ -162,16 +162,14 @@ export const useForm = <T extends FormValues = FormValues>(): [FormInstance<T>] 
         rulesRef.current = { ...rulesRef.current, [name]: fieldRules };
     }, []);
 
-    /** 注销字段并清理字段值。 */
+    /** 注销字段，清理规则/错误/dirty，但保留字段值，确保条件渲染字段 re-mount 后仍能读到已回填的值。 */
     const unregisterField = useCallback((name: string): void => {
         const nextRules = { ...rulesRef.current };
         delete nextRules[name];
         rulesRef.current = nextRules;
 
-        const nextStore = { ...(storeRef.current as Record<string, unknown>) };
-        delete nextStore[name];
-        storeRef.current = nextStore as T;
-
+        // 注意：intentionally 不删除 storeRef 中的值，
+        // 这样条件显示的字段（如 hourlyRate）在 unmount 后 re-mount 时仍能读到之前设置的值。
         clearFieldError(name);
         dirtyFields.current.delete(name);
         fieldListeners.current.delete(name);
@@ -240,23 +238,30 @@ export const useForm = <T extends FormValues = FormValues>(): [FormInstance<T>] 
         changedFields.forEach(name => notifyField(name));
     }, [notifyField]);
 
-    const formInstance: FormInstance<T> & FormContextType & {
+    /** 用 ref 保持 formInstance 对象引用稳定，避免每次渲染都创建新对象
+     *  导致依赖 form 的 useEffect / useMemo 被误触发。 */
+    const formInstanceRef2 = useRef<FormInstance<T> & FormContextType & {
         __setSubmit: (fn: (e?: FormEvent) => Promise<void>) => void;
         subscribeField: (name: string, listener: FieldListener) => () => void;
-    } = {
-        getFieldValue,
-        setFieldValue,
-        validateFields,
-        validateSingleField,
-        submit,
-        getFieldError,
-        reset,
-        registerField,
-        unregisterField,
-        __setSubmit,
-        subscribeField,
-    };
+    } | null>(null);
+
+    if (!formInstanceRef2.current) {
+        formInstanceRef2.current = {
+            getFieldValue,
+            setFieldValue,
+            validateFields,
+            validateSingleField,
+            submit,
+            getFieldError,
+            reset,
+            registerField,
+            unregisterField,
+            requiredMark: true,
+            __setSubmit,
+            subscribeField,
+        };
+    }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    return [formInstance];
+    return [formInstanceRef2.current!];
 };

@@ -1,0 +1,54 @@
+@import (reference) '../../../../styles/variables.less';
+@import (reference) '../../../../styles/mixins.less';
+
+.loadingState,
+.errorState {
+  .flex-col();
+  align-items: center;
+  gap: 1rem;
+  padding: 5.6rem 2rem;
+  color: @text-slate-400;
+  font-size: 1.3rem;
+}
+
+.emptyWrap {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  overflow: hidden;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #a855f7, #c084fc, #818cf8);
+    border-radius: 20px 20px 0 0;
+  }
+}
+
+.retryBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.9rem 1.6rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(168, 85, 247, 0.28);
+  background: rgba(168, 85, 247, 0.08);
+  color: #9333ea;
+  font-size: 1.3rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+
+  &:hover {
+    background: rgba(168, 85, 247, 0.12);
+    border-color: rgba(168, 85, 247, 0.4);
+  }
+}

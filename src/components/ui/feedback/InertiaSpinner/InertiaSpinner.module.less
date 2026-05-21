@@ -1,0 +1,173 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/breakpoints.less';
+
+.spinner {
+    --spinner-size: 1.9rem;
+    --spinner-inner-inset: 0.28rem;
+    --spinner-dot-size: 0.24rem;
+    --spinner-dot-top: 0.16rem;
+    --spinner-ring-bg: conic-gradient(
+        from -32deg,
+        #8bcf2f 0deg 52deg,
+        #d3e84d 52deg 104deg,
+        #f6d54d 104deg 156deg,
+        #f4a43e 156deg 208deg,
+        #ea5b5b 208deg 260deg,
+        #cf6aa6 260deg 312deg,
+        #6ca7eb 312deg 360deg
+    );
+    --spinner-shell-shadow: 0 0 0 0.1rem fade(@primary, 8%);
+    --spinner-inner-bg: @bg-white;
+    --spinner-inner-shadow: inset 0 0 0 0.08rem fade(@primary, 12%);
+    --spinner-dot-bg: fade(@bg-white, 98%);
+    --spinner-dot-shadow: 0 0 0 0.06rem fade(@text-main, 10%);
+    display: inline-block;
+    position: relative;
+    width: var(--spinner-size);
+    height: var(--spinner-size);
+    flex: 0 0 var(--spinner-size);
+    border-radius: @radius-full;
+    box-sizing: border-box;
+    transform-origin: center center;
+    opacity: 0.94;
+    background: var(--spinner-ring-bg);
+    box-shadow: var(--spinner-shell-shadow);
+    transition: opacity 0.2s ease, box-shadow 0.2s ease;
+    color: @primary;
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: var(--spinner-inner-inset);
+        border-radius: @radius-full;
+        background-color: var(--spinner-inner-bg);
+        box-shadow: var(--spinner-inner-shadow);
+    }
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: var(--spinner-dot-top);
+        left: 50%;
+        width: var(--spinner-dot-size);
+        height: var(--spinner-dot-size);
+        border-radius: @radius-full;
+        background-color: var(--spinner-dot-bg);
+        box-shadow: var(--spinner-dot-shadow);
+        transform: translateX(-50%);
+    }
+}
+
+.size_sm {
+    --spinner-size: 1.5rem;
+    --spinner-inner-inset: 0.22rem;
+    --spinner-dot-size: 0.2rem;
+    --spinner-dot-top: 0.12rem;
+}
+
+.size_md {
+    --spinner-size: 1.9rem;
+    --spinner-inner-inset: 0.28rem;
+    --spinner-dot-size: 0.24rem;
+    --spinner-dot-top: 0.16rem;
+
+    .mobile({
+        --spinner-size: 1.7rem;
+        --spinner-inner-inset: 0.24rem;
+        --spinner-dot-size: 0.22rem;
+        --spinner-dot-top: 0.14rem;
+    });
+}
+
+.size_lg {
+    --spinner-size: 2.4rem;
+    --spinner-inner-inset: 0.34rem;
+    --spinner-dot-size: 0.3rem;
+    --spinner-dot-top: 0.18rem;
+}
+
+.variant_rainbow {
+    --spinner-ring-bg: conic-gradient(
+        from -32deg,
+        #8bcf2f 0deg 52deg,
+        #d3e84d 52deg 104deg,
+        #f6d54d 104deg 156deg,
+        #f4a43e 156deg 208deg,
+        #ea5b5b 208deg 260deg,
+        #cf6aa6 260deg 312deg,
+        #6ca7eb 312deg 360deg
+    );
+    --spinner-shell-shadow: 0 0 0 0.1rem fade(@primary, 8%);
+    --spinner-inner-shadow: inset 0 0 0 0.08rem fade(@primary, 12%);
+}
+
+.variant_brand {
+    --spinner-ring-bg: conic-gradient(
+        from -32deg,
+        fade(@primary, 28%) 0deg 48deg,
+        fade(@primary, 42%) 48deg 112deg,
+        fade(@primary, 58%) 112deg 192deg,
+        fade(@primary, 76%) 192deg 272deg,
+        fade(@primary, 94%) 272deg 360deg
+    );
+    --spinner-shell-shadow: 0 0 0 0.1rem fade(@primary, 12%);
+    --spinner-inner-shadow: inset 0 0 0 0.08rem fade(@primary, 16%);
+    --spinner-dot-bg: fade(@primary, 96%);
+    --spinner-dot-shadow: 0 0 0 0.06rem fade(@primary, 18%);
+    color: @primary;
+}
+
+.variant_neutral {
+    --spinner-ring-bg: conic-gradient(
+        from -32deg,
+        fade(@text-sub, 18%) 0deg 64deg,
+        fade(@text-sub, 28%) 64deg 144deg,
+        fade(@text-sub, 42%) 144deg 224deg,
+        fade(@text-sub, 58%) 224deg 304deg,
+        fade(@text-sub, 76%) 304deg 360deg
+    );
+    --spinner-shell-shadow: 0 0 0 0.1rem fade(@text-sub, 8%);
+    --spinner-inner-shadow: inset 0 0 0 0.08rem fade(@text-sub, 12%);
+    --spinner-dot-bg: fade(@bg-white, 100%);
+    --spinner-dot-shadow: 0 0 0 0.06rem fade(@text-sub, 16%);
+    color: @text-sub;
+}
+
+.spinnerCustom {
+    background: transparent;
+    box-shadow: none;
+    border-radius: 0;
+
+    &::before,
+    &::after {
+        display: none;
+    }
+}
+
+.customIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+
+    > svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
+}
+
+.spinnerActive {
+    will-change: transform;
+    opacity: 1;
+    box-shadow: 0 0 0 0.12rem fade(@primary, 12%);
+}
+
+.variant_neutral.spinnerActive {
+    box-shadow: 0 0 0 0.12rem fade(@text-sub, 10%);
+}
+
+.spinnerCustom.spinnerActive {
+    box-shadow: none;
+}

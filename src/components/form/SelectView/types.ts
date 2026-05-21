@@ -1,8 +1,11 @@
-// src/components/form/SelectView/types.ts
-
 import type React from 'react';
 
 export type SelectValue = string | number;
+export type SelectMode = 'single' | 'multiple';
+export type SelectDisplayMode = 'mobile' | 'pc';
+export type SelectChangeValue<M extends SelectMode = SelectMode> = M extends 'multiple'
+  ? SelectValue[]
+  : SelectValue;
 
 export type SelectOption = {
   label: string;
@@ -10,56 +13,59 @@ export type SelectOption = {
   disabled?: boolean;
 };
 
-export interface SelectViewProps {
-  /** 选项列表 */
-  options: SelectOption[];
-  /** 受控值 */
-  value?: SelectValue | SelectValue[];
-  /** 默认值（非受控） */
-  defaultValue?: SelectValue | SelectValue[];
-  /** 值变化回调 */
-  onChange?: (value: SelectValue | SelectValue[]) => void;
-  /** 占位文本，默认"请选择" */
-  placeholder?: string;
-  /** 选择模式：单选或多选，默认 'single' */
-  mode?: 'single' | 'multiple';
-  /** 是否显示搜索框，默认 true */
-  searchable?: boolean;
-  /** 搜索框占位文本，默认"搜索" */
-  searchPlaceholder?: string;
-  /**
-   * 强制指定显示模式（不传则自动检测窗口宽度）
-   * - `'mobile'`：底部弹出面板
-   * - `'pc'`：下拉面板
-   */
-  displayMode?: 'mobile' | 'pc';
-  /** 输入框前缀内容（如图标） */
-  prefix?: React.ReactNode;
-  /** 输入状态，`'error'` 时显示红框 */
-  status?: 'error' | undefined;
-  /** 是否显示清除按钮，默认 false */
-  allowClear?: boolean;
-  /** 自定义类名 */
-  className?: string;
+export interface SelectOptionRenderInfo {
+  index: number;
+  keyword: string;
+  isSelected: boolean;
 }
 
-// ─── useSelectState ───────────────────────────────────────────────────────────
+export type SelectOptionRender = (
+  option: SelectOption,
+  info: SelectOptionRenderInfo,
+) => React.ReactNode;
 
-export interface UseSelectStateOptions {
+interface SelectViewSharedProps {
   options: SelectOption[];
-  value?: SelectValue | SelectValue[];
-  defaultValue?: SelectValue | SelectValue[];
-  onChange?: (value: SelectValue | SelectValue[]) => void;
-  isMultiple: boolean;
+  placeholder?: string;
+  searchable?: boolean;
+  searchPlaceholder?: string;
+  displayMode?: SelectDisplayMode;
+  prefix?: React.ReactNode;
+  status?: 'error' | undefined;
+  allowClear?: boolean;
+  className?: string;
+  triggerClassName?: string;
+  optionRender?: SelectOptionRender;
+}
+
+export interface SingleSelectViewProps extends SelectViewSharedProps {
+  mode?: 'single';
+  value?: SelectChangeValue<'single'>;
+  defaultValue?: SelectChangeValue<'single'>;
+  onChange?: (value: SelectChangeValue<'single'>) => void;
+}
+
+export interface MultipleSelectViewProps extends SelectViewSharedProps {
+  mode: 'multiple';
+  value?: SelectChangeValue<'multiple'>;
+  defaultValue?: SelectChangeValue<'multiple'>;
+  onChange?: (value: SelectChangeValue<'multiple'>) => void;
+}
+
+export type SelectViewProps = SingleSelectViewProps | MultipleSelectViewProps;
+
+export interface UseSelectStateOptions<M extends SelectMode = SelectMode> {
+  options: SelectOption[];
+  value?: SelectChangeValue<M>;
+  defaultValue?: SelectChangeValue<M>;
+  onChange?: (value: SelectChangeValue<M>) => void;
+  mode: M;
   onClose: () => void;
 }
 
 export interface UseSelectStateReturn {
-  // 展示相关
   displayText: string;
   selectedValues: SelectValue[];
-
-  // 搜索相关
   searchText: string;
   deferredSearch: string;
   isStale: boolean;
@@ -67,12 +73,8 @@ export interface UseSelectStateReturn {
   handleSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleSearchClear: () => void;
   resetSearch: () => void;
-
-  // 草稿（多选）
   draftValues: SelectValue[];
   syncDraftToSelected: () => void;
-
-  // 操作
   isSelected: (val: SelectValue) => boolean;
   handleSingleSelect: (val: SelectValue) => void;
   handleMultiToggle: (val: SelectValue) => void;
@@ -80,10 +82,7 @@ export interface UseSelectStateReturn {
   handleClear: (e: React.MouseEvent) => void;
 }
 
-// ─── SelectMobilePanel ────────────────────────────────────────────────────────
-
-export interface SelectMobilePanelProps {
-  visible: boolean;
+export interface SelectPanelSharedProps {
   isMultiple: boolean;
   filteredOptions: SelectOption[];
   searchText: string;
@@ -95,27 +94,28 @@ export interface SelectMobilePanelProps {
   onSingleSelect: (val: SelectValue) => void;
   onMultiToggle: (val: SelectValue) => void;
   onMultiConfirm: () => void;
-  onClose: () => void;
   onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSearchClear: () => void;
+  optionRender?: SelectOptionRender;
 }
 
-// ─── SelectPcDropdown ─────────────────────────────────────────────────────────
-
-export interface SelectPcDropdownProps {
-  isClosing: boolean;
+export interface SelectOptionRowProps {
+  option: SelectOption;
+  index: number;
+  isSelected: boolean;
   isMultiple: boolean;
-  filteredOptions: SelectOption[];
-  searchText: string;
-  deferredSearch: string;
-  isStale: boolean;
-  searchable: boolean;
-  searchPlaceholder: string;
-  isSelected: (val: SelectValue) => boolean;
+  keyword: string;
   onSingleSelect: (val: SelectValue) => void;
   onMultiToggle: (val: SelectValue) => void;
-  onMultiConfirm: () => void;
+  optionRender?: SelectOptionRender;
+}
+
+export interface SelectMobilePanelProps extends SelectPanelSharedProps {
+  visible: boolean;
+  onClose: () => void;
+}
+
+export interface SelectPcDropdownProps extends SelectPanelSharedProps {
+  isClosing: boolean;
   onAnimationEnd: () => void;
-  onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onSearchClear: () => void;
 }

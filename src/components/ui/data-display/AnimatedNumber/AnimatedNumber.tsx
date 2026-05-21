@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer } from 'react';
+import React, { useEffect, useReducer, useRef } from 'react';
 import { cx } from '@utils/utils';
 import styles from './AnimatedNumber.module.less';
 
@@ -57,12 +57,20 @@ const reducer = (state: State, action: Action): State => {
   }
 };
 
+// ── prefers-reduced-motion 检测（模块级，只查询一次）───────────────
+// 用户开启「减少动态效果」时直接跳到最终值，不跑滑入/滑出动画
+const prefersReducedMotion = (): boolean =>
+  typeof window !== 'undefined' &&
+  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
 const AnimatedNumber: React.FC<AnimatedNumberProps> = ({
   value,
   triggerKey,
   className,
   itemClassName,
 }): React.ReactElement => {
+  const reducedMotion = useRef(prefersReducedMotion());
+
   const [state, dispatch] = useReducer(reducer, {
     items: [{ key: triggerKey, value }],
     lastTriggerKey: triggerKey,
@@ -70,9 +78,15 @@ const AnimatedNumber: React.FC<AnimatedNumberProps> = ({
   });
 
   // 响应 triggerKey 或 value 变化（在 effect 中派发，避免 render 阶段 setState 的双重渲染）
+  // prefers-reduced-motion 开启时跳过动画，直接更新为最新值
   useEffect(() => {
     if (triggerKey !== state.lastTriggerKey) {
-      dispatch({ type: 'TRIGGER_CHANGE', triggerKey, value });
+      if (reducedMotion.current) {
+        // 降级：直接替换为新值，无动画
+        dispatch({ type: 'VALUE_CHANGE', triggerKey, value });
+      } else {
+        dispatch({ type: 'TRIGGER_CHANGE', triggerKey, value });
+      }
     } else if (value !== state.lastValue) {
       dispatch({ type: 'VALUE_CHANGE', triggerKey, value });
     }

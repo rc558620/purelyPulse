@@ -22,6 +22,7 @@ import { renderHook, act } from '@testing-library/react';
 import {
     resolveLabels,
     resolveAllLevels,
+    isOptionSelected,
     useCascaderState,
 } from '../useCascaderState';
 import type { CascadeOption, CascadeValue } from '../types';
@@ -59,6 +60,20 @@ const OPTIONS: CascadeOption[] = [
     },
 ];
 
+const COMPRESSED_OPTIONS: CascadeOption[] = [
+    {
+        value: '北京',
+        label: '北京市',
+        children: [
+            {
+                value: '朝阳',
+                label: '朝阳区',
+                valuePath: ['北京', '市辖区', '朝阳'],
+            },
+        ],
+    },
+];
+
 // ─── resolveLabels ────────────────────────────────────────────────────────────
 
 describe('resolveLabels', () => {
@@ -81,6 +96,13 @@ describe('resolveLabels', () => {
     it('叶节点后不再深入', () => {
         const result = resolveLabels(OPTIONS, ['广东', '广州', '天河', 'extra']);
         expect(result).toEqual(['广东省', '广州市', '天河区']);
+    });
+
+    it('支持折叠显示项按完整 valuePath 收集 labels', () => {
+        expect(resolveLabels(COMPRESSED_OPTIONS, ['北京', '市辖区', '朝阳'])).toEqual([
+            '北京市',
+            '朝阳区',
+        ]);
     });
 });
 
@@ -108,6 +130,25 @@ describe('resolveAllLevels', () => {
     it('到叶节点后不再展开', () => {
         const levels = resolveAllLevels(OPTIONS, ['广东', '广州', '天河']);
         expect(levels).toHaveLength(3);
+    });
+
+    it('折叠显示项保留视觉层级数量', () => {
+        const levels = resolveAllLevels(COMPRESSED_OPTIONS, ['北京', '市辖区', '朝阳']);
+        expect(levels).toHaveLength(2);
+        expect(levels[1]?.[0]?.label).toBe('朝阳区');
+    });
+});
+
+// ─── isOptionSelected ────────────────────────────────────────────────────────
+
+describe('isOptionSelected', () => {
+    it('普通选项按当前层级 value 高亮', () => {
+        expect(isOptionSelected(OPTIONS[0]!, ['广东'], 0)).toBe(true);
+    });
+
+    it('折叠显示项按完整 valuePath 高亮', () => {
+        const option = COMPRESSED_OPTIONS[0]!.children![0]!;
+        expect(isOptionSelected(option, ['北京', '市辖区', '朝阳'], 1)).toBe(true);
     });
 });
 
@@ -226,6 +267,23 @@ describe('useCascaderState – handleMobileSelect（移动端）', () => {
         expect(onChange).toHaveBeenCalledWith(['广东', '广州', '天河']);
         expect(onClose).toHaveBeenCalled();
     });
+
+    it('选中折叠叶节点 → 提交完整 valuePath', () => {
+        const onClose = vi.fn();
+        const onChange = vi.fn();
+        const { result } = renderHook(() =>
+            useCascaderState({
+                options: COMPRESSED_OPTIONS,
+                isMobile: true,
+                onClose,
+                onChange,
+            }),
+        );
+        act(() => { result.current.handleMobileSelect('北京'); });
+        act(() => { result.current.handleMobileSelect('朝阳'); });
+        expect(onChange).toHaveBeenCalledWith(['北京', '市辖区', '朝阳']);
+        expect(onClose).toHaveBeenCalled();
+    });
 });
 
 // ─── 5. handleMobileBack ─────────────────────────────────────────────────────
@@ -294,6 +352,23 @@ describe('useCascaderState – handlePcSelect（PC 端）', () => {
         act(() => { result.current.handlePcSelect('深圳', 1); });
         // 深圳有子节点，不提交；internalValue 应为 ['广东', '深圳']
         expect(result.current.allLevels).toHaveLength(3);
+    });
+
+    it('选中折叠叶节点 → 提交完整 valuePath', () => {
+        const onClose = vi.fn();
+        const onChange = vi.fn();
+        const { result } = renderHook(() =>
+            useCascaderState({
+                options: COMPRESSED_OPTIONS,
+                isMobile: false,
+                onClose,
+                onChange,
+            }),
+        );
+        act(() => { result.current.handlePcSelect('北京', 0); });
+        act(() => { result.current.handlePcSelect('朝阳', 1); });
+        expect(onChange).toHaveBeenCalledWith(['北京', '市辖区', '朝阳']);
+        expect(onClose).toHaveBeenCalled();
     });
 });
 

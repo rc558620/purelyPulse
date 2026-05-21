@@ -1,4 +1,5 @@
 @import (reference) '../../../../styles/breakpoints.less';
+@import (reference) '../../../../styles/variables.less';
 
 .tooltipTrigger {
   position: relative;
@@ -30,25 +31,58 @@
   }
 }
 
+/* Top placement — pops up above the trigger, arrow points down */
+.tooltipTop {
+  top: auto;
+  bottom: 100%;
+  padding-top: 0;
+  padding-bottom: 8px; /* space for arrow below */
+  transform: translateX(-50%) translateY(-10px) scale(0.8);
+  transform-origin: 50% 100%; /* Scale from the bottom edge */
+
+  .tooltipArrow {
+    top: auto;
+    bottom: 8px;
+    transform: translateY(100%) translateX(-50%);
+
+    &::before {
+      top: 0;
+      bottom: auto;
+    }
+
+    &::after {
+      top: 0;
+      bottom: auto;
+      transform: translateY(-50%) rotate(45deg);
+    }
+  }
+}
+
 /* Visibility state */
 .tooltipVisible {
   opacity: 1;
   transform: translateX(-50%) translateY(0) scale(1);
 }
 
+/* Top placement visible override */
+.tooltipTop.tooltipVisible {
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+
 /* The actual text bubble */
 .tooltipInner {
   min-height: 32px;
-  padding: 6px 8px;
+  padding: 6px 10px;
   color: #fff;
   text-align: left;
   text-decoration: none;
   word-wrap: break-word;
-  background-color: rgba(0, 0, 0, 0.85);
-  border-radius: 6px; /* AntD v5 roundness */
-  box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
-  font-size: 14px;
-  line-height: 1.5714285714285714;
+  background-color: #1e293b;
+  border-radius: 8px;
+  // box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  font-size: 13px;
+  line-height: 1.6;
+  letter-spacing: 0.01em;
 }
 
 /* The AntD arrow pointing up */
@@ -86,7 +120,7 @@
     border-radius: 0 0 2px 0;
     transform: translateY(50%) rotate(-135deg);
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.05);
-    background: rgba(0, 0, 0, 0.85);
+    background: #1e293b;
   }
 }
 
@@ -99,13 +133,19 @@
 
 .tooltip-cyan {
   .tooltipInner, .tooltipArrow::after {
-    background-color: #13c2c2;
+    background-color: #1e293b;
   }
 }
 
 .tooltip-green {
   .tooltipInner, .tooltipArrow::after {
     background-color: #52c41a;
+  }
+}
+
+.tooltip-lime {
+  .tooltipInner, .tooltipArrow::after {
+    background-color: @primary;
   }
 }
 

@@ -14,7 +14,7 @@ import classNames from 'classnames';
 
 import useDeviceType  from '@components/form/_shared/useDeviceType';
 import usePickerPopup from '@components/form/_shared/usePickerPopup';
-import ClockIcon      from '@components/form/_shared/ClockIcon';
+import { ClockIcon, SmallCloseIcon } from '@components/form/_shared/icons';
 import TimePickerMobilePanel from './TimePickerMobilePanel';
 import TimePickerPcDropdown  from './TimePickerPcDropdown';
 import styles from './TimePicker.module.less';
@@ -114,9 +114,7 @@ const TimePicker: React.FC<TimePickerProps> = ({
             onClick={handleClearClick}
             aria-label="清除时间"
           >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
-              <path d="M6 5.293L10.146 1.146a.5.5 0 01.708.708L6.707 6l4.147 4.146a.5.5 0 01-.708.708L6 6.707l-4.146 4.147a.5.5 0 01-.708-.708L5.293 6 1.146 1.854a.5.5 0 01.708-.708L6 5.293z" />
-            </svg>
+            <SmallCloseIcon />
           </button>
         ) : (
           <span className={styles.arrowPlaceholder} aria-hidden="true" />

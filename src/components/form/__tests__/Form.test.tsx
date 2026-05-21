@@ -16,8 +16,8 @@
  *  - 提交时调用 e.preventDefault()
  */
 
-import React, { act, useRef } from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import React, { act, useEffect, useRef } from 'react';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Form } from '../Form';
@@ -218,11 +218,13 @@ describe('Form – onFinishFailed 回调', () => {
 describe('Form – form.submit() 触发', () => {
     it('form.submit() 调用后触发 onFinish', async () => {
         const onFinish = vi.fn();
-        let capturedForm: ReturnType<typeof useForm>[0] | null = null;
+        const capturedFormRef: { current: ReturnType<typeof useForm>[0] | null } = { current: null };
 
         const Wrapper = () => {
             const [form] = useForm();
-            capturedForm = form;
+            useEffect(() => {
+                capturedFormRef.current = form;
+            }, [form]);
             return (
                 <Form form={form} onFinish={onFinish}>
                     <FormItem name="x">
@@ -232,8 +234,8 @@ describe('Form – form.submit() 触发', () => {
             );
         };
         render(<Wrapper />);
-        act(() => { capturedForm!.setFieldValue('x', 'val'); });
-        await act(async () => { await capturedForm!.submit(); });
+        act(() => { capturedFormRef.current!.setFieldValue('x', 'val'); });
+        await act(async () => { await capturedFormRef.current!.submit(); });
         await waitFor(() => {
             expect(onFinish).toHaveBeenCalledWith({ x: 'val' });
         });
@@ -241,11 +243,13 @@ describe('Form – form.submit() 触发', () => {
 
     it('form.submit() 校验失败时触发 onFinishFailed', async () => {
         const onFinishFailed = vi.fn();
-        let capturedForm: ReturnType<typeof useForm>[0] | null = null;
+        const capturedFormRef: { current: ReturnType<typeof useForm>[0] | null } = { current: null };
 
         const Wrapper = () => {
             const [form] = useForm();
-            capturedForm = form;
+            useEffect(() => {
+                capturedFormRef.current = form;
+            }, [form]);
             return (
                 <Form form={form} onFinishFailed={onFinishFailed}>
                     <FormItem name="req" rules={[{ required: true, message: '必填' }]}>
@@ -255,7 +259,7 @@ describe('Form – form.submit() 触发', () => {
             );
         };
         render(<Wrapper />);
-        await act(async () => { await capturedForm!.submit(); });
+        await act(async () => { await capturedFormRef.current!.submit(); });
         await waitFor(() => {
             expect(onFinishFailed).toHaveBeenCalledWith({ req: '必填' });
         });

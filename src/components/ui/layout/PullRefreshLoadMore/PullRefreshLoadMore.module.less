@@ -1,0 +1,234 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/breakpoints.less';
+@import (reference) '@styles/mixins.less';
+
+.shell {
+  position: relative;
+  width: 100%;
+  min-height: 0;
+}
+
+.disabled {
+  opacity: 0.72;
+
+  .scrollArea {
+    cursor: default;
+  }
+}
+
+.refreshRail {
+  position: absolute;
+  top: 0.8rem;
+  left: 50%;
+  z-index: 5;
+  transform: translate(-50%, -1.2rem);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.refreshRailVisible,
+.refreshRailPinned {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.refreshBubble {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-width: 17.6rem;
+  justify-content: center;
+  padding: 1rem 1.4rem;
+  border-radius: @radius-full;
+  border: 1px solid fade(@primary, 22%);
+  background: fade(@bg-white, 96%);
+  color: @text-main;
+  box-shadow:
+    0 10px 24px rgba(15, 23, 42, 0.08),
+    0 3px 10px fade(@primary, 16%);
+  backdrop-filter: blur(12px);
+  font-size: 1.3rem;
+  font-weight: 600;
+
+  &[data-status='armed'] {
+    color: darken(@primary, 18%);
+    border-color: fade(@primary, 34%);
+  }
+
+  &[data-status='refreshing'] {
+    color: darken(@blue-500, 8%);
+    border-color: fade(@blue-500, 22%);
+  }
+
+  &[data-status='success'] {
+    color: @green-600;
+    border-color: fade(@green-600, 24%);
+  }
+
+  &[data-status='error'] {
+    color: @orange-600;
+    border-color: fade(@orange-600, 28%);
+  }
+}
+
+.scrollArea {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  cursor: grab;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  // 这里不能写 touch-action: pan-y。
+  // PullRefreshLoadMore 需要在 touchmove 里通过 preventDefault 接管下拉手势；
+  // 一旦显式声明 pan-y，浏览器会在手势开始阶段优先走原生竖向滚动，
+  // 首次进入时尤其容易表现成“很沉、拉不动”。
+  scrollbar-width: thin;
+  scrollbar-color: fade(@primary, 28%) transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border-radius: 9999px;
+    background: fade(@primary, 26%);
+  }
+}
+
+.scrollAreaDragging {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.content {
+  min-height: 100%;
+  padding-top: 0.4rem;
+  transform: translate3d(0, var(--pull-refresh-offset, 0px), 0);
+  transition-property: transform;
+  transition-duration: var(--pull-refresh-transition-duration, 220ms);
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.footer {
+  display: flex;
+  justify-content: center;
+  padding: 1.6rem 2.4rem 0 2.4rem;
+}
+
+.footerButton,
+.retryRefreshBtn,
+.backToTopBtn {
+  border: none;
+  border-radius: @radius-full;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.16s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.62;
+    transform: none;
+  }
+}
+
+.footerButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-width: 19rem;
+  justify-content: center;
+  padding: 1rem 1.6rem;
+  background: linear-gradient(135deg, fade(@primary, 14%), fade(@bg-white, 96%));
+  color: @text-main;
+  border: 1px solid fade(@primary, 20%);
+  box-shadow: 0 8px 18px fade(@primary, 10%);
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.footerButtonLoading {
+  color: darken(@blue-500, 6%);
+}
+
+.retryRefreshBtn {
+  position: absolute;
+  top: 5.8rem;
+  right: 0;
+  padding: 0.8rem 1.2rem;
+  background: fade(@orange-100, 92%);
+  color: @orange-600;
+  box-shadow: 0 8px 16px fade(@orange-500, 14%);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.backToTopBtn {
+  position: absolute;
+  right: 2.2rem;
+  bottom: 5rem;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 4.4rem;
+  height: 4.4rem;
+  padding: 0;
+  background: linear-gradient(135deg, darken(@primary, 6%), @primary);
+  color: #fff;
+  box-shadow:
+    0 10px 24px fade(@primary, 28%),
+    0 3px 10px fade(@primary, 18%);
+
+  @media (min-width: @bp-mobile) {
+    right: 4rem;
+    bottom: 5rem;
+  }
+}
+
+.backToTopIcon {
+  width: 2.6rem;
+  height: 2.6rem;
+  filter: drop-shadow(0 1px 1px rgba(15, 23, 42, 0.12));
+}
+
+.statusIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  font-size: 1.5rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.statusIconSpinning {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}

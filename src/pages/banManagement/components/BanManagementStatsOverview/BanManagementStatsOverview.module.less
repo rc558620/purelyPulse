@@ -1,0 +1,63 @@
+@import (reference) '../../../../styles/variables.less';
+@import (reference) '../../../../styles/breakpoints.less';
+@import (reference) '../../../../styles/mixins.less';
+
+.statsRow {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 16px;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.statItem {
+  flex: 1;
+  .flex-col();
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 1.6rem 0.8rem;
+}
+
+.statNum {
+  font-size: 2.4rem;
+  font-weight: 900;
+  color: @text-main;
+  letter-spacing: -0.03em;
+  line-height: 1;
+
+  @media (min-width: @bp-mobile) {
+    font-size: 2.8rem;
+  }
+}
+
+.statNumActive {
+  color: @emerald-500;
+}
+
+.statNumInactive {
+  color: #d97706;
+}
+
+.statNumBanned {
+  color: #ef4444;
+}
+
+.statLabel {
+  font-size: 1.1rem;
+  color: @text-sub;
+  font-weight: 500;
+}
+
+.statDivider {
+  width: 1px;
+  background: @border-color;
+  flex-shrink: 0;
+  margin: 1.4rem 0;
+}

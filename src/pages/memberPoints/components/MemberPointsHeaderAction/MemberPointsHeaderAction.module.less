@@ -1,0 +1,30 @@
+@import (reference) '@styles/variables.less';
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.4rem;
+  border: none;
+  border-radius: 2rem;
+  background: @primary;
+  color: #fff;
+  font-size: 1.3rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+
+  &:hover {
+    opacity: 0.88;
+  }
+
+  &:active {
+    opacity: 0.75;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}

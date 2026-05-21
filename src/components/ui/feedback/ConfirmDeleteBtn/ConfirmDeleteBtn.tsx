@@ -11,30 +11,8 @@
  */
 import React, { useState, useCallback, useEffect, useRef, memo } from 'react';
 import { cx } from '@utils/utils';
+import { IconTrash } from '@components/ui/_shared/icons';
 import styles from './ConfirmDeleteBtn.module.less';
-
-// ─── 内联图标（不依赖任何模块图标文件）────────────────────────
-
-const IconTrash: React.FC<{ size?: string }> = ({ size = '14' }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={2}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <polyline points="3 6 5 6 21 6" />
-    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-    <path d="M10 11v6M14 11v6" />
-    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-  </svg>
-);
-
-// ─── Props ──────────────────────────────────────────────────────
 
 export interface ConfirmDeleteBtnProps {
   /** 删除确认后触发 */
@@ -53,55 +31,85 @@ export interface ConfirmDeleteBtnProps {
   className?: string;
   /** 额外追加到确认态的 className */
   confirmClassName?: string;
+  /** 外部禁用态，默认 false */
+  disabled?: boolean;
 }
-
-// ─── 组件 ──────────────────────────────────────────────────────
 
 const ConfirmDeleteBtn: React.FC<ConfirmDeleteBtnProps> = ({
   onDelete,
-  ariaLabel        = '删除',
+  ariaLabel = '删除',
   confirmAriaLabel = '确认删除',
-  confirmText      = '确认',
-  timeout          = 3000,
-  iconSize         = '14',
+  confirmText = '确认删除',
+  timeout = 3000,
+  iconSize = '14',
   className,
   confirmClassName,
+  disabled = false,
 }) => {
   const [confirming, setConfirming] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const disabledResetRef = useRef(false);
+  const isConfirming = confirming && !disabled && !disabledResetRef.current;
 
-  // 组件卸载时清理定时器，防止内存泄漏
   useEffect(() => () => {
-    if (timerRef.current !== null) clearTimeout(timerRef.current);
+    if (timerRef.current !== null) {
+      clearTimeout(timerRef.current);
+    }
   }, []);
 
-  const handleClick = useCallback(() => {
-    if (confirming) {
-      if (timerRef.current !== null) clearTimeout(timerRef.current);
-      onDelete();
-    } else {
-      setConfirming(true);
-      timerRef.current = setTimeout(() => {
-        setConfirming(false);
-        timerRef.current = null;
-      }, timeout);
+  useEffect(() => {
+    if (!disabled) {
+      return;
     }
-  }, [confirming, onDelete, timeout]);
+
+    disabledResetRef.current = true;
+    if (timerRef.current !== null) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, [disabled]);
+
+  const handleClick = useCallback(() => {
+    if (disabled) {
+      return;
+    }
+
+    if (isConfirming) {
+      if (timerRef.current !== null) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      disabledResetRef.current = false;
+      setConfirming(false);
+      onDelete();
+      return;
+    }
+
+    disabledResetRef.current = false;
+    setConfirming(true);
+    timerRef.current = setTimeout(() => {
+      disabledResetRef.current = false;
+      setConfirming(false);
+      timerRef.current = null;
+    }, timeout);
+  }, [disabled, isConfirming, onDelete, timeout]);
 
   return (
     <button
       type="button"
       className={cx(
         styles.deleteBtn,
-        confirming && styles.deleteBtnConfirm,
+        isConfirming && styles.deleteBtnConfirm,
         className,
-        confirming && confirmClassName,
+        isConfirming && confirmClassName,
       )}
       onClick={handleClick}
-      aria-label={confirming ? confirmAriaLabel : ariaLabel}
+      aria-label={isConfirming ? confirmAriaLabel : ariaLabel}
+      disabled={disabled}
+      aria-disabled={disabled}
     >
-      <IconTrash size={iconSize} />
-      {confirming && <span className={styles.confirmText}>{confirmText}</span>}
+      {!isConfirming && <IconTrash size={iconSize} />}
+      {isConfirming && <span className={styles.confirmText}>{confirmText}</span>}
     </button>
   );
 };

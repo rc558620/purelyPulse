@@ -338,12 +338,13 @@ describe('ImageCropModal – 按钮交互', () => {
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
 
-  it('点击「使用原图」触发 onUseOriginal', async () => {
+  it('点击「使用原图」时会把当前 imageSrc 透传给 onUseOriginal', async () => {
     const user = userEvent.setup();
     const onUseOriginal = vi.fn();
-    renderCropModal({ onUseOriginal });
+    renderCropModal({ imageSrc: 'data:image/png;base64,raw-image', onUseOriginal });
     await user.click(screen.getByRole('button', { name: '使用原图' }));
     expect(onUseOriginal).toHaveBeenCalledTimes(1);
+    expect(onUseOriginal).toHaveBeenCalledWith('data:image/png;base64,raw-image');
   });
 });
 

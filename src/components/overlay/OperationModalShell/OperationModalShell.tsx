@@ -25,22 +25,11 @@
  *     {body JSX}
  *   </OperationModalShell>
  */
-import React, { type ReactNode, useCallback, useEffect } from 'react';
+import React, { type ReactNode, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { cx } from '@utils/utils';
+import { IconClose } from '../_shared/icons';
 import styles from './OperationModalShell.module.less';
-
-// ─── 内联关闭图标（自洽，不依赖外部图标集）──────────────────────
-
-const IconClose: React.FC = () => (
-  <svg
-    width="18" height="18" viewBox="0 0 24 24" fill="none"
-    stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-    aria-hidden="true"
-  >
-    <line x1="18" y1="6" x2="6" y2="18" />
-    <line x1="6" y1="6" x2="18" y2="18" />
-  </svg>
-);
 
 // ─── Props ──────────────────────────────────────────────────────
 
@@ -63,6 +52,8 @@ export interface OperationModalShellProps {
   onClose: () => void;
   /** 确认回调 */
   onConfirm: () => void;
+  /** 确认按钮禁用（灰显不可点），默认 false */
+  confirmDisabled?: boolean;
   /**
    * 展示形态
    * - `sheet`（默认）：底部抽屉（mobile）/ 居中（desktop）
@@ -71,6 +62,8 @@ export interface OperationModalShellProps {
   variant?: 'sheet' | 'center';
   /** 弹窗最大宽度，默认 52rem。通过 CSS 变量 --modal-max-width 注入 */
   maxWidth?: string;
+  /** 桌面端纵向对齐方式，默认 center；需要避免高度变化抖动时可用 top */
+  desktopAlign?: 'center' | 'top';
 }
 
 // ─── 组件 ──────────────────────────────────────────────────────
@@ -85,10 +78,13 @@ const OperationModalShell: React.FC<OperationModalShellProps> = ({
   children,
   onClose,
   onConfirm,
+  confirmDisabled = false,
   variant      = 'sheet',
   maxWidth,
+  desktopAlign = 'center',
 }) => {
   const isCenter = variant === 'center';
+  const isDesktopTop = desktopAlign === 'top';
 
   // ─── ESC 关闭 ──────────────────────────────────────────────
   useEffect(() => {
@@ -97,17 +93,12 @@ const OperationModalShell: React.FC<OperationModalShellProps> = ({
     return () => window.removeEventListener('keydown', handler);
   }, [onClose]);
 
-  const handleBackdrop = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) onClose();
-  }, [onClose]);
-
-  return (
+  return ReactDOM.createPortal(
     <div
-      className={cx(styles.overlay, isCenter && styles.overlayCenter)}
+      className={cx(styles.overlay, isCenter && styles.overlayCenter, isDesktopTop && styles.overlayDesktopTop)}
       role="dialog"
       aria-modal="true"
       aria-label={ariaLabel}
-      onClick={handleBackdrop}
       style={maxWidth ? ({ '--modal-max-width': maxWidth } as React.CSSProperties) : undefined}
     >
       <div className={cx(styles.card, isCenter && styles.cardCenter)}>
@@ -136,14 +127,21 @@ const OperationModalShell: React.FC<OperationModalShellProps> = ({
           <button type="button" className={styles.cancelBtn} onClick={onClose}>
             {cancelText}
           </button>
-          <button type="button" className={styles.confirmBtn} onClick={onConfirm}>
+          <button
+            type="button"
+            className={cx(styles.confirmBtn, confirmDisabled && styles.confirmBtnDisabled)}
+            onClick={confirmDisabled ? undefined : onConfirm}
+            disabled={confirmDisabled}
+            aria-disabled={confirmDisabled}
+          >
             {confirmIcon}
             {confirmText}
           </button>
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
 

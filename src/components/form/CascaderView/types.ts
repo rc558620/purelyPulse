@@ -7,6 +7,8 @@ export type CascadeOption = {
   value: CascadeValue;
   disabled?: boolean;
   children?: CascadeOption[];
+  /** 选中该项时回传的完整值路径，用于 UI 层级与业务编码层级不一致的场景。 */
+  valuePath?: CascadeValue[];
 };
 
 /** @alias CascadeOption - 兼容别名 */

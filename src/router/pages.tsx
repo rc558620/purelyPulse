@@ -12,25 +12,33 @@
  */
 
 import { lazy } from 'react';
+import type { ComponentType } from 'react';
 
 /**
  * 创建带 preload() 方法的懒加载组件。
  *
- * 返回结果包含两个能力：
- * - Component：给路由渲染时使用的 React.lazy 组件
- * - preload：在真正进入路由前，提前触发 import() 下载页面 chunk
- *
- * 这里的 preload 可以放心重复调用：
- * - import() 结果会被浏览器缓存
- * - 同一个 chunk 不会因为多次调用而重复下载
+ * 相比简单版本，这里额外做了两件事：
+ * 1. promise 缓存：同一个 chunk 只会触发一次网络请求
+ * 2. 错误重置：加载失败后清除缓存，下次调用会重新尝试，
+ *    避免一次网络抖动后页面永久加载失败
  */
-function lazyWithPreload<T extends React.ComponentType>(
+function lazyWithPreload<T extends ComponentType>(
   factory: () => Promise<{ default: T }>,
 ) {
-  const Component = lazy(factory);
+  let promise: Promise<{ default: T }> | undefined;
+
+  const load = () => {
+    promise ??= factory().catch((error) => {
+      promise = undefined;
+      throw error;
+    });
+    return promise;
+  };
+
+  const Component = lazy(load);
 
   const preload = () => {
-    factory();
+    void load();
   };
 
   return { Component, preload };
@@ -63,13 +71,13 @@ export const pages = {
   home:          lazyWithPreload(() => import('../pages/home/home')),
   partnerReview: lazyWithPreload(() => import('../pages/partnerReview/partnerReview')),
   partnerPayout: lazyWithPreload(() => import('../pages/partnerPayout/partnerPayout')),
-  revenueDetail:        lazyWithPreload(() => import('../pages/revenueDetail/revenueDetail')),
-  promotionRankDetail:  lazyWithPreload(() => import('../pages/promotionDetail/promotionRankDetail')),
+  revenueDetail:    lazyWithPreload(() => import('../pages/revenueDetail/revenueDetail')),
+  promotionDetail:  lazyWithPreload(() => import('../pages/promotionDetail/promotionDetail')),
   // ─── 会员管理 ───────────────────────────────────────────────────────
   memberPoints: lazyWithPreload(() => import('../pages/memberPoints/memberPoints')),
   partnerBeans: lazyWithPreload(() => import('../pages/partnerBeans/partnerBeans')),
   memberList:   lazyWithPreload(() => import('../pages/memberList/memberList')),
-  memberDetail: lazyWithPreload(() => import('../pages/memberList/memberDetail')),
+  memberDetail: lazyWithPreload(() => import('../pages/memberDetail/memberDetail')),
   // ─── 用户管理 ───────────────────────────────────────────────────────
   banManagement: lazyWithPreload(() => import('../pages/banManagement/banManagement')),
 } as const;

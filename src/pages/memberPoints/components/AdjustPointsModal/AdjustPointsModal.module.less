@@ -123,6 +123,10 @@
   line-height: 1;
   color: @text-sub;
   transition: color 0.15s;
+
+  &Active {
+    color: var(--sign-color, @primary);
+  }
 }
 
 // ─── 数量输入 ────────────────────────────────────────────────────────
@@ -268,6 +272,14 @@
 .previewNew {
   font-size: 1.6rem;
   font-weight: 700;
+
+  &Add {
+    color: #84cc16;
+  }
+
+  &Sub {
+    color: #f97316;
+  }
 }
 
 .previewUnit {

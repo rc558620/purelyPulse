@@ -1,0 +1,40 @@
+@import (reference) '../../../../styles/variables.less';
+
+@accent: #84cc16;
+@accent-dark: #65a30d;
+
+.loadingState,
+.stateBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 6rem 2rem;
+  color: @text-slate-400;
+  font-size: 1.3rem;
+}
+
+.retryBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.9rem 1.6rem;
+  border: 1px solid fade(@accent, 28%);
+  border-radius: 9999px;
+  background: fade(@accent, 8%);
+  color: @accent-dark;
+  font-size: 1.3rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+
+  &:hover {
+    border-color: fade(@accent, 42%);
+    background: fade(@accent, 12%);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}

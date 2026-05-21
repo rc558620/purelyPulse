@@ -5,18 +5,12 @@ import LoginHeader from './components/LoginHeader/LoginHeader';
 import LoginForm from './components/LoginForm/LoginForm';
 import { useLoginForm } from './hooks/useLoginForm';
 
-/**
- * 登录页面组件。
- *
- * 业务逻辑全部委托给 {@link useLoginForm} Hook，组件层只负责布局与渲染。
- * 背景/布局由 {@link AuthPageLayout} 统一提供。
- * 品牌 Logo 区由 {@link LoginHeader} 负责。
- * 表单字段渲染由 {@link LoginForm} 负责。
- */
+/** 登录页面组件。 */
 const Login: React.FC = memo(() => {
     const {
         form,
         showPassword,
+        isSubmitting,
         togglePasswordVisibility,
         handleFinish,
         handleFinishFailed,
@@ -26,20 +20,20 @@ const Login: React.FC = memo(() => {
 
     return (
         <AuthPageLayout contentAlign="center">
-            {/* ── 品牌 Logo 区 ─────────────────────────────── */}
+            {/* 品牌 Logo 区 */}
             <LoginHeader />
 
-            {/* ── 登录表单区 ───────────────────────────────── */}
+            {/* 登录表单区 */}
             <LoginForm
                 form={form}
                 showPassword={showPassword}
+                isSubmitting={isSubmitting}
                 onTogglePassword={togglePasswordVisibility}
                 onFinish={handleFinish}
                 onFinishFailed={handleFinishFailed}
                 onNavigateToRegister={handleNavigateToRegister}
                 onNavigateToForgotPassword={handleNavigateToForgotPassword}
             />
-
         </AuthPageLayout>
     );
 });

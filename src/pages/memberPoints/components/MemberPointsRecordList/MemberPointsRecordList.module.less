@@ -1,0 +1,200 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/breakpoints.less';
+
+.listCard {
+  overflow: hidden;
+  border: 1px solid @border-color;
+  border-radius: 1.6rem;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+
+  @media (min-width: @bp-mobile) {
+    border-radius: 2rem;
+  }
+}
+
+.listHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.4rem 1.6rem;
+  border-bottom: 1px solid @border-color;
+
+  @media (min-width: @bp-mobile) {
+    padding: 1.6rem 2rem;
+  }
+
+  @media (min-width: @bp-tablet) {
+    padding: 1.8rem 2.4rem;
+  }
+}
+
+.listTitle {
+  color: @text-main;
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.listCount {
+  color: @text-sub;
+  font-size: 1.2rem;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 4rem 2rem;
+  color: @text-sub;
+  font-size: 1.3rem;
+
+  svg {
+    opacity: 0.45;
+  }
+}
+
+.recordList {
+  display: flex;
+  flex-direction: column;
+}
+
+.recordItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.2rem;
+  padding: 1.4rem 1.6rem;
+  border-bottom: 1px solid @border-color;
+  transition: background 0.12s;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.02);
+  }
+
+  @media (min-width: @bp-mobile) {
+    gap: 1.6rem;
+    padding: 1.6rem 2rem;
+  }
+
+  @media (min-width: @bp-tablet) {
+    padding: 1.8rem 2.4rem;
+  }
+}
+
+.recordIcon {
+  width: 3.2rem;
+  height: 3.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 0.2rem;
+  border-radius: 50%;
+
+  &Earn {
+    background: rgba(132, 204, 22, 0.12);
+    color: #84cc16;
+  }
+
+  &Spend {
+    background: rgba(249, 115, 22, 0.12);
+    color: #f97316;
+  }
+
+  &Expire {
+    background: rgba(148, 163, 184, 0.15);
+    color: #94a3b8;
+  }
+}
+
+.recordInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.recordTopRow {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.recordUserName {
+  color: @text-main;
+  font-size: 1.3rem;
+  font-weight: 600;
+  white-space: nowrap;
+
+  @media (min-width: @bp-mobile) {
+    font-size: 1.4rem;
+  }
+}
+
+.recordPhone {
+  color: @text-sub;
+  font-size: 1.15rem;
+  white-space: nowrap;
+
+  @media (min-width: @bp-mobile) {
+    font-size: 1.25rem;
+  }
+}
+
+.recordSourceTag {
+  padding: 0.2rem 0.7rem;
+  border-radius: 2rem;
+  background: rgba(100, 116, 139, 0.1);
+  color: @text-sub;
+  font-size: 1.1rem;
+  white-space: nowrap;
+
+  &Admin {
+    background: rgba(132, 204, 22, 0.12);
+    color: darken(#84cc16, 12%);
+  }
+}
+
+.recordDesc {
+  overflow: hidden;
+  color: @text-main;
+  font-size: 1.25rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.recordTime {
+  color: @text-sub;
+  font-size: 1.1rem;
+}
+
+.recordAmount {
+  flex-shrink: 0;
+  margin-top: 0.2rem;
+  color: @text-main;
+  font-size: 1.6rem;
+  font-weight: 700;
+  white-space: nowrap;
+
+  @media (min-width: @bp-mobile) {
+    font-size: 1.9rem;
+  }
+
+  &Earn {
+    color: #84cc16;
+  }
+
+  &Spend {
+    color: #f97316;
+  }
+
+  &Expire {
+    color: #94a3b8;
+  }
+}

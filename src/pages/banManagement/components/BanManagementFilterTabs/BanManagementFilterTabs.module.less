@@ -1,0 +1,60 @@
+@import (reference) '../../../../styles/variables.less';
+
+.filterWrap {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.filterBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.4rem;
+  border-radius: 9999px;
+  border: 1px solid @border-color;
+  background: rgba(255, 255, 255, 0.85);
+  color: @text-sub;
+  font-size: 1.3rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.04);
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+.filterBtnActive {
+  background: rgba(239, 68, 68, 0.09);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.filterBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.8rem;
+  height: 1.8rem;
+  padding: 0 0.4rem;
+  border-radius: 9999px;
+  background: @bg-slate-100;
+  color: @text-sub;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.filterBadgeBanned {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}

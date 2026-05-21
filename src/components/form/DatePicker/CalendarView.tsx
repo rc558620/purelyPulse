@@ -44,6 +44,10 @@ export interface CalendarViewProps {
   onNow?: () => void;
   /** 「确认」按钮回调（datetime 模式） */
   onConfirm?: () => void;
+  /** 返回需要禁用的小时列表（0-23），同 antd disabledTime */
+  disabledHours?: () => number[];
+  /** 返回需要禁用的分钟列表（0-59），接收当前小时作为参数 */
+  disabledMinutes?: (hour: number) => number[];
   // ── 底部按钮控制 ──
   /** 是否隐藏「今天」快捷按钮，默认 false */
   hideToday?: boolean;
@@ -65,6 +69,8 @@ const CalendarView: React.FC<CalendarViewProps> = memo(({
   onConfirm,
   hideToday = false,
   showConfirm = false,
+  disabledHours,
+  disabledMinutes,
 }) => {
   const today    = useMemo(() => new Date(), []);
   const todayStr = useMemo(() => toDateString(today), [today]);
@@ -202,6 +208,8 @@ const CalendarView: React.FC<CalendarViewProps> = memo(({
         <TimePickerPanel
           time={time}
           onChange={onTimeChange ?? (() => {})}
+          disabledHours={disabledHours}
+          disabledMinutes={disabledMinutes}
         />
       </div>
     );

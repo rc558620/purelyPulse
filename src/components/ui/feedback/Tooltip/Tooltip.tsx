@@ -3,16 +3,19 @@ import type { ReactNode } from 'react';
 import { cx } from '@utils/utils';
 import styles from './Tooltip.module.less';
 
-export type TooltipColor = 'orange' | 'cyan' | 'green' | 'blue' | 'volcano' | 'magenta' | 'purple' | 'red';
+export type TooltipColor = 'orange' | 'cyan' | 'green' | 'lime' | 'blue' | 'volcano' | 'magenta' | 'purple' | 'red';
+
+export type TooltipPlacement = 'top' | 'bottom';
 
 export interface TooltipProps {
   title: ReactNode;
   color?: TooltipColor;
+  placement?: TooltipPlacement;
   children: React.ReactElement;
   className?: string;
 }
 
-const Tooltip = memo(function Tooltip({ title, color, children, className }: TooltipProps) {
+const Tooltip = memo(function Tooltip({ title, color, placement = 'bottom', children, className }: TooltipProps) {
   const [visible, setVisible] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
 
@@ -51,6 +54,7 @@ const Tooltip = memo(function Tooltip({ title, color, children, className }: Too
       <div
         className={cx(
           styles.tooltip,
+          placement === 'top' && styles.tooltipTop,
           visible && styles.tooltipVisible,
           color && styles[`tooltip-${color}`],
           className

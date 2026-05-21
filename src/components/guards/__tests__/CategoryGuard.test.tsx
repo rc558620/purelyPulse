@@ -1,24 +1,30 @@
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import { STORAGE_KEYS } from '@constants/storageKeys';
+import { render, screen, waitFor } from '@testing-library/react';
 import CategoryGuard from '../CategoryGuard';
 
-interface MockProtectedRouteProps {
-  check: () => boolean;
-  fallback: string;
-  preloadFallback?: () => void;
-  message?: string;
-  children: React.ReactNode;
-}
-
-const protectedRouteSpy = vi.fn((props: MockProtectedRouteProps) => (
-  <div data-testid="protected-route-mock">{props.children}</div>
-));
-
-vi.mock('@components/business/ProtectedRoute', () => ({
-  default: (props: MockProtectedRouteProps) => protectedRouteSpy(props),
+const mocks = vi.hoisted(() => ({
+  showToast: vi.fn(),
+  useGoodsCategories: vi.fn(),
 }));
+
+vi.mock('@components/ui/feedback/Toast', () => ({
+  showToast: mocks.showToast,
+}));
+
+vi.mock('@pages/main/goods/hooks/useGoodsCategories', () => ({
+  useGoodsCategories: (options?: unknown) => mocks.useGoodsCategories(options),
+}));
+
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-router-dom')>();
+  return {
+    ...actual,
+    Navigate: ({ to, replace }: { to: string; replace?: boolean }) => (
+      <div data-testid="mock-navigate" data-to={to} data-replace={String(replace)} />
+    ),
+  };
+});
 
 const renderCategoryGuard = (props: Partial<React.ComponentProps<typeof CategoryGuard>> = {}) =>
   render(
@@ -27,39 +33,59 @@ const renderCategoryGuard = (props: Partial<React.ComponentProps<typeof Category
     </CategoryGuard>,
   );
 
-const getLastProtectedRouteProps = (): MockProtectedRouteProps => {
-  const lastCall = protectedRouteSpy.mock.lastCall?.[0];
-  if (!lastCall) {
-    throw new Error('ProtectedRoute mock was not called');
-  }
-  return lastCall as MockProtectedRouteProps;
-};
-
 describe('CategoryGuard', () => {
   beforeEach(() => {
-    protectedRouteSpy.mockClear();
-    localStorage.clear();
+    vi.clearAllMocks();
+    mocks.useGoodsCategories.mockReturnValue({
+      categories: [],
+      categoryOptions: [],
+      loading: false,
+      errorMessage: null,
+      hasRequestError: false,
+    });
   });
 
-  it('渲染时包裹到 ProtectedRoute，并透传 children', () => {
+  it('默认按共享分类字典消费 useGoodsCategories', () => {
     renderCategoryGuard();
 
-    expect(screen.getByTestId('protected-route-mock')).toBeInTheDocument();
-    expect(screen.getByTestId('guarded-content')).toBeInTheDocument();
+    expect(mocks.useGoodsCategories).toHaveBeenCalledWith({
+      resolveErrorMessage: expect.any(Function),
+      suppressRefreshErrorWhenHasData: true,
+    });
   });
 
-  it('未传 props 时使用默认 fallback 和默认提示文案', () => {
+  it('有分类时直接放行', async () => {
+    mocks.useGoodsCategories.mockReturnValue({
+      categories: [{ id: '1', name: '奶茶', createdAt: Date.now() }],
+      categoryOptions: [{ label: '奶茶', value: '奶茶' }],
+      loading: false,
+      errorMessage: null,
+      hasRequestError: false,
+    });
+
     renderCategoryGuard();
 
-    expect(getLastProtectedRouteProps()).toEqual(
-      expect.objectContaining({
-        fallback: '/category-entry',
-        message: '请先录入至少一个商品分类',
-      }),
-    );
+    await waitFor(() => {
+      expect(screen.getByTestId('guarded-content')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('mock-navigate')).toBeNull();
+    expect(mocks.showToast).not.toHaveBeenCalled();
   });
 
-  it('支持透传自定义 fallback、message 和 preloadFallback', () => {
+  it('无分类时重定向并提示', async () => {
+    renderCategoryGuard();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mock-navigate')).toHaveAttribute('data-to', '/category-entry');
+    });
+    expect(screen.getByTestId('mock-navigate')).toHaveAttribute('data-replace', 'true');
+    expect(mocks.showToast).toHaveBeenCalledWith({
+      message: '请先录入至少一个商品分类',
+      type: 'warning',
+    });
+  });
+
+  it('支持透传自定义 fallback、message 和 preloadFallback', async () => {
     const preloadFallback = vi.fn();
 
     renderCategoryGuard({
@@ -68,90 +94,46 @@ describe('CategoryGuard', () => {
       preloadFallback,
     });
 
-    expect(getLastProtectedRouteProps()).toEqual(
-      expect.objectContaining({
-        fallback: '/custom-category-entry',
-        message: '请先创建分类后再录入商品',
-        preloadFallback,
-      }),
-    );
+    await waitFor(() => {
+      expect(screen.getByTestId('mock-navigate')).toHaveAttribute('data-to', '/custom-category-entry');
+    });
+    expect(mocks.showToast).toHaveBeenCalledWith({
+      message: '请先创建分类后再录入商品',
+      type: 'warning',
+    });
+    expect(preloadFallback).toHaveBeenCalledTimes(1);
   });
 
-  it('本地存在至少一个分类时允许访问', () => {
-    localStorage.setItem(
-      STORAGE_KEYS.CATEGORIES,
-      JSON.stringify([{ id: 'cate-1', name: '奶茶' }]),
-    );
+  it('请求失败时展示错误而不重定向', async () => {
+    mocks.useGoodsCategories.mockReturnValue({
+      categories: [],
+      categoryOptions: [],
+      loading: false,
+      errorMessage: '获取分类失败',
+      hasRequestError: true,
+    });
 
     renderCategoryGuard();
 
-    expect(getLastProtectedRouteProps().check()).toBe(true);
+    await waitFor(() => {
+      expect(screen.getByText('获取分类失败')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('mock-navigate')).toBeNull();
+    expect(mocks.showToast).not.toHaveBeenCalled();
   });
 
-  it('本地没有分类存储时拒绝访问', () => {
-    renderCategoryGuard();
-
-    expect(getLastProtectedRouteProps().check()).toBe(false);
-  });
-
-  it('本地分类为空数组时拒绝访问', () => {
-    localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify([]));
-
-    renderCategoryGuard();
-
-    expect(getLastProtectedRouteProps().check()).toBe(false);
-  });
-
-  it('本地分类 JSON 非法时拒绝访问', () => {
-    localStorage.setItem(STORAGE_KEYS.CATEGORIES, '{invalid json');
+  it('加载中不渲染内容也不提前跳转', () => {
+    mocks.useGoodsCategories.mockReturnValue({
+      categories: [],
+      categoryOptions: [],
+      loading: true,
+      errorMessage: null,
+      hasRequestError: false,
+    });
 
     renderCategoryGuard();
 
-    expect(getLastProtectedRouteProps().check()).toBe(false);
-  });
-
-  it.each([
-    ['object', { id: 'cate-1' }],
-    ['string', '奶茶'],
-    ['number', 1],
-    ['boolean', true],
-    ['null', null],
-  ])('本地分类解析为 %s 时拒绝访问', (_label, value) => {
-    localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(value));
-
-    renderCategoryGuard();
-
-    expect(getLastProtectedRouteProps().check()).toBe(false);
-  });
-
-  it('check 会在重新渲染后读取最新的 localStorage 分类数据', () => {
-    const { rerender } = render(
-      <CategoryGuard>
-        <div data-testid="guarded-content">商品录入页</div>
-      </CategoryGuard>,
-    );
-
-    expect(getLastProtectedRouteProps().check()).toBe(false);
-
-    localStorage.setItem(
-      STORAGE_KEYS.CATEGORIES,
-      JSON.stringify([{ id: 'cate-2', name: '甜品' }]),
-    );
-
-    rerender(
-      <CategoryGuard>
-        <div data-testid="guarded-content">商品录入页</div>
-      </CategoryGuard>,
-    );
-
-    expect(getLastProtectedRouteProps().check()).toBe(true);
-  });
-
-  it('check 读取的是分类存储 key，而不是其他无关存储', () => {
-    localStorage.setItem('other-key', JSON.stringify([{ id: 'cate-1' }]));
-
-    renderCategoryGuard();
-
-    expect(getLastProtectedRouteProps().check()).toBe(false);
+    expect(screen.queryByTestId('guarded-content')).toBeNull();
+    expect(screen.queryByTestId('mock-navigate')).toBeNull();
   });
 });

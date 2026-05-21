@@ -1,14 +1,8 @@
 // 通用菜单行组件
 import React, { memo } from 'react';
 import { cx } from '@utils/utils';
+import { IconChevronRight } from '@components/ui/_shared/icons';
 import styles from './MenuRow.module.less';
-
-/** 右箭头图标 — 模块级常量，避免每次渲染重建 JSX */
-const ARROW_ICON = (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M9 18l6-6-6-6" />
-    </svg>
-);
 
 export type BadgeVariant = 'success' | 'warning' | 'info' | 'danger';
 
@@ -66,7 +60,7 @@ const MenuRow = memo(function MenuRow({
                         {badge}
                     </span>
                 )}
-                {showArrow && <span className={styles.menuArrow}>{ARROW_ICON}</span>}
+                {showArrow && <span className={styles.menuArrow}><IconChevronRight /></span>}
             </div>
         </button>
     );

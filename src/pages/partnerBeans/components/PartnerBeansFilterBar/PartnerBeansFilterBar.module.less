@@ -1,0 +1,57 @@
+@import (reference) '@styles/variables.less';
+
+.searchWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 1.4rem;
+  color: @text-sub;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.searchInput {
+  width: 100%;
+  height: 4.4rem;
+  padding: 0 4rem 0 4rem;
+  border-radius: 1.2rem;
+  border: 1.5px solid @border-color;
+  background: #fff;
+  font-size: 1.3rem;
+  color: @text-main;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+
+  &::placeholder {
+    color: @text-slate-400;
+  }
+
+  &:focus {
+    border-color: #f59e0b;
+  }
+}
+
+.searchClear {
+  position: absolute;
+  right: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.06);
+  color: @text-sub;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.1);
+  }
+}

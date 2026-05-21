@@ -2,6 +2,7 @@
 import React, { memo, useMemo, useState, useCallback } from 'react';
 import { MONTH_NAMES, isMonthDisabled } from './utils';
 import styles from './DatePicker.module.less';
+import { ChevronsLeftIcon, ChevronsRightIcon } from '@components/form/_shared/icons';
 
 export interface MonthPickerViewProps {
   /** 当前选中值，格式 "YYYY-MM"，null 表示未选中 */
@@ -59,9 +60,7 @@ const MonthPickerView: React.FC<MonthPickerViewProps> = memo(({
           onClick={() => setViewYear(y => y - 1)}
           aria-label="上一年"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M11 17l-5-5 5-5M17 17l-5-5 5-5" />
-          </svg>
+          <ChevronsLeftIcon />
         </button>
         <span className={styles.calNavTitle} style={{ cursor: 'default' }}>{viewYear}年</span>
         <button
@@ -70,9 +69,7 @@ const MonthPickerView: React.FC<MonthPickerViewProps> = memo(({
           onClick={() => setViewYear(y => y + 1)}
           aria-label="下一年"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M13 17l5-5-5-5M7 17l5-5-5-5" />
-          </svg>
+          <ChevronsRightIcon />
         </button>
       </div>
 

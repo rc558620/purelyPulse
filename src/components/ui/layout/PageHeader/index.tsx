@@ -1,5 +1,6 @@
 import React, { memo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { IconChevronLeft } from '@components/ui/_shared/icons';
 import styles from './PageHeader.module.less';
 
 export type PageHeaderVariant = 'sticky' | 'transparent' | 'absolute' | 'relative';
@@ -23,22 +24,6 @@ export interface PageHeaderProps {
     leftExtra?: React.ReactNode;
 }
 
-/** 返回箭头图标 — 模块级常量，避免每次渲染重建 JSX */
-const BACK_ICON = (
-    <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-    >
-        <path d="M15 18l-6-6 6-6" />
-    </svg>
-);
 
 const variantClass: Record<PageHeaderVariant, string> = {
     sticky: styles.header,
@@ -73,7 +58,7 @@ const PageHeader = memo(function PageHeader({
                     aria-label="返回"
                     type="button"
                 >
-                    {BACK_ICON}
+                    <IconChevronLeft />
                 </button>
                 {leftExtra}
             </div>

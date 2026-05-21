@@ -14,7 +14,7 @@ import classNames from 'classnames';
 
 import useDeviceType  from '@components/form/_shared/useDeviceType';
 import usePickerPopup from '@components/form/_shared/usePickerPopup';
-import CalendarIcon   from '@components/form/_shared/CalendarIcon';
+import { CalendarIcon, CloseIcon } from '@components/form/_shared/icons';
 import { pad2 }       from '@components/form/_shared/pickerUtils';
 import DayPickerMobilePanel from './DayPickerMobilePanel';
 import DayPickerPcDropdown  from './DayPickerPcDropdown';
@@ -96,15 +96,7 @@ const DayPicker: React.FC<DayPickerProps> = ({
             onClick={handleClearClick}
             aria-label="清除日期"
           >
-            <svg
-              width="16" height="16" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" strokeWidth="2.5"
-              strokeLinecap="round" strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <line x1="18" y1="6"  x2="6"  y2="18" />
-              <line x1="6"  y1="6"  x2="18" y2="18" />
-            </svg>
+            <CloseIcon size={16} />
           </button>
         ) : (
           <span className={styles.arrowPlaceholder} aria-hidden="true" />

@@ -1,0 +1,163 @@
+@import (reference) '../../../../styles/variables.less';
+@import (reference) '../../../../styles/breakpoints.less';
+@import (reference) '../../../../styles/mixins.less';
+
+.heroCard {
+  position: relative;
+  overflow: hidden;
+  padding: 2.4rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.6rem;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 20px;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.05),
+    0 1px 4px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, @primary, #34d399, darken(@primary, 4%));
+    border-radius: 20px 20px 0 0;
+  }
+
+  @media (min-width: @bp-mobile) {
+    grid-column: 1 / -1;
+    padding: 3.2rem 3.6rem;
+    gap: 3.2rem;
+    border-radius: 24px;
+
+    &::before {
+      border-radius: 24px 24px 0 0;
+    }
+  }
+}
+
+.heroLeft {
+  flex: 1;
+  min-width: 0;
+  .flex-col();
+  gap: 1rem;
+}
+
+.heroLiveBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 1rem;
+  border-radius: 9999px;
+  background: fade(@primary, 12%);
+  border: 1px solid fade(@primary, 25%);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: darken(@primary, 15%);
+  letter-spacing: 0.08em;
+  align-self: flex-start;
+}
+
+.heroLiveDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background-color: @primary;
+  box-shadow: 0 0 0 0 fade(@primary, 50%);
+  animation: heroPulse 2s ease-out infinite;
+}
+
+@keyframes heroPulse {
+  0% { box-shadow: 0 0 0 0 fade(@primary, 60%); }
+  60% { box-shadow: 0 0 0 6px fade(@primary, 0%); }
+  100% { box-shadow: 0 0 0 0 fade(@primary, 0%); }
+}
+
+.heroCountWrap {
+  display: flex;
+  align-items: baseline;
+  gap: 0.8rem;
+}
+
+.heroCount {
+  font-size: 4.8rem;
+  font-weight: 900;
+  color: @text-main;
+  letter-spacing: -0.03em;
+  line-height: 1;
+
+  @media (min-width: @bp-mobile) {
+    font-size: 6.4rem;
+  }
+}
+
+.heroCountUnit {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: @text-sub;
+
+  @media (min-width: @bp-mobile) {
+    font-size: 2rem;
+  }
+}
+
+.heroMeta {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.heroMetaItem {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: darken(@primary, 10%);
+
+  &:last-child {
+    color: @text-sub;
+    font-weight: 500;
+  }
+
+  @media (min-width: @bp-mobile) {
+    font-size: 1.3rem;
+  }
+}
+
+.heroMetaDivider {
+  width: 1px;
+  height: 1.2rem;
+  background-color: @border-color;
+  flex-shrink: 0;
+}
+
+.heroSparkline {
+  width: 120px;
+  flex-shrink: 0;
+
+  @media (min-width: @bp-mobile) {
+    width: 260px;
+  }
+}
+
+.heroSparklineCanvas {
+  width: 100%;
+}
+
+.heroDecorCircle {
+  position: absolute;
+  bottom: -40px;
+  right: -40px;
+  width: 160px;
+  height: 160px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, fade(@primary, 10%), transparent);
+  pointer-events: none;
+}

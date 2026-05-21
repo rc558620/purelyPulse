@@ -29,11 +29,12 @@ import { Form } from '../Form';
 import { FormItem } from '../FormItem';
 import { FormContext } from '../context';
 import { useForm } from '../useForm';
-import type { FormContextType, ValidatorRule } from '../types';
+import type { FormContextType, FormRequiredMark, ValidatorRule } from '../types';
 
 // ─── 辅助：创建 mock FormContext ──────────────────────────────────────────────
 function createMockContext(overrides: Partial<FormContextType> = {}): FormContextType {
     return {
+        requiredMark: true,
         registerField: vi.fn(),
         unregisterField: vi.fn(),
         setFieldValue: vi.fn(),
@@ -135,10 +136,72 @@ describe('FormItem – 字段注册与注销', () => {
         unmount();
         expect(ctx.unregisterField).toHaveBeenCalledWith('email');
     });
+
+    it('rules 变化时重新注册字段规则但不注销字段', () => {
+        const ctx = createMockContext();
+        const firstRules: ValidatorRule[] = [{ required: true, message: '旧规则' }];
+        const nextRules: ValidatorRule[] = [{ required: true, message: '新规则' }];
+        const { rerender } = renderWithContext(
+            <FormItem name="amount" rules={firstRules}>
+                <TextInput />
+            </FormItem>,
+            ctx,
+        );
+
+        rerender(
+            <FormContext.Provider value={ctx}>
+                <FormItem name="amount" rules={nextRules}>
+                    <TextInput />
+                </FormItem>
+            </FormContext.Provider>,
+        );
+
+        expect(ctx.registerField).toHaveBeenNthCalledWith(1, 'amount', firstRules);
+        expect(ctx.registerField).toHaveBeenNthCalledWith(2, 'amount', nextRules);
+        expect(ctx.unregisterField).not.toHaveBeenCalled();
+    });
 });
 
 // ─── 2. label ────────────────────────────────────────────────────────────────
 describe('FormItem – label', () => {
+    it.each<[{ requiredMark: FormRequiredMark }, boolean]>([
+        [{ requiredMark: true }, true],
+        [{ requiredMark: false }, false],
+    ])('根据 Form requiredMark=%j 控制必填星标', ({ requiredMark }, shouldShowMark) => {
+        const ctx = createMockContext({ requiredMark });
+        renderWithContext(
+            <FormItem name="f" label="用户名" rules={[{ required: true, message: '必填' }]}>
+                <TextInput />
+            </FormItem>,
+            ctx,
+        );
+
+        expect(screen.getByText('用户名')).toBeInTheDocument();
+        expect(screen.queryByText('*')).toBe(shouldShowMark ? screen.getByText('*') : null);
+    });
+
+    it('required prop 可强制展示必填星标', () => {
+        const ctx = createMockContext({ requiredMark: true });
+        renderWithContext(
+            <FormItem name="f" label="用户名" required>
+                <TextInput />
+            </FormItem>,
+            ctx,
+        );
+        expect(screen.getByText('*')).toBeInTheDocument();
+    });
+
+    it('requiredMark="optional" 时非必填字段显示 Optional', () => {
+        const ctx = createMockContext({ requiredMark: 'optional' });
+        renderWithContext(
+            <FormItem name="f" label="昵称">
+                <TextInput />
+            </FormItem>,
+            ctx,
+        );
+        expect(screen.getByText('Optional')).toBeInTheDocument();
+    });
+
     it('传入 label 时渲染 <label>', () => {
         const ctx = createMockContext();
         renderWithContext(
@@ -147,7 +210,7 @@ describe('FormItem – label', () => {
             </FormItem>,
             ctx,
         );
-        expect(screen.getByText('用户名').tagName.toLowerCase()).toBe('label');
+        expect(screen.getByText('用户名').closest('label')?.tagName.toLowerCase()).toBe('label');
     });
 
     it('不传 label 时不渲染 <label>', () => {

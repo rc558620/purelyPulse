@@ -1,0 +1,199 @@
+@import (reference) '../../../../styles/variables.less';
+@import (reference) '../../../../styles/mixins.less';
+
+.dialogOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1000;
+  .flex-center();
+  padding: 2rem 1.6rem;
+  animation: overlayIn 0.2s ease;
+
+  @keyframes overlayIn {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+.dialogCard {
+  width: 100%;
+  max-width: 36rem;
+  background: @bg-white;
+  border-radius: 24px;
+  padding: 2.8rem 2.4rem 2.4rem;
+  .flex-col();
+  align-items: center;
+  gap: 1.4rem;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.15),
+    0 4px 16px rgba(0, 0, 0, 0.08);
+  animation: cardIn 0.24s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  @keyframes cardIn {
+    from {
+      opacity: 0;
+      transform: scale(0.88) translateY(12px);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+}
+
+.dialogIconWrap {
+  width: 7.2rem;
+  height: 7.2rem;
+  border-radius: 9999px;
+  .flex-center();
+}
+
+.dialogIconBan {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 2px solid rgba(239, 68, 68, 0.2);
+}
+
+.dialogIconUnban {
+  background: rgba(16, 185, 129, 0.1);
+  color: @emerald-500;
+  border: 2px solid rgba(16, 185, 129, 0.2);
+}
+
+.dialogTitle {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: @text-main;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.dialogDesc {
+  margin: 0;
+  font-size: 1.4rem;
+  color: @text-sub;
+  text-align: center;
+  line-height: 1.7;
+}
+
+.dialogReasonWrap {
+  width: 100%;
+  .flex-col();
+  gap: 0.8rem;
+}
+
+.dialogReasonLabel {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: @text-sub;
+  letter-spacing: 0.04em;
+}
+
+.dialogReasonList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.dialogReasonBtn {
+  padding: 0.55rem 1.2rem;
+  border-radius: 9999px;
+  border: 1px solid @border-color;
+  background: @bg-slate-50;
+  color: @text-sub;
+  font-size: 1.3rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.05);
+  }
+}
+
+.dialogReasonBtnActive {
+  border-color: rgba(239, 68, 68, 0.45);
+  background: rgba(239, 68, 68, 0.09);
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.dialogActions {
+  width: 100%;
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.4rem;
+}
+
+.dialogCancelBtn {
+  flex: 1;
+  padding: 1.2rem;
+  border-radius: @radius-lg;
+  border: 1px solid @border-color;
+  background: @bg-white;
+  color: @text-sub;
+  font-size: 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    border-color: rgba(0, 0, 0, 0.15);
+    background: @bg-slate-50;
+  }
+}
+
+.dialogConfirmBtn {
+  flex: 1.2;
+  padding: 1.2rem;
+  border-radius: @radius-lg;
+  border: none;
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+  .btn-press-effect();
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+}
+
+.dialogConfirmBtnBan {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    box-shadow: 0 6px 18px rgba(239, 68, 68, 0.42);
+  }
+}
+
+.dialogConfirmBtnUnban {
+  background: linear-gradient(135deg, @emerald-500, #059669);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, #059669, #047857);
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.42);
+  }
+}

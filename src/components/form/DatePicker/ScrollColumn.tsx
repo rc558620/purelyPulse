@@ -18,9 +18,11 @@ export interface ScrollColumnProps {
   onChange: (index: number) => void;
   /** 列标题（时 / 分） */
   label: string;
+  /** 被禁用的索引集合，这些项灰显且不可选择 */
+  disabledIndices?: Set<number>;
 }
 
-const ScrollColumn: React.FC<ScrollColumnProps> = memo(({ items, selectedIndex, onChange, label }) => {
+const ScrollColumn: React.FC<ScrollColumnProps> = memo(({ items, selectedIndex, onChange, label, disabledIndices }) => {
   const listRef    = useRef<HTMLUListElement>(null);
   const isDragging = useRef(false);
   const startY     = useRef(0);
@@ -40,6 +42,20 @@ const ScrollColumn: React.FC<ScrollColumnProps> = memo(({ items, selectedIndex, 
     scrollToIndex(selectedIndex, false);
   }, [selectedIndex, scrollToIndex]);
 
+  // ── 找到最近的非禁用项 ──
+  const findNearestEnabled = useCallback((idx: number): number => {
+    if (!disabledIndices || disabledIndices.size === 0) return idx;
+    if (!disabledIndices.has(idx)) return idx;
+    // 向两侧搜索最近的可用项
+    for (let offset = 1; offset < items.length; offset++) {
+      const next = idx + offset;
+      const prev = idx - offset;
+      if (next < items.length && !disabledIndices.has(next)) return next;
+      if (prev >= 0             && !disabledIndices.has(prev)) return prev;
+    }
+    return idx;
+  }, [disabledIndices, items.length]);
+
   // ── 滚动对齐（使用 rAF 节流，避免高频 setState） ──
   const handleScroll = useCallback(() => {
     if (scrollRafId.current) cancelAnimationFrame(scrollRafId.current);
@@ -48,9 +64,14 @@ const ScrollColumn: React.FC<ScrollColumnProps> = memo(({ items, selectedIndex, 
       if (!el) return;
       const idx     = Math.round(el.scrollTop / ITEM_H);
       const clamped = Math.max(0, Math.min(items.length - 1, idx));
-      if (clamped !== selectedIndex) onChange(clamped);
+      const enabled = findNearestEnabled(clamped);
+      if (enabled !== selectedIndex) {
+        onChange(enabled);
+        // 如果被弹回到另一项，修正滚动位置
+        if (enabled !== clamped) scrollToIndex(enabled, true);
+      }
     });
-  }, [items.length, onChange, selectedIndex]);
+  }, [items.length, onChange, selectedIndex, findNearestEnabled, scrollToIndex]);
 
   // 清理 rAF
   useEffect(() => () => { cancelAnimationFrame(scrollRafId.current); }, []);
@@ -68,11 +89,12 @@ const ScrollColumn: React.FC<ScrollColumnProps> = memo(({ items, selectedIndex, 
     const delta   = startY.current - e.clientY;
     const newIdx  = Math.round(startIdx.current + delta / ITEM_H);
     const clamped = Math.max(0, Math.min(items.length - 1, newIdx));
-    if (clamped !== selectedIndex) {
-      onChange(clamped);
-      scrollToIndex(clamped, false);
+    const enabled = findNearestEnabled(clamped);
+    if (enabled !== selectedIndex) {
+      onChange(enabled);
+      scrollToIndex(enabled, false);
     }
-  }, [items.length, onChange, scrollToIndex, selectedIndex]);
+  }, [items.length, onChange, scrollToIndex, selectedIndex, findNearestEnabled]);
 
   const onMouseUp = useCallback(() => { isDragging.current = false; }, []);
 
@@ -108,21 +130,25 @@ const ScrollColumn: React.FC<ScrollColumnProps> = memo(({ items, selectedIndex, 
             <li key={`top-${i}`} className={styles.scrollColPad} aria-hidden="true" />
           ))}
 
-          {items.map((item, idx) => (
-            <li
-              key={item}
-              role="option"
-              aria-selected={idx === selectedIndex}
-              className={
-                idx === selectedIndex
-                  ? `${styles.scrollColItem} ${styles.scrollColItemSelected}`
-                  : styles.scrollColItem
-              }
-              onClick={() => { onChange(idx); scrollToIndex(idx); }}
-            >
-              {item}
-            </li>
-          ))}
+          {items.map((item, idx) => {
+            const isDisabled = disabledIndices?.has(idx) ?? false;
+            const isSelected = idx === selectedIndex;
+            let cls = styles.scrollColItem;
+            if (isSelected)  cls += ` ${styles.scrollColItemSelected}`;
+            if (isDisabled)  cls += ` ${styles.scrollColItemDisabled}`;
+            return (
+              <li
+                key={item}
+                role="option"
+                aria-selected={isSelected}
+                aria-disabled={isDisabled}
+                className={cls}
+                onClick={isDisabled ? undefined : () => { onChange(idx); scrollToIndex(idx); }}
+              >
+                {item}
+              </li>
+            );
+          })}
 
           {/* 下方填充：让最后一项可居中 */}
           {Array.from({ length: Math.floor(VISIBLE / 2) }, (_, i) => (
