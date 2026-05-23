@@ -71,8 +71,8 @@ const MemberDetailHeroSection: React.FC<MemberDetailHeroSectionProps> = React.me
             <span className={pageStyles.heroJoined}>加入于 {formatMemberDate(member.registeredAt)}</span>
             <span className={pageStyles.heroActive}>活跃 {formatMemberRelativeTime(member.lastActiveAt)}</span>
             {membershipExpiryText ? (
-              <span className={cx(pageStyles.heroMembershipExpiry, memberLevel === 'lifetime' && pageStyles.heroMembershipExpiryLifetime)}>
-                {memberLevel === 'lifetime' ? '♾ ' : '📅 '}
+              <span className={cx(pageStyles.heroMembershipExpiry, membershipExpiryText === '永久有效' && pageStyles.heroMembershipExpiryLifetime)}>
+                {membershipExpiryText === '永久有效' ? '♾ ' : '📅 '}
                 {membershipExpiryText}
               </span>
             ) : null}

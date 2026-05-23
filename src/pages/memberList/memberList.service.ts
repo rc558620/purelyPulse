@@ -1,7 +1,8 @@
 // 会员列表 / 详情服务层：封装接口请求、字段映射与前端语义整理。
 import { createKeyedInFlightRequest, http, resolveEnvPath } from '@utils/http';
 import { safeNum } from '@utils/utils';
-import { MEMBER_STATUS_SYNC_EVENT } from './memberList.constants';
+import { STORAGE_KEYS } from '@constants/storageKeys';
+import { MEMBER_STATUS_SYNC_EVENT, MEMBERSHIP_REVENUE_CONFIG, MEMBERSHIP_REVENUE_SYNC_EVENT } from './memberList.constants';
 import type {
   MemberPointsPageUser,
   MemberPointsRecord,
@@ -63,6 +64,162 @@ const RELATED_USER_CANDIDATES = ['relatedUser', 'referralUserName', 'inviteeName
 const isPlainObject = (value: unknown): value is Record<string, unknown> => (
   typeof value === 'object' && value !== null && !Array.isArray(value)
 );
+
+const isFiniteNumber = (value: unknown): value is number => (
+  typeof value === 'number' && Number.isFinite(value)
+);
+
+interface PulseServerRechargeRecordLike {
+  id: string;
+  planName: string;
+  amount: number;
+  pointsAwarded: number;
+  channel: string;
+  createdAt: number;
+}
+
+interface PulseServerMemberListItemLike {
+  id: string;
+  name: string;
+  phone: string;
+  avatarChar: string;
+  avatarColorIdx: number;
+  status: string;
+  level: string;
+  availablePoints: number;
+  beanBalance: number;
+  isPartner: boolean;
+  totalRecharged: number;
+  registeredAt: number;
+  lastActiveAt: number;
+  partnerLevel?: string;
+  invitedCount?: number;
+  rechargeCount?: number;
+  remark?: string;
+}
+
+interface PulseServerMemberDetailLike extends PulseServerMemberListItemLike {
+  totalPointsEarned: number;
+  rechargeHistory: PulseServerRechargeRecordLike[];
+  membershipExpiry?: number | null;
+}
+
+interface PulseServerMembersResponseLike {
+  items: PulseServerMemberListItemLike[];
+  total: number;
+}
+
+const isServerRechargeRecordLike = (value: unknown): value is PulseServerRechargeRecordLike => (
+  isPlainObject(value)
+  && typeof value.id === 'string'
+  && typeof value.planName === 'string'
+  && isFiniteNumber(value.amount)
+  && isFiniteNumber(value.pointsAwarded)
+  && typeof value.channel === 'string'
+  && isFiniteNumber(value.createdAt)
+);
+
+const isServerMemberListItemLike = (value: unknown): value is PulseServerMemberListItemLike => (
+  isPlainObject(value)
+  && typeof value.id === 'string'
+  && typeof value.name === 'string'
+  && typeof value.phone === 'string'
+  && typeof value.avatarChar === 'string'
+  && isFiniteNumber(value.avatarColorIdx)
+  && typeof value.status === 'string'
+  && typeof value.level === 'string'
+  && isFiniteNumber(value.availablePoints)
+  && isFiniteNumber(value.beanBalance)
+  && typeof value.isPartner === 'boolean'
+  && isFiniteNumber(value.totalRecharged)
+  && isFiniteNumber(value.registeredAt)
+  && isFiniteNumber(value.lastActiveAt)
+);
+
+const isServerMemberDetailLike = (value: unknown): value is PulseServerMemberDetailLike => (
+  isServerMemberListItemLike(value)
+  && isFiniteNumber(value.totalPointsEarned)
+  && Array.isArray(value.rechargeHistory)
+  && value.rechargeHistory.every((item) => isServerRechargeRecordLike(item))
+);
+
+const isServerMembersResponseLike = (value: unknown): value is PulseServerMembersResponseLike => (
+  isPlainObject(value)
+  && Array.isArray(value.items)
+  && isFiniteNumber(value.total)
+  && value.items.every((item) => isServerMemberListItemLike(item))
+);
+
+const normalizeOptionalString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const trimmedValue = value.trim();
+  return trimmedValue || undefined;
+};
+
+const normalizeOptionalCount = (value: unknown): number | undefined => {
+  const normalizedValue = normalizeNumber(value);
+  if (normalizedValue !== 0 || value === 0 || value === '0') {
+    return safeNum(normalizedValue);
+  }
+
+  return undefined;
+};
+
+const mapServerRechargeRecord = (value: PulseServerRechargeRecordLike): RechargeRecord => ({
+  id: value.id,
+  planName: value.planName,
+  amount: safeNum(value.amount),
+  pointsAwarded: safeNum(value.pointsAwarded),
+  channel: normalizeRechargeChannel(value.channel),
+  createdAt: value.createdAt,
+});
+
+const mapServerMemberListItem = (value: PulseServerMemberListItemLike): MemberListItem => ({
+  id: value.id,
+  name: value.name,
+  phone: value.phone,
+  avatarChar: value.avatarChar,
+  avatarColorIdx: Math.abs(Math.round(value.avatarColorIdx)) % MEMBER_AVATAR_COLOR_COUNT,
+  status: normalizeMemberStatus(value.status),
+  level: normalizeMemberLevel(value.level),
+  availablePoints: safeNum(value.availablePoints),
+  beanBalance: safeNum(value.beanBalance),
+  isPartner: value.isPartner,
+  partnerLevel: normalizeOptionalString(value.partnerLevel),
+  totalRecharged: safeNum(value.totalRecharged),
+  registeredAt: value.registeredAt,
+  lastActiveAt: value.lastActiveAt,
+  invitedCount: normalizeOptionalCount(value.invitedCount),
+  rechargeCount: normalizeOptionalCount(value.rechargeCount),
+  remark: normalizeOptionalString(value.remark),
+  membershipExpiry: value.membershipExpiry === null || value.expireAt === null || value.membershipExpireAt === null
+    ? null
+    : normalizeTimestamp(value.membershipExpiry ?? value.expireAt ?? value.membershipExpireAt, 0) || undefined,
+});
+
+const mapServerMemberDetail = (value: PulseServerMemberDetailLike): MemberDetail => ({
+  ...mapServerMemberListItem(value),
+  totalPointsEarned: safeNum(value.totalPointsEarned),
+  rechargeCount: normalizeOptionalCount(value.rechargeCount) ?? value.rechargeHistory.length,
+  invitedCount: normalizeOptionalCount(value.invitedCount) ?? 0,
+  rechargeHistory: value.rechargeHistory.map((record) => mapServerRechargeRecord(record)),
+  membershipExpiry: value.membershipExpiry === null || value.expireAt === null || value.membershipExpireAt === null
+    ? null
+    : normalizeTimestamp(value.membershipExpiry ?? value.expireAt ?? value.membershipExpireAt, 0) || undefined,
+});
+
+const getServerMemberListStats = (
+  members: MemberListItem[],
+  payload: PulseServerMembersResponseLike,
+): MemberListStats => ({
+  totalCount: payload.total,
+  activeCount: members.filter((member) => member.status === 'active').length,
+  partnerCount: members.filter((member) => member.isPartner).length,
+  bannedCount: members.filter((member) => member.status === 'banned').length,
+});
 
 const getNestedRecord = (value: unknown, keys: readonly string[]): Record<string, unknown> | null => {
   if (!isPlainObject(value)) {
@@ -305,6 +462,10 @@ const normalizeRechargeChannel = (value: string): RechargeRecord['channel'] => {
     case 'giftcard':
     case 'gift_card':
       return 'card';
+    case 'manual':
+    case 'manual_set':
+    case 'system':
+      return 'manual';
     case 'wechat':
     case 'wx':
     case 'wechatpay':
@@ -427,29 +588,161 @@ const mapBeanRecord = (value: unknown, index: number): BeanRecord => {
 };
 
 const buildMemberListStats = (members: MemberListItem[], payload: unknown): MemberListStats => {
-  const statsSource = getNestedRecord(payload, MEMBER_STATS_SOURCE_CANDIDATES) ?? (isPlainObject(payload) ? payload : null);
-  if (statsSource) {
-    const totalCount = pickNumberField(statsSource, ['totalCount', 'total', 'memberCount']);
-    const activeCount = pickNumberField(statsSource, ['activeCount', 'normalCount']);
-    const partnerCount = pickNumberField(statsSource, ['partnerCount']);
-    const bannedCount = pickNumberField(statsSource, ['bannedCount', 'disabledCount']);
-
-    if (totalCount || activeCount || partnerCount || bannedCount) {
-      return {
-        totalCount,
-        activeCount,
-        partnerCount,
-        bannedCount,
-      };
-    }
+  if (isServerMembersResponseLike(payload)) {
+    return getServerMemberListStats(members, payload);
   }
 
-  return members.reduce<MemberListStats>((stats, member) => ({
+  const computedStats = members.reduce<MemberListStats>((stats, member) => ({
     totalCount: stats.totalCount + 1,
     activeCount: stats.activeCount + (member.status === 'active' ? 1 : 0),
     partnerCount: stats.partnerCount + (member.isPartner ? 1 : 0),
     bannedCount: stats.bannedCount + (member.status === 'banned' ? 1 : 0),
   }), { ...EMPTY_MEMBER_LIST_STATS });
+
+  const statsSource = getNestedRecord(payload, MEMBER_STATS_SOURCE_CANDIDATES) ?? (isPlainObject(payload) ? payload : null);
+  if (!statsSource) {
+    return computedStats;
+  }
+
+  return {
+    totalCount: pickNumberField(statsSource, ['totalCount', 'total', 'memberCount']) || computedStats.totalCount,
+    activeCount: pickNumberField(statsSource, ['activeCount', 'normalCount']) || computedStats.activeCount,
+    partnerCount: pickNumberField(statsSource, ['partnerCount']) || computedStats.partnerCount,
+    bannedCount: pickNumberField(statsSource, ['bannedCount', 'disabledCount']) || computedStats.bannedCount,
+  };
+};
+
+export interface MembershipRevenueSyncPayload {
+  memberId: string;
+  memberName: string;
+  level: Exclude<MemberLevel, 'free'>;
+  amountFen: number;
+  planName: string;
+  revenueTypeLabel: string;
+  createdAt: number;
+}
+
+const MEMBERSHIP_REVENUE_EVENT_LIMIT = 200;
+
+const buildMembershipRevenueRecordId = (event: MembershipRevenueSyncPayload): string => (
+  `membership-revenue-${event.memberId}-${event.createdAt}-${event.level}`
+);
+
+const normalizeMembershipRevenueSyncPayload = (value: unknown): MembershipRevenueSyncPayload | null => {
+  if (!isPlainObject(value)) {
+    return null;
+  }
+
+  const memberId = normalizeOptionalString(value.memberId) ?? '';
+  const normalizedLevel = normalizeMemberLevel(normalizeOptionalString(value.level) ?? 'free');
+  const amountFen = normalizeNumber(value.amountFen);
+  const planName = normalizeOptionalString(value.planName) ?? '';
+  const revenueTypeLabel = normalizeOptionalString(value.revenueTypeLabel) ?? '';
+  const createdAt = normalizeTimestamp(value.createdAt, 0);
+
+  if (!memberId || normalizedLevel === 'free' || amountFen <= 0 || !planName || !revenueTypeLabel || !createdAt) {
+    return null;
+  }
+
+  return {
+    memberId,
+    memberName: normalizeOptionalString(value.memberName) ?? `会员${memberId}`,
+    level: normalizedLevel,
+    amountFen,
+    planName,
+    revenueTypeLabel,
+    createdAt,
+  };
+};
+
+const readStoredMembershipRevenueSyncEvents = (): MembershipRevenueSyncPayload[] => {
+  if (typeof window === 'undefined') {
+    return [];
+  }
+
+  try {
+    const rawValue = sessionStorage.getItem(STORAGE_KEYS.MEMBERSHIP_REVENUE_EVENTS);
+    if (!rawValue) {
+      return [];
+    }
+
+    const parsedValue = JSON.parse(rawValue);
+    if (!Array.isArray(parsedValue)) {
+      sessionStorage.removeItem(STORAGE_KEYS.MEMBERSHIP_REVENUE_EVENTS);
+      return [];
+    }
+
+    return parsedValue
+      .map((item) => normalizeMembershipRevenueSyncPayload(item))
+      .filter((item): item is MembershipRevenueSyncPayload => item !== null);
+  } catch {
+    sessionStorage.removeItem(STORAGE_KEYS.MEMBERSHIP_REVENUE_EVENTS);
+    return [];
+  }
+};
+
+const persistMembershipRevenueSyncEvents = (events: MembershipRevenueSyncPayload[]): void => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  if (events.length === 0) {
+    sessionStorage.removeItem(STORAGE_KEYS.MEMBERSHIP_REVENUE_EVENTS);
+    return;
+  }
+
+  sessionStorage.setItem(
+    STORAGE_KEYS.MEMBERSHIP_REVENUE_EVENTS,
+    JSON.stringify(events.slice(-MEMBERSHIP_REVENUE_EVENT_LIMIT)),
+  );
+};
+
+export const readMembershipRevenueSyncEvents = (): MembershipRevenueSyncPayload[] => (
+  readStoredMembershipRevenueSyncEvents()
+);
+
+const appendMembershipRevenueSyncEvent = (payload: MembershipRevenueSyncPayload): void => {
+  persistMembershipRevenueSyncEvents(readStoredMembershipRevenueSyncEvents().concat(payload));
+};
+
+const applyMembershipRevenueToMemberListItem = (member: MemberListItem): MemberListItem => {
+  const relatedEvents = readStoredMembershipRevenueSyncEvents().filter((item) => item.memberId === member.id);
+  if (relatedEvents.length === 0) {
+    return member;
+  }
+
+  const addedAmountFen = relatedEvents.reduce((sum, item) => safeNum(sum + item.amountFen), 0);
+  return {
+    ...member,
+    totalRecharged: safeNum(member.totalRecharged + addedAmountFen),
+    rechargeCount: safeNum((member.rechargeCount ?? 0) + relatedEvents.length),
+  };
+};
+
+const applyMembershipRevenueToMemberDetail = (member: MemberDetail): MemberDetail => {
+  const relatedEvents = readStoredMembershipRevenueSyncEvents()
+    .filter((item) => item.memberId === member.id)
+    .sort((left, right) => right.createdAt - left.createdAt);
+  if (relatedEvents.length === 0) {
+    return member;
+  }
+
+  const addedAmountFen = relatedEvents.reduce((sum, item) => safeNum(sum + item.amountFen), 0);
+  const manualRechargeHistory = relatedEvents.map<RechargeRecord>((item) => ({
+    id: buildMembershipRevenueRecordId(item),
+    planName: item.planName,
+    amount: item.amountFen,
+    pointsAwarded: 0,
+    channel: 'manual',
+    createdAt: item.createdAt,
+  }));
+
+  return {
+    ...member,
+    totalRecharged: safeNum(member.totalRecharged + addedAmountFen),
+    rechargeCount: safeNum((member.rechargeCount ?? member.rechargeHistory.length) + relatedEvents.length),
+    rechargeHistory: manualRechargeHistory.concat(member.rechargeHistory),
+  };
 };
 
 const mapRechargeRecord = (value: unknown, index: number, memberId: string): RechargeRecord => {
@@ -478,6 +771,10 @@ const mapRechargeRecord = (value: unknown, index: number, memberId: string): Rec
 };
 
 const mapMemberListItem = (value: unknown, index: number): MemberListItem => {
+  if (isServerMemberListItemLike(value)) {
+    return mapServerMemberListItem(value);
+  }
+
   const memberId = pickStringField(value, MEMBER_ID_CANDIDATES) || `member-${index + 1}`;
   const memberName = pickStringField(value, MEMBER_NAME_CANDIDATES) || `会员${index + 1}`;
   const phone = maskPhone(pickStringField(value, MEMBER_PHONE_CANDIDATES));
@@ -506,10 +803,17 @@ const mapMemberListItem = (value: unknown, index: number): MemberListItem => {
     invitedCount: pickNumberField(value, ['invitedCount', 'inviteCount', 'referralCount', 'promotionCount']) || undefined,
     rechargeCount: pickNumberField(value, ['rechargeCount', 'rechargeTimes', 'payCount']) || undefined,
     remark: pickStringField(value, REMARK_CANDIDATES) || undefined,
+    membershipExpiry: isPlainObject(value) && (value.membershipExpiry === null || value.expireAt === null || value.membershipExpireAt === null)
+      ? null
+      : normalizeTimestamp(isPlainObject(value) ? value.membershipExpiry ?? value.expireAt ?? value.membershipExpireAt : undefined, 0) || undefined,
   };
 };
 
 const mapMemberDetail = (value: unknown): MemberDetail => {
+  if (isServerMemberDetailLike(value)) {
+    return mapServerMemberDetail(value);
+  }
+
   const memberListItem = mapMemberListItem(value, 0);
   const partnerLevel = pickStringField(value, PARTNER_LEVEL_CANDIDATES);
   const rechargeHistorySource = getNestedArray(value, RECHARGE_LIST_SOURCE_CANDIDATES);
@@ -528,7 +832,7 @@ const mapMemberDetail = (value: unknown): MemberDetail => {
     invitedCount: pickNumberField(value, ['invitedCount', 'inviteCount', 'referralCount', 'promotionCount']),
     rechargeHistory,
     remark: pickStringField(value, REMARK_CANDIDATES) || undefined,
-    membershipExpiry: isPlainObject(value) && (value.membershipExpiry === null || value.expireAt === null)
+    membershipExpiry: isPlainObject(value) && (value.membershipExpiry === null || value.expireAt === null || value.membershipExpireAt === null)
       ? null
       : normalizeTimestamp(isPlainObject(value) ? value.membershipExpiry ?? value.expireAt ?? value.membershipExpireAt : undefined, 0) || undefined,
   };
@@ -539,12 +843,20 @@ const resolveMemberListSource = (payload: unknown): unknown[] => {
     return payload;
   }
 
+  if (isServerMembersResponseLike(payload)) {
+    return payload.items;
+  }
+
   return getNestedArray(payload, MEMBER_LIST_SOURCE_CANDIDATES);
 };
 
 const resolveMemberDetailSource = (payload: unknown): unknown | null => {
   if (Array.isArray(payload)) {
     return payload[0] ?? null;
+  }
+
+  if (isServerMemberDetailLike(payload)) {
+    return payload;
   }
 
   if (!isPlainObject(payload)) {
@@ -565,7 +877,9 @@ const requestMemberList = async (query: MemberListQuery): Promise<{ members: Mem
     errorMessage: '获取会员列表失败',
   });
 
-  const memberList = resolveMemberListSource(response).map((item, index) => mapMemberListItem(item, index));
+  const memberList = resolveMemberListSource(response)
+    .map((item, index) => mapMemberListItem(item, index))
+    .map((item) => applyMembershipRevenueToMemberListItem(item));
 
   return {
     members: memberList,
@@ -615,7 +929,7 @@ const requestMemberDetail = async (id: string): Promise<MemberDetail | null> => 
     return null;
   }
 
-  return mapMemberDetail(memberDetailSource);
+  return applyMembershipRevenueToMemberDetail(mapMemberDetail(memberDetailSource));
 };
 
 const requestMemberPointsPageData = async (): Promise<{
@@ -747,6 +1061,16 @@ export const emitMemberStatusSync = (payload: MemberStatusSyncPayload): void => 
   window.dispatchEvent(new CustomEvent<MemberStatusSyncPayload>(MEMBER_STATUS_SYNC_EVENT, { detail: payload }));
 };
 
+/** 广播会员等级设置产生的收入，驱动充值收入相关页面刷新。 */
+export const emitMembershipRevenueSync = (payload: MembershipRevenueSyncPayload): void => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  appendMembershipRevenueSyncEvent(payload);
+  window.dispatchEvent(new CustomEvent<MembershipRevenueSyncPayload>(MEMBERSHIP_REVENUE_SYNC_EVENT, { detail: payload }));
+};
+
 /** 提交会员积分调整。 */
 export const submitMemberPointsAdjustment = async (memberId: string, delta: number, reason: string): Promise<void> => {
   const requestTarget = resolveMemberActionPath(ADJUST_MEMBER_POINTS_API_PATH, memberId);
@@ -772,23 +1096,45 @@ export const submitMemberMembership = async (
   memberId: string,
   level: MemberLevel,
   membershipExpiry: number | null,
+  options?: { memberName?: string; amountFen?: number },
 ): Promise<void> => {
   const requestTarget = resolveMemberActionPath(SET_MEMBERSHIP_API_PATH, memberId);
-  await http.post<unknown, Record<string, unknown>>(requestTarget.url, {
-    memberId,
-    userId: memberId,
-    id: memberId,
+  const isNonExpiringLevel = level === 'free';
+
+  if (!isNonExpiringLevel && (membershipExpiry === null || !Number.isFinite(membershipExpiry))) {
+    throw new Error('缺少有效的会员到期时间');
+  }
+
+  const payload: Record<string, unknown> = {
     level,
-    memberLevel: level,
-    membershipLevel: level,
-    expireAt: membershipExpiry,
-    expiryAt: membershipExpiry,
-    membershipExpiry,
-  }, {
+  };
+
+  if (isNonExpiringLevel) {
+    payload.membershipExpiry = null;
+  } else {
+    payload.membershipExpiry = membershipExpiry;
+  }
+
+  await http.post<unknown, Record<string, unknown>>(requestTarget.url, payload, {
     params: requestTarget.params,
     skipGlobalErrorHandler: true,
     errorMessage: '会员等级设置失败，请稍后重试',
   });
+
+  if (level !== 'free') {
+    const config = MEMBERSHIP_REVENUE_CONFIG[level];
+    emitMembershipRevenueSync({
+      memberId,
+      memberName: options?.memberName?.trim() || `会员${memberId}`,
+      level,
+      amountFen: level === 'lifetime' && typeof options?.amountFen === 'number'
+        ? options.amountFen
+        : config.amountFen,
+      planName: config.planName,
+      revenueTypeLabel: config.revenueTypeLabel,
+      createdAt: Date.now(),
+    });
+  }
 };
 
 /** 提交会员封禁。 */

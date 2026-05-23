@@ -5,6 +5,7 @@ export const MEMBER_RECHARGE_CHANNEL_LABEL: Record<RechargeRecord['channel'], st
   wechat: '微信支付',
   alipay: '支付宝',
   card: '礼品卡',
+  manual: '手动设置',
 };
 
 /** 封禁原因预设选项。 */

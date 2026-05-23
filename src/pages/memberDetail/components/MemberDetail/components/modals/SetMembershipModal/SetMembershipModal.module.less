@@ -287,14 +287,16 @@
   color: @text-slate-400;
 }
 
-// ─── 等级选择网格 ────────────────────────────────────────────────────
+// ─── 等级选择网格（5 项：免费 / 月度 / 季度 / 年度 / 永久）────────────
 .durationGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  // 移动端：每项最小 9rem 自适应填充，3 列为宜
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
   gap: 1rem;
 
+  // 桌面端：均分 5 列
   @media (min-width: @bp-mobile) {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
   }
 }
 
@@ -406,6 +408,31 @@
     font-size: 1.5rem;
     font-weight: 800;
   }
+}
+
+// ─── 免费会员提示条 ───────────────────────────────────────────────────
+.freeNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 1.2rem 1.4rem;
+  border-radius: 1.1rem;
+  border: 1px solid transparent;
+}
+
+.freeNoticeIcon {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+  display: flex;
+}
+
+.freeNoticeText {
+  margin: 0;
+  font-size: 1.25rem;
+  color: @text-sub;
+  line-height: 1.65;
+
+  strong { font-weight: 800; color: @text-main; }
 }
 
 // ─── 永久会员提示条 ───────────────────────────────────────────────────
@@ -578,6 +605,39 @@
   flex-direction: column;
   gap: 0.8rem;
   transition: border-color 0.2s, background 0.2s;
+}
+
+.confirmAmountField {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  text-align: left;
+}
+
+.confirmAmountInput {
+  height: 4.8rem;
+}
+
+.confirmAmountHintRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.confirmAmountHint {
+  font-size: 1.15rem;
+  color: @text-sub;
+  line-height: 1.5;
+}
+
+.confirmAmountError {
+  font-size: 1.15rem;
+  color: @rose-500;
+  font-weight: 600;
+  line-height: 1.5;
 }
 
 .summaryRow {

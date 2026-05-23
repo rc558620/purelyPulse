@@ -2,8 +2,8 @@
  * SetMembershipModal —— 设置会员订阅级别弹窗
  *
  * 功能：
- *  - 选择会员类型：月度 / 季度 / 年度 / 永久
- *  - 非永久会员：追加时间（多选期数）
+ *  - 选择会员类型：免费 / 月度 / 季度 / 年度 / 永久
+ *  - 非永久 & 非免费会员：追加时间（多选期数）
  *  - 永久会员可降级回月度/季度/年度（设置具体时长）
  *  - 实时预览到期日期
  */
@@ -19,12 +19,17 @@ export interface SetMembershipModalProps {
   member: MemberDetail;
   currentLevel: MemberLevel;
   currentExpiry: number | null | undefined;
+  lifetimeMembershipDays: number;
+  lifetimeMembershipAmountFen: number;
   onClose: () => void;
-  onConfirm: (newLevel: MemberLevel, newExpiry: number | null) => Promise<void> | void;
+  onConfirm: (newLevel: MemberLevel, newExpiry: number | null, options?: { amountFen?: number }) => Promise<void> | void;
 }
 
-const DURATION_OPTIONS: {
-  value: MembershipDuration;
+/** 弹窗内部使用的选择类型，扩展了 free */
+export type ModalMembershipSelection = MembershipDuration | 'free';
+
+const BASE_DURATION_OPTIONS: {
+  value: ModalMembershipSelection;
   label: string;
   shortLabel: string;
   desc: string;
@@ -33,6 +38,16 @@ const DURATION_OPTIONS: {
   gradientFrom: string;
   gradientTo: string;
 }[] = [
+  {
+    value: 'free',
+    label: '免费会员',
+    shortLabel: '免费',
+    desc: '基础权益',
+    daysBase: 0,
+    color: '#94a3b8',
+    gradientFrom: 'rgba(148,163,184,0.14)',
+    gradientTo: 'rgba(203,213,225,0.07)',
+  },
   {
     value: 'monthly',
     label: '月度会员',
@@ -67,7 +82,7 @@ const DURATION_OPTIONS: {
     value: 'lifetime',
     label: '永久会员',
     shortLabel: '永久',
-    desc: '无限期',
+    desc: '',
     daysBase: 0,
     color: '#a855f7',
     gradientFrom: 'rgba(168,85,247,0.14)',
@@ -84,6 +99,29 @@ const MULTIPLIER_OPTIONS = [
 ];
 
 const DAY_MS = 86_400_000;
+
+const formatAmountInputFromFen = (amountFen: number): string => {
+  const amountYuan = amountFen / 100;
+  return Number.isInteger(amountYuan) ? String(amountYuan) : amountYuan.toFixed(2);
+};
+
+const parseAmountInputToFen = (value: string): number | null => {
+  const normalizedValue = value.trim();
+  if (!normalizedValue) {
+    return null;
+  }
+
+  if (!/^\d+(\.\d{0,2})?$/.test(normalizedValue)) {
+    return null;
+  }
+
+  const amountYuan = Number(normalizedValue);
+  if (!Number.isFinite(amountYuan) || amountYuan <= 0) {
+    return null;
+  }
+
+  return Math.round(amountYuan * 100);
+};
 
 function formatMembershipExpiry(ts: number): string {
   const date = new Date(ts);
@@ -104,52 +142,85 @@ const SetMembershipModal: React.FC<SetMembershipModalProps> = ({
   member,
   currentLevel,
   currentExpiry,
+  lifetimeMembershipDays,
+  lifetimeMembershipAmountFen,
   onClose,
   onConfirm,
 }) => {
   const isCurrentLifetime = currentLevel === 'lifetime';
 
   // 记录弹窗首次打开的时间戳（useState 懒初始化，仅在首次渲染执行一次）
-  // 规避在 useMemo / JSX 渲染期间调用 Date.now() 导致的 react-hooks/purity 错误
   const [now] = useState<number>(() => Date.now());
 
-  const defaultDuration: MembershipDuration =
-    currentLevel === 'free' ? 'monthly' :
+  const defaultDuration: ModalMembershipSelection =
+    currentLevel === 'free' ? 'free' :
     currentLevel === 'lifetime' ? 'lifetime' :
     currentLevel;
 
-  const [selectedDuration, setSelectedDuration] = useState<MembershipDuration>(defaultDuration);
+  const [selectedDuration, setSelectedDuration] = useState<ModalMembershipSelection>(defaultDuration);
   const [multiplier, setMultiplier] = useState(1);
   const [step, setStep] = useState<'select' | 'confirm'>('select');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lifetimeAmountInput, setLifetimeAmountInput] = useState<string>(() => formatAmountInputFromFen(lifetimeMembershipAmountFen));
+
+  const isFree = selectedDuration === 'free';
+  const isLifetime = selectedDuration === 'lifetime';
+
+  const durationOptions = useMemo(() => BASE_DURATION_OPTIONS.map((option) => (
+    option.value === 'lifetime'
+      ? {
+          ...option,
+          daysBase: lifetimeMembershipDays,
+          desc: `${lifetimeMembershipDays} 天订阅`,
+        }
+      : option
+  )), [lifetimeMembershipDays]);
 
   const baseExpiry: number | null = useMemo(() => {
-    if (selectedDuration === 'lifetime') return null;
-    if (isCurrentLifetime) {
-      return now;
-    }
+    if (selectedDuration === 'free') return null;
     if (currentExpiry && currentExpiry > now) {
       return currentExpiry;
     }
     return now;
-  }, [currentExpiry, isCurrentLifetime, now, selectedDuration]);
+  }, [currentExpiry, now, selectedDuration]);
 
   const addedDays = useMemo(() => {
-    if (selectedDuration === 'lifetime') return 0;
-    const selectedOption = DURATION_OPTIONS.find((option) => option.value === selectedDuration)!;
-    return selectedOption.daysBase * multiplier;
-  }, [multiplier, selectedDuration]);
+    if (selectedDuration === 'free') return 0;
+    const selectedOption = durationOptions.find((option) => option.value === selectedDuration)!;
+    return selectedOption.daysBase * (selectedDuration === 'lifetime' ? 1 : multiplier);
+  }, [durationOptions, multiplier, selectedDuration]);
 
   const newExpiry: number | null = useMemo(() => {
-    if (selectedDuration === 'lifetime') return null;
+    if (selectedDuration === 'free') return null;
     return (baseExpiry ?? now) + addedDays * DAY_MS;
   }, [addedDays, baseExpiry, now, selectedDuration]);
 
   const isSameAsNow = useMemo(() => {
     if (selectedDuration !== currentLevel) return false;
-    if (selectedDuration === 'lifetime') return true;
+    if (selectedDuration === 'free') return true;
     return false;
   }, [currentLevel, selectedDuration]);
+
+  const lifetimeAmountFen = useMemo(() => (
+    selectedDuration === 'lifetime' ? parseAmountInputToFen(lifetimeAmountInput) : null
+  ), [lifetimeAmountInput, selectedDuration]);
+
+  const lifetimeAmountError = useMemo(() => {
+    if (selectedDuration !== 'lifetime') {
+      return '';
+    }
+    if (!lifetimeAmountInput.trim()) {
+      return '请输入永久会员价格';
+    }
+    if (lifetimeAmountFen === null) {
+      return '请输入有效价格，最多保留 2 位小数';
+    }
+    return '';
+  }, [lifetimeAmountFen, lifetimeAmountInput, selectedDuration]);
+
+  useEffect(() => {
+    setLifetimeAmountInput(formatAmountInputFromFen(lifetimeMembershipAmountFen));
+  }, [lifetimeMembershipAmountFen]);
 
   useEffect(() => {
     const handler = (event: KeyboardEvent): void => {
@@ -172,18 +243,22 @@ const SetMembershipModal: React.FC<SetMembershipModalProps> = ({
       return;
     }
 
-    const newLevel: MemberLevel = selectedDuration;
+    // free 选择直接转换为 MemberLevel 'free'，expiry 为 null
+    const newLevel: MemberLevel = selectedDuration === 'free' ? 'free' : selectedDuration;
     setIsSubmitting(true);
     try {
-      await Promise.resolve(onConfirm(newLevel, newExpiry));
+      await Promise.resolve(onConfirm(
+        newLevel,
+        selectedDuration === 'free' ? null : newExpiry,
+        selectedDuration === 'lifetime' && lifetimeAmountFen !== null ? { amountFen: lifetimeAmountFen } : undefined,
+      ));
       onClose();
     } finally {
       setIsSubmitting(false);
     }
-  }, [isSubmitting, newExpiry, onClose, onConfirm, selectedDuration]);
+  }, [isSubmitting, lifetimeAmountFen, newExpiry, onClose, onConfirm, selectedDuration]);
 
-  const selectedOption = DURATION_OPTIONS.find((option) => option.value === selectedDuration)!;
-  const isLifetime = selectedDuration === 'lifetime';
+  const selectedOption = durationOptions.find((option) => option.value === selectedDuration)!;
 
   const currentLevelLabel =
     currentLevel === 'free' ? '免费会员' :
@@ -242,25 +317,32 @@ const SetMembershipModal: React.FC<SetMembershipModalProps> = ({
             multiplier={multiplier}
             selectedOption={selectedOption}
             isLifetime={isLifetime}
+            isFree={isFree}
             addedDays={addedDays}
             newExpiry={newExpiry}
             now={now}
-            durationOptions={DURATION_OPTIONS}
+            durationOptions={durationOptions}
             multiplierOptions={MULTIPLIER_OPTIONS}
             onDurationChange={setSelectedDuration}
             onMultiplierChange={setMultiplier}
             formatMembershipExpiry={formatMembershipExpiry}
             formatMembershipDaysLeft={formatMembershipDaysLeft}
+            lifetimeMembershipDays={lifetimeMembershipDays}
           />
         ) : (
           <SetMembershipConfirmStep
             isLifetime={isLifetime}
+            isFree={isFree}
             isCurrentLifetime={isCurrentLifetime}
             selectedOption={selectedOption}
             multiplier={multiplier}
             addedDays={addedDays}
             newExpiry={newExpiry}
+            lifetimeAmountInput={lifetimeAmountInput}
+            lifetimeAmountError={lifetimeAmountError}
+            onLifetimeAmountChange={setLifetimeAmountInput}
             formatMembershipExpiry={formatMembershipExpiry}
+            lifetimeMembershipAmountFen={lifetimeMembershipAmountFen}
           />
         )}
 
@@ -269,10 +351,12 @@ const SetMembershipModal: React.FC<SetMembershipModalProps> = ({
           isSubmitting={isSubmitting}
           isSameAsNow={isSameAsNow}
           isLifetime={isLifetime}
+          isFree={isFree}
           multiplier={multiplier}
           selectedOption={selectedOption}
           onCancel={step === 'confirm' ? () => setStep('select') : onClose}
           onConfirm={step === 'confirm' ? handleFinalConfirm : handleFirstConfirm}
+          isConfirmDisabled={step === 'confirm' && isLifetime ? Boolean(lifetimeAmountError) : false}
         />
       </div>
     </div>

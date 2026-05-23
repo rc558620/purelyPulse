@@ -13,6 +13,7 @@ const STATUS_TABS: { value: MemberFilterStatus; label: string }[] = [
 
 const LEVEL_FILTERS: { value: MemberFilterLevel; label: string }[] = [
   { value: 'all', label: '全部等级' },
+  { value: 'lifetime', label: '永久' },
   { value: 'annual', label: '年卡' },
   { value: 'quarterly', label: '季卡' },
   { value: 'monthly', label: '月卡' },

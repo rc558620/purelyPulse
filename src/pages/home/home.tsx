@@ -1,8 +1,9 @@
 // 首页页面：负责筛选状态编排、数据装配与区块组合。
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useAnimatedNavigate } from '@hooks/useAnimatedNavigate';
 import { ROUTE_PATHS } from '../../router/paths';
 import type { CascadeValue } from '@components/form/CascaderView/types';
+import { normalizeRegionValue } from '@constants/regionData';
 import type { RevenuePeriod } from './home.types';
 import { useHomeOverview } from './useHomeOverview';
 import HomeHeroSection from './components/HomeHeroSection/HomeHeroSection';
@@ -16,9 +17,17 @@ import styles from './home.module.less';
 
 const Home = (): React.JSX.Element => {
   const navigate = useAnimatedNavigate();
-  const { overview, isLoading, hasLoaded, errorMessage, retryLoad } = useHomeOverview();
   const [revenuePeriod, setRevenuePeriod] = useState<RevenuePeriod>('month');
   const [rankRegion, setRankRegion] = useState<CascadeValue[]>([]);
+  const rankRegionLabel = useMemo(() => {
+    const regionLabels = normalizeRegionValue(rankRegion)?.regionLabels ?? [];
+    return regionLabels[regionLabels.length - 1] || undefined;
+  }, [rankRegion]);
+  const homeOverviewQuery = useMemo(() => ({
+    revenuePeriod,
+    region: rankRegionLabel,
+  }), [rankRegionLabel, revenuePeriod]);
+  const { overview, isLoading, hasLoaded, errorMessage, retryLoad } = useHomeOverview(homeOverviewQuery);
 
   const handleRankRegionChange = useCallback((value: CascadeValue[]): void => {
     setRankRegion(value);

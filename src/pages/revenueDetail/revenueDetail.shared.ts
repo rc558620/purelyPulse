@@ -44,6 +44,10 @@ const REVENUE_TYPE_META_MAP: Record<string, RevenueTypeMeta> = {
     color: '#6366f1',
     tone: 'toneIndigo',
   },
+  永久会员: {
+    color: '#a855f7',
+    tone: 'toneOrange',
+  },
   其他充值: {
     color: '#f59e0b',
     tone: 'toneAmber',

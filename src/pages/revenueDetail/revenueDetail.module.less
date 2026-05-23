@@ -443,15 +443,27 @@
   justify-content: space-between;
   width: 100%;
   padding: 1.4rem 1.8rem;
+  gap: 1.2rem;
+}
+
+.filterToggleSummary {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 0;
   background: transparent;
   border: none;
+  border-radius: 12px;
   cursor: pointer;
-  gap: 1.2rem;
   -webkit-tap-highlight-color: transparent;
-  transition: background-color 0.15s;
+  transition: background-color 0.15s, box-shadow 0.15s;
 
   &:hover { background-color: fade(@text-main, 2%); }
   &:active { background-color: fade(@text-main, 4%); }
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px fade(@accent, 18%);
+  }
 }
 
 .filterToggleLeft {
@@ -503,6 +515,28 @@
   overflow: hidden;
   display: flex;
   justify-content: flex-end;
+}
+
+.filterToggleBtn {
+  width: 3.2rem;
+  height: 3.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s, box-shadow 0.15s;
+
+  &:hover { background-color: fade(@text-main, 2%); }
+  &:active { background-color: fade(@text-main, 4%); }
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px fade(@accent, 18%);
+  }
 }
 
 .filterChevron {

@@ -10,8 +10,8 @@ interface IconPaymentChannelProps extends SvgProps {
 }
 
 interface IconMembershipDurationProps extends SvgProps {
-  /** 会员时长类型。 */
-  duration: MembershipDuration;
+  /** 会员时长类型，扩展支持 free。 */
+  duration: MembershipDuration | 'free';
 }
 
 /** 星标徽章：积分、会员等级与高亮入口。 */
@@ -153,8 +153,21 @@ export const IconPaymentChannel = ({ channel, ...props }: IconPaymentChannelProp
   return <IconBankCard width={18} height={18} strokeWidth={2} {...props} />;
 };
 
+/** 用户轮廓：免费会员默认状态图标。 */
+export const IconUserCircle = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="currentColor" strokeWidth={2} {...props}>
+    <circle cx="12" cy="12" r="10" />
+    <circle cx="12" cy="8" r="3" />
+    <path d="M6.168 18.849A4.001 4.001 0 0 1 10 16h4a4.001 4.001 0 0 1 3.832 2.849" />
+  </svg>
+);
+
 /** 会员时长：不同订阅类型的区分图标。 */
 export const IconMembershipDuration = ({ duration, ...props }: IconMembershipDurationProps): React.JSX.Element => {
+  if (duration === 'free') {
+    return <IconUserCircle width={16} height={16} strokeWidth={2} {...props} />;
+  }
+
   if (duration === 'monthly') {
     return (
       <svg aria-hidden="true" viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="currentColor" strokeWidth={2} {...props}>

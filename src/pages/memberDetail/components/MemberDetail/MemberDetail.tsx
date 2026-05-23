@@ -1,7 +1,8 @@
 // 会员详情页主体组件：状态编排 + 事件处理 + 子组件组合。
-import React, { Suspense, lazy, useCallback, useState } from 'react';
+import React, { Suspense, lazy, useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import PageHeader from '@components/ui/layout/PageHeader';
+import type { SetMembershipModalProps } from './components/modals/SetMembershipModal/SetMembershipModal';
 import { useAnimatedNavigate } from '@hooks/useAnimatedNavigate';
 import MemberDetailHeroSection from './components/sections/MemberDetailHeroSection/MemberDetailHeroSection';
 import MemberDetailMetricsGrid from './components/sections/MemberDetailMetricsGrid/MemberDetailMetricsGrid';
@@ -15,9 +16,14 @@ import styles from '../../memberDetail.module.less';
 const AdjustBeanModal = lazy(() => import('./components/modals/AdjustBeanModal/AdjustBeanModal'));
 const AdjustPointsModal = lazy(() => import('./components/modals/AdjustPointsModal/AdjustPointsModal'));
 const MemberDetailStatusModal = lazy(() => import('./components/modals/MemberDetailStatusModal/MemberDetailStatusModal'));
-const SetMembershipModal = lazy(() => import('./components/modals/SetMembershipModal/SetMembershipModal'));
+const SetMembershipModal = lazy(async () => {
+  const module = await import('./components/modals/SetMembershipModal/SetMembershipModal');
+  return { default: module.default as React.ComponentType<SetMembershipModalProps> };
+});
 
 type ActiveModal = 'points' | 'beans' | 'membership' | 'status' | null;
+
+const DAY_MS = 86_400_000;
 
 const MemberDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -31,6 +37,8 @@ const MemberDetail: React.FC = () => {
     beans,
     memberLevel,
     memberExpiry,
+    lifetimeMembershipDays,
+    lifetimeMembershipAmountFen,
     isSubmittingPoints,
     isSubmittingBeans,
     isSubmittingMembership,
@@ -47,10 +55,26 @@ const MemberDetail: React.FC = () => {
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
   const [banReason, setBanReason] = useState<string>('');
 
+  const displayMemberExpiry = useMemo(() => {
+    if (memberLevel !== 'lifetime' || memberExpiry || !member) {
+      return memberExpiry;
+    }
+
+    const latestRechargeAt = member.rechargeHistory.reduce<number | null>((latest, record) => {
+      if (!Number.isFinite(record.createdAt)) {
+        return latest;
+      }
+      return latest === null ? record.createdAt : Math.max(latest, record.createdAt);
+    }, null);
+
+    const inferredStartAt = latestRechargeAt ?? member.registeredAt;
+    return Number.isFinite(inferredStartAt) ? inferredStartAt + lifetimeMembershipDays * DAY_MS : null;
+  }, [lifetimeMembershipDays, member, memberExpiry, memberLevel]);
+
   const membershipExpiryText =
     memberLevel === 'free' ? null :
-    memberLevel === 'lifetime' ? '永久有效' :
-    memberExpiry ? `${formatMemberDate(memberExpiry)} 到期` : null;
+    displayMemberExpiry ? `${formatMemberDate(displayMemberExpiry)} 到期` :
+    memberLevel === 'lifetime' ? '永久有效' : null;
 
   const isBannedMember = member?.status === 'banned';
   const isPointsModalOpen = activeModal === 'points';
@@ -194,7 +218,9 @@ const MemberDetail: React.FC = () => {
           <SetMembershipModal
             member={member}
             currentLevel={memberLevel}
-            currentExpiry={memberExpiry}
+            currentExpiry={displayMemberExpiry}
+            lifetimeMembershipDays={lifetimeMembershipDays}
+            lifetimeMembershipAmountFen={lifetimeMembershipAmountFen}
             onClose={handleCloseModal}
             onConfirm={handleSetMembership}
           />

@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { MEMBERSHIP_REVENUE_SYNC_EVENT } from '../memberList/memberList.constants';
+import type { MembershipRevenueSyncPayload } from '../memberList/memberList.service';
 import { createEmptyHomeOverview, fetchHomeOverview } from './home.service';
+import type { HomeOverviewQuery } from './home.service';
 import type { HomeOverviewData } from './home.types';
 
 interface UseHomeOverviewReturn {
@@ -10,7 +13,7 @@ interface UseHomeOverviewReturn {
   retryLoad: () => void;
 }
 
-export const useHomeOverview = (): UseHomeOverviewReturn => {
+export const useHomeOverview = (query: HomeOverviewQuery): UseHomeOverviewReturn => {
   const [overview, setOverview] = useState<HomeOverviewData>(createEmptyHomeOverview());
   const [isLoading, setIsLoading] = useState(true);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -23,7 +26,7 @@ export const useHomeOverview = (): UseHomeOverviewReturn => {
     setIsLoading(true);
 
     try {
-      const response = await fetchHomeOverview();
+      const response = await fetchHomeOverview(query);
       if (currentRequestId !== requestIdRef.current) {
         return;
       }
@@ -42,10 +45,27 @@ export const useHomeOverview = (): UseHomeOverviewReturn => {
         setIsLoading(false);
       }
     }
-  }, []);
+  }, [query]);
 
   useEffect(() => {
     void loadOverview();
+  }, [loadOverview]);
+
+  useEffect(() => {
+    const handleMembershipRevenueSync = (event: Event): void => {
+      const customEvent = event as CustomEvent<MembershipRevenueSyncPayload>;
+      const payload = customEvent.detail;
+      if (!payload) {
+        return;
+      }
+
+      void loadOverview();
+    };
+
+    window.addEventListener(MEMBERSHIP_REVENUE_SYNC_EVENT, handleMembershipRevenueSync);
+    return () => {
+      window.removeEventListener(MEMBERSHIP_REVENUE_SYNC_EVENT, handleMembershipRevenueSync);
+    };
   }, [loadOverview]);
 
   const retryLoad = useCallback((): void => {

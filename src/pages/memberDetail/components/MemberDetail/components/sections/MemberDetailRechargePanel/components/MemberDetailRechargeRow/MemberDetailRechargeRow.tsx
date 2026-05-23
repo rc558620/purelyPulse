@@ -6,6 +6,16 @@ import { formatMemberAmount, formatMemberDate } from '../../../../../../../membe
 import type { RechargeRecord } from '@pages/memberList/memberList.types';
 import pageStyles from '../../../../../../../memberDetail.module.less';
 
+/** 根据套餐名称推断时长类型，用于着色。 */
+const getPlanColorClass = (planName: string): string => {
+  const name = planName ?? '';
+  if (name.includes('永久')) return pageStyles.planColorLifetime;
+  if (name.includes('年度')) return pageStyles.planColorAnnual;
+  if (name.includes('季度')) return pageStyles.planColorQuarterly;
+  if (name.includes('月度')) return pageStyles.planColorMonthly;
+  return '';
+};
+
 interface MemberDetailRechargeRowProps {
   record: RechargeRecord;
   isLast: boolean;
@@ -24,7 +34,7 @@ const MemberDetailRechargeRow: React.FC<MemberDetailRechargeRowProps> = ({ recor
         <IconPaymentChannel channel={record.channel} />
       </div>
       <div className={pageStyles.rechargeInfo}>
-        <div className={pageStyles.rechargePlanName}>{safeStr(record.planName, '会员充值')}</div>
+        <div className={cx(pageStyles.rechargePlanName, getPlanColorClass(record.planName))}>{safeStr(record.planName, '会员充值')}</div>
         <div className={pageStyles.rechargeMeta}>
           <span className={cx(pageStyles.rechargeChannel, channelClassName)}>
             {MEMBER_RECHARGE_CHANNEL_LABEL[record.channel]}
@@ -34,7 +44,7 @@ const MemberDetailRechargeRow: React.FC<MemberDetailRechargeRowProps> = ({ recor
         </div>
       </div>
       <div className={pageStyles.rechargeRight}>
-        <span className={pageStyles.rechargeAmtValue}>¥{formatMemberAmount(record.amount)}</span>
+        <span className={cx(pageStyles.rechargeAmtValue, getPlanColorClass(record.planName))}>¥{formatMemberAmount(record.amount)}</span>
         <span className={pageStyles.rechargePoints}>+{safeNum(record.pointsAwarded)} 积分</span>
       </div>
     </div>

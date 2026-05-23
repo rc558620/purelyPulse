@@ -10,7 +10,7 @@ import { CHART_ICON_GRADIENTS } from '../../home.constants';
 import { IconHomeChevronRight, IconHomeTrendUp } from '../HomeIcons/HomeIcons';
 import styles from './HomeRevenueSection.module.less';
 
-type HomeRevenueTypeTone = 'lime' | 'emerald' | 'blue' | 'slate';
+type HomeRevenueTypeTone = 'lime' | 'emerald' | 'blue' | 'purple' | 'slate';
 
 interface HomeRevenueSectionProps {
   revenuePeriod: RevenuePeriod;
@@ -27,6 +27,7 @@ const revenueTypeToneMap: Record<string, HomeRevenueTypeTone> = {
   月卡会员: 'lime',
   季度会员: 'emerald',
   年卡会员: 'blue',
+  永久会员: 'purple',
   其他充值: 'slate',
 };
 
@@ -38,6 +39,8 @@ const getRevenueTypeToneClassName = (tone: HomeRevenueTypeTone): string => {
       return styles.revenueTypeToneEmerald;
     case 'blue':
       return styles.revenueTypeToneBlue;
+    case 'purple':
+      return styles.revenueTypeTonePurple;
     case 'slate':
       return styles.revenueTypeToneSlate;
     default:

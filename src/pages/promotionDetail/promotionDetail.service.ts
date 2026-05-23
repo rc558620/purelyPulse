@@ -76,7 +76,8 @@ const toYuanAmount = (value: unknown): number => {
     return 0;
   }
 
-  return normalizedValue >= 100000 ? safeNum(normalizedValue / 100) : safeNum(normalizedValue);
+  // Pulse promotion detail amount fields are returned in fen.
+  return safeNum(normalizedValue / 100);
 };
 
 const pickStringField = (value: unknown, keys: readonly string[]): string => {

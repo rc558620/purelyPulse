@@ -25,6 +25,8 @@ interface ImportMetaEnv {
   readonly VITE_MEMBER_UNBAN_API_PATH?: string;
   readonly VITE_ADJUST_MEMBER_POINTS_API_PATH?: string;
   readonly VITE_ADJUST_PARTNER_BEANS_API_PATH?: string;
+  readonly VITE_MEMBERSHIP_SETTINGS_API_PATH?: string;
+  readonly VITE_UPDATE_MEMBERSHIP_SETTINGS_API_PATH?: string;
 }
 
 interface ImportMeta {

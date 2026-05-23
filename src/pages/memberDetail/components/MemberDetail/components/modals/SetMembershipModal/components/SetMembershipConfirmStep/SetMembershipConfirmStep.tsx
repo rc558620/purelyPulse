@@ -1,4 +1,5 @@
 import React from 'react';
+import { Input } from '@components/form/Input/Input';
 import { IconCircleChevronUp, IconWarningTriangle } from '@pages/memberDetail/components/MemberDetailIcons/MemberDetailIcons';
 import styles from '../../SetMembershipModal.module.less';
 
@@ -9,22 +10,32 @@ interface SelectedOption {
 
 interface SetMembershipConfirmStepProps {
   isLifetime: boolean;
+  isFree: boolean;
   isCurrentLifetime: boolean;
   selectedOption: SelectedOption;
   multiplier: number;
   addedDays: number;
   newExpiry: number | null;
+  lifetimeAmountInput: string;
+  lifetimeAmountError: string;
+  onLifetimeAmountChange: (value: string) => void;
   formatMembershipExpiry: (timestamp: number) => string;
+  lifetimeMembershipAmountFen: number;
 }
 
 const SetMembershipConfirmStep: React.FC<SetMembershipConfirmStepProps> = ({
   isLifetime,
+  isFree,
   isCurrentLifetime,
   selectedOption,
   multiplier,
   addedDays,
   newExpiry,
+  lifetimeAmountInput,
+  lifetimeAmountError,
+  onLifetimeAmountChange,
   formatMembershipExpiry,
+  lifetimeMembershipAmountFen,
 }) => (
   <div className={styles.sheetBody}>
     <div className={styles.confirmContent}>
@@ -38,7 +49,7 @@ const SetMembershipConfirmStep: React.FC<SetMembershipConfirmStepProps> = ({
         className={styles.confirmSummary}
         style={{ borderColor: `${selectedOption.color}33`, background: `${selectedOption.color}08` }}
       >
-        {isLifetime ? (
+        {isFree ? (
           <>
             <div className={styles.summaryRow}>
               <span className={styles.summaryLabel}>设置类型</span>
@@ -50,20 +61,48 @@ const SetMembershipConfirmStep: React.FC<SetMembershipConfirmStepProps> = ({
                   borderColor: `${selectedOption.color}40`,
                 }}
               >
-                ♾ {selectedOption.label}
+                {selectedOption.label}
               </span>
             </div>
             <div className={styles.summaryDivider} />
             <div className={styles.summaryRow}>
               <span className={styles.summaryLabel}>会员状态</span>
               <span className={styles.summaryValue} style={{ color: selectedOption.color, fontWeight: 800 }}>
-                永久有效
+                基础权益
               </span>
             </div>
             <div className={styles.summaryDivider} />
             <div className={styles.summaryRow}>
-              <span className={styles.summaryLabel}>续期需求</span>
-              <span className={styles.summaryValue}>无需续期</span>
+              <span className={styles.summaryLabel}>到期时间</span>
+              <span className={styles.summaryValue}>无到期限制</span>
+            </div>
+          </>
+        ) : isLifetime ? (
+          <>
+            <div className={styles.summaryRow}>
+              <span className={styles.summaryLabel}>设置类型</span>
+              <span
+                className={styles.summaryValue}
+                style={{
+                  background: `${selectedOption.color}20`,
+                  color: selectedOption.color,
+                  borderColor: `${selectedOption.color}40`,
+                }}
+              >
+                {selectedOption.label}
+              </span>
+            </div>
+            <div className={styles.summaryDivider} />
+            <div className={styles.summaryRow}>
+              <span className={styles.summaryLabel}>有效期天数</span>
+              <span className={styles.summaryValue} style={{ color: selectedOption.color, fontWeight: 800 }}>
+                +{addedDays} 天
+              </span>
+            </div>
+            <div className={styles.summaryDivider} />
+            <div className={styles.summaryRow}>
+              <span className={styles.summaryLabel}>新到期日期</span>
+              <span className={styles.summaryValue}>{newExpiry ? formatMembershipExpiry(newExpiry) : '—'}</span>
             </div>
           </>
         ) : (
@@ -97,7 +136,35 @@ const SetMembershipConfirmStep: React.FC<SetMembershipConfirmStepProps> = ({
         )}
       </div>
 
-      {isCurrentLifetime && !isLifetime ? (
+      {isLifetime ? (
+        <div className={styles.confirmAmountField}>
+          <label className={styles.fieldLabel} htmlFor="lifetime-membership-price">
+            永久会员价格
+            <span className={styles.fieldLabelSub}>（单位：元，默认取后端配置 {lifetimeMembershipAmountFen / 100}）</span>
+          </label>
+          <Input
+            id="lifetime-membership-price"
+            type="text"
+            inputMode="decimal"
+            placeholder="请输入永久会员价格"
+            value={lifetimeAmountInput}
+            status={lifetimeAmountError ? 'error' : undefined}
+            onChange={(event) => onLifetimeAmountChange(event.target.value.replace(/[^\d.]/g, ''))}
+            wrapperClassName={styles.confirmAmountInput}
+          />
+          <div className={styles.confirmAmountHintRow}>
+            <span className={styles.confirmAmountHint}>将按该价格计入充值收入</span>
+            {lifetimeAmountError ? <span className={styles.confirmAmountError}>{lifetimeAmountError}</span> : null}
+          </div>
+        </div>
+      ) : null}
+
+      {isFree ? (
+        <div className={styles.confirmWarning}>
+          <IconWarningTriangle width={16} height={16} strokeWidth={2} />
+          <p>设置为免费会员后，当前订阅权益将立即停止，请谨慎操作</p>
+        </div>
+      ) : isCurrentLifetime && !isLifetime ? (
         <div className={styles.confirmWarning}>
           <IconWarningTriangle width={16} height={16} strokeWidth={2} />
           <p>当前为永久会员，降级后账户到期需要续期</p>

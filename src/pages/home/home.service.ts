@@ -1,6 +1,8 @@
 // 首页总览服务层：封装首页接口请求、字段映射与默认值兜底。
 import { createKeyedInFlightRequest, http, resolveEnvPath } from '@utils/http';
 import { safeNum } from '@utils/utils';
+import { readMembershipRevenueSyncEvents } from '../memberList/memberList.service';
+import type { MembershipRevenueSyncPayload } from '../memberList/memberList.service';
 import type {
   HomeOverviewData,
   HomePartnerRankItem,
@@ -12,7 +14,7 @@ import type {
 
 const HOME_OVERVIEW_API_PATH = resolveEnvPath(import.meta.env.VITE_HOME_OVERVIEW_API_PATH, '/pulse/dashboard/home');
 const REVENUE_PERIODS: RevenuePeriod[] = ['today', 'week', 'month', 'season'];
-const REVENUE_TYPE_DEFAULTS = ['月卡会员', '季度会员', '年卡会员', '其他充值'] as const;
+const REVENUE_TYPE_DEFAULTS = ['月卡会员', '季度会员', '年卡会员', '永久会员', '其他充值'] as const;
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> => (
   typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -140,7 +142,8 @@ const toYuanAmount = (value: unknown): number => {
     return 0;
   }
 
-  return normalizedValue >= 100000 ? safeNum(normalizedValue / 100) : safeNum(normalizedValue);
+  // Pulse dashboard amounts are returned in fen.
+  return safeNum(normalizedValue / 100);
 };
 
 const createEmptyRevenuePeriod = (): HomeRevenuePeriodData => ({
@@ -160,6 +163,170 @@ const createEmptyPartnerStats = (): HomePartnerStats => ({
   avgPerPartner: 0,
 });
 
+const getStartOfDay = (date: Date): Date => new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+const getStartOfWeek = (date: Date): Date => {
+  const start = getStartOfDay(date);
+  const day = start.getDay();
+  const offset = day === 0 ? 6 : day - 1;
+  start.setDate(start.getDate() - offset);
+  return start;
+};
+
+const getStartOfMonth = (date: Date): Date => new Date(date.getFullYear(), date.getMonth(), 1);
+
+const getStartOfQuarter = (date: Date): Date => new Date(date.getFullYear(), Math.floor(date.getMonth() / 3) * 3, 1);
+
+const isMembershipRevenueEventInPeriod = (
+  event: MembershipRevenueSyncPayload,
+  period: RevenuePeriod,
+  now: Date,
+): boolean => {
+  const eventTime = event.createdAt;
+  const endTime = now.getTime();
+  const startTime = (
+    period === 'today' ? getStartOfDay(now)
+      : period === 'week' ? getStartOfWeek(now)
+        : period === 'month' ? getStartOfMonth(now)
+          : getStartOfQuarter(now)
+  ).getTime();
+
+  return eventTime >= startTime && eventTime <= endTime;
+};
+
+const mergeAmountIntoTrend = (
+  dates: string[],
+  values: number[],
+  event: MembershipRevenueSyncPayload,
+): { dates: string[]; values: number[] } => {
+  const amountYuan = safeNum(event.amountFen / 100);
+  const label = formatDateLabel(event.createdAt) || '今日';
+  const nextDates = [...dates];
+  const nextValues = [...values];
+  const labelIndex = nextDates.findIndex((item) => item === label);
+
+  if (labelIndex >= 0 && nextValues[labelIndex] !== undefined) {
+    nextValues[labelIndex] = safeNum(nextValues[labelIndex] + amountYuan);
+    return { dates: nextDates, values: nextValues };
+  }
+
+  if (nextValues.length === 0) {
+    return {
+      dates: [label],
+      values: [amountYuan],
+    };
+  }
+
+  if (nextDates.length === nextValues.length && nextDates.every((item) => item.includes('/'))) {
+    nextDates.push(label);
+    nextValues.push(amountYuan);
+    return { dates: nextDates, values: nextValues };
+  }
+
+  const lastIndex = nextValues.length - 1;
+  nextValues[lastIndex] = safeNum(nextValues[lastIndex] + amountYuan);
+  return { dates: nextDates, values: nextValues };
+};
+
+const applyMembershipRevenueEventsToPeriod = (
+  periodData: HomeRevenuePeriodData,
+  events: MembershipRevenueSyncPayload[],
+): HomeRevenuePeriodData => {
+  if (events.length === 0) {
+    return periodData;
+  }
+
+  const sortedEvents = [...events].sort((left, right) => left.createdAt - right.createdAt);
+  const mergedTrend = sortedEvents.reduce<{ dates: string[]; values: number[] }>((accumulator, event) => (
+    mergeAmountIntoTrend(accumulator.dates, accumulator.values, event)
+  ), {
+    dates: [...periodData.dates],
+    values: [...periodData.values],
+  });
+
+  const addedTotal = sortedEvents.reduce((sum, event) => safeNum(sum + safeNum(event.amountFen / 100)), 0);
+  const total = safeNum(periodData.total + addedTotal);
+  const avgDivisor = Math.max(mergedTrend.values.length, 1);
+
+  return {
+    ...periodData,
+    dates: mergedTrend.dates,
+    values: mergedTrend.values,
+    total,
+    avg: safeNum(total / avgDivisor),
+  };
+};
+
+const mergeRevenueTypes = (
+  revenueTypes: HomeRevenueTypeItem[],
+  totalBefore: number,
+  events: MembershipRevenueSyncPayload[],
+): HomeRevenueTypeItem[] => {
+  if (events.length === 0) {
+    return revenueTypes;
+  }
+
+  const labelOrder: string[] = [];
+  const labelSet = new Set<string>();
+  [...REVENUE_TYPE_DEFAULTS, ...revenueTypes.map((item) => item.label), ...events.map((item) => item.revenueTypeLabel)].forEach((label) => {
+    if (!labelSet.has(label)) {
+      labelSet.add(label);
+      labelOrder.push(label);
+    }
+  });
+
+  const amountMap = new Map<string, number>();
+  labelOrder.forEach((label) => {
+    amountMap.set(label, 0);
+  });
+
+  revenueTypes.forEach((item) => {
+    amountMap.set(item.label, safeNum(totalBefore * safeNum(item.value) / 100));
+  });
+  events.forEach((event) => {
+    amountMap.set(event.revenueTypeLabel, safeNum((amountMap.get(event.revenueTypeLabel) ?? 0) + safeNum(event.amountFen / 100)));
+  });
+
+  const totalAfter = Array.from(amountMap.values()).reduce((sum, value) => safeNum(sum + value), 0);
+  return labelOrder.map((label) => ({
+    label,
+    value: totalAfter > 0 ? safeNum(Number((((amountMap.get(label) ?? 0) / totalAfter) * 100).toFixed(1))) : 0,
+  }));
+};
+
+const applyMembershipRevenueEventsToOverview = (
+  overview: HomeOverviewData,
+  query: HomeOverviewQuery,
+): HomeOverviewData => {
+  if (query.region) {
+    return overview;
+  }
+
+  const events = readMembershipRevenueSyncEvents();
+  if (events.length === 0) {
+    return overview;
+  }
+
+  const now = new Date();
+  const revenueByPeriod = REVENUE_PERIODS.reduce<Record<RevenuePeriod, HomeRevenuePeriodData>>((accumulator, period) => {
+    const matchedEvents = events.filter((event) => isMembershipRevenueEventInPeriod(event, period, now));
+    accumulator[period] = applyMembershipRevenueEventsToPeriod(overview.revenueByPeriod[period], matchedEvents);
+    return accumulator;
+  }, {
+    today: overview.revenueByPeriod.today,
+    week: overview.revenueByPeriod.week,
+    month: overview.revenueByPeriod.month,
+    season: overview.revenueByPeriod.season,
+  });
+  const currentPeriodEvents = events.filter((event) => isMembershipRevenueEventInPeriod(event, query.revenuePeriod, now));
+
+  return {
+    ...overview,
+    revenueByPeriod,
+    revenueTypes: mergeRevenueTypes(overview.revenueTypes, overview.revenueByPeriod[query.revenuePeriod].total, currentPeriodEvents),
+  };
+};
+
 export const createEmptyHomeOverview = (): HomeOverviewData => ({
   onlineCount: 0,
   onlinePeak: 0,
@@ -177,13 +344,36 @@ export const createEmptyHomeOverview = (): HomeOverviewData => ({
   partnerTop: [],
 });
 
-const resolveRevenueRoot = (response: unknown): Record<string, unknown> | null => (
-  getNestedRecord(response, ['revenue', 'revenueOverview', 'income', 'recharge', 'revenueTrend'])
-  ?? getNestedRecord(response, ['overview'])
-  ?? (isPlainObject(response) ? response : null)
-);
+export interface HomeOverviewQuery {
+  revenuePeriod: RevenuePeriod;
+  region?: string;
+}
 
-const mapRevenuePeriod = (revenueRoot: Record<string, unknown> | null, period: RevenuePeriod): HomeRevenuePeriodData => {
+const resolveRevenueRoot = (response: unknown): Record<string, unknown> | null => {
+  if (!isPlainObject(response)) {
+    return null;
+  }
+
+  // Prefer the aggregate response object when summary/trend fields already live at top level.
+  if (
+    isPlainObject(response.revenueTrend)
+    || isPlainObject(response.revenueSummary)
+    || Array.isArray(response.revenueTypeBreakdown)
+    || Array.isArray(response.revenueTypes)
+  ) {
+    return response;
+  }
+
+  return getNestedRecord(response, ['revenue', 'revenueOverview', 'income', 'recharge'])
+    ?? getNestedRecord(response, ['overview'])
+    ?? response;
+};
+
+const mapRevenuePeriod = (
+  revenueRoot: Record<string, unknown> | null,
+  period: RevenuePeriod,
+  requestedPeriod: RevenuePeriod,
+): HomeRevenuePeriodData => {
   if (!revenueRoot) {
     return createEmptyRevenuePeriod();
   }
@@ -194,7 +384,8 @@ const mapRevenuePeriod = (revenueRoot: Record<string, unknown> | null, period: R
 
   if (periodRecord) {
     const dates = pickStringArray(periodRecord, ['dates', 'labels', 'xAxis', 'categories']);
-    const values = pickNumberArray(periodRecord, ['values', 'data', 'series', 'amounts']);
+    const values = pickNumberArray(periodRecord, ['values', 'data', 'series', 'amounts'])
+      .map((value) => toYuanAmount(value));
     const rawDateItems = dates.length > 0 ? dates : getNestedArray(periodRecord, ['dates', 'labels', 'xAxis', 'categories']).map((item) => formatDateLabel(item)).filter(Boolean);
 
     return {
@@ -223,12 +414,13 @@ const mapRevenuePeriod = (revenueRoot: Record<string, unknown> | null, period: R
     return candidate === responsePeriod;
   });
 
-  if (!summaryPeriod && period !== 'month') {
+  if (!summaryPeriod && requestedPeriod !== period) {
     return createEmptyRevenuePeriod();
   }
 
   const dates = pickStringArray(trendRoot, ['dates', 'labels', 'xAxis', 'categories']);
-  const values = pickNumberArray(trendRoot, ['values', 'data', 'series', 'amounts']);
+  const values = pickNumberArray(trendRoot, ['values', 'data', 'series', 'amounts'])
+    .map((value) => toYuanAmount(value));
   const rawDateItems = dates.length > 0 ? dates : getNestedArray(trendRoot, ['dates', 'labels', 'xAxis', 'categories']).map((item) => formatDateLabel(item)).filter(Boolean);
 
   return {
@@ -339,7 +531,10 @@ const mapPartnerTop = (response: unknown): HomePartnerRankItem[] => {
     .slice(0, 5);
 };
 
-const mapHomeOverview = (response: unknown): HomeOverviewData => {
+const mapHomeOverview = (
+  response: unknown,
+  requestedPeriod: RevenuePeriod,
+): HomeOverviewData => {
   const emptyOverview = createEmptyHomeOverview();
   const revenueRoot = resolveRevenueRoot(response);
   const onlineSection = mapOnlineSection(response);
@@ -347,7 +542,7 @@ const mapHomeOverview = (response: unknown): HomeOverviewData => {
   const partnerTop = mapPartnerTop(response);
 
   const revenueByPeriod = REVENUE_PERIODS.reduce<Record<RevenuePeriod, HomeRevenuePeriodData>>((accumulator, period) => {
-    accumulator[period] = mapRevenuePeriod(revenueRoot, period);
+    accumulator[period] = mapRevenuePeriod(revenueRoot, period, requestedPeriod);
     return accumulator;
   }, {
     today: createEmptyRevenuePeriod(),
@@ -366,16 +561,20 @@ const mapHomeOverview = (response: unknown): HomeOverviewData => {
   };
 };
 
-const requestHomeOverview = async (): Promise<HomeOverviewData> => {
+const requestHomeOverview = async (query: HomeOverviewQuery): Promise<HomeOverviewData> => {
   const response = await http.get<unknown>(HOME_OVERVIEW_API_PATH, {
+    params: {
+      revenuePeriod: query.revenuePeriod,
+      region: query.region || undefined,
+    },
     skipGlobalErrorHandler: true,
     errorMessage: '获取首页总览失败',
   });
 
-  return mapHomeOverview(response);
+  return applyMembershipRevenueEventsToOverview(mapHomeOverview(response, query.revenuePeriod), query);
 };
 
 export const fetchHomeOverview = createKeyedInFlightRequest(
-  () => 'home-overview',
-  async (): Promise<HomeOverviewData> => requestHomeOverview(),
+  (query: HomeOverviewQuery) => JSON.stringify(query),
+  async (query: HomeOverviewQuery): Promise<HomeOverviewData> => requestHomeOverview(query),
 );

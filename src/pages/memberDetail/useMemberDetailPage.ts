@@ -1,6 +1,8 @@
 // 会员详情页 Hook：管理详情请求、提交动作与本地展示态同步。
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { showToast } from '@components/ui/feedback/Toast';
+import { MEMBERSHIP_TIER_DEFAULT_VALUES } from '../membershipSettings/membershipSettings.constants';
+import { fetchMembershipSettings } from '../membershipSettings/membershipSettings.service';
 import { MEMBER_STATUS_SYNC_EVENT } from '../memberList/memberList.constants';
 import {
   emitMemberStatusSync,
@@ -30,6 +32,10 @@ interface UseMemberDetailPageReturn {
   memberLevel: MemberLevel;
   /** 当前会员到期时间。 */
   memberExpiry: number | null | undefined;
+  /** 永久会员当前有效天数配置。 */
+  lifetimeMembershipDays: number;
+  /** 永久会员当前价格配置，单位分。 */
+  lifetimeMembershipAmountFen: number;
   /** 是否正在提交积分调整。 */
   isSubmittingPoints: boolean;
   /** 是否正在提交纯利豆调整。 */
@@ -45,7 +51,7 @@ interface UseMemberDetailPageReturn {
   /** 调整纯利豆并提交。 */
   handleAdjustBeans: (delta: number, reason: string) => Promise<void>;
   /** 设置会员等级并提交。 */
-  handleSetMembership: (newLevel: MemberLevel, newExpiry: number | null) => Promise<void>;
+  handleSetMembership: (newLevel: MemberLevel, newExpiry: number | null, options?: { amountFen?: number }) => Promise<void>;
   /** 封禁当前会员。 */
   handleBanMember: (reason: string) => Promise<boolean>;
   /** 解封当前会员。 */
@@ -56,6 +62,27 @@ interface UseMemberDetailPageReturn {
 
 type MemberSubmitAction = 'points' | 'beans' | 'membership' | 'ban' | null;
 
+const DEFAULT_LIFETIME_MEMBERSHIP_DAYS = Number.parseInt(MEMBERSHIP_TIER_DEFAULT_VALUES.lifetime.lifetimeDays ?? '730', 10);
+const DEFAULT_LIFETIME_MEMBERSHIP_AMOUNT_FEN = Math.round(Number(MEMBERSHIP_TIER_DEFAULT_VALUES.lifetime.price) * 100);
+
+const normalizeLifetimeMembershipDays = (value: string | undefined): number => {
+  const parsedValue = Number.parseInt(value ?? '', 10);
+  if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
+    return DEFAULT_LIFETIME_MEMBERSHIP_DAYS;
+  }
+
+  return parsedValue;
+};
+
+const normalizeLifetimeMembershipAmountFen = (value: string): number => {
+  const parsedValue = Number.parseFloat(value);
+  if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
+    return DEFAULT_LIFETIME_MEMBERSHIP_AMOUNT_FEN;
+  }
+
+  return Math.round(parsedValue * 100);
+};
+
 /** 会员详情页数据 Hook。 */
 export const useMemberDetailPage = (memberId: string | undefined): UseMemberDetailPageReturn => {
   const [member, setMember] = useState<MemberDetail | null>(null);
@@ -63,6 +90,8 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
   const [isNotFound, setIsNotFound] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [submittingAction, setSubmittingAction] = useState<MemberSubmitAction>(null);
+  const [lifetimeMembershipDays, setLifetimeMembershipDays] = useState<number>(DEFAULT_LIFETIME_MEMBERSHIP_DAYS);
+  const [lifetimeMembershipAmountFen, setLifetimeMembershipAmountFen] = useState<number>(DEFAULT_LIFETIME_MEMBERSHIP_AMOUNT_FEN);
 
   // 从 member 直接派生展示态，避免 useEffect 同步 setState 产生的级联渲染
   const points = member?.availablePoints ?? 0;
@@ -71,6 +100,7 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
   const memberExpiry: number | null | undefined = member ? member.membershipExpiry : undefined;
 
   const requestIdRef = useRef<number>(0);
+  const membershipSettingsRequestIdRef = useRef<number>(0);
 
   const loadMember = useCallback(async (options?: { silent?: boolean }): Promise<void> => {
     const normalizedMemberId = memberId?.trim() ?? '';
@@ -134,6 +164,32 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 数据加载的惯用模式，与项目其他 hook 保持一致
     void loadMember();
   }, [loadMember]);
+
+  useEffect(() => {
+    const loadMembershipSettings = async (): Promise<void> => {
+      membershipSettingsRequestIdRef.current += 1;
+      const currentRequestId = membershipSettingsRequestIdRef.current;
+
+      try {
+        const response = await fetchMembershipSettings();
+        if (currentRequestId !== membershipSettingsRequestIdRef.current) {
+          return;
+        }
+
+        setLifetimeMembershipDays(normalizeLifetimeMembershipDays(response.lifetime.lifetimeDays));
+        setLifetimeMembershipAmountFen(normalizeLifetimeMembershipAmountFen(response.lifetime.price));
+      } catch {
+        if (currentRequestId !== membershipSettingsRequestIdRef.current) {
+          return;
+        }
+
+        setLifetimeMembershipDays(DEFAULT_LIFETIME_MEMBERSHIP_DAYS);
+        setLifetimeMembershipAmountFen(DEFAULT_LIFETIME_MEMBERSHIP_AMOUNT_FEN);
+      }
+    };
+
+    void loadMembershipSettings();
+  }, []);
 
   useEffect(() => {
     const handleStatusSync = (event: Event): void => {
@@ -203,14 +259,21 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
     }
   }, [loadMember, member, submittingAction]);
 
-  const handleSetMembership = useCallback(async (newLevel: MemberLevel, newExpiry: number | null): Promise<void> => {
+  const handleSetMembership = useCallback(async (
+    newLevel: MemberLevel,
+    newExpiry: number | null,
+    options?: { amountFen?: number },
+  ): Promise<void> => {
     if (!member || submittingAction) {
       return;
     }
 
     setSubmittingAction('membership');
     try {
-      await submitMemberMembership(member.id, newLevel, newExpiry);
+      await submitMemberMembership(member.id, newLevel, newExpiry, {
+        memberName: member.name,
+        amountFen: options?.amountFen,
+      });
       showToast({ type: 'success', message: '会员等级设置成功' });
       void loadMember({ silent: true });
     } catch (error) {
@@ -290,6 +353,8 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
     beans,
     memberLevel,
     memberExpiry,
+    lifetimeMembershipDays,
+    lifetimeMembershipAmountFen,
     isSubmittingPoints: submittingAction === 'points',
     isSubmittingBeans: submittingAction === 'beans',
     isSubmittingMembership: submittingAction === 'membership',

@@ -7,7 +7,7 @@ import DateRangePicker from '@components/form/DateRangePicker/DateRangePicker';
 import DayPicker from '@components/form/DayPicker';
 import SlidingTabBar from '@components/ui/filter/SlidingTabBar/SlidingTabBar';
 import { REGION_DATA } from '@constants/regionData';
-import { cx } from '@utils/utils';
+import { cx, safeNum } from '@utils/utils';
 import {
   IconRevenueDetailChevronDown,
   IconRevenueDetailFilter,
@@ -85,40 +85,65 @@ export const RevenueDetailFilterSection = ({
   handleToggleCustomRange,
   handleClearCustomDate,
   handleClearCustomRange,
-}: RevenueDetailFilterSectionProps): React.JSX.Element => (
-  <section className={cx(sharedStyles.filterSection, styles.root)}>
-    <button
-      className={sharedStyles.filterToggle}
-      type="button"
-      onClick={() => setFilterOpen((previousValue) => !previousValue)}
-      aria-expanded={filterOpen}
-      aria-controls="filter-panel"
-    >
-      <div className={sharedStyles.filterToggleLeft}>
-        <div className={sharedStyles.filterToggleIcon} aria-hidden="true">
-          <IconRevenueDetailFilter />
-        </div>
-        <span className={sharedStyles.filterToggleTitle}>筛选条件</span>
-        {hasFilter ? (
-          <span className={sharedStyles.filterActiveDot} aria-label="已设置筛选条件" />
-        ) : null}
-      </div>
-      <div className={sharedStyles.filterToggleRight}>
-        {!filterOpen ? (
-          <div className={sharedStyles.filterSummaryTabs}>
-            <SlidingTabBar
-              options={REVENUE_TAB_OPTIONS}
-              value={revenuePeriod}
-              onChange={(value) => handleChangeRevenuePeriod(value as RevenuePeriod)}
-              variant="pill"
-            />
+}: RevenueDetailFilterSectionProps): React.JSX.Element => {
+  const toggleFilterOpen = (): void => {
+    setFilterOpen((previousValue) => !previousValue);
+  };
+
+  const handleSummaryKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      toggleFilterOpen();
+    }
+  };
+
+  return (
+    <section className={cx(sharedStyles.filterSection, styles.root)}>
+      <div className={sharedStyles.filterToggle}>
+        <div
+          className={sharedStyles.filterToggleSummary}
+          role="button"
+          tabIndex={safeNum(0)}
+          onClick={toggleFilterOpen}
+          onKeyDown={handleSummaryKeyDown}
+          aria-expanded={filterOpen}
+          aria-controls="filter-panel"
+        >
+          <div className={sharedStyles.filterToggleLeft}>
+            <div className={sharedStyles.filterToggleIcon} aria-hidden="true">
+              <IconRevenueDetailFilter />
+            </div>
+            <span className={sharedStyles.filterToggleTitle}>筛选条件</span>
+            {hasFilter ? (
+              <span className={sharedStyles.filterActiveDot} aria-label="已设置筛选条件" />
+            ) : null}
           </div>
-        ) : null}
-        <IconRevenueDetailChevronDown
-          className={cx(sharedStyles.filterChevron, filterOpen && sharedStyles.filterChevronOpen)}
-        />
+        </div>
+        <div className={sharedStyles.filterToggleRight}>
+          {!filterOpen ? (
+            <div className={sharedStyles.filterSummaryTabs}>
+              <SlidingTabBar
+                options={REVENUE_TAB_OPTIONS}
+                value={revenuePeriod}
+                onChange={(value) => handleChangeRevenuePeriod(value as RevenuePeriod)}
+                variant="pill"
+              />
+            </div>
+          ) : null}
+          <button
+            className={sharedStyles.filterToggleBtn}
+            type="button"
+            onClick={toggleFilterOpen}
+            aria-label={filterOpen ? '收起筛选面板' : '展开筛选面板'}
+            aria-expanded={filterOpen}
+            aria-controls="filter-panel"
+          >
+            <IconRevenueDetailChevronDown
+              className={cx(sharedStyles.filterChevron, filterOpen && sharedStyles.filterChevronOpen)}
+            />
+          </button>
+        </div>
       </div>
-    </button>
 
     <div
       id="filter-panel"
@@ -194,6 +219,7 @@ export const RevenueDetailFilterSection = ({
       </div>
     </div>
   </section>
-);
+  );
+};
 
 export default RevenueDetailFilterSection;

@@ -12,21 +12,40 @@ interface SetMembershipActionBarProps {
   isSubmitting: boolean;
   isSameAsNow: boolean;
   isLifetime: boolean;
+  isFree: boolean;
   multiplier: number;
   selectedOption: SelectedOption;
   onCancel: () => void;
   onConfirm: () => void;
+  isConfirmDisabled?: boolean;
 }
+
+const getConfirmLabel = (
+  isSubmitting: boolean,
+  step: 'select' | 'confirm',
+  isLifetime: boolean,
+  isFree: boolean,
+  shortLabel: string,
+  multiplier: number,
+): string => {
+  if (isSubmitting) return '提交中...';
+  const prefix = step === 'confirm' ? '确认设置' : '确认选择';
+  if (isLifetime) return `${prefix}永久会员`;
+  if (isFree) return `${prefix}免费会员`;
+  return `${prefix}${shortLabel} × ${multiplier}`;
+};
 
 const SetMembershipActionBar: React.FC<SetMembershipActionBarProps> = ({
   step,
   isSubmitting,
   isSameAsNow,
   isLifetime,
+  isFree,
   multiplier,
   selectedOption,
   onCancel,
   onConfirm,
+  isConfirmDisabled = false,
 }) => (
   <div className={styles.sheetActions}>
     <button type="button" className={styles.cancelBtn} onClick={onCancel} disabled={isSubmitting}>
@@ -40,14 +59,10 @@ const SetMembershipActionBar: React.FC<SetMembershipActionBarProps> = ({
         boxShadow: `0 4px 16px ${selectedOption.color}55`,
       }}
       onClick={onConfirm}
-      disabled={(step === 'select' && isSameAsNow) || isSubmitting}
+      disabled={(step === 'select' && isSameAsNow) || isSubmitting || isConfirmDisabled}
     >
       <IconCheck />
-      {isSubmitting
-        ? '提交中...'
-        : step === 'confirm'
-          ? `确认设置${isLifetime ? '永久会员' : `${selectedOption.shortLabel} × ${multiplier}`}`
-          : `确认选择${isLifetime ? '永久会员' : `${selectedOption.shortLabel} × ${multiplier}`}`}
+      {getConfirmLabel(isSubmitting, step, isLifetime, isFree, selectedOption.shortLabel, multiplier)}
     </button>
   </div>
 );

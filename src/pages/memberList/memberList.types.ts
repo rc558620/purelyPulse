@@ -19,7 +19,7 @@ export interface RechargeRecord {
   /** 积分奖励。 */
   pointsAwarded: number;
   /** 支付渠道。 */
-  channel: 'wechat' | 'alipay' | 'card';
+  channel: 'wechat' | 'alipay' | 'card' | 'manual';
   /** 充值时间。 */
   createdAt: number;
 }
@@ -104,6 +104,8 @@ export interface MemberListItem {
   rechargeCount?: number;
   /** 备注信息。 */
   remark?: string;
+  /** 会员到期时间戳（永久会员可能为 null）。 */
+  membershipExpiry?: number | null;
 }
 
 /** 会员列表筛选状态。 */

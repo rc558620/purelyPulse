@@ -15,4 +15,6 @@ export const ROUTE_PATHS = {
     memberDetail: '/member-list/detail',
     // ─── 用户管理 ────────────────────────────────────────────────
     banManagement: '/ban-management',
+    // ─── 会员设置 ────────────────────────────────────────────────
+    membershipSettings: '/membership-settings',
 } as const;

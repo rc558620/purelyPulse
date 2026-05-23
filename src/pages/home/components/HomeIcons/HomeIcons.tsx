@@ -146,6 +146,14 @@ export const IconHomeMemberList = (props: SvgProps): React.JSX.Element => (
   </svg>
 );
 
+/** 快捷入口：会员管理（皇冠）图标 */
+export const IconHomeMembershipSettings = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="M2 17l3-9 4 5 3-7 4 5 3-4 3 10H2z" />
+    <line x1="2" y1="20" x2="22" y2="20" />
+  </svg>
+);
+
 /** 通用跳转：向右箭头图标 */
 export const IconHomeChevronRight = (props: SvgProps): React.JSX.Element => (
   <svg aria-hidden="true" viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="currentColor" strokeWidth={2.5} {...props}>

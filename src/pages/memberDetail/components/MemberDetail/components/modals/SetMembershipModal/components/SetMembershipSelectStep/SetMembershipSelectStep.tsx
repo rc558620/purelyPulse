@@ -8,11 +8,12 @@ import {
   IconWarningTriangle,
 } from '@pages/memberDetail/components/MemberDetailIcons/MemberDetailIcons';
 import { AVATAR_COLORS } from '@pages/memberList/memberList.constants';
-import type { MemberDetail, MemberLevel, MembershipDuration } from '@pages/memberList/memberList.types';
+import type { MemberDetail, MemberLevel } from '@pages/memberList/memberList.types';
+import type { ModalMembershipSelection } from '../../SetMembershipModal';
 import styles from '../../SetMembershipModal.module.less';
 
 interface DurationOption {
-  value: MembershipDuration;
+  value: ModalMembershipSelection;
   label: string;
   shortLabel: string;
   desc: string;
@@ -33,19 +34,21 @@ interface SetMembershipSelectStepProps {
   currentExpiry: number | null | undefined;
   currentLevelLabel: string;
   isCurrentLifetime: boolean;
-  selectedDuration: MembershipDuration;
+  selectedDuration: ModalMembershipSelection;
   multiplier: number;
   selectedOption: DurationOption;
   isLifetime: boolean;
+  isFree: boolean;
   addedDays: number;
   newExpiry: number | null;
   now: number;
   durationOptions: DurationOption[];
   multiplierOptions: MultiplierOption[];
-  onDurationChange: (value: MembershipDuration) => void;
+  onDurationChange: (value: ModalMembershipSelection) => void;
   onMultiplierChange: (value: number) => void;
   formatMembershipExpiry: (timestamp: number) => string;
   formatMembershipDaysLeft: (timestamp: number) => string;
+  lifetimeMembershipDays: number;
 }
 
 const getCurrentLevelBadgeStyle = (currentLevel: MemberLevel): React.CSSProperties => ({
@@ -71,6 +74,7 @@ const SetMembershipSelectStep: React.FC<SetMembershipSelectStepProps> = ({
   multiplier,
   selectedOption,
   isLifetime,
+  isFree,
   addedDays,
   newExpiry,
   now,
@@ -80,8 +84,11 @@ const SetMembershipSelectStep: React.FC<SetMembershipSelectStepProps> = ({
   onMultiplierChange,
   formatMembershipExpiry,
   formatMembershipDaysLeft,
+  lifetimeMembershipDays,
 }) => {
   const avatarBg = AVATAR_COLORS[member.avatarColorIdx % AVATAR_COLORS.length];
+  // 当前是付费会员，切换到免费会员属于降级
+  const isDowngradeToFree = isFree && currentLevel !== 'free';
 
   return (
   <div className={styles.sheetBody}>
@@ -99,15 +106,15 @@ const SetMembershipSelectStep: React.FC<SetMembershipSelectStepProps> = ({
         <span className={styles.userPhone}>{member.phone}</span>
       </div>
       <div className={styles.expiryBox}>
-        {isCurrentLifetime ? (
-          <>
-            <span className={styles.expiryPermanent}>永久有效</span>
-            <span className={styles.expiryLbl}>到期时间</span>
-          </>
-        ) : currentExpiry ? (
+        {currentExpiry ? (
           <>
             <span className={styles.expiryVal}>{formatMembershipExpiry(currentExpiry)}</span>
             <span className={styles.expiryLbl}>{formatMembershipDaysLeft(currentExpiry)}</span>
+          </>
+        ) : isCurrentLifetime ? (
+          <>
+            <span className={styles.expiryPermanent}>待写入 {lifetimeMembershipDays} 天有效期</span>
+            <span className={styles.expiryLbl}>到期时间</span>
           </>
         ) : (
           <>
@@ -160,32 +167,34 @@ const SetMembershipSelectStep: React.FC<SetMembershipSelectStepProps> = ({
       </div>
     </div>
 
-    {!isLifetime ? (
+    {!isFree ? (
       <div className={styles.field}>
         <label className={styles.fieldLabel}>
-          追加期数
+          {isLifetime ? '有效期配置' : '追加期数'}
           <span className={styles.fieldLabelSub}>（每期 {selectedOption.daysBase} 天）</span>
         </label>
-        <div className={styles.multiplierRow}>
-          {multiplierOptions.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              className={cx(styles.multiplierBtn, multiplier === option.value && styles.multiplierBtnActive)}
-              style={multiplier === option.value ? ({
-                borderColor: selectedOption.color,
-                background: `${selectedOption.color}18`,
-                color: selectedOption.color,
-              } as React.CSSProperties) : undefined}
-              onClick={() => onMultiplierChange(option.value)}
-              aria-pressed={multiplier === option.value}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
+        {!isLifetime ? (
+          <div className={styles.multiplierRow}>
+            {multiplierOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                className={cx(styles.multiplierBtn, multiplier === option.value && styles.multiplierBtnActive)}
+                style={multiplier === option.value ? ({
+                  borderColor: selectedOption.color,
+                  background: `${selectedOption.color}18`,
+                  color: selectedOption.color,
+                } as React.CSSProperties) : undefined}
+                onClick={() => onMultiplierChange(option.value)}
+                aria-pressed={multiplier === option.value}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
         <div className={styles.addedDaysHint}>
-          本次追加
+          {isLifetime ? '本次写入' : '本次追加'}
           <strong style={{ color: selectedOption.color }}> {addedDays} </strong>
           天
         </div>
@@ -201,66 +210,85 @@ const SetMembershipSelectStep: React.FC<SetMembershipSelectStepProps> = ({
           <IconInfoCircle width={15} height={15} strokeWidth={2.2} />
         </div>
         <p className={styles.lifetimeNoticeText}>
-          设置为永久会员后账号将<strong>永不过期</strong>，可随时在此处切换回时间型订阅。
+          设置为永久会员后将按<strong>{lifetimeMembershipDays} 天有效期</strong>写入，并在详情页展示真实到期时间。
         </p>
       </div>
     ) : null}
 
-    <div
-      className={styles.previewCard}
-      style={{ borderColor: `${selectedOption.color}33`, background: `${selectedOption.color}08` }}
-    >
-      <div className={styles.previewRow}>
-        <span className={styles.previewLabel}>操作后等级</span>
-        <span
-          className={styles.previewLevelBadge}
-          style={{
-            background: `${selectedOption.color}20`,
-            color: selectedOption.color,
-            borderColor: `${selectedOption.color}40`,
-          }}
-        >
-          {selectedOption.label}
-        </span>
+    {isFree ? (
+      <div
+        className={styles.freeNotice}
+        style={{ borderColor: `${selectedOption.color}40`, background: `${selectedOption.color}0a` }}
+      >
+        <div className={styles.freeNoticeIcon} style={{ color: selectedOption.color }} aria-hidden="true">
+          <IconInfoCircle width={15} height={15} strokeWidth={2.2} />
+        </div>
+        <p className={styles.freeNoticeText}>
+          免费会员仅享有<strong>基础权益</strong>，不含订阅特权。可随时升级为付费会员。
+        </p>
       </div>
-      <div className={styles.previewDivider} />
-      <div className={styles.previewRow}>
-        <span className={styles.previewLabel}>到期时间</span>
-        {isLifetime ? (
-          <span className={styles.previewExpiryPermanent} style={{ color: selectedOption.color }}>
-            永久有效 ∞
-          </span>
-        ) : newExpiry ? (
-          <div className={styles.previewExpiryWrap}>
-            {currentExpiry && currentExpiry > now && !isCurrentLifetime ? (
-              <>
-                <span className={styles.previewExpiryOld}>{formatMembershipExpiry(currentExpiry)}</span>
-                <IconArrowRight width={12} height={12} stroke="#94a3b8" />
-              </>
-            ) : null}
-            <span className={styles.previewExpiryNew} style={{ color: selectedOption.color }}>
-              {formatMembershipExpiry(newExpiry)}
-            </span>
-            <span className={styles.previewExpiryDaysLeft}>
-              {formatMembershipDaysLeft(newExpiry)}
-            </span>
-          </div>
-        ) : null}
-      </div>
-      {!isLifetime ? (
+    ) : null}
+
+    {!isFree ? (
+      <div
+        className={styles.previewCard}
+        style={{ borderColor: `${selectedOption.color}33`, background: `${selectedOption.color}08` }}
+      >
         <div className={styles.previewRow}>
-          <span className={styles.previewLabel}>追加天数</span>
+          <span className={styles.previewLabel}>操作后等级</span>
+          <span
+            className={styles.previewLevelBadge}
+            style={{
+              background: `${selectedOption.color}20`,
+              color: selectedOption.color,
+              borderColor: `${selectedOption.color}40`,
+            }}
+          >
+            {selectedOption.label}
+          </span>
+        </div>
+        <div className={styles.previewDivider} />
+        <div className={styles.previewRow}>
+          <span className={styles.previewLabel}>到期时间</span>
+          {newExpiry ? (
+            <div className={styles.previewExpiryWrap}>
+              {currentExpiry && currentExpiry > now && !isCurrentLifetime ? (
+                <>
+                  <span className={styles.previewExpiryOld}>{formatMembershipExpiry(currentExpiry)}</span>
+                  <IconArrowRight width={12} height={12} stroke="#94a3b8" />
+                </>
+              ) : null}
+              <span className={styles.previewExpiryNew} style={{ color: selectedOption.color }}>
+                {formatMembershipExpiry(newExpiry)}
+              </span>
+              <span className={styles.previewExpiryDaysLeft}>
+                {formatMembershipDaysLeft(newExpiry)}
+              </span>
+            </div>
+          ) : null}
+        </div>
+        <div className={styles.previewRow}>
+          <span className={styles.previewLabel}>{isLifetime ? '有效期天数' : '追加天数'}</span>
           <span className={styles.previewAddedDays} style={{ color: selectedOption.color }}>
             +{addedDays} 天
           </span>
         </div>
-      ) : null}
-    </div>
+      </div>
+    ) : null}
 
     {isCurrentLifetime && !isLifetime ? (
       <div className={styles.downgradeWarning}>
         <IconWarningTriangle width={14} height={14} strokeWidth={2.2} />
-        当前为永久会员，本操作将切换为{selectedOption.label}，到期后需续期
+        {isFree
+          ? '当前为永久会员，本操作将切换为免费会员，订阅权益将立即停止'
+          : `当前为永久会员，本操作将切换为${selectedOption.label}，到期后需续期`}
+      </div>
+    ) : null}
+
+    {isDowngradeToFree && !isCurrentLifetime ? (
+      <div className={styles.downgradeWarning}>
+        <IconWarningTriangle width={14} height={14} strokeWidth={2.2} />
+        降级为免费会员后，当前订阅权益将立即停止
       </div>
     ) : null}
   </div>

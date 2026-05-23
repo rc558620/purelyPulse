@@ -80,4 +80,6 @@ export const pages = {
   memberDetail: lazyWithPreload(() => import('../pages/memberDetail/memberDetail')),
   // ─── 用户管理 ───────────────────────────────────────────────────────
   banManagement: lazyWithPreload(() => import('../pages/banManagement/banManagement')),
+  // ─── 会员设置 ───────────────────────────────────────────────────────
+  membershipSettings: lazyWithPreload(() => import('../pages/membershipSettings/membershipSettings')),
 } as const;

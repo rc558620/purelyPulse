@@ -1,6 +1,8 @@
 // 会员列表 / 详情模块共享展示常量。
 import type { MemberLevel, MemberStatus } from './memberList.types';
 
+export type PaidMemberLevel = Exclude<MemberLevel, 'free'>;
+
 /** 会员等级显示映射。 */
 export const LEVEL_LABEL: Record<MemberLevel, string> = {
   free: '免费',
@@ -29,3 +31,34 @@ export const AVATAR_COLORS = [
 
 /** 会员状态变更后的跨页面同步事件名。 */
 export const MEMBER_STATUS_SYNC_EVENT = 'member-status-sync';
+
+/** 会员等级设置产生收入后的跨页面同步事件名。 */
+export const MEMBERSHIP_REVENUE_SYNC_EVENT = 'membership-revenue-sync';
+
+/** 会员等级设置对应的前端收入配置。 */
+export const MEMBERSHIP_REVENUE_CONFIG: Record<PaidMemberLevel, {
+  planName: string;
+  revenueTypeLabel: string;
+  amountFen: number;
+}> = {
+  monthly: {
+    planName: '月度会员',
+    revenueTypeLabel: '月卡会员',
+    amountFen: 3800,
+  },
+  quarterly: {
+    planName: '季度会员',
+    revenueTypeLabel: '季度会员',
+    amountFen: 9900,
+  },
+  annual: {
+    planName: '年度会员',
+    revenueTypeLabel: '年卡会员',
+    amountFen: 36900,
+  },
+  lifetime: {
+    planName: '永久会员',
+    revenueTypeLabel: '永久会员',
+    amountFen: 39800,
+  },
+};
