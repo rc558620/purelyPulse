@@ -153,6 +153,74 @@ export const IconPaymentChannel = ({ channel, ...props }: IconPaymentChannelProp
   return <IconBankCard width={18} height={18} strokeWidth={2} {...props} />;
 };
 
+/** 子账号管理：子账号能力入口。 */
+export const IconSubAccount = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="currentColor" strokeWidth={2.2} {...props}>
+    <circle cx="9" cy="7" r="3" />
+    <path d="M4 20v-1a5 5 0 0 1 5-5h1" />
+    <circle cx="17" cy="16" r="2.5" />
+    <path d="M17 13.5V11" />
+    <path d="M17 18.5V21" />
+    <path d="M14.5 16H12" />
+    <path d="M19.5 16H22" />
+  </svg>
+);
+
+/** 收银员角色：cashier 子账号标识。 */
+export const IconCashierRole = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="currentColor" strokeWidth={2.2} {...props}>
+    <rect x="2" y="7" width="20" height="14" rx="2" />
+    <path d="M16 3h-8l-2 4h12l-2-4z" />
+    <path d="M12 12v3" />
+    <path d="M10 13h4" />
+  </svg>
+);
+
+/** 财务角色：finance 子账号标识。 */
+export const IconFinanceRole = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="currentColor" strokeWidth={2.2} {...props}>
+    <rect x="2" y="5" width="20" height="14" rx="2" />
+    <path d="M2 10h20" />
+    <path d="M6 15h2" />
+    <path d="M10 15h6" />
+  </svg>
+);
+
+/** 槽位格子：子账号配额格子指示。 */
+export const IconSlotGrid = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="currentColor" strokeWidth={2} {...props}>
+    <rect x="3" y="3" width="7" height="7" rx="1" />
+    <rect x="14" y="3" width="7" height="7" rx="1" />
+    <rect x="3" y="14" width="7" height="7" rx="1" />
+    <rect x="14" y="14" width="7" height="7" rx="1" />
+  </svg>
+);
+
+/** 锁定：无资格或不可操作状态。 */
+export const IconLock = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="currentColor" strokeWidth={2.2} {...props}>
+    <rect x="3" y="11" width="18" height="11" rx="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </svg>
+);
+
+/** 睁眼：密码可见切换。 */
+export const IconEye = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="currentColor" strokeWidth={2} {...props}>
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
+/** 闭眼：密码隐藏切换。 */
+export const IconEyeOff = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="currentColor" strokeWidth={2} {...props}>
+    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+    <line x1="1" y1="1" x2="23" y2="23" />
+  </svg>
+);
+
 /** 用户轮廓：免费会员默认状态图标。 */
 export const IconUserCircle = (props: SvgProps): React.JSX.Element => (
   <svg aria-hidden="true" viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="currentColor" strokeWidth={2} {...props}>

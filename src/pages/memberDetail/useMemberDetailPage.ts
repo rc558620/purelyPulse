@@ -1,5 +1,6 @@
 // 会员详情页 Hook：管理详情请求、提交动作与本地展示态同步。
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { safeNum } from '@utils/utils';
 import { showToast } from '@components/ui/feedback/Toast';
 import { MEMBERSHIP_TIER_DEFAULT_VALUES } from '../membershipSettings/membershipSettings.constants';
 import { fetchMembershipSettings } from '../membershipSettings/membershipSettings.service';
@@ -12,8 +13,14 @@ import {
   submitMemberMembership,
   submitMemberPointsAdjustment,
   submitMemberUnban,
+  submitSubAccountQuota,
 } from '../memberList/memberList.service';
-import type { MemberDetail, MemberLevel, MemberStatusSyncPayload } from '../memberList/memberList.types';
+import type {
+  MemberDetail,
+  MemberLevel,
+  MemberStatusSyncPayload,
+  SubAccountRoleSummary,
+} from '../memberList/memberList.types';
 
 interface UseMemberDetailPageReturn {
   /** 当前会员详情。 */
@@ -44,6 +51,8 @@ interface UseMemberDetailPageReturn {
   isSubmittingMembership: boolean;
   /** 是否正在提交封禁或解封。 */
   isSubmittingBan: boolean;
+  /** 是否正在提交子账号配额设置。 */
+  isSubmittingSubAccount: boolean;
   /** 是否有任一提交动作进行中。 */
   isSubmittingAction: boolean;
   /** 调整积分并提交。 */
@@ -56,11 +65,13 @@ interface UseMemberDetailPageReturn {
   handleBanMember: (reason: string) => Promise<boolean>;
   /** 解封当前会员。 */
   handleUnbanMember: () => Promise<boolean>;
+  /** 设置子账号配额与角色并提交（平台侧）。 */
+  handleSetSubAccountQuota: (quota: number, roleSummary: SubAccountRoleSummary[]) => Promise<boolean>;
   /** 重试拉取详情。 */
   retryLoadMember: () => void;
 }
 
-type MemberSubmitAction = 'points' | 'beans' | 'membership' | 'ban' | null;
+type MemberSubmitAction = 'points' | 'beans' | 'membership' | 'ban' | 'subAccount' | null;
 
 const DEFAULT_LIFETIME_MEMBERSHIP_DAYS = Number.parseInt(MEMBERSHIP_TIER_DEFAULT_VALUES.lifetime.lifetimeDays ?? '730', 10);
 const DEFAULT_LIFETIME_MEMBERSHIP_AMOUNT_FEN = Math.round(Number(MEMBERSHIP_TIER_DEFAULT_VALUES.lifetime.price) * 100);
@@ -340,6 +351,31 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
     }
   }, [loadMember, member, submittingAction]);
 
+  const handleSetSubAccountQuota = useCallback(async (
+    quota: number,
+    roleSummary: SubAccountRoleSummary[],
+  ): Promise<boolean> => {
+    if (!member || submittingAction) {
+      return false;
+    }
+
+    setSubmittingAction('subAccount');
+    try {
+      await submitSubAccountQuota(member.id, quota, roleSummary);
+      showToast({ type: 'success', message: quota > 0 ? `子账号配置已更新，共 ${safeNum(quota)} 个槽位` : '子账号能力已关闭' });
+      void loadMember({ silent: true });
+      return true;
+    } catch (error) {
+      showToast({
+        type: 'error',
+        message: error instanceof Error ? error.message : '子账号配置失败，请稍后重试',
+      });
+      return false;
+    } finally {
+      setSubmittingAction(null);
+    }
+  }, [loadMember, member, submittingAction]);
+
   const retryLoadMember = useCallback((): void => {
     void loadMember();
   }, [loadMember]);
@@ -359,12 +395,14 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
     isSubmittingBeans: submittingAction === 'beans',
     isSubmittingMembership: submittingAction === 'membership',
     isSubmittingBan: submittingAction === 'ban',
+    isSubmittingSubAccount: submittingAction === 'subAccount',
     isSubmittingAction: submittingAction !== null,
     handleAdjustPoints,
     handleAdjustBeans,
     handleSetMembership,
     handleBanMember,
     handleUnbanMember,
+    handleSetSubAccountQuota,
     retryLoadMember,
   };
 };

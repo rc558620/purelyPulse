@@ -1,0 +1,848 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/mixins.less';
+@import (reference) '@styles/breakpoints.less';
+
+// ─── 遮罩 ─────────────────────────────────────────────────────────────
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+// ─── 底部抽屉 ────────────────────────────────────────────────────────
+.sheet {
+  width: 100%;
+  max-width: 52rem;
+  max-height: 92dvh;
+  border-radius: 2.4rem 2.4rem 0 0;
+  background: @bg-white;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+
+  @media (min-width: @bp-mobile) {
+    border-radius: 2.4rem;
+    margin: auto;
+    max-height: 90dvh;
+  }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+// ─── 拖拽指示条 ──────────────────────────────────────────────────────
+.dragHandle {
+  width: 4rem;
+  height: 0.4rem;
+  border-radius: 9999px;
+  background: @border-color;
+  margin: 1.2rem auto 0;
+  flex-shrink: 0;
+}
+
+// ─── 标题行 ──────────────────────────────────────────────────────────
+.sheetHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.6rem 2rem 1.4rem;
+  flex-shrink: 0;
+}
+
+.sheetTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.sheetTitleIcon {
+  width: 3.2rem;
+  height: 3.2rem;
+  border-radius: @radius-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.14), rgba(139, 92, 246, 0.08));
+  border: 1px solid rgba(99, 102, 241, 0.28);
+  color: #6366f1;
+}
+
+.sheetTitle {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: @text-main;
+}
+
+.closeBtn {
+  width: 3.2rem;
+  height: 3.2rem;
+  border-radius: 9999px;
+  border: none;
+  background: @bg-slate-100;
+  color: @text-sub;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover { background: @border-color; color: @text-main; }
+}
+
+// ─── 可滚动内容区 ─────────────────────────────────────────────────────
+.sheetBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.4rem 2rem 1.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  -webkit-overflow-scrolling: touch;
+
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 102, 241, 0.2) transparent;
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background-color: rgba(99, 102, 241, 0.18); border-radius: 4px; }
+}
+
+// ─── 底部操作栏 ──────────────────────────────────────────────────────
+.sheetActions {
+  display: flex;
+  gap: 1.2rem;
+  padding: 1.6rem 2rem calc(1.6rem + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid @border-color;
+  flex-shrink: 0;
+}
+
+.cancelBtn {
+  flex: 1;
+  height: 5.2rem;
+  border-radius: @radius-lg;
+  border: 1.5px solid @border-color;
+  background: @bg-slate-100;
+  color: @text-sub;
+  font-size: 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover { background: @border-color; color: @text-main; }
+}
+
+.confirmBtn {
+  flex: 2;
+  height: 5.2rem;
+  border-radius: @radius-lg;
+  border: none;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3);
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  transition: filter 0.2s, transform 0.15s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover:not(:disabled) { filter: brightness(1.08); }
+  &:active:not(:disabled) { transform: scale(0.97); }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: none !important;
+  }
+}
+
+// ─── 会员信息卡 ──────────────────────────────────────────────────────
+.memberCard {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1.4rem 1.6rem;
+  background: @bg-light;
+  border-radius: 1.4rem;
+  border: 1px solid @border-color;
+}
+
+.memberAvatar {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 1.6rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.memberInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.memberNameRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.memberName {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: @text-main;
+}
+
+.memberLevelBadge {
+  padding: 0.2rem 0.7rem;
+  border-radius: 9999px;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.levelBadgeAnnual {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+}
+
+.levelBadgeLifetime {
+  background: rgba(168, 85, 247, 0.12);
+  color: #9333ea;
+}
+
+.levelBadgeOther {
+  background: rgba(148, 163, 184, 0.12);
+  color: @text-sub;
+}
+
+.memberPhone {
+  font-size: 1.2rem;
+  color: @text-sub;
+}
+
+// 头像颜色（与 memberDetail.module.less 中 heroAvatar 保持一致）
+.avatarColor_0 { background: linear-gradient(135deg, #84cc16, #4ade80); }
+.avatarColor_1 { background: linear-gradient(135deg, #3b82f6, #60a5fa); }
+.avatarColor_2 { background: linear-gradient(135deg, #a855f7, #c084fc); }
+.avatarColor_3 { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+.avatarColor_4 { background: linear-gradient(135deg, #10b981, #34d399); }
+.avatarColor_5 { background: linear-gradient(135deg, #f43f5e, #fb7185); }
+
+.memberQuotaTag {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 9999px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.memberQuotaTagActive {
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+  border: 1px solid rgba(99, 102, 241, 0.22);
+}
+
+.memberQuotaTagNone {
+  background: rgba(148, 163, 184, 0.1);
+  color: @text-slate-400;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+// 关闭按钮 label（字号稍大一点以清晰显示）
+.quotaItemLabelClose {
+  font-size: 1.15rem !important;
+}
+
+// ─── 无资格提示横幅 ──────────────────────────────────────────────────
+.ineligibleBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.4rem 1.6rem;
+  background: rgba(245, 158, 11, 0.07);
+  border: 1px solid rgba(245, 158, 11, 0.24);
+  border-radius: 1.2rem;
+}
+
+.ineligibleBannerIcon {
+  flex-shrink: 0;
+  color: #d97706;
+  margin-top: 0.1rem;
+}
+
+.ineligibleBannerText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.ineligibleBannerTitle {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #d97706;
+}
+
+.ineligibleBannerDesc {
+  font-size: 1.2rem;
+  color: @text-sub;
+  line-height: 1.6;
+}
+
+// 变更提醒横幅（靛蓝主题变体）
+.ineligibleBannerInfo {
+  background: rgba(99, 102, 241, 0.06);
+  border-color: rgba(99, 102, 241, 0.22);
+}
+
+.ineligibleBannerIconInfo {
+  color: #6366f1;
+}
+
+.ineligibleBannerTitleInfo {
+  color: #6366f1;
+}
+
+// ─── 额度数量选择区 ──────────────────────────────────────────────────
+.sectionLabel {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: @text-main;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.sectionLabelSub {
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: @text-slate-400;
+}
+
+.quotaSelector {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.quotaGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.8rem;
+
+  @media (min-width: @bp-mobile) {
+    grid-template-columns: repeat(8, 1fr);
+    gap: 1rem;
+  }
+}
+
+.quotaItem {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  aspect-ratio: 1;
+  border-radius: 1.2rem;
+  border: 1.5px solid @border-color;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 5.2rem;
+
+  &:hover {
+    border-color: #94a3b8;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.07);
+  }
+  &:active { transform: translateY(0); }
+}
+
+.quotaItemSelected {
+  border-color: #6366f1 !important;
+  background: rgba(99, 102, 241, 0.08);
+  transform: translateY(-2px) !important;
+  box-shadow: 0 5px 16px rgba(99, 102, 241, 0.18) !important;
+}
+
+.quotaItemDisabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+  border-color: @border-color !important;
+  background: rgba(148, 163, 184, 0.04) !important;
+}
+
+.quotaItemZero {
+  &.quotaItemSelected {
+    border-color: #94a3b8 !important;
+    background: rgba(148, 163, 184, 0.08);
+    box-shadow: 0 5px 16px rgba(148, 163, 184, 0.14) !important;
+  }
+}
+
+.quotaItemNumber {
+  font-size: 1.9rem;
+  font-weight: 900;
+  color: @text-main;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  transition: color 0.15s;
+
+  .quotaItemSelected & { color: #6366f1; }
+  .quotaItemZero.quotaItemSelected & { color: @text-sub; }
+}
+
+.quotaItemLabel {
+  font-size: 1rem;
+  font-weight: 600;
+  color: @text-slate-400;
+  line-height: 1;
+
+  .quotaItemSelected & { color: rgba(99, 102, 241, 0.8); }
+}
+
+.quotaItemCheck {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background: #6366f1;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quotaItemCheckZero {
+  background: #94a3b8;
+}
+
+.quotaHint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.15rem;
+  color: @text-sub;
+  line-height: 1.55;
+
+  &.quotaHintActive {
+    color: #6366f1;
+    font-weight: 600;
+  }
+
+  &.quotaHintWarning {
+    color: #d97706;
+  }
+}
+
+// ─── 角色配置区 ──────────────────────────────────────────────────────
+.roleConfigSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  animation: fadeSlideIn 0.25s ease;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.slotList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.slotRow {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.2rem 1.4rem;
+  border-radius: 1.2rem;
+  border: 1.5px solid @border-color;
+  background: rgba(248, 250, 252, 0.6);
+  transition: border-color 0.15s, background 0.15s;
+
+  &.slotRowActive {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: rgba(99, 102, 241, 0.2);
+  }
+}
+
+.slotTopRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.slotBadge {
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.slotLabel {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: @text-main;
+  flex: 1;
+  min-width: 0;
+}
+
+.rolePicker {
+  display: flex;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.roleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 1rem;
+  border-radius: 9999px;
+  border: 1.5px solid @border-color;
+  background: transparent;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: @text-sub;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    border-color: #94a3b8;
+    color: @text-main;
+  }
+}
+
+.roleBtnCashier {
+  &.roleBtnActive {
+    border-color: rgba(16, 185, 129, 0.45);
+    background: rgba(16, 185, 129, 0.08);
+    color: #059669;
+  }
+}
+
+.roleBtnFinance {
+  &.roleBtnActive {
+    border-color: rgba(59, 130, 246, 0.45);
+    background: rgba(59, 130, 246, 0.08);
+    color: #2563eb;
+  }
+}
+
+.roleBtnActive {
+  font-weight: 700;
+}
+
+// ─── 权益说明卡 ──────────────────────────────────────────────────────
+.capabilityCard {
+  padding: 1.4rem 1.6rem;
+  background: rgba(99, 102, 241, 0.04);
+  border: 1px solid rgba(99, 102, 241, 0.16);
+  border-radius: 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.capabilityTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #6366f1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.capabilityList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.capabilityItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  font-size: 1.2rem;
+  color: @text-sub;
+  line-height: 1.55;
+}
+
+.capabilityItemDot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #6366f1;
+  flex-shrink: 0;
+  margin-top: 0.6rem;
+  opacity: 0.6;
+}
+
+.capabilityItemDotWarning {
+  background: #ef4444;
+}
+
+.capabilityItemText {
+  flex: 1;
+
+  strong {
+    font-weight: 700;
+    color: @text-main;
+  }
+}
+
+// 角色描述图标颜色
+.roleDescIconCashier { color: #059669; }
+.roleDescIconFinance { color: #2563eb; }
+
+// 角色描述模块列表
+.roleDescList {
+  margin: 0.3rem 0 0;
+  padding-left: 1.4rem;
+  font-size: 1.1rem;
+  color: inherit;
+  line-height: 1.7;
+}
+
+// ─── 账号 + 密码并排行 ────────────────────────────────────────────────
+.credentialsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+
+  @media (max-width: 360px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.credentialWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+// ─── 密码输入区（兼容旧 .passwordWrap 单独使用场景） ─────────────────
+.passwordWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.passwordLabel {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: @text-slate-400;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.passwordInputRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  height: 3.4rem;
+  padding: 0 1rem;
+  border-radius: 0.9rem;
+  border: 1.5px solid @border-color;
+  background: @bg-white;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &:focus-within {
+    border-color: rgba(99, 102, 241, 0.5);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  }
+}
+
+.passwordInput {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 1.25rem;
+  color: @text-main;
+  font-family: inherit;
+  letter-spacing: 0.04em;
+
+  &::placeholder {
+    color: @text-slate-400;
+    font-weight: 400;
+    letter-spacing: 0;
+  }
+}
+
+.passwordToggleBtn {
+  flex-shrink: 0;
+  width: 2.4rem;
+  height: 2.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: @text-slate-400;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  transition: color 0.15s, background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    color: @text-sub;
+    background: @bg-slate-100;
+  }
+}
+
+.passwordStrengthHint {
+  font-size: 1.05rem;
+  color: @text-slate-400;
+  line-height: 1.4;
+}
+
+.passwordStrengthWeak { color: #ef4444; }
+.passwordStrengthMedium { color: #f59e0b; }
+.passwordStrengthStrong { color: #059669; }
+
+// ─── 角色说明行 ──────────────────────────────────────────────────────
+.roleDescRow {
+  display: flex;
+  gap: 0.8rem;
+}
+
+.roleDescCard {
+  flex: 1;
+  padding: 1.1rem 1.2rem;
+  border-radius: 1rem;
+  border: 1px solid @border-color;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.roleDescCardCashier {
+  background: rgba(16, 185, 129, 0.04);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.roleDescCardFinance {
+  background: rgba(59, 130, 246, 0.04);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.roleDescHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.roleDescTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.roleDescTitleCashier { color: #059669; }
+.roleDescTitleFinance { color: #2563eb; }
+
+.roleDescBody {
+  font-size: 1.1rem;
+  color: @text-sub;
+  line-height: 1.55;
+
+  p { margin: 0; }
+}
+
+// ─── 当前快照摘要 ─────────────────────────────────────────────────────
+.snapshotBar {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1rem 1.4rem;
+  background: rgba(248, 250, 252, 0.9);
+  border: 1px solid @border-color;
+  border-radius: 1rem;
+  font-size: 1.2rem;
+  color: @text-sub;
+  flex-wrap: wrap;
+}
+
+.snapshotItem {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.snapshotDivider {
+  width: 1px;
+  height: 1.2rem;
+  background: @border-color;
+  flex-shrink: 0;
+}
+
+.snapshotValue {
+  font-weight: 700;
+  color: @text-main;
+}
+
+.snapshotValueHighlight {
+  color: #6366f1;
+}

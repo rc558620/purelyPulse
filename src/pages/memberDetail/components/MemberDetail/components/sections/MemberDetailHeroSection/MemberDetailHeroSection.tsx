@@ -5,6 +5,7 @@ import {
   IconBanCircle,
   IconShieldCheck,
   IconStarBadge,
+  IconSubAccount,
 } from '@pages/memberDetail/components/MemberDetailIcons/MemberDetailIcons';
 import { LEVEL_LABEL, STATUS_LABEL } from '@pages/memberList/memberList.constants';
 import type { MemberDetail, MemberLevel } from '@pages/memberList/memberList.types';
@@ -20,8 +21,10 @@ interface MemberDetailHeroSectionProps {
   isSubmittingAction: boolean;
   isSubmittingMembership: boolean;
   isSubmittingBan: boolean;
+  isSubmittingSubAccount: boolean;
   onOpenMembershipModal: () => void;
   onOpenStatusModal: () => void;
+  onOpenSubAccountModal: () => void;
 }
 
 const STATUS_CLASS_MAP = {
@@ -38,9 +41,13 @@ const MemberDetailHeroSection: React.FC<MemberDetailHeroSectionProps> = React.me
   isSubmittingAction,
   isSubmittingMembership,
   isSubmittingBan,
+  isSubmittingSubAccount,
   onOpenMembershipModal,
   onOpenStatusModal,
+  onOpenSubAccountModal,
 }) => {
+  const subAccountCapability = member.subAccountCapability;
+  const subAccountQuota = subAccountCapability?.subAccountQuota ?? 0;
   const heroAvatarColorClassName = pageStyles[`heroAvatarColor_${member.avatarColorIdx % 6}`];
 
   return (
@@ -87,6 +94,20 @@ const MemberDetailHeroSection: React.FC<MemberDetailHeroSectionProps> = React.me
             >
               <IconStarBadge width={13} height={13} strokeWidth={2.5} />
               {isSubmittingMembership ? '设置中...' : '设置会员等级'}
+            </button>
+            <button
+              type="button"
+              className={pageStyles.setSubAccountBtn}
+              onClick={onOpenSubAccountModal}
+              aria-label="配置子账号"
+              disabled={isSubmittingAction}
+            >
+              <IconSubAccount width={13} height={13} strokeWidth={2.2} />
+              {isSubmittingSubAccount ? '配置中...' : (
+                subAccountQuota > 0
+                  ? `子账号 · ${subAccountQuota} 个`
+                  : '配置子账号'
+              )}
             </button>
             <button
               type="button"

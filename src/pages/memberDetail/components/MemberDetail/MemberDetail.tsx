@@ -20,8 +20,9 @@ const SetMembershipModal = lazy(async () => {
   const module = await import('./components/modals/SetMembershipModal/SetMembershipModal');
   return { default: module.default as React.ComponentType<SetMembershipModalProps> };
 });
+const SetSubAccountModal = lazy(() => import('./components/modals/SetSubAccountModal/SetSubAccountModal'));
 
-type ActiveModal = 'points' | 'beans' | 'membership' | 'status' | null;
+type ActiveModal = 'points' | 'beans' | 'membership' | 'status' | 'subAccount' | null;
 
 const DAY_MS = 86_400_000;
 
@@ -43,12 +44,14 @@ const MemberDetail: React.FC = () => {
     isSubmittingBeans,
     isSubmittingMembership,
     isSubmittingBan,
+    isSubmittingSubAccount,
     isSubmittingAction,
     handleAdjustPoints,
     handleAdjustBeans,
     handleSetMembership,
     handleBanMember,
     handleUnbanMember,
+    handleSetSubAccountQuota,
     retryLoadMember,
   } = useMemberDetailPage(id);
 
@@ -81,6 +84,7 @@ const MemberDetail: React.FC = () => {
   const isBeanModalOpen = activeModal === 'beans';
   const isMembershipModalOpen = activeModal === 'membership';
   const isStatusModalOpen = activeModal === 'status';
+  const isSubAccountModalOpen = activeModal === 'subAccount';
 
   const handleBack = useCallback((): void => {
     navigate(-1);
@@ -105,6 +109,10 @@ const MemberDetail: React.FC = () => {
   const handleOpenStatusModal = useCallback((): void => {
     setBanReason('');
     setActiveModal('status');
+  }, []);
+
+  const handleOpenSubAccountModal = useCallback((): void => {
+    setActiveModal('subAccount');
   }, []);
 
   const handleCloseStatusModal = useCallback((): void => {
@@ -166,8 +174,10 @@ const MemberDetail: React.FC = () => {
           isSubmittingAction={isSubmittingAction}
           isSubmittingMembership={isSubmittingMembership}
           isSubmittingBan={isSubmittingBan}
+          isSubmittingSubAccount={isSubmittingSubAccount}
           onOpenMembershipModal={handleOpenMembershipModal}
           onOpenStatusModal={handleOpenStatusModal}
+          onOpenSubAccountModal={handleOpenSubAccountModal}
         />
 
         {/* 核心数据网格：积分、豆、充值额、邀请数 */}
@@ -235,6 +245,23 @@ const MemberDetail: React.FC = () => {
             onBanReasonChange={setBanReason}
             onClose={handleCloseStatusModal}
             onConfirm={handleStatusConfirm}
+          />
+        ) : null}
+
+        {/* 子账号配置弹窗（平台侧，年/永久会员专属） */}
+        {isSubAccountModalOpen ? (
+          <SetSubAccountModal
+            member={member}
+            currentLevel={memberLevel}
+            currentCapability={member.subAccountCapability}
+            isSubmitting={isSubmittingSubAccount}
+            onClose={handleCloseModal}
+            onConfirm={async (quota, roleSummary) => {
+              const didSucceed = await handleSetSubAccountQuota(quota, roleSummary);
+              if (didSucceed) {
+                handleCloseModal();
+              }
+            }}
           />
         ) : null}
       </Suspense>

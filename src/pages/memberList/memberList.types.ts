@@ -3,6 +3,48 @@
 /** 会员状态。 */
 export type MemberStatus = 'active' | 'inactive' | 'banned';
 
+// ─── 子账号类型 ────────────────────────────────────────────────────────────
+
+/** 子账号角色类型。 */
+export type SubAccountRole = 'cashier' | 'finance';
+
+/** 子账号状态。 */
+export type SubAccountStatus = 'active' | 'inactive' | 'disabled';
+
+/** 子账号角色摘要（平台视角）。 */
+export interface SubAccountRoleSummary {
+  /** 子账号槽位序号（1~7）。 */
+  slot: number;
+  /** 子账号角色。 */
+  role: SubAccountRole;
+  /** 当前状态。 */
+  status: SubAccountStatus;
+  /** 是否已分配给员工。 */
+  isAssigned: boolean;
+  /** 平台为该子账号分配的登录账号（手机号或自定义用户名）。留空表示不修改。 */
+  username?: string;
+  /** 平台为该子账号设置的登录密码（明文；提交后由后端加密存储）。留空表示不修改。 */
+  password?: string;
+}
+
+/** 子账号能力快照（会员详情中的平台侧展示字段）。 */
+export interface SubAccountCapability {
+  /** 当前门店配置的子账号额度（0 = 未启用）。 */
+  subAccountQuota: number;
+  /** 该商家是否具备配置子账号的资格（年/永久会员）。 */
+  subAccountEligible: boolean;
+  /** 子账号能力是否实际开启（quota > 0 且有资格）。 */
+  subAccountCapabilityEnabled: boolean;
+  /** 子账号额度上限（有资格时为 7，否则为 0）。 */
+  subAccountQuotaMax: number;
+  /** 已使用的子账号槽位数。 */
+  subAccountsUsedCount: number;
+  /** 剩余可分配的子账号槽位数。 */
+  subAccountsAvailableCount: number;
+  /** 子账号角色分配摘要。 */
+  subAccountRoleSummary: SubAccountRoleSummary[];
+}
+
 /** 会员等级。 */
 export type MemberLevel = 'free' | 'monthly' | 'quarterly' | 'annual' | 'lifetime';
 
@@ -66,6 +108,8 @@ export interface MemberDetail {
   remark?: string;
   /** 会员到期时间戳（永久会员为 null）。 */
   membershipExpiry?: number | null;
+  /** 子账号能力快照（平台侧）。 */
+  subAccountCapability?: SubAccountCapability;
 }
 
 /** 会员列表项（轻量）。 */

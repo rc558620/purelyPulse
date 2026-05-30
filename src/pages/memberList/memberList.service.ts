@@ -23,6 +23,7 @@ import type {
   MemberStatus,
   MemberStatusSyncPayload,
   RechargeRecord,
+  SubAccountRoleSummary,
 } from './memberList.types';
 
 const MEMBER_LIST_API_PATH = resolveEnvPath(import.meta.env.VITE_MEMBER_LIST_API_PATH, '/pulse/membership/admin/members');
@@ -34,6 +35,7 @@ const ADJUST_PARTNER_BEANS_API_PATH = resolveEnvPath(import.meta.env.VITE_ADJUST
 const SET_MEMBERSHIP_API_PATH = resolveEnvPath(import.meta.env.VITE_SET_MEMBERSHIP_API_PATH, '/pulse/membership/admin/members/{id}/membership');
 const MEMBER_BAN_API_PATH = resolveEnvPath(import.meta.env.VITE_MEMBER_BAN_API_PATH, '/pulse/membership/admin/members/{id}/ban');
 const MEMBER_UNBAN_API_PATH = resolveEnvPath(import.meta.env.VITE_MEMBER_UNBAN_API_PATH, '/pulse/membership/admin/members/{id}/unban');
+const SET_SUB_ACCOUNT_QUOTA_API_PATH = resolveEnvPath(import.meta.env.VITE_SET_SUB_ACCOUNT_QUOTA_API_PATH, '/pulse/membership/admin/members/{id}/sub-accounts/quota');
 const MEMBER_AVATAR_COLOR_COUNT = 6;
 const DAY_MS = 86_400_000;
 
@@ -1170,3 +1172,32 @@ export const fetchMemberDetail = createKeyedInFlightRequest(
   (id: string) => id,
   async (id: string): Promise<MemberDetail | null> => requestMemberDetail(id),
 );
+
+/** 提交子账号配额设置（平台侧，仅允许年/永久会员商家）。 */
+export const submitSubAccountQuota = async (
+  memberId: string,
+  quota: number,
+  roleSummary: SubAccountRoleSummary[],
+): Promise<void> => {
+  const requestTarget = resolveMemberActionPath(SET_SUB_ACCOUNT_QUOTA_API_PATH, memberId);
+  await http.post<unknown, Record<string, unknown>>(
+    requestTarget.url,
+    {
+      memberId,
+      quota,
+      roleSummary: roleSummary.map((item) => ({
+        slot: item.slot,
+        role: item.role,
+        status: item.status,
+        isAssigned: item.isAssigned,
+        ...(item.username ? { username: item.username } : {}),
+        ...(item.password ? { password: item.password } : {}),
+      })),
+    },
+    {
+      params: requestTarget.params,
+      skipGlobalErrorHandler: true,
+      errorMessage: '子账号配额设置失败，请稍后重试',
+    },
+  );
+};
