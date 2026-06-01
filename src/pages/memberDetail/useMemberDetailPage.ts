@@ -19,7 +19,6 @@ import type {
   MemberDetail,
   MemberLevel,
   MemberStatusSyncPayload,
-  SubAccountRoleSummary,
 } from '../memberList/memberList.types';
 
 interface UseMemberDetailPageReturn {
@@ -65,8 +64,8 @@ interface UseMemberDetailPageReturn {
   handleBanMember: (reason: string) => Promise<boolean>;
   /** 解封当前会员。 */
   handleUnbanMember: () => Promise<boolean>;
-  /** 设置子账号配额与角色并提交（平台侧）。 */
-  handleSetSubAccountQuota: (quota: number, roleSummary: SubAccountRoleSummary[]) => Promise<boolean>;
+  /** 设置子账号配额并提交（平台侧）。角色分配由商家在 purelyProfit 端操作。 */
+  handleSetSubAccountQuota: (quota: number) => Promise<boolean>;
   /** 重试拉取详情。 */
   retryLoadMember: () => void;
 }
@@ -353,7 +352,6 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
 
   const handleSetSubAccountQuota = useCallback(async (
     quota: number,
-    roleSummary: SubAccountRoleSummary[],
   ): Promise<boolean> => {
     if (!member || submittingAction) {
       return false;
@@ -361,8 +359,8 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
 
     setSubmittingAction('subAccount');
     try {
-      await submitSubAccountQuota(member.id, quota, roleSummary);
-      showToast({ type: 'success', message: quota > 0 ? `子账号配置已更新，共 ${safeNum(quota)} 个槽位` : '子账号能力已关闭' });
+      await submitSubAccountQuota(member.id, quota);
+      showToast({ type: 'success', message: quota > 0 ? `子账号配额已更新，共 ${safeNum(quota)} 个槽位` : '子账号能力已关闭' });
       void loadMember({ silent: true });
       return true;
     } catch (error) {

@@ -111,7 +111,7 @@
 .sheetBody {
   flex: 1;
   overflow-y: auto;
-  padding: 0.4rem 2rem 1.6rem;
+  padding: 1.6rem 2rem;
   display: flex;
   flex-direction: column;
   gap: 2rem;
@@ -281,11 +281,6 @@
   border: 1px solid rgba(148, 163, 184, 0.2);
 }
 
-// 关闭按钮 label（字号稍大一点以清晰显示）
-.quotaItemLabelClose {
-  font-size: 1.15rem !important;
-}
-
 // ─── 无资格提示横幅 ──────────────────────────────────────────────────
 .ineligibleBanner {
   display: flex;
@@ -359,102 +354,128 @@
   gap: 1.2rem;
 }
 
-.quotaGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.8rem;
-
-  @media (min-width: @bp-mobile) {
-    grid-template-columns: repeat(8, 1fr);
-    gap: 1rem;
-  }
+// ─── 关闭按钮 + 输入框 横向布局 ────────────────────────────────────
+.quotaModeRow {
+  display: flex;
+  align-items: stretch;
+  gap: 1rem;
 }
 
-.quotaItem {
+// 「关闭」切换按钮
+.quotaModeBtn {
   position: relative;
+  flex-shrink: 0;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.3rem;
-  aspect-ratio: 1;
-  border-radius: 1.2rem;
+  gap: 0.5rem;
+  width: 7.2rem;
+  height: 5rem;
+  border-radius: @radius-lg;
   border: 1.5px solid @border-color;
-  background: transparent;
+  background: @bg-slate-100;
+  color: @text-sub;
+  font-size: 1.4rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.18s ease;
   -webkit-tap-highlight-color: transparent;
-  min-height: 5.2rem;
 
-  &:hover {
+  &:hover:not(:disabled) {
     border-color: #94a3b8;
-    transform: translateY(-1px);
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.07);
-  }
-  &:active { transform: translateY(0); }
-}
-
-.quotaItemSelected {
-  border-color: #6366f1 !important;
-  background: rgba(99, 102, 241, 0.08);
-  transform: translateY(-2px) !important;
-  box-shadow: 0 5px 16px rgba(99, 102, 241, 0.18) !important;
-}
-
-.quotaItemDisabled {
-  opacity: 0.38;
-  cursor: not-allowed;
-  transform: none !important;
-  box-shadow: none !important;
-  border-color: @border-color !important;
-  background: rgba(148, 163, 184, 0.04) !important;
-}
-
-.quotaItemZero {
-  &.quotaItemSelected {
-    border-color: #94a3b8 !important;
-    background: rgba(148, 163, 184, 0.08);
-    box-shadow: 0 5px 16px rgba(148, 163, 184, 0.14) !important;
+    color: @text-main;
+    background: @border-color;
   }
 }
 
-.quotaItemNumber {
-  font-size: 1.9rem;
-  font-weight: 900;
-  color: @text-main;
-  line-height: 1;
-  letter-spacing: -0.02em;
-  transition: color 0.15s;
-
-  .quotaItemSelected & { color: #6366f1; }
-  .quotaItemZero.quotaItemSelected & { color: @text-sub; }
+// 「关闭」激活态（已关闭）
+.quotaModeBtnActiveOff {
+  border-color: #94a3b8 !important;
+  background: rgba(148, 163, 184, 0.12) !important;
+  color: @text-sub !important;
+  box-shadow: 0 3px 10px rgba(148, 163, 184, 0.16) !important;
 }
 
-.quotaItemLabel {
-  font-size: 1rem;
-  font-weight: 600;
+// 当有数值时（非关闭态），按钮显示为轻淡靛蓝描边
+.quotaModeBtnActiveOn {
+  border-color: rgba(99, 102, 241, 0.3);
   color: @text-slate-400;
-  line-height: 1;
-
-  .quotaItemSelected & { color: rgba(99, 102, 241, 0.8); }
+  background: @bg-white;
 }
 
+.quotaModeBtnLabel {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+// 选中勾标（定位在按钮右上）
 .quotaItemCheck {
   position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  width: 1.6rem;
-  height: 1.6rem;
+  top: 0.4rem;
+  right: 0.4rem;
+  width: 1.5rem;
+  height: 1.5rem;
   border-radius: 50%;
   background: #6366f1;
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .quotaItemCheckZero {
   background: #94a3b8;
+}
+
+// 输入框容器
+.quotaInputWrap {
+  flex: 1;
+  min-width: 0;
+}
+
+// 覆盖全局 Input wrapper 样式
+.quotaInput {
+  height: 5rem !important;
+  border-radius: @radius-lg !important;
+  transition: border-color 0.18s, box-shadow 0.18s, background 0.18s !important;
+}
+
+// 有数值激活态：靛蓝高亮边框 + 淡紫底
+.quotaInputActive {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12) !important;
+  background: rgba(99, 102, 241, 0.03) !important;
+}
+
+// 关闭态：视觉灰化，但保留点击/focus 能力以便切换回开启
+.quotaInputOff {
+  background: rgba(148, 163, 184, 0.06) !important;
+  border-color: @border-color !important;
+  opacity: 0.55;
+  cursor: text;
+}
+
+// 无资格禁用态
+.quotaInputDisabled {
+  opacity: 0.4 !important;
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+}
+
+// suffix「个」单位
+.inputSuffixUnit {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: @text-slate-400;
+  letter-spacing: 0.02em;
+  user-select: none;
+  transition: color 0.18s;
+}
+
+.inputSuffixUnitActive {
+  color: #6366f1;
 }
 
 .quotaHint {
@@ -473,117 +494,6 @@
   &.quotaHintWarning {
     color: #d97706;
   }
-}
-
-// ─── 角色配置区 ──────────────────────────────────────────────────────
-.roleConfigSection {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-  animation: fadeSlideIn 0.25s ease;
-}
-
-@keyframes fadeSlideIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.slotList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-}
-
-.slotRow {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 1.2rem 1.4rem;
-  border-radius: 1.2rem;
-  border: 1.5px solid @border-color;
-  background: rgba(248, 250, 252, 0.6);
-  transition: border-color 0.15s, background 0.15s;
-
-  &.slotRowActive {
-    background: rgba(255, 255, 255, 0.85);
-    border-color: rgba(99, 102, 241, 0.2);
-  }
-}
-
-.slotTopRow {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.slotBadge {
-  width: 2.6rem;
-  height: 2.6rem;
-  border-radius: 0.7rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.1rem;
-  font-weight: 800;
-  flex-shrink: 0;
-  background: rgba(99, 102, 241, 0.1);
-  color: #6366f1;
-  border: 1px solid rgba(99, 102, 241, 0.2);
-}
-
-.slotLabel {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: @text-main;
-  flex: 1;
-  min-width: 0;
-}
-
-.rolePicker {
-  display: flex;
-  gap: 0.6rem;
-  flex-shrink: 0;
-}
-
-.roleBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.45rem 1rem;
-  border-radius: 9999px;
-  border: 1.5px solid @border-color;
-  background: transparent;
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: @text-sub;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  -webkit-tap-highlight-color: transparent;
-
-  &:hover {
-    border-color: #94a3b8;
-    color: @text-main;
-  }
-}
-
-.roleBtnCashier {
-  &.roleBtnActive {
-    border-color: rgba(16, 185, 129, 0.45);
-    background: rgba(16, 185, 129, 0.08);
-    color: #059669;
-  }
-}
-
-.roleBtnFinance {
-  &.roleBtnActive {
-    border-color: rgba(59, 130, 246, 0.45);
-    background: rgba(59, 130, 246, 0.08);
-    color: #2563eb;
-  }
-}
-
-.roleBtnActive {
-  font-weight: 700;
 }
 
 // ─── 权益说明卡 ──────────────────────────────────────────────────────
@@ -645,169 +555,6 @@
     font-weight: 700;
     color: @text-main;
   }
-}
-
-// 角色描述图标颜色
-.roleDescIconCashier { color: #059669; }
-.roleDescIconFinance { color: #2563eb; }
-
-// 角色描述模块列表
-.roleDescList {
-  margin: 0.3rem 0 0;
-  padding-left: 1.4rem;
-  font-size: 1.1rem;
-  color: inherit;
-  line-height: 1.7;
-}
-
-// ─── 账号 + 密码并排行 ────────────────────────────────────────────────
-.credentialsRow {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.8rem;
-
-  @media (max-width: 360px) {
-    grid-template-columns: 1fr;
-  }
-}
-
-.credentialWrap {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  min-width: 0;
-}
-
-// ─── 密码输入区（兼容旧 .passwordWrap 单独使用场景） ─────────────────
-.passwordWrap {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  flex: 1;
-  min-width: 0;
-}
-
-.passwordLabel {
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: @text-slate-400;
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.passwordInputRow {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  height: 3.4rem;
-  padding: 0 1rem;
-  border-radius: 0.9rem;
-  border: 1.5px solid @border-color;
-  background: @bg-white;
-  transition: border-color 0.15s, box-shadow 0.15s;
-
-  &:focus-within {
-    border-color: rgba(99, 102, 241, 0.5);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-  }
-}
-
-.passwordInput {
-  flex: 1;
-  min-width: 0;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-size: 1.25rem;
-  color: @text-main;
-  font-family: inherit;
-  letter-spacing: 0.04em;
-
-  &::placeholder {
-    color: @text-slate-400;
-    font-weight: 400;
-    letter-spacing: 0;
-  }
-}
-
-.passwordToggleBtn {
-  flex-shrink: 0;
-  width: 2.4rem;
-  height: 2.4rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  color: @text-slate-400;
-  cursor: pointer;
-  border-radius: 0.5rem;
-  transition: color 0.15s, background 0.15s;
-  -webkit-tap-highlight-color: transparent;
-
-  &:hover {
-    color: @text-sub;
-    background: @bg-slate-100;
-  }
-}
-
-.passwordStrengthHint {
-  font-size: 1.05rem;
-  color: @text-slate-400;
-  line-height: 1.4;
-}
-
-.passwordStrengthWeak { color: #ef4444; }
-.passwordStrengthMedium { color: #f59e0b; }
-.passwordStrengthStrong { color: #059669; }
-
-// ─── 角色说明行 ──────────────────────────────────────────────────────
-.roleDescRow {
-  display: flex;
-  gap: 0.8rem;
-}
-
-.roleDescCard {
-  flex: 1;
-  padding: 1.1rem 1.2rem;
-  border-radius: 1rem;
-  border: 1px solid @border-color;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.roleDescCardCashier {
-  background: rgba(16, 185, 129, 0.04);
-  border-color: rgba(16, 185, 129, 0.2);
-}
-
-.roleDescCardFinance {
-  background: rgba(59, 130, 246, 0.04);
-  border-color: rgba(59, 130, 246, 0.2);
-}
-
-.roleDescHeader {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.roleDescTitle {
-  font-size: 1.2rem;
-  font-weight: 700;
-}
-
-.roleDescTitleCashier { color: #059669; }
-.roleDescTitleFinance { color: #2563eb; }
-
-.roleDescBody {
-  font-size: 1.1rem;
-  color: @text-sub;
-  line-height: 1.55;
-
-  p { margin: 0; }
 }
 
 // ─── 当前快照摘要 ─────────────────────────────────────────────────────

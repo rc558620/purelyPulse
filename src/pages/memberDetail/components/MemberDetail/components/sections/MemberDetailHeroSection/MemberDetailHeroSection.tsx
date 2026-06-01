@@ -3,6 +3,7 @@ import React from 'react';
 import { cx, safeStr } from '@utils/utils';
 import {
   IconBanCircle,
+  IconInfoCircle,
   IconShieldCheck,
   IconStarBadge,
   IconSubAccount,
@@ -25,6 +26,7 @@ interface MemberDetailHeroSectionProps {
   onOpenMembershipModal: () => void;
   onOpenStatusModal: () => void;
   onOpenSubAccountModal: () => void;
+  onOpenSubAccountDetailModal: () => void;
 }
 
 const STATUS_CLASS_MAP = {
@@ -45,6 +47,7 @@ const MemberDetailHeroSection: React.FC<MemberDetailHeroSectionProps> = React.me
   onOpenMembershipModal,
   onOpenStatusModal,
   onOpenSubAccountModal,
+  onOpenSubAccountDetailModal,
 }) => {
   const subAccountCapability = member.subAccountCapability;
   const subAccountQuota = subAccountCapability?.subAccountQuota ?? 0;
@@ -109,6 +112,18 @@ const MemberDetailHeroSection: React.FC<MemberDetailHeroSectionProps> = React.me
                   : '配置子账号'
               )}
             </button>
+            {subAccountQuota > 0 ? (
+              <button
+                type="button"
+                className={pageStyles.viewSubAccountDetailBtn}
+                onClick={onOpenSubAccountDetailModal}
+                aria-label="查看子账号详情"
+                disabled={isSubmittingAction}
+              >
+                <IconInfoCircle width={13} height={13} strokeWidth={2.2} />
+                查看子账号详情
+              </button>
+            ) : null}
             <button
               type="button"
               className={cx(pageStyles.memberStatusBtn, isBannedMember ? pageStyles.memberStatusBtnSafe : pageStyles.memberStatusBtnDanger)}

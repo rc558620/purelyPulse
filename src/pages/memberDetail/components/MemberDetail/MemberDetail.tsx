@@ -21,8 +21,9 @@ const SetMembershipModal = lazy(async () => {
   return { default: module.default as React.ComponentType<SetMembershipModalProps> };
 });
 const SetSubAccountModal = lazy(() => import('./components/modals/SetSubAccountModal/SetSubAccountModal'));
+const SubAccountDetailModal = lazy(() => import('./components/modals/SubAccountDetailModal/SubAccountDetailModal'));
 
-type ActiveModal = 'points' | 'beans' | 'membership' | 'status' | 'subAccount' | null;
+type ActiveModal = 'points' | 'beans' | 'membership' | 'status' | 'subAccount' | 'subAccountDetail' | null;
 
 const DAY_MS = 86_400_000;
 
@@ -85,6 +86,7 @@ const MemberDetail: React.FC = () => {
   const isMembershipModalOpen = activeModal === 'membership';
   const isStatusModalOpen = activeModal === 'status';
   const isSubAccountModalOpen = activeModal === 'subAccount';
+  const isSubAccountDetailModalOpen = activeModal === 'subAccountDetail';
 
   const handleBack = useCallback((): void => {
     navigate(-1);
@@ -113,6 +115,10 @@ const MemberDetail: React.FC = () => {
 
   const handleOpenSubAccountModal = useCallback((): void => {
     setActiveModal('subAccount');
+  }, []);
+
+  const handleOpenSubAccountDetailModal = useCallback((): void => {
+    setActiveModal('subAccountDetail');
   }, []);
 
   const handleCloseStatusModal = useCallback((): void => {
@@ -178,6 +184,7 @@ const MemberDetail: React.FC = () => {
           onOpenMembershipModal={handleOpenMembershipModal}
           onOpenStatusModal={handleOpenStatusModal}
           onOpenSubAccountModal={handleOpenSubAccountModal}
+          onOpenSubAccountDetailModal={handleOpenSubAccountDetailModal}
         />
 
         {/* 核心数据网格：积分、豆、充值额、邀请数 */}
@@ -248,7 +255,16 @@ const MemberDetail: React.FC = () => {
           />
         ) : null}
 
-        {/* 子账号配置弹窗（平台侧，年/永久会员专属） */}
+        {/* 子账号详情弹窗：查看 purelyProfit 端的角色分配快照 */}
+        {isSubAccountDetailModalOpen ? (
+          <SubAccountDetailModal
+            capability={member.subAccountCapability}
+            onClose={handleCloseModal}
+            onEditQuota={handleOpenSubAccountModal}
+          />
+        ) : null}
+
+        {/* 子账号配置弹窗（平台侧，年/永久会员专属；角色分配由商家在 purelyProfit 端操作） */}
         {isSubAccountModalOpen ? (
           <SetSubAccountModal
             member={member}
@@ -256,8 +272,8 @@ const MemberDetail: React.FC = () => {
             currentCapability={member.subAccountCapability}
             isSubmitting={isSubmittingSubAccount}
             onClose={handleCloseModal}
-            onConfirm={async (quota, roleSummary) => {
-              const didSucceed = await handleSetSubAccountQuota(quota, roleSummary);
+            onConfirm={async (quota) => {
+              const didSucceed = await handleSetSubAccountQuota(quota);
               if (didSucceed) {
                 handleCloseModal();
               }

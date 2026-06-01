@@ -1,0 +1,500 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/mixins.less';
+@import (reference) '@styles/breakpoints.less';
+
+// ─── 根容器 ────────────────────────────────────────────────────────────────
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  padding: 1.8rem;
+  background: @bg-white;
+  border-radius: @radius-lg;
+  border: 1px solid @border-color;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+
+  @media (min-width: @bp-mobile) {
+    padding: 2rem 2.4rem;
+    gap: 1.6rem;
+  }
+}
+
+// ─── 禁用态卡片 ────────────────────────────────────────────────────────────
+.disabledCard {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  padding: 1.6rem;
+  background: @bg-slate-50;
+  border-radius: @radius-md;
+  border: 1px dashed @border-color;
+}
+
+.disabledIcon {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background: @bg-slate-100;
+  color: @text-slate-400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.disabledText {
+  flex: 1;
+  min-width: 0;
+}
+
+.disabledTitle {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: @text-sub;
+  margin-bottom: 0.3rem;
+}
+
+.disabledDesc {
+  font-size: 1.15rem;
+  color: @text-slate-400;
+  line-height: 1.55;
+}
+
+.disabledEditBtn {
+  flex-shrink: 0;
+  padding: 0.55rem 1.2rem;
+  border: 1.5px solid @border-color;
+  border-radius: @radius-full;
+  background: @bg-white;
+  color: @text-sub;
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover:not(:disabled) {
+    border-color: @indigo-500;
+    color: @indigo-500;
+    background: @indigo-100;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+// ─── 区块头部 ────────────────────────────────────────────────────────────────
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-width: 0;
+}
+
+.headerIcon {
+  width: 2.8rem;
+  height: 2.8rem;
+  border-radius: 0.8rem;
+  background: rgba(99, 102, 241, 0.1);
+  color: @indigo-500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.headerTitle {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: @text-main;
+  letter-spacing: -0.01em;
+}
+
+.headerBadge {
+  padding: 0.2rem 0.75rem;
+  border-radius: @radius-full;
+  background: rgba(99, 102, 241, 0.08);
+  color: @indigo-500;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.editQuotaBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+  padding: 0.5rem 1.1rem;
+  border: 1.5px solid @border-color;
+  border-radius: @radius-full;
+  background: @bg-white;
+  color: @text-sub;
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover:not(:disabled) {
+    border-color: @indigo-500;
+    color: @indigo-500;
+    background: rgba(99, 102, 241, 0.06);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+// ─── 概览统计行 ────────────────────────────────────────────────────────────
+.statsRow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 1.2rem 1.4rem;
+  background: @bg-slate-50;
+  border-radius: @radius-md;
+  border: 1px solid @border-color;
+
+  @media (min-width: @bp-mobile) {
+    padding: 1.4rem 1.8rem;
+  }
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  flex: 0 0 auto;
+  min-width: 5.4rem;
+}
+
+.statValue {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: @text-main;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.statValueUsed {
+  color: @indigo-500;
+}
+
+.statValueAvail {
+  color: @emerald-500;
+}
+
+.statValueFull {
+  color: @orange-600;
+}
+
+.statLabel {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: @text-slate-400;
+  letter-spacing: 0.02em;
+}
+
+.statDivider {
+  width: 1px;
+  height: 3rem;
+  background: @border-color;
+  margin: 0 1.2rem;
+  flex-shrink: 0;
+}
+
+.statUsageWrap {
+  flex: 1;
+  min-width: 0;
+  margin-left: 1.4rem;
+}
+
+// ─── 使用率条 ─────────────────────────────────────────────────────────────
+.usageBar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.usageBarTrack {
+  width: 100%;
+  height: 0.6rem;
+  background: @border-color;
+  border-radius: @radius-full;
+  overflow: hidden;
+}
+
+.usageBarFill {
+  height: 100%;
+  width: 0%;
+  background: @indigo-500;
+  border-radius: @radius-full;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 0.4rem;
+}
+
+// 离散进度档位（0~100，步长 10）——由 JS 注入对应 class，无需 inline style
+.usageBarFillPct0   { width: 0%; }
+.usageBarFillPct10  { width: 10%; }
+.usageBarFillPct20  { width: 20%; }
+.usageBarFillPct30  { width: 30%; }
+.usageBarFillPct40  { width: 40%; }
+.usageBarFillPct50  { width: 50%; }
+.usageBarFillPct60  { width: 60%; }
+.usageBarFillPct70  { width: 70%; }
+.usageBarFillPct80  { width: 80%; }
+.usageBarFillPct90  { width: 90%; }
+.usageBarFillPct100 { width: 100%; }
+
+.usageBarFillWarn {
+  background: @orange-500;
+}
+
+.usageBarFillFull {
+  background: @rose-500;
+}
+
+.usageBarText {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: @text-slate-400;
+  text-align: right;
+}
+
+.usageBarTextFull {
+  color: @rose-500;
+}
+
+// ─── 槽位列表 ─────────────────────────────────────────────────────────────
+.slotGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.8rem;
+
+  @media (min-width: @bp-mobile) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+
+  @media (min-width: @bp-tablet) {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+// 单个槽位卡片
+.slotCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem 1.1rem;
+  background: @bg-slate-50;
+  border: 1.5px solid @border-color;
+  border-radius: @radius-md;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  min-height: 7.2rem;
+}
+
+.slotCardActive {
+  background: rgba(99, 102, 241, 0.03);
+  border-color: rgba(99, 102, 241, 0.25);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
+}
+
+.slotCardEmpty {
+  background: @bg-white;
+  border-style: dashed;
+}
+
+.slotCardDisabled {
+  opacity: 0.45;
+  background: @bg-slate-100;
+}
+
+.slotIndex {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: @text-slate-400;
+  line-height: 1;
+}
+
+// ─── 角色芯片 ─────────────────────────────────────────────────────────────
+.roleChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: @radius-full;
+  font-size: 1.05rem;
+  font-weight: 700;
+  align-self: flex-start;
+}
+
+.roleChipLabel {
+  line-height: 1;
+}
+
+// 角色颜色变体
+.roleColorCashier {
+  background: rgba(14, 165, 233, 0.12);
+  color: #0284c7;
+}
+
+.roleColorFinance {
+  background: rgba(99, 102, 241, 0.12);
+  color: @indigo-500;
+}
+
+.roleColorManager {
+  background: rgba(168, 85, 247, 0.12);
+  color: @purple-500;
+}
+
+// ─── 槽位状态 ─────────────────────────────────────────────────────────────
+.slotStatus {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: @text-slate-400;
+  margin-top: auto;
+}
+
+.slotStatusActive {
+  color: @emerald-500;
+}
+
+.slotStatusInactive {
+  color: @orange-500;
+}
+
+.slotStatusDisabled {
+  color: @rose-500;
+}
+
+.slotStatusDot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+// 未分配态
+.slotEmpty {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-top: auto;
+}
+
+.slotEmptyDash {
+  font-size: 1.6rem;
+  font-weight: 300;
+  color: @border-color;
+  line-height: 1;
+}
+
+.slotEmptyLabel {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: @text-slate-400;
+}
+
+// ─── 无角色分配提示 ───────────────────────────────────────────────────────
+.noRolesHint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 2.4rem 1.6rem;
+  text-align: center;
+}
+
+.noRolesIcon {
+  color: @border-color;
+}
+
+.noRolesTitle {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: @text-sub;
+}
+
+.noRolesDesc {
+  font-size: 1.2rem;
+  color: @text-slate-400;
+  line-height: 1.55;
+
+  strong {
+    font-weight: 700;
+    color: @text-sub;
+  }
+}
+
+// ─── 角色图例 ─────────────────────────────────────────────────────────────
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+  padding-top: 0.4rem;
+  border-top: 1px solid @border-color;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.legendDot {
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: @radius-full;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &.roleColorCashier {
+    background: rgba(14, 165, 233, 0.2);
+    color: #0284c7;
+  }
+
+  &.roleColorFinance {
+    background: rgba(99, 102, 241, 0.2);
+    color: @indigo-500;
+  }
+
+  &.roleColorManager {
+    background: rgba(168, 85, 247, 0.2);
+    color: @purple-500;
+  }
+
+  &.legendDotActive {
+    background: @emerald-500;
+    color: #fff;
+  }
+}
+
+.legendLabel {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: @text-sub;
+}

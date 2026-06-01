@@ -23,6 +23,7 @@ import type {
   MemberStatus,
   MemberStatusSyncPayload,
   RechargeRecord,
+  SubAccountCapability,
   SubAccountRoleSummary,
 } from './memberList.types';
 
@@ -62,6 +63,12 @@ const RECHARGE_PLAN_CANDIDATES = ['planName', 'packageName', 'productName', 'mem
 const POINTS_RECORD_SOURCE_CANDIDATES = ['records', 'list', 'items', 'rows', 'data'] as const;
 const PARTNER_USERS_SOURCE_CANDIDATES = ['partners', 'partnerUsers', 'users', 'members', 'list', 'items', 'rows', 'data'] as const;
 const RELATED_USER_CANDIDATES = ['relatedUser', 'referralUserName', 'inviteeName', 'promotedUserName'] as const;
+const SUB_ACCOUNT_QUOTA_CANDIDATES = ['subAccountQuota', 'quota', 'subAccountCount'] as const;
+const SUB_ACCOUNT_ELIGIBLE_CANDIDATES = ['subAccountEligible', 'eligible', 'canUseSubAccounts'] as const;
+const SUB_ACCOUNT_CAPABILITY_ENABLED_CANDIDATES = ['subAccountCapabilityEnabled', 'enabled', 'isEnabled'] as const;
+const SUB_ACCOUNT_QUOTA_MAX_CANDIDATES = ['subAccountQuotaMax', 'quotaMax', 'maxQuota', 'subAccountLimit'] as const;
+const SUB_ACCOUNT_USED_COUNT_CANDIDATES = ['subAccountsUsedCount', 'usedCount', 'usedQuota'] as const;
+const SUB_ACCOUNT_AVAILABLE_COUNT_CANDIDATES = ['subAccountsAvailableCount', 'availableCount', 'remainingQuota'] as const;
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> => (
   typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -98,6 +105,9 @@ interface PulseServerMemberListItemLike {
   invitedCount?: number;
   rechargeCount?: number;
   remark?: string;
+  membershipExpiry?: number | null;
+  expireAt?: number | null;
+  membershipExpireAt?: number | null;
 }
 
 interface PulseServerMemberDetailLike extends PulseServerMemberListItemLike {
@@ -105,6 +115,24 @@ interface PulseServerMemberDetailLike extends PulseServerMemberListItemLike {
   rechargeHistory: PulseServerRechargeRecordLike[];
   membershipExpiry?: number | null;
 }
+
+type SubAccountStatusValue = 'active' | 'inactive' | 'disabled';
+
+const normalizeSubAccountRole = (value: unknown): 'cashier' | 'finance' | 'manager' => {
+  if (value === 'finance' || value === 'manager') {
+    return value;
+  }
+
+  return 'cashier';
+};
+
+const normalizeSubAccountStatus = (value: unknown): SubAccountStatusValue => {
+  if (value === 'inactive' || value === 'disabled') {
+    return value;
+  }
+
+  return 'active';
+};
 
 interface PulseServerMembersResponseLike {
   items: PulseServerMemberListItemLike[];
@@ -138,12 +166,17 @@ const isServerMemberListItemLike = (value: unknown): value is PulseServerMemberL
   && isFiniteNumber(value.lastActiveAt)
 );
 
-const isServerMemberDetailLike = (value: unknown): value is PulseServerMemberDetailLike => (
-  isServerMemberListItemLike(value)
-  && isFiniteNumber(value.totalPointsEarned)
-  && Array.isArray(value.rechargeHistory)
-  && value.rechargeHistory.every((item) => isServerRechargeRecordLike(item))
-);
+const isServerMemberDetailLike = (value: unknown): value is PulseServerMemberDetailLike => {
+  if (!isServerMemberListItemLike(value)) {
+    return false;
+  }
+
+  const candidate = value as Partial<PulseServerMemberDetailLike>;
+
+  return isFiniteNumber(candidate.totalPointsEarned)
+    && Array.isArray(candidate.rechargeHistory)
+    && candidate.rechargeHistory.every((item) => isServerRechargeRecordLike(item));
+};
 
 const isServerMembersResponseLike = (value: unknown): value is PulseServerMembersResponseLike => (
   isPlainObject(value)
@@ -168,6 +201,69 @@ const normalizeOptionalCount = (value: unknown): number | undefined => {
   }
 
   return undefined;
+};
+
+const hasSubAccountCapabilitySignal = (value: unknown): value is Record<string, unknown> => {
+  if (!isPlainObject(value)) {
+    return false;
+  }
+
+  return [
+    'subAccountCapability',
+    'subAccountConfig',
+    'subAccountEligible',
+    'subAccountQuota',
+    'quota',
+    'subAccountCapabilityEnabled',
+    'subAccountQuotaMax',
+    'quotaMax',
+    'subAccountsUsedCount',
+    'subAccountsAvailableCount',
+    'subAccountRoleSummary',
+    'subAccountSlots',
+  ].some((key) => key in value);
+};
+
+const mapSubAccountRoleSummaryItem = (value: unknown, fallbackSlot: number): SubAccountRoleSummary => ({
+  slot: pickNumberField(value, ['slot', 'slotIndex']) || fallbackSlot,
+  role: normalizeSubAccountRole(pickStringField(value, ['role', 'subAccountRole']) || 'cashier'),
+  status: normalizeSubAccountStatus(pickStringField(value, ['status', 'subAccountStatus']) || 'active'),
+  isAssigned: pickBooleanField(value, ['isAssigned', 'assigned']),
+});
+
+const resolveSubAccountRoleSummary = (value: unknown): SubAccountRoleSummary[] => {
+  const summarySource = getNestedArray(value, ['subAccountRoleSummary']);
+  if (summarySource.length > 0) {
+    return summarySource.map((item, index) => mapSubAccountRoleSummaryItem(item, index + 1));
+  }
+
+  const slotSource = getNestedArray(value, ['subAccountSlots', 'slots']);
+  return slotSource.map((item, index) => mapSubAccountRoleSummaryItem(item, index + 1));
+};
+
+const mapSubAccountCapability = (value: unknown): SubAccountCapability | undefined => {
+  if (!hasSubAccountCapabilitySignal(value)) {
+    return undefined;
+  }
+
+  const capabilitySource = getNestedRecord(value, ['subAccountCapability', 'subAccountConfig']) ?? value;
+  const roleSummary = resolveSubAccountRoleSummary(capabilitySource);
+  const subAccountQuota = pickNumberField(capabilitySource, SUB_ACCOUNT_QUOTA_CANDIDATES);
+  const subAccountQuotaMax = pickNumberField(capabilitySource, SUB_ACCOUNT_QUOTA_MAX_CANDIDATES);
+  const subAccountsUsedCount = pickNumberField(capabilitySource, SUB_ACCOUNT_USED_COUNT_CANDIDATES);
+  const subAccountsAvailableCount = pickNumberField(capabilitySource, SUB_ACCOUNT_AVAILABLE_COUNT_CANDIDATES);
+  const subAccountEligible = pickBooleanField(capabilitySource, SUB_ACCOUNT_ELIGIBLE_CANDIDATES) || subAccountQuotaMax > 0;
+  const subAccountCapabilityEnabled = pickBooleanField(capabilitySource, SUB_ACCOUNT_CAPABILITY_ENABLED_CANDIDATES) || subAccountQuota > 0;
+
+  return {
+    subAccountQuota,
+    subAccountEligible,
+    subAccountCapabilityEnabled,
+    subAccountQuotaMax: subAccountQuotaMax || (subAccountEligible ? 10 : 0),
+    subAccountsUsedCount,
+    subAccountsAvailableCount: subAccountsAvailableCount || Math.max(subAccountQuota - subAccountsUsedCount, 0),
+    subAccountRoleSummary: roleSummary,
+  };
 };
 
 const mapServerRechargeRecord = (value: PulseServerRechargeRecordLike): RechargeRecord => ({
@@ -211,6 +307,7 @@ const mapServerMemberDetail = (value: PulseServerMemberDetailLike): MemberDetail
   membershipExpiry: value.membershipExpiry === null || value.expireAt === null || value.membershipExpireAt === null
     ? null
     : normalizeTimestamp(value.membershipExpiry ?? value.expireAt ?? value.membershipExpireAt, 0) || undefined,
+  subAccountCapability: mapSubAccountCapability(value),
 });
 
 const getServerMemberListStats = (
@@ -837,6 +934,7 @@ const mapMemberDetail = (value: unknown): MemberDetail => {
     membershipExpiry: isPlainObject(value) && (value.membershipExpiry === null || value.expireAt === null || value.membershipExpireAt === null)
       ? null
       : normalizeTimestamp(isPlainObject(value) ? value.membershipExpiry ?? value.expireAt ?? value.membershipExpireAt : undefined, 0) || undefined,
+    subAccountCapability: mapSubAccountCapability(value),
   };
 };
 
@@ -1173,27 +1271,15 @@ export const fetchMemberDetail = createKeyedInFlightRequest(
   async (id: string): Promise<MemberDetail | null> => requestMemberDetail(id),
 );
 
-/** 提交子账号配额设置（平台侧，仅允许年/永久会员商家）。 */
+/** 提交子账号配额设置（平台侧，仅允许年/永久会员商家）。角色分配由商家在 purelyProfit 端操作。 */
 export const submitSubAccountQuota = async (
   memberId: string,
   quota: number,
-  roleSummary: SubAccountRoleSummary[],
 ): Promise<void> => {
   const requestTarget = resolveMemberActionPath(SET_SUB_ACCOUNT_QUOTA_API_PATH, memberId);
   await http.post<unknown, Record<string, unknown>>(
     requestTarget.url,
-    {
-      memberId,
-      quota,
-      roleSummary: roleSummary.map((item) => ({
-        slot: item.slot,
-        role: item.role,
-        status: item.status,
-        isAssigned: item.isAssigned,
-        ...(item.username ? { username: item.username } : {}),
-        ...(item.password ? { password: item.password } : {}),
-      })),
-    },
+    { memberId, quota, subAccountQuota: quota },
     {
       params: requestTarget.params,
       skipGlobalErrorHandler: true,
