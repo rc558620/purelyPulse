@@ -70,8 +70,13 @@ function manualChunks(id: string) {
 }
 
 // https://vite.dev/config/
+// VITE_BASE_URL 由 GitHub Actions 的 configure-pages 步骤注入，例如 /purelyPulse/
+// 本地开发时不设置该变量，base 默认为 /
+const base = process.env.VITE_BASE_URL ? new URL(process.env.VITE_BASE_URL).pathname : '/'
+
 export default defineConfig({
   plugins: [react()],
+  base,
   server: {
     host: true,
     proxy: {

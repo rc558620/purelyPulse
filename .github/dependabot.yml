@@ -1,0 +1,53 @@
+version: 2
+updates:
+  # 每周自动检查 npm/pnpm 依赖更新
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Shanghai
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+    groups:
+      # 将所有 vite 相关依赖合并为一个 PR
+      vite:
+        patterns:
+          - "vite"
+          - "@vitejs/*"
+          - "vitest"
+          - "@vitest/*"
+      # 将所有 React 相关依赖合并为一个 PR
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+          - "react-router*"
+          - "@react-spring/*"
+          - "@use-gesture/*"
+          - "react-easy-crop"
+          - "react-fast-compare"
+      # 将所有 ESLint 相关依赖合并为一个 PR
+      eslint:
+        patterns:
+          - "eslint*"
+          - "@eslint/*"
+          - "typescript-eslint"
+          - "globals"
+
+  # 每周自动检查 GitHub Actions 依赖更新
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Shanghai
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - github-actions
