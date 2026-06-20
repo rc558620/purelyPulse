@@ -174,6 +174,92 @@ export interface MemberListStats {
   bannedCount: number;
 }
 
+// ─── purelyClub C 端会员运营数据 ──────────────────────────────────────────
+
+/** C 端会员等级（purelyClub 储值会员分层）。 */
+export type ClubMemberLevel = 'free' | 'gold' | 'platinum' | 'diamond';
+
+/** C 端各等级会员数量分布。 */
+export interface ClubMemberLevelBreakdown {
+  /** 免费会员数量。 */
+  free: number;
+  /** 黄金会员数量。 */
+  gold: number;
+  /** 铂金会员数量。 */
+  platinum: number;
+  /** 钻石会员数量。 */
+  diamond: number;
+}
+
+/** 该商家在 purelyClub 的会员运营统计（owner 视角）。 */
+export interface ClubMemberStats {
+  /** 顾客在途余额合计（分），即全部顾客当前储值余额之和。 */
+  pendingBalanceFen: number;
+  /** 会员充值总金额（分）。 */
+  totalRechargeFen: number;
+  /** 会员用户总数。 */
+  totalMemberCount: number;
+  /** 累计充值笔数。 */
+  rechargeCount: number;
+  /** 今日储值金额（分）。 */
+  todayRechargeFen: number;
+  /** 本月储值金额（分）。 */
+  monthRechargeFen: number;
+  /** 本季储值金额（分）。 */
+  quarterRechargeFen: number;
+  /** 本年储值金额（分）。 */
+  yearRechargeFen: number;
+  /** 去年储值金额（分）。 */
+  lastYearRechargeFen: number;
+  /** 各等级会员数量分布。 */
+  levelBreakdown: ClubMemberLevelBreakdown;
+}
+
+// ─── 会员营业详情：销售额与利润数据 ────────────────────────────────────────────
+
+/** 单周期销售/利润数据点。 */
+export interface SalesPeriodDataPoint {
+  /** 时间标签（如"周一"、"1月"等）。 */
+  label: string;
+  /** 销售额（分）。 */
+  salesFen: number;
+  /** 利润（分）。 */
+  profitFen: number;
+}
+
+/** 销售统计时间维度类型。 */
+export type SalesPeriodType = 'today' | 'week' | 'month' | 'year' | 'lastYear';
+
+/** 单维度销售汇总。 */
+export interface SalesPeriodSummary {
+  /** 时间维度。 */
+  period: SalesPeriodType;
+  /** 销售总额（分）。 */
+  totalSalesFen: number;
+  /** 利润总额（分）。 */
+  totalProfitFen: number;
+  /** 销售额环比增幅（百分比，null = 无数据）。 */
+  salesGrowthPct: number | null;
+  /** 利润环比增幅（百分比，null = 无数据）。 */
+  profitGrowthPct: number | null;
+  /** 各时间点明细（今日=小时，本周=天，本月=天，今年/去年=月）。 */
+  dataPoints: SalesPeriodDataPoint[];
+}
+
+/** 该商家的营业详情统计（owner 视角，含 5 个周期）。 */
+export interface MemberSalesStats {
+  /** 今日数据。 */
+  today: SalesPeriodSummary;
+  /** 本周数据。 */
+  week: SalesPeriodSummary;
+  /** 本月数据。 */
+  month: SalesPeriodSummary;
+  /** 今年数据。 */
+  year: SalesPeriodSummary;
+  /** 去年数据。 */
+  lastYear: SalesPeriodSummary;
+}
+
 /** 会员状态同步事件载荷。 */
 export interface MemberStatusSyncPayload {
   /** 会员 id。 */

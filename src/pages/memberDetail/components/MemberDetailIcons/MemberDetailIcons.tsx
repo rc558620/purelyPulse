@@ -195,6 +195,138 @@ export const IconManagerRole = (props: SvgProps): React.JSX.Element => (
   </svg>
 );
 
+/** 会员运营概览：查看 purelyClub C 端运营情况入口。 */
+export const IconClubStats = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="currentColor" strokeWidth={2.2} {...props}>
+    <path d="M3 3v18h18" />
+    <path d="M7 16l4-4 4 4 4-4" />
+  </svg>
+);
+
+/** 顾客在途余额：储值类资金流动指示。 */
+export const IconWallet = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="currentColor" strokeWidth={2.2} {...props}>
+    <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
+    <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
+    <path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z" />
+  </svg>
+);
+
+/** 充值总额：累计储值金额。 */
+export const IconRechargeTotal = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="currentColor" strokeWidth={2.2} {...props}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M9 8h5a2 2 0 0 1 0 4H9v4h6" />
+    <path d="M12 6v2m0 8v2" />
+  </svg>
+);
+
+/** 会员人数：C 端用户群体总量。 */
+export const IconClubMembers = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="currentColor" strokeWidth={2.2} {...props}>
+    <circle cx="9" cy="7" r="4" />
+    <path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" />
+    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    <path d="M21 21v-2a4 4 0 0 0-3-3.87" />
+  </svg>
+);
+
+/** 充值笔数：累计交易次数。 */
+export const IconRechargeCount = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="currentColor" strokeWidth={2.2} {...props}>
+    <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+    <rect x="9" y="3" width="6" height="4" rx="1" />
+    <path d="M9 12h6" />
+    <path d="M9 16h4" />
+  </svg>
+);
+
+/** 今日储值：日历单日视图。 */
+export const IconCalendarDay = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="currentColor" strokeWidth={2.2} {...props}>
+    <rect x="3" y="4" width="18" height="18" rx="2" />
+    <path d="M16 2v4M8 2v4M3 10h18" />
+    <path d="M12 14v4m0-4h.01" />
+  </svg>
+);
+
+/** 本月储值：日历月视图。 */
+export const IconCalendarMonth = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="currentColor" strokeWidth={2.2} {...props}>
+    <rect x="3" y="4" width="18" height="18" rx="2" />
+    <path d="M16 2v4M8 2v4M3 10h18" />
+    <path d="M7 14h2m4 0h2M7 18h2m4 0h2" />
+  </svg>
+);
+
+/** 本年储值：日历全年视图。 */
+export const IconCalendarYear = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="currentColor" strokeWidth={2.2} {...props}>
+    <rect x="3" y="4" width="18" height="18" rx="2" />
+    <path d="M16 2v4M8 2v4M3 10h18" />
+    <path d="M8 14l2 2 4-4" />
+  </svg>
+);
+
+/** 本季储值：日历四分之一标记（季度视图）。 */
+export const IconCalendarQuarter = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="currentColor" strokeWidth={2.2} {...props}>
+    <rect x="3" y="4" width="18" height="18" rx="2" />
+    <path d="M16 2v4M8 2v4M3 10h18" />
+    <path d="M7 15h4v3H7z" />
+    <path d="M13 14l2 1.5L13 17" />
+  </svg>
+);
+
+/** 去年储值：日历带历史箭头（上一年视图）。 */
+export const IconCalendarLastYear = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="currentColor" strokeWidth={2.2} {...props}>
+    <rect x="3" y="4" width="18" height="18" rx="2" />
+    <path d="M16 2v4M8 2v4M3 10h18" />
+    <path d="M7 17l2-3h4l2 3" />
+    <path d="M12 14v-1" />
+  </svg>
+);
+
+/** 营业销售额：收银台/POS 收入入口。 */
+export const IconSalesRevenue = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="currentColor" strokeWidth={2.2} {...props}>
+    <path d="M3 3v18h18" />
+    <path d="M7 12l4-4 4 4 4-4" />
+    <circle cx="7" cy="12" r="1.2" fill="currentColor" stroke="none" />
+    <circle cx="11" cy="8" r="1.2" fill="currentColor" stroke="none" />
+    <circle cx="15" cy="12" r="1.2" fill="currentColor" stroke="none" />
+    <circle cx="19" cy="8" r="1.2" fill="currentColor" stroke="none" />
+  </svg>
+);
+
+/** 营业利润：净盈余/毛利指示。 */
+export const IconProfitCoin = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="currentColor" strokeWidth={2.2} {...props}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M9 9h5a2 2 0 0 1 0 4H9v4" />
+    <path d="M12 6v2m0 8v2" />
+  </svg>
+);
+
+/** 营业趋势柱状图：营业详情弹窗入口。 */
+export const IconSalesBarChart = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="currentColor" strokeWidth={2.2} {...props}>
+    <rect x="3" y="12" width="4" height="9" rx="1" />
+    <rect x="10" y="7" width="4" height="14" rx="1" />
+    <rect x="17" y="4" width="4" height="17" rx="1" />
+    <path d="M2 21h20" />
+  </svg>
+);
+
+/** 等级分布：各等级会员占比示意。 */
+export const IconLevelPie = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="currentColor" strokeWidth={2.2} {...props}>
+    <path d="M21.21 15.89A10 10 0 1 1 8 2.83" />
+    <path d="M22 12A10 10 0 0 0 12 2v10z" />
+  </svg>
+);
+
 /** 槽位格子：子账号配额格子指示。 */
 export const IconSlotGrid = (props: SvgProps): React.JSX.Element => (
   <svg aria-hidden="true" viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="currentColor" strokeWidth={2} {...props}>

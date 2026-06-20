@@ -3,7 +3,9 @@ import React from 'react';
 import { cx, safeStr } from '@utils/utils';
 import {
   IconBanCircle,
+  IconClubStats,
   IconInfoCircle,
+  IconSalesBarChart,
   IconShieldCheck,
   IconStarBadge,
   IconSubAccount,
@@ -27,6 +29,10 @@ interface MemberDetailHeroSectionProps {
   onOpenStatusModal: () => void;
   onOpenSubAccountModal: () => void;
   onOpenSubAccountDetailModal: () => void;
+  /** 打开会员运营情况弹窗。 */
+  onOpenClubStatsModal: () => void;
+  /** 打开营业详情弹窗。 */
+  onOpenSalesStatsModal: () => void;
 }
 
 const STATUS_CLASS_MAP = {
@@ -48,6 +54,8 @@ const MemberDetailHeroSection: React.FC<MemberDetailHeroSectionProps> = React.me
   onOpenStatusModal,
   onOpenSubAccountModal,
   onOpenSubAccountDetailModal,
+  onOpenClubStatsModal,
+  onOpenSalesStatsModal,
 }) => {
   const subAccountCapability = member.subAccountCapability;
   const subAccountQuota = subAccountCapability?.subAccountQuota ?? 0;
@@ -124,6 +132,28 @@ const MemberDetailHeroSection: React.FC<MemberDetailHeroSectionProps> = React.me
                 查看子账号详情
               </button>
             ) : null}
+            {/* 会员运营情况入口：查看该商家在 purelyClub C 端的储值与等级分布 */}
+            <button
+              type="button"
+              className={pageStyles.viewClubStatsBtn}
+              onClick={onOpenClubStatsModal}
+              aria-label="查看会员运营情况"
+              disabled={isSubmittingAction}
+            >
+              <IconClubStats width={13} height={13} strokeWidth={2.2} />
+              会员运营情况
+            </button>
+            {/* 营业详情入口：查看该商家今日/本周/本月/今年/去年的销售额与利润数据 */}
+            <button
+              type="button"
+              className={pageStyles.viewSalesStatsBtn}
+              onClick={onOpenSalesStatsModal}
+              aria-label="查看营业详情"
+              disabled={isSubmittingAction}
+            >
+              <IconSalesBarChart width={13} height={13} strokeWidth={2.2} />
+              营业详情
+            </button>
             <button
               type="button"
               className={cx(pageStyles.memberStatusBtn, isBannedMember ? pageStyles.memberStatusBtnSafe : pageStyles.memberStatusBtnDanger)}

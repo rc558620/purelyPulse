@@ -1,0 +1,672 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/breakpoints.less';
+
+// ─── 弹窗容器 ─────────────────────────────────────────────────────
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+  @media (min-width: @bp-mobile) {
+    align-items: center;
+    padding: 2.4rem 1.6rem;
+  }
+}
+
+.card {
+  width: 100%;
+  max-width: 56rem;
+  max-height: 92dvh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, rgba(247, 249, 252, 0.98) 0%, rgba(255, 255, 255, 0.98) 100%);
+  border-radius: 2.2rem 2.2rem 0 0;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow: 0 -8px 40px rgba(15, 23, 42, 0.2);
+  overflow: hidden;
+
+  @media (min-width: @bp-mobile) {
+    border-radius: 2.4rem;
+    box-shadow: 0 24px 72px rgba(15, 23, 42, 0.24);
+  }
+}
+
+// ─── 弹窗头部 ─────────────────────────────────────────────────────
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.2rem;
+  padding: 1.8rem 1.8rem 1.4rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+
+  @media (min-width: @bp-mobile) {
+    padding: 2rem 2.2rem 1.6rem;
+  }
+}
+
+.headerMain {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.1rem;
+  min-width: 0;
+}
+
+.headerIcon {
+  width: 3.6rem;
+  height: 3.6rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1.2rem;
+  background: rgba(132, 204, 22, 0.12);
+  color: darken(#84cc16, 10%);
+  box-shadow: inset 0 0 0 1px rgba(132, 204, 22, 0.15);
+}
+
+.headerText {
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: @text-main;
+}
+
+.desc {
+  margin: 0.45rem 0 0;
+  font-size: 1.2rem;
+  line-height: 1.55;
+  color: @text-slate-400;
+}
+
+.closeBtn {
+  width: 3.4rem;
+  height: 3.4rem;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(148, 163, 184, 0.12);
+  color: @text-sub;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    background: rgba(132, 204, 22, 0.1);
+    color: darken(#84cc16, 12%);
+    transform: translateY(-1px);
+  }
+}
+
+// ─── 弹窗主体 ─────────────────────────────────────────────────────
+.body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 1.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+
+  @media (min-width: @bp-mobile) {
+    padding: 2.2rem;
+    gap: 1.6rem;
+  }
+}
+
+// ─── loading / error 态 ───────────────────────────────────────────
+.stateBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+  padding: 5rem 2rem;
+  text-align: center;
+}
+
+.stateText {
+  font-size: 1.35rem;
+  color: @text-slate-400;
+  font-weight: 500;
+}
+
+.retryBtn {
+  padding: 0.7rem 1.6rem;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(132, 204, 22, 0.4);
+  background: rgba(132, 204, 22, 0.08);
+  color: darken(#84cc16, 12%);
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: rgba(132, 204, 22, 0.15);
+    border-color: rgba(132, 204, 22, 0.65);
+    transform: translateY(-1px);
+  }
+}
+
+// ─── 顾客在途余额主卡片 ────────────────────────────────────────────
+.heroCard {
+  position: relative;
+  padding: 2rem;
+  border-radius: 1.8rem;
+  background: linear-gradient(135deg, #48c774 0%, #3ab868 45%, #2da05a 100%);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.2rem;
+
+  @media (min-width: @bp-mobile) {
+    padding: 2.2rem 2.4rem;
+    border-radius: 2rem;
+  }
+}
+
+// 装饰圆 1：右上角
+.heroCardDecor {
+  position: absolute;
+  top: -4rem;
+  right: -4rem;
+  width: 16rem;
+  height: 16rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.09);
+  pointer-events: none;
+}
+
+// 装饰圆 2：左下角
+.heroCardDecor2 {
+  position: absolute;
+  bottom: -3rem;
+  left: 30%;
+  width: 10rem;
+  height: 10rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  pointer-events: none;
+}
+
+// 左侧：icon + 文案纵向排列
+.heroLeft {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+
+// 左侧图标容器
+.heroIconWrap {
+  width: 4rem;
+  height: 4rem;
+  flex-shrink: 0;
+  border-radius: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+
+// 标题 + 副标题纵向
+.heroTextGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.heroLabel {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  white-space: nowrap;
+}
+
+.heroSubLabel {
+  margin: 0;
+  font-size: 1.05rem;
+  color: rgba(255, 255, 255, 0.62);
+  line-height: 1.4;
+}
+
+// 右侧：大金额
+.heroAmount {
+  position: relative;
+  flex-shrink: 0;
+  font-size: 3rem;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  text-align: right;
+
+  @media (min-width: @bp-mobile) {
+    font-size: 3.6rem;
+  }
+}
+
+.heroAmountUnit {
+  font-size: 1.7rem;
+  font-weight: 700;
+  margin-right: 0.15rem;
+  vertical-align: 0.2em;
+  opacity: 0.85;
+}
+
+// ─── 次要统计卡片行 ───────────────────────────────────────────────
+.statsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.1rem;
+
+  @media (min-width: @bp-mobile) {
+    gap: 1.4rem;
+  }
+}
+
+.statCard {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1.6rem;
+  border-radius: 1.6rem;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+
+  @media (min-width: @bp-mobile) {
+    padding: 1.8rem;
+    border-radius: 1.8rem;
+    gap: 1.4rem;
+  }
+}
+
+// icon 右侧：大数字在上，标签在下
+.statCardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.statIconWrap {
+  width: 3.6rem;
+  height: 3.6rem;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  &.iconRecharge {
+    background: rgba(245, 158, 11, 0.14);
+    color: #d97706;
+  }
+
+  &.iconMembers {
+    background: rgba(59, 130, 246, 0.14);
+    color: #3b82f6;
+  }
+}
+
+.statValue {
+  font-size: 2rem;
+  font-weight: 900;
+  color: @text-main;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+
+  @media (min-width: @bp-mobile) {
+    font-size: 2.4rem;
+  }
+}
+
+.statLabel {
+  font-size: 1.2rem;
+  color: @text-sub;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+// ─── 会员等级分布区块 ─────────────────────────────────────────────
+.breakdownSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.breakdownTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: @text-main;
+}
+
+.breakdownTitleIcon {
+  color: @text-slate-400;
+}
+
+.breakdownGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
+
+  @media (min-width: @bp-mobile) {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
+}
+
+// ─── 充值明细区块 ──────────────────────────────────────────────────
+.rechargeDetailSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.rechargeDetailTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: @text-main;
+}
+
+.rechargeDetailTitleIcon {
+  color: @text-slate-400;
+}
+
+// 2×2 网格
+.rechargeDetailGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
+
+  @media (min-width: @bp-mobile) {
+    gap: 1rem;
+  }
+}
+
+// 每张卡：横排，icon 左，body 右
+.rechargeDetailCard {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.4rem 1.5rem;
+  border-radius: 1.4rem;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(226, 232, 240, 0.7);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.04);
+
+  @media (min-width: @bp-mobile) {
+    padding: 1.5rem 1.6rem;
+  }
+}
+
+// icon 容器，各自主题色
+.rechargeDetailIconWrap {
+  width: 3.2rem;
+  height: 3.2rem;
+  border-radius: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  &.iconCount {
+    background: rgba(99, 102, 241, 0.12);
+    color: #6366f1;
+  }
+  &.iconToday {
+    background: rgba(20, 184, 166, 0.12);
+    color: #0d9488;
+  }
+  &.iconMonth {
+    background: rgba(59, 130, 246, 0.12);
+    color: #2563eb;
+  }
+  &.iconYear {
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+  }
+  &.iconQuarter {
+    background: rgba(234, 88, 12, 0.11);
+    color: #ea580c;
+  }
+  &.iconLastYear {
+    background: rgba(100, 116, 139, 0.12);
+    color: #64748b;
+  }
+}
+
+// 右侧：数值在上，label 在下
+.rechargeDetailBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.rechargeDetailValue {
+  font-size: 1.7rem;
+  font-weight: 900;
+  color: @text-main;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  display: flex;
+  align-items: baseline;
+  gap: 0.1rem;
+
+  @media (min-width: @bp-mobile) {
+    font-size: 1.9rem;
+  }
+}
+
+.rechargeDetailCurrency {
+  font-size: 1.1rem;
+  font-weight: 700;
+  opacity: 0.7;
+  margin-right: 0.05rem;
+}
+
+.rechargeDetailUnit {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: @text-sub;
+  margin-left: 0.1rem;
+}
+
+.rechargeDetailLabel {
+  font-size: 1.1rem;
+  color: @text-sub;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+// ─── levelCard：徽章风格，竖排居中，超大数字 ────────────────────────
+.levelCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 1.8rem 1rem 1.4rem;
+  border-radius: 1.6rem;
+  border: 1px solid transparent;
+  overflow: hidden;
+  text-align: center;
+
+  @media (min-width: @bp-mobile) {
+    padding: 2rem 1rem 1.6rem;
+  }
+}
+
+// 各等级配色（渐变底色更强烈）
+.levelFree {
+  background: linear-gradient(160deg, rgba(148, 163, 184, 0.18) 0%, rgba(148, 163, 184, 0.06) 100%);
+  border-color: rgba(148, 163, 184, 0.25);
+}
+
+.levelGold {
+  background: linear-gradient(160deg, rgba(245, 158, 11, 0.18) 0%, rgba(251, 191, 36, 0.06) 100%);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.levelPlatinum {
+  background: linear-gradient(160deg, rgba(147, 51, 234, 0.18) 0%, rgba(168, 85, 247, 0.06) 100%);
+  border-color: rgba(147, 51, 234, 0.28);
+}
+
+.levelDiamond {
+  background: linear-gradient(160deg, rgba(14, 165, 233, 0.18) 0%, rgba(56, 189, 248, 0.06) 100%);
+  border-color: rgba(14, 165, 233, 0.28);
+}
+
+// 右上角呼吸装饰 dot（absolute 定位）
+@keyframes breathe {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.9;
+    box-shadow: 0 0 0 0 currentColor;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 0.6;
+    box-shadow: 0 0 0 4px currentColor;
+  }
+}
+
+.levelDot {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  animation: breathe 2.4s ease-in-out infinite;
+}
+
+.dotFree     { background: #94a3b8; color: rgba(148, 163, 184, 0.28); }
+.dotGold     { background: #f59e0b; color: rgba(245, 158,  11, 0.28); }
+.dotPlatinum { background: #9333ea; color: rgba(147,  51, 234, 0.28); }
+.dotDiamond  { background: #0ea5e9; color: rgba( 14, 165, 233, 0.28); }
+
+// 超大数字，各等级主色
+.levelCount {
+  font-size: 2.6rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.03em;
+
+  @media (min-width: @bp-mobile) {
+    font-size: 3rem;
+  }
+
+  .levelFree &     { color: #64748b; }
+  .levelGold &     { color: #d97706; }
+  .levelPlatinum & { color: #9333ea; }
+  .levelDiamond &  { color: #0ea5e9; }
+}
+
+// 等级名：小字，各等级主色淡版
+.levelName {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+
+  .levelFree &     { color: #94a3b8; }
+  .levelGold &     { color: #f59e0b; }
+  .levelPlatinum & { color: #9333ea; }
+  .levelDiamond &  { color: #0ea5e9; }
+}
+
+// ─── 底部关闭行 ───────────────────────────────────────────────────
+.footer {
+  padding: 1.2rem 1.8rem 1.8rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+
+  @media (min-width: @bp-mobile) {
+    padding: 1.4rem 2.2rem 2rem;
+  }
+}
+
+.footerCloseBtn {
+  width: 100%;
+  padding: 1.1rem;
+  border-radius: 1.4rem;
+  border: 1.5px solid rgba(132, 204, 22, 0.3);
+  background: rgba(132, 204, 22, 0.08);
+  color: darken(#84cc16, 12%);
+  font-size: 1.4rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    background: rgba(132, 204, 22, 0.15);
+    border-color: rgba(132, 204, 22, 0.6);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(132, 204, 22, 0.2);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+}
+
+// ─── 加载骨架 ─────────────────────────────────────────────────────
+.skeleton {
+  border-radius: 1.2rem;
+  background: linear-gradient(90deg, rgba(226, 232, 240, 0.6) 25%, rgba(241, 245, 249, 0.8) 50%, rgba(226, 232, 240, 0.6) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeletonHero {
+  .skeleton();
+  height: 12rem;
+  border-radius: 1.8rem;
+}
+
+.skeletonCard {
+  .skeleton();
+  height: 9rem;
+  border-radius: 1.6rem;
+}

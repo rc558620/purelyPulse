@@ -1,0 +1,537 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/breakpoints.less';
+
+// ─── 弹窗容器 ─────────────────────────────────────────────────────
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  background: rgba(15, 23, 42, 0.52);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+  @media (min-width: @bp-mobile) {
+    align-items: center;
+    padding: 2.4rem 1.6rem;
+  }
+}
+
+.card {
+  width: 100%;
+  max-width: 58rem;
+  max-height: 94dvh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, rgba(247, 249, 252, 0.98) 0%, rgba(255, 255, 255, 0.98) 100%);
+  border-radius: 2.2rem 2.2rem 0 0;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow: 0 -8px 40px rgba(15, 23, 42, 0.2);
+  overflow: hidden;
+
+  @media (min-width: @bp-mobile) {
+    border-radius: 2.4rem;
+    box-shadow: 0 24px 72px rgba(15, 23, 42, 0.24);
+  }
+}
+
+// ─── 弹窗头部 ─────────────────────────────────────────────────────
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.2rem;
+  padding: 1.8rem 1.8rem 1.4rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+
+  @media (min-width: @bp-mobile) {
+    padding: 2rem 2.2rem 1.6rem;
+  }
+}
+
+.headerMain {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.1rem;
+  min-width: 0;
+}
+
+.headerIcon {
+  width: 3.6rem;
+  height: 3.6rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1.2rem;
+  background: rgba(132, 204, 22, 0.12);
+  color: darken(#84cc16, 10%);
+  box-shadow: inset 0 0 0 1px rgba(132, 204, 22, 0.15);
+}
+
+.headerText {
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: @text-main;
+}
+
+.desc {
+  margin: 0.45rem 0 0;
+  font-size: 1.2rem;
+  line-height: 1.55;
+  color: @text-slate-400;
+}
+
+.closeBtn {
+  width: 3.4rem;
+  height: 3.4rem;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(148, 163, 184, 0.12);
+  color: @text-sub;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    background: rgba(132, 204, 22, 0.1);
+    color: darken(#84cc16, 12%);
+    transform: translateY(-1px);
+  }
+}
+
+// ─── 弹窗主体 ─────────────────────────────────────────────────────
+.body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 1.6rem 1.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+
+  @media (min-width: @bp-mobile) {
+    padding: 2rem 2.2rem;
+    gap: 1.6rem;
+  }
+}
+
+// ─── 时间维度 Tab ─────────────────────────────────────────────────
+.periodTabWrap {
+  // SlidingTabBar segment 变体自带宽度 100%，直接承接即可
+}
+
+// ─── 汇总统计卡行（横排两列） ────────────────────────────────────────
+.summaryRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+
+  @media (min-width: @bp-mobile) {
+    gap: 1.2rem;
+  }
+}
+
+.summaryCard {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1.1rem;
+  padding: 1.5rem 1.4rem;
+  border-radius: 1.6rem;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1.5px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+  overflow: hidden;
+
+  &:hover {
+    border-color: rgba(132, 204, 22, 0.35);
+    box-shadow: 0 4px 16px rgba(132, 204, 22, 0.12);
+    transform: translateY(-1px);
+  }
+
+  @media (min-width: @bp-mobile) {
+    padding: 1.6rem;
+    gap: 1.2rem;
+  }
+}
+
+// 销售额激活态：绿色边框与浅底
+.summaryCardActive {
+  border-color: rgba(132, 204, 22, 0.55) !important;
+  background: rgba(240, 253, 244, 0.95) !important;
+  box-shadow: 0 4px 20px rgba(132, 204, 22, 0.18) !important;
+  transform: translateY(-1px);
+}
+
+// 利润激活态：蓝色边框与浅底
+.summaryCardActiveBlue {
+  border-color: rgba(59, 130, 246, 0.5) !important;
+  background: rgba(239, 246, 255, 0.95) !important;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.16) !important;
+  transform: translateY(-1px);
+
+  &:hover {
+    border-color: rgba(59, 130, 246, 0.6);
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.22);
+  }
+}
+
+.summaryIconWrap {
+  width: 3.4rem;
+  height: 3.4rem;
+  flex-shrink: 0;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &.iconSales {
+    background: rgba(132, 204, 22, 0.14);
+    color: darken(#84cc16, 8%);
+  }
+
+  &.iconProfit {
+    background: rgba(59, 130, 246, 0.14);
+    color: #2563eb;
+  }
+}
+
+.summaryCardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.summaryValue {
+  display: flex;
+  align-items: baseline;
+  gap: 0.1rem;
+  font-size: 1.85rem;
+  font-weight: 900;
+  color: @text-main;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+
+  @media (min-width: @bp-mobile) {
+    font-size: 2.1rem;
+  }
+}
+
+.summaryCurrency {
+  font-size: 1.1rem;
+  font-weight: 700;
+  opacity: 0.65;
+  margin-right: 0.1rem;
+}
+
+.summaryLabel {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: @text-sub;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+// 激活态右上角指示点
+.activeIndicatorDot {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: @primary;
+}
+
+.activeIndicatorDotBlue {
+  background: #3b82f6;
+}
+
+// ─── 增幅标签 ──────────────────────────────────────────────────────
+.growthTag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.6;
+  flex-shrink: 0;
+}
+
+.growthPos {
+  background: rgba(132, 204, 22, 0.15);
+  color: darken(#84cc16, 15%);
+}
+
+.growthNeg {
+  background: rgba(244, 63, 94, 0.12);
+  color: #e11d48;
+}
+
+// ─── 图表区头部 ────────────────────────────────────────────────────
+.chartHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.chartTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: @text-main;
+}
+
+.chartTitleIcon {
+  color: @text-slate-400;
+  display: flex;
+  align-items: center;
+}
+
+.chartTitle {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: @text-main;
+}
+
+.chartTotalBadge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  background: rgba(132, 204, 22, 0.1);
+  border: 1px solid rgba(132, 204, 22, 0.2);
+}
+
+.chartTotalBadgeBlue {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.2);
+
+  .chartTotalLabel {
+    color: rgba(59, 130, 246, 0.75);
+  }
+
+  .chartTotalValue {
+    color: #2563eb;
+  }
+}
+
+.chartTotalLabel {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: rgba(132, 204, 22, 0.7);
+}
+
+.chartTotalValue {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: darken(#84cc16, 12%);
+  letter-spacing: -0.02em;
+}
+
+.chartGrowthBadge {
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 0.1rem 0.45rem;
+  border-radius: 9999px;
+
+  &.growthPos {
+    background: rgba(132, 204, 22, 0.18);
+    color: darken(#84cc16, 18%);
+  }
+
+  &.growthNeg {
+    background: rgba(244, 63, 94, 0.12);
+    color: #e11d48;
+  }
+}
+
+// ─── ECharts 容器 ──────────────────────────────────────────────────
+.chartWrap {
+  width: 100%;
+  border-radius: 1.6rem;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(226, 232, 240, 0.65);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  padding: 1.4rem 0.8rem 0.8rem;
+
+  @media (min-width: @bp-mobile) {
+    padding: 1.6rem 1rem 0.8rem;
+  }
+}
+
+.chart {
+  width: 100%;
+  height: 20rem;
+
+  @media (min-width: @bp-mobile) {
+    height: 24rem;
+  }
+}
+
+// ─── 底部关闭行 ────────────────────────────────────────────────────
+.footer {
+  padding: 1.2rem 1.8rem 1.8rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+
+  @media (min-width: @bp-mobile) {
+    padding: 1.4rem 2.2rem 2rem;
+  }
+}
+
+.footerCloseBtn {
+  width: 100%;
+  padding: 1.1rem;
+  border-radius: 1.4rem;
+  border: 1.5px solid rgba(132, 204, 22, 0.3);
+  background: rgba(132, 204, 22, 0.08);
+  color: darken(#84cc16, 12%);
+  font-size: 1.4rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    background: rgba(132, 204, 22, 0.15);
+    border-color: rgba(132, 204, 22, 0.6);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(132, 204, 22, 0.2);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+}
+
+// ─── loading / error 态 ───────────────────────────────────────────
+.stateBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+  padding: 5rem 2rem;
+  text-align: center;
+}
+
+.stateText {
+  font-size: 1.35rem;
+  color: @text-slate-400;
+  font-weight: 500;
+}
+
+.retryBtn {
+  padding: 0.7rem 1.6rem;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(132, 204, 22, 0.4);
+  background: rgba(132, 204, 22, 0.08);
+  color: darken(#84cc16, 12%);
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: rgba(132, 204, 22, 0.15);
+    border-color: rgba(132, 204, 22, 0.65);
+    transform: translateY(-1px);
+  }
+}
+
+// ─── 加载骨架 ─────────────────────────────────────────────────────
+.skeleton {
+  border-radius: 1.2rem;
+  background: linear-gradient(90deg, rgba(226, 232, 240, 0.6) 25%, rgba(241, 245, 249, 0.8) 50%, rgba(226, 232, 240, 0.6) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeletonTab {
+  .skeleton();
+  height: 3.8rem;
+  border-radius: 1.2rem;
+}
+
+.skeletonRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.skeletonCard {
+  .skeleton();
+  height: 8rem;
+  border-radius: 1.6rem;
+}
+
+.skeletonChartHeader {
+  .skeleton();
+  height: 2rem;
+  width: 60%;
+  border-radius: 0.8rem;
+}
+
+.skeletonChart {
+  .skeleton();
+  height: 20rem;
+  border-radius: 1.6rem;
+
+  @media (min-width: @bp-mobile) {
+    height: 24rem;
+  }
+}
+
+// ─── 图表空态 ─────────────────────────────────────────────────────
+.chartEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 4rem 2rem;
+  border-radius: 1.6rem;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(226, 232, 240, 0.65);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  color: rgba(148, 163, 184, 0.5);
+}
+
+.chartEmptyText {
+  margin: 0;
+  font-size: 1.2rem;
+  color: @text-slate-400;
+  font-weight: 500;
+}

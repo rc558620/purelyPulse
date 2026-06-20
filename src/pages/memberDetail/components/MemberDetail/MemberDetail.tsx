@@ -22,8 +22,10 @@ const SetMembershipModal = lazy(async () => {
 });
 const SetSubAccountModal = lazy(() => import('./components/modals/SetSubAccountModal/SetSubAccountModal'));
 const SubAccountDetailModal = lazy(() => import('./components/modals/SubAccountDetailModal/SubAccountDetailModal'));
+const MemberDetailClubStatsModal = lazy(() => import('./components/modals/MemberDetailClubStatsModal/MemberDetailClubStatsModal'));
+const MemberDetailSalesStatsModal = lazy(() => import('./components/modals/MemberDetailSalesStatsModal/MemberDetailSalesStatsModal'));
 
-type ActiveModal = 'points' | 'beans' | 'membership' | 'status' | 'subAccount' | 'subAccountDetail' | null;
+type ActiveModal = 'points' | 'beans' | 'membership' | 'status' | 'subAccount' | 'subAccountDetail' | 'clubStats' | 'salesStats' | null;
 
 const DAY_MS = 86_400_000;
 
@@ -87,6 +89,8 @@ const MemberDetail: React.FC = () => {
   const isStatusModalOpen = activeModal === 'status';
   const isSubAccountModalOpen = activeModal === 'subAccount';
   const isSubAccountDetailModalOpen = activeModal === 'subAccountDetail';
+  const isClubStatsModalOpen = activeModal === 'clubStats';
+  const isSalesStatsModalOpen = activeModal === 'salesStats';
 
   const handleBack = useCallback((): void => {
     navigate(-1);
@@ -119,6 +123,14 @@ const MemberDetail: React.FC = () => {
 
   const handleOpenSubAccountDetailModal = useCallback((): void => {
     setActiveModal('subAccountDetail');
+  }, []);
+
+  const handleOpenClubStatsModal = useCallback((): void => {
+    setActiveModal('clubStats');
+  }, []);
+
+  const handleOpenSalesStatsModal = useCallback((): void => {
+    setActiveModal('salesStats');
   }, []);
 
   const handleCloseStatusModal = useCallback((): void => {
@@ -185,6 +197,8 @@ const MemberDetail: React.FC = () => {
           onOpenStatusModal={handleOpenStatusModal}
           onOpenSubAccountModal={handleOpenSubAccountModal}
           onOpenSubAccountDetailModal={handleOpenSubAccountDetailModal}
+          onOpenClubStatsModal={handleOpenClubStatsModal}
+          onOpenSalesStatsModal={handleOpenSalesStatsModal}
         />
 
         {/* 核心数据网格：积分、豆、充值额、邀请数 */}
@@ -278,6 +292,24 @@ const MemberDetail: React.FC = () => {
                 handleCloseModal();
               }
             }}
+          />
+        ) : null}
+
+        {/* 会员运营情况弹窗：查看该商家在 purelyClub C 端的储值与等级分布 */}
+        {isClubStatsModalOpen ? (
+          <MemberDetailClubStatsModal
+            memberId={member.id}
+            memberName={member.name}
+            onClose={handleCloseModal}
+          />
+        ) : null}
+
+        {/* 营业详情弹窗：查看该商家今日/本周/本月/今年/去年的销售额与利润柱状图 */}
+        {isSalesStatsModalOpen ? (
+          <MemberDetailSalesStatsModal
+            memberId={member.id}
+            memberName={member.name}
+            onClose={handleCloseModal}
           />
         ) : null}
       </Suspense>

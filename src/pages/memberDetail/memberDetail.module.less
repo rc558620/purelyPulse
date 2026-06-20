@@ -387,6 +387,97 @@
   }
 }
 
+// 查看会员运营情况按钮（品牌绿色系）
+.viewClubStatsBtn {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0;
+  padding: 0.5rem 1.2rem 0.5rem 1rem;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(132, 204, 22, 0.3);
+  background: rgba(255, 255, 255, 0.9);
+  color: @text-sub;
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+  align-self: flex-start;
+
+  &:hover {
+    background: rgba(132, 204, 22, 0.08);
+    border-color: rgba(132, 204, 22, 0.55);
+    color: darken(#84cc16, 14%);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(132, 204, 22, 0.15);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  @media (min-width: @bp-mobile) {
+    font-size: 1.3rem;
+    padding: 0.6rem 1.4rem 0.6rem 1.2rem;
+  }
+}
+
+.viewSalesStatsBtn {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0;
+  padding: 0.5rem 1.2rem 0.5rem 1rem;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(59, 130, 246, 0.3);
+  background: rgba(255, 255, 255, 0.9);
+  color: @text-sub;
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+  align-self: flex-start;
+
+  &:hover {
+    background: rgba(59, 130, 246, 0.08);
+    border-color: rgba(59, 130, 246, 0.55);
+    color: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(59, 130, 246, 0.15);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  @media (min-width: @bp-mobile) {
+    font-size: 1.3rem;
+    padding: 0.6rem 1.4rem 0.6rem 1.2rem;
+  }
+}
+
 .memberStatusBtn {
   all: unset;
   box-sizing: border-box;
