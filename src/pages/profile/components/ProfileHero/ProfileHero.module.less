@@ -1,0 +1,31 @@
+@import (reference) '../../../../styles/variables.less';
+@import (reference) '../../../../styles/mixins.less';
+
+.profileHero {
+    .flex-col();
+    align-items: center;
+    padding-top: 3.2rem;
+    position: relative;
+    z-index: 30;
+}
+
+.userMeta {
+    .flex-col();
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 3.2rem;
+    margin-top: 1.2rem;
+}
+
+.userName {
+    font-size: 2rem;
+    font-weight: 500;
+    color: @text-main;
+    margin: 0;
+}
+
+.userPhone {
+    font-size: 1.4rem;
+    color: @text-sub;
+    margin: 0;
+}

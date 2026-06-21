@@ -2,7 +2,7 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { MEMBER_STATUS_SYNC_EVENT } from './memberList.constants';
 import { fetchMemberList } from './memberList.service';
-import type { MemberFilterLevel, MemberFilterStatus, MemberListItem, MemberListQuery, MemberListStats } from './memberList.types';
+import type { MemberFilterExpiry, MemberFilterLevel, MemberFilterStatus, MemberListItem, MemberListQuery, MemberListStats } from './memberList.types';
 
 interface UseMemberListPageReturn {
   /** 当前会员列表。 */
@@ -19,12 +19,16 @@ interface UseMemberListPageReturn {
   statusFilter: MemberFilterStatus;
   /** 当前等级筛选值。 */
   levelFilter: MemberFilterLevel;
+  /** 当前到期时间筛选值。 */
+  expiryFilter: MemberFilterExpiry;
   /** 当前搜索词。 */
   searchQuery: string;
   /** 更新状态筛选。 */
   setStatusFilter: (value: MemberFilterStatus) => void;
   /** 更新等级筛选。 */
   setLevelFilter: (value: MemberFilterLevel) => void;
+  /** 更新到期时间筛选。 */
+  setExpiryFilter: (value: MemberFilterExpiry) => void;
   /** 更新搜索词。 */
   setSearchQuery: (value: string) => void;
   /** 清空搜索词。 */
@@ -46,6 +50,7 @@ export const useMemberListPage = (): UseMemberListPageReturn => {
   const [stats, setStats] = useState<MemberListStats>(EMPTY_MEMBER_LIST_STATS);
   const [statusFilter, setStatusFilter] = useState<MemberFilterStatus>('all');
   const [levelFilter, setLevelFilter] = useState<MemberFilterLevel>('all');
+  const [expiryFilter, setExpiryFilter] = useState<MemberFilterExpiry>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -59,7 +64,8 @@ export const useMemberListPage = (): UseMemberListPageReturn => {
     keyword: deferredSearchQuery.trim(),
     status: statusFilter,
     level: levelFilter,
-  }), [deferredSearchQuery, levelFilter, statusFilter]);
+    expiry: expiryFilter,
+  }), [deferredSearchQuery, expiryFilter, levelFilter, statusFilter]);
   const latestQueryRef = useRef<MemberListQuery>(currentQuery);
 
   const loadMembers = useCallback(async (query: MemberListQuery): Promise<void> => {
@@ -141,9 +147,11 @@ export const useMemberListPage = (): UseMemberListPageReturn => {
     errorMessage,
     statusFilter,
     levelFilter,
+    expiryFilter,
     searchQuery,
     setStatusFilter,
     setLevelFilter,
+    setExpiryFilter,
     setSearchQuery,
     handleSearchClear,
     retryLoadMembers,

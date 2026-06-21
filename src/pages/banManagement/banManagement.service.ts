@@ -12,6 +12,7 @@ const buildBanManagementMemberListQuery = (query: BanManagementQuery) => ({
   keyword: query.keyword,
   status: query.status,
   level: 'all' as const,
+  expiry: 'all' as const,
 });
 
 export const fetchBanManagementList = async (query: BanManagementQuery): Promise<BanManagementListResponse> => {

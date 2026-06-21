@@ -65,6 +65,7 @@ const useAvatarUpload = ({ onAvatarChange }: UseAvatarUploadOptions): UseAvatarU
             })
             .catch(() => {
                 // 接口失败时保留裁剪弹窗，方便用户继续重试。
+                showToast({ message: '头像更新失败，请重试', type: 'error' });
             });
     }, [onAvatarChange]);
 

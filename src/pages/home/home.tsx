@@ -7,6 +7,7 @@ import { normalizeRegionValue } from '@constants/regionData';
 import type { RevenuePeriod } from './home.types';
 import { useHomeOverview } from './useHomeOverview';
 import HomeHeroSection from './components/HomeHeroSection/HomeHeroSection';
+import HomeNavbar from './components/HomeNavbar/HomeNavbar';
 import HomeOverviewState from './components/HomeOverviewState/HomeOverviewState';
 import HomePartnerOverviewSection from './components/HomePartnerOverviewSection/HomePartnerOverviewSection';
 import HomePartnerRankSection from './components/HomePartnerRankSection/HomePartnerRankSection';
@@ -54,6 +55,9 @@ const Home = (): React.JSX.Element => {
       <div className={styles.bgOrb1} aria-hidden="true" />
       <div className={styles.bgOrb2} aria-hidden="true" />
       <div className={styles.bgGrid} aria-hidden="true" />
+
+      {/* 顶部导航栏：门店信息、通知、设置及用户头像 */}
+      <HomeNavbar />
 
       <main className={styles.contentWrapper}>
         <HomeOverviewState

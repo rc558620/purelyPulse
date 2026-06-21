@@ -1,0 +1,108 @@
+@import (reference) '../../../../styles/variables.less';
+@import (reference) '../../../../styles/breakpoints.less';
+@import (reference) '../../../../styles/mixins.less';
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background-color: fade(@bg-light, 90%);
+  border-bottom: 1px solid @primary-fade-20;
+  padding: 1.2rem 2.4rem;
+  .flex-between();
+
+  .mobile({
+    padding: 1.2rem 1.6rem;
+  });
+}
+
+.logoSection {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.logoIcon {
+  width: 4rem;
+  height: 4rem;
+  border-radius: @radius-md;
+  background-color: @primary;
+  .flex-center();
+  box-shadow: 0 10px 15px -3px fade(@primary, 30%);
+  overflow: hidden;
+}
+
+.storeFallbackIcon {
+  width: 2.4rem;
+  height: 2.4rem;
+  filter: brightness(0) invert(1);
+}
+
+.appTitle {
+  font-size: 2rem;
+  font-weight: bold;
+  letter-spacing: 0.025em;
+  margin: 0;
+}
+
+.actionSection {
+  display: flex;
+  gap: 1.6rem;
+  align-items: center;
+}
+
+.iconButton {
+  padding: 0.8rem;
+  border-radius: @radius-full;
+  background: transparent;
+  border: none;
+  color: @text-sub;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  .flex-center();
+
+  &:hover {
+    background-color: @primary-light;
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 3px fade(@primary, 30%);
+  }
+}
+
+.userAvatar {
+  width: 4rem;
+  height: 4rem;
+  border-radius: @radius-full;
+  overflow: hidden;
+  .flex-center();
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.avatarPlaceholderIconDiv {
+  width: 4rem;
+  height: 4rem;
+  border: 2px solid @primary-fade;
+  background-color: fade(@primary, 10%);
+  border-radius: @radius-full;
+  color: @primary;
+  .flex-center();
+
+  .avatarPlaceholderIcon {
+    width: 2.8rem;
+    height: 2.8rem;
+  }
+}
+
+.iconImage {
+  width: 2.4rem;
+  height: 2.4rem;
+  display: block;
+}

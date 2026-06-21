@@ -7,7 +7,7 @@ import {
   IconStarBadge,
 } from '../MemberListIcons/MemberListIcons';
 import { LEVEL_LABEL } from '../../../../memberList.constants';
-import { formatMemberAmount, formatMemberRelativeTime } from '../../../../memberList.utils';
+import { formatMemberAmount, formatMemberRelativeTime, formatMemberExpiry } from '../../../../memberList.utils';
 import type { MemberListItem } from '../../../../memberList.types';
 import styles from '../../../../memberList.module.less';
 
@@ -27,6 +27,7 @@ const MemberListCard: React.FC<MemberListCardProps> = ({ member, onClick }) => {
   const beanText = useMemo(() => `${safeNum(member.beanBalance).toLocaleString('zh-CN')} 豆`, [member.beanBalance]);
   const activeTimeText = useMemo(() => `活跃 ${formatMemberRelativeTime(member.lastActiveAt)}`, [member.lastActiveAt]);
   const rechargeAmountText = useMemo(() => `¥${formatMemberAmount(member.totalRecharged)}`, [member.totalRecharged]);
+  const expiryText = useMemo(() => formatMemberExpiry(member.membershipExpiry, member.level), [member.membershipExpiry, member.level]);
   const ariaLabel = useMemo(() => `查看 ${safeStr(member.name, '会员')} 的会员详情`, [member.name]);
 
   return (
@@ -54,6 +55,9 @@ const MemberListCard: React.FC<MemberListCardProps> = ({ member, onClick }) => {
           <span className={cx(styles.levelBadge, styles[`level_${member.level}`])}>
             {LEVEL_LABEL[member.level]}
           </span>
+          {expiryText && (
+            <span className={styles.expiryBadge}>{expiryText}</span>
+          )}
           {member.isPartner && (
             <span className={styles.partnerBadge}>合伙人</span>
           )}
@@ -76,13 +80,12 @@ const MemberListCard: React.FC<MemberListCardProps> = ({ member, onClick }) => {
         </div>
       </div>
 
-      {/* 右侧：累计充值 + 状态点 + 箭头 */}
+      {/* 右侧：累计充值 + 箭头 */}
       <div className={styles.memberRight}>
         <div className={styles.memberRecharge}>
           <span className={styles.rechargeAmt}>{rechargeAmountText}</span>
           <span className={styles.rechargeLabel}>累计充值</span>
         </div>
-        <div className={cx(styles.statusDot, styles[`status_${member.status}`])} />
         <IconChevronRight className={styles.memberArrow} />
       </div>
     </button>

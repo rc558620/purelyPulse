@@ -152,6 +152,9 @@ export interface MemberListItem {
 export type MemberFilterStatus = 'all' | MemberStatus;
 export type MemberFilterLevel = 'all' | MemberLevel;
 
+/** 会员到期时间筛选。 */
+export type MemberFilterExpiry = 'all' | '1m' | '3m' | '6m' | '1y' | '2y';
+
 /** 会员列表查询参数。 */
 export interface MemberListQuery {
   /** 搜索关键词。 */
@@ -160,6 +163,8 @@ export interface MemberListQuery {
   status: MemberFilterStatus;
   /** 等级筛选。 */
   level: MemberFilterLevel;
+  /** 到期时间筛选。 */
+  expiry: MemberFilterExpiry;
 }
 
 /** 会员列表统计概览。 */

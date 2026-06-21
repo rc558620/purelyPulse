@@ -17,6 +17,7 @@ import type {
 import type {
   ClubMemberStats,
   MemberDetail,
+  MemberFilterExpiry,
   MemberLevel,
   MemberListItem,
   MemberListQuery,
@@ -972,20 +973,71 @@ const resolveMemberDetailSource = (payload: unknown): unknown | null => {
   return getNestedRecord(payload, MEMBER_DETAIL_SOURCE_CANDIDATES) ?? payload;
 };
 
+/** 根据到期时间筛选条件过滤会员列表（客户端补充筛选）。 */
+const filterMembersByExpiry = (members: MemberListItem[], expiry: MemberFilterExpiry): MemberListItem[] => {
+  if (expiry === 'all') {
+    return members;
+  }
+
+  const now = Date.now();
+  const dayMs = 86_400_000;
+  let days = 0;
+
+  switch (expiry) {
+    case '1m':
+      days = 30;
+      break;
+    case '3m':
+      days = 90;
+      break;
+    case '6m':
+      days = 180;
+      break;
+    case '1y':
+      days = 365;
+      break;
+    case '2y':
+      days = 730;
+      break;
+    default:
+      return members;
+  }
+
+  const thresholdMs = now + days * dayMs;
+
+  return members.filter((member) => {
+    // 排除 free 和 lifetime 会员
+    if (member.level === 'lifetime' || member.level === 'free') {
+      return false;
+    }
+    // 排除没有到期时间的会员
+    if (member.membershipExpiry == null) {
+      return false;
+    }
+    // 精准过滤：到期时间 > 当前时间 且 <= 阈值时间
+    return member.membershipExpiry > now && member.membershipExpiry <= thresholdMs;
+  });
+};
+
 const requestMemberList = async (query: MemberListQuery): Promise<{ members: MemberListItem[]; stats: MemberListStats }> => {
   const response = await http.get<unknown>(MEMBER_LIST_API_PATH, {
     params: {
       keyword: query.keyword || undefined,
       status: query.status !== 'all' ? query.status : undefined,
       level: query.level !== 'all' ? query.level : undefined,
+      expiry: query.expiry !== 'all' ? query.expiry : undefined,
     },
     skipGlobalErrorHandler: true,
     errorMessage: '获取会员列表失败',
   });
 
-  const memberList = resolveMemberListSource(response)
+  let memberList = resolveMemberListSource(response)
     .map((item, index) => mapMemberListItem(item, index))
     .map((item) => applyMembershipRevenueToMemberListItem(item));
+
+  if (query.expiry !== 'all') {
+    memberList = filterMembersByExpiry(memberList, query.expiry);
+  }
 
   return {
     members: memberList,

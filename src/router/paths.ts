@@ -7,6 +7,9 @@ export const ROUTE_PATHS = {
     partnerPayout: '/partner-payout',
     revenueDetail: '/revenue-detail',
     promotionDetail: '/promotion-detail',
+    // ─── 个人中心 ────────────────────────────────────────────────
+    profile: '/profile',
+    changePassword: '/change-password',
     // ─── 会员管理 ────────────────────────────────────────────────
     memberPoints: '/member-points',
     partnerBeans: '/partner-beans',

@@ -20,9 +20,11 @@ const MemberList: React.FC = () => {
     errorMessage,
     statusFilter,
     levelFilter,
+    expiryFilter,
     searchQuery,
     setStatusFilter,
     setLevelFilter,
+    setExpiryFilter,
     setSearchQuery,
     handleSearchClear,
     retryLoadMembers,
@@ -44,11 +46,13 @@ const MemberList: React.FC = () => {
         {/* 统计概览行：总会员 / 活跃 / 合伙人 / 封禁 */}
         <MemberListStatsRow stats={stats} />
 
-        {/* 搜索栏：姓名 / 手机号 */}
+        {/* 搜索栏 + 到期时间筛选同行 */}
         <MemberListSearchBar
-          value={searchQuery}
-          onChange={setSearchQuery}
-          onClear={handleSearchClear}
+          searchValue={searchQuery}
+          onSearchChange={setSearchQuery}
+          onSearchClear={handleSearchClear}
+          expiryFilter={expiryFilter}
+          onExpiryChange={setExpiryFilter}
         />
 
         {/* 状态 Tab + 等级 Chip 筛选区 */}

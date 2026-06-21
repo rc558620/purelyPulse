@@ -1,0 +1,34 @@
+@import (reference) '../../../../styles/variables.less';
+@import (reference) '../../../../styles/mixins.less';
+
+.section {
+    .flex-col();
+    gap: 2rem;
+}
+
+.iconSection {
+    .flex-col();
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.4rem 0 0.8rem;
+}
+
+.iconCircle {
+    width: 7.2rem;
+    height: 7.2rem;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, fade(@primary, 16%) 0%, fade(@primary, 7%) 100%);
+    border: 1px solid fade(@primary, 25%);
+    box-shadow: 0 4px 20px fade(@primary, 12%);
+    color: @primary;
+    .flex-center();
+}
+
+.iconHint {
+    max-width: 30rem;
+    margin: 0;
+    font-size: 1.3rem;
+    line-height: 1.6;
+    text-align: center;
+    color: @text-sub;
+}
