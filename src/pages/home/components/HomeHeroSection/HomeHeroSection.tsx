@@ -15,7 +15,7 @@ interface HomeHeroSectionProps {
 const HomeHeroSection = memo(({ overview }: HomeHeroSectionProps): React.JSX.Element => {
   const onlineTrend = overview.onlineTrend.length > 0 ? overview.onlineTrend : [0];
   const onlineGrowthLabel = `${overview.onlineGrowthRate >= 0 ? '+' : ''}${safeNum(overview.onlineGrowthRate)}%`;
-  const { sparklineOption, sparklineHeight } = useHomeSparklineChart(onlineTrend);
+  const { sparklineOption } = useHomeSparklineChart(onlineTrend);
 
   return (
     <section className={styles.heroCard}>
@@ -40,8 +40,9 @@ const HomeHeroSection = memo(({ overview }: HomeHeroSectionProps): React.JSX.Ele
         </div>
       </div>
 
-      <div className={styles.heroSparkline}>
-        <ChartRenderer option={sparklineOption} className={styles.heroSparklineCanvas} height={sparklineHeight} />
+      {/* 趋势图：绝对定位填满卡片右半侧，作为视觉背景层 */}
+      <div className={styles.heroSparkline} aria-hidden="true">
+        <ChartRenderer option={sparklineOption} className={styles.heroSparklineCanvas} />
       </div>
 
       <div className={styles.heroDecorCircle} aria-hidden="true" />

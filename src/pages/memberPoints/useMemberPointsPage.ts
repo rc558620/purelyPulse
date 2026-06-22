@@ -129,9 +129,11 @@ export const useMemberPointsPage = (): UseMemberPointsPageReturn => {
     if (activeTab === 'admin') {
       nextRecords = nextRecords.filter((record) => record.source === 'admin_adjust');
     } else if (activeTab === 'earn') {
-      nextRecords = nextRecords.filter((record) => record.type === 'earn');
+      // "获得"tab：只显示非管理员调整的获得记录（购买奖励等）
+      nextRecords = nextRecords.filter((record) => record.source !== 'admin_adjust' && record.type === 'earn');
     } else if (activeTab === 'spend') {
-      nextRecords = nextRecords.filter((record) => record.type !== 'earn');
+      // "消耗"tab：只显示非管理员调整的消耗/过期记录（抵扣消费、积分过期等）
+      nextRecords = nextRecords.filter((record) => record.source !== 'admin_adjust' && record.type !== 'earn');
     }
 
     const normalizedQuery = normalizeQuery(deferredRecordSearchQuery);
@@ -209,28 +211,40 @@ export const useMemberPointsPage = (): UseMemberPointsPageReturn => {
     try {
       await submitMemberPointsAdjustment(userId, delta, reason);
 
-      const newRecord: MemberPointsRecord = {
-        id: fallbackKey('member-points-record'),
-        userId,
-        userName: targetUser.name,
-        userPhone: targetUser.phone,
-        amount: delta,
-        type: delta > 0 ? 'earn' : 'spend',
-        source: 'admin_adjust',
-        description: reason,
-        createdAt: Date.now(),
-      };
+      // 提交成功后重新从后端拉取最新数据，确保数据一致性
+      try {
+        const response = await fetchMemberPointsPageData();
+        setRecords(response.records);
+        setUsers(response.users);
+        setStats(response.stats);
+      } catch {
+        // 后端刷新失败时退回乐观更新
+        const newRecord: MemberPointsRecord = {
+          id: fallbackKey('member-points-record'),
+          userId,
+          userName: targetUser.name,
+          userPhone: targetUser.phone,
+          avatarUrl: targetUser.avatarUrl,
+          availablePoints: targetUser.availablePoints,
+          amount: delta,
+          type: delta > 0 ? 'earn' : 'spend',
+          source: 'admin_adjust',
+          description: reason,
+          createdAt: Date.now(),
+        };
 
-      setRecords((prev) => {
-        const nextRecords = [newRecord, ...prev];
-        setStats(buildStats(nextRecords));
-        return nextRecords;
-      });
-      setUsers((prev) => prev.map((user) => (
-        user.id === userId
-          ? { ...user, availablePoints: safeNum(user.availablePoints + delta) }
-          : user
-      )));
+        setRecords((prev) => {
+          const nextRecords = [newRecord, ...prev];
+          setStats(buildStats(nextRecords));
+          return nextRecords;
+        });
+        setUsers((prev) => prev.map((user) => (
+          user.id === userId
+            ? { ...user, availablePoints: safeNum(user.availablePoints + delta) }
+            : user
+        )));
+      }
+
       setAdjustTarget(null);
       showToast({ type: 'success', message: delta >= 0 ? '积分调整成功' : '积分扣减成功' });
     } catch (error) {

@@ -85,23 +85,68 @@
   }
 }
 
-.recordIcon {
-  width: 3.2rem;
-  height: 3.2rem;
+// 用户头像（替代原 recordIcon）
+.recordAvatar {
+  width: 3.6rem;
+  height: 3.6rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #84cc16, #4ade80);
+  border: 1.5px solid rgba(132, 204, 22, 0.3);
+  color: #fff;
+  font-size: 1.4rem;
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   margin-top: 0.2rem;
+  position: relative;
+
+  // 不使用 overflow:hidden，让角标可以超出头像圆形边界
+  // 图片裁剪通过 .recordAvatarImg 的 border-radius 实现
+
+  &WithImage {
+    background: none;
+    border-color: rgba(132, 204, 22, 0.2);
+  }
+}
+
+.recordAvatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   border-radius: 50%;
+  position: absolute;
+  inset: 0;
+}
+
+.recordAvatarBadge {
+  position: absolute;
+  right: -0.2rem;
+  bottom: -0.2rem;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(100, 116, 139, 0.15);
+  color: #94a3b8;
+  border: 1.5px solid #fff;
+  z-index: 1;
+
+  svg {
+    width: 0.9rem;
+    height: 0.9rem;
+  }
 
   &Earn {
-    background: rgba(132, 204, 22, 0.12);
+    background: rgba(132, 204, 22, 0.18);
     color: #84cc16;
   }
 
   &Spend {
-    background: rgba(249, 115, 22, 0.12);
+    background: rgba(249, 115, 22, 0.18);
     color: #f97316;
   }
 
@@ -159,6 +204,19 @@
     background: rgba(132, 204, 22, 0.12);
     color: darken(#84cc16, 12%);
   }
+}
+
+.recordMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.recordBalance {
+  font-size: 1.1rem;
+  color: @text-sub;
+  white-space: nowrap;
 }
 
 .recordDesc {

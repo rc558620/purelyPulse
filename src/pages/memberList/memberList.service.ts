@@ -35,8 +35,8 @@ import type {
 
 const MEMBER_LIST_API_PATH = resolveEnvPath(import.meta.env.VITE_MEMBER_LIST_API_PATH, '/pulse/membership/admin/members');
 const MEMBER_DETAIL_API_PATH = resolveEnvPath(import.meta.env.VITE_MEMBER_DETAIL_API_PATH, '/pulse/membership/admin/members/{id}');
-const MEMBER_POINTS_API_PATH = resolveEnvPath(import.meta.env.VITE_MEMBER_POINTS_API_PATH, '/pulse/membership/points/logs');
-const PARTNER_BEANS_API_PATH = resolveEnvPath(import.meta.env.VITE_PARTNER_BEANS_API_PATH, '/pulse/membership/beans/logs');
+const MEMBER_POINTS_API_PATH = resolveEnvPath(import.meta.env.VITE_MEMBER_POINTS_API_PATH, '/pulse/membership/admin/points/logs');
+const PARTNER_BEANS_API_PATH = resolveEnvPath(import.meta.env.VITE_PARTNER_BEANS_API_PATH, '/pulse/membership/admin/beans/logs');
 const ADJUST_MEMBER_POINTS_API_PATH = resolveEnvPath(import.meta.env.VITE_ADJUST_MEMBER_POINTS_API_PATH, '/pulse/membership/admin/members/{id}/points/adjust');
 const ADJUST_PARTNER_BEANS_API_PATH = resolveEnvPath(import.meta.env.VITE_ADJUST_PARTNER_BEANS_API_PATH, '/pulse/membership/admin/members/{id}/beans/adjust');
 const SET_MEMBERSHIP_API_PATH = resolveEnvPath(import.meta.env.VITE_SET_MEMBERSHIP_API_PATH, '/pulse/membership/admin/members/{id}/membership');
@@ -100,6 +100,7 @@ interface PulseServerMemberListItemLike {
   phone: string;
   avatarChar: string;
   avatarColorIdx: number;
+  avatarUrl?: string;
   status: string;
   level: string;
   availablePoints: number;
@@ -288,6 +289,7 @@ const mapServerMemberListItem = (value: PulseServerMemberListItemLike): MemberLi
   phone: value.phone,
   avatarChar: value.avatarChar,
   avatarColorIdx: Math.abs(Math.round(value.avatarColorIdx)) % MEMBER_AVATAR_COLOR_COUNT,
+  avatarUrl: value.avatarUrl || undefined,
   status: normalizeMemberStatus(value.status),
   level: normalizeMemberLevel(value.level),
   availablePoints: safeNum(value.availablePoints),
@@ -633,10 +635,11 @@ const mapUserSnapshot = (value: unknown, index: number): UserSnapshot => {
     availablePoints: member.availablePoints,
     beanBalance: member.beanBalance,
     isPartner: member.isPartner,
+    avatarUrl: member.avatarUrl,
   };
 };
 
-const mapPointsRecord = (value: unknown, index: number): MemberPointsRecord => {
+const mapPointsRecord = (value: unknown, index: number, userLookup?: Map<string, MemberPointsPageUser>): MemberPointsRecord => {
   const userId = pickStringField(value, ['userId', 'memberId', 'uid', 'id']) || `member-${index + 1}`;
   const userName = pickStringField(value, ['userName', 'name', 'memberName']) || `会员${index + 1}`;
   const amount = pickNumberField(value, ['amount', 'delta', 'changeAmount']);
@@ -650,11 +653,22 @@ const mapPointsRecord = (value: unknown, index: number): MemberPointsRecord => {
         ? 'expire'
         : 'spend';
 
+  const matchedUser = userLookup?.get(userId);
+  const rawAvatarUrl = (isPlainObject(value) && typeof value.avatarUrl === 'string' && value.avatarUrl.trim())
+    ? value.avatarUrl.trim()
+    : undefined;
+  const avatarUrl = rawAvatarUrl || matchedUser?.avatarUrl || undefined;
+  const availablePoints = pickNumberField(value, ['availablePoints', 'pointsBalance', 'pointBalance', 'currentPoints', 'balanceBefore', 'balance'])
+    || matchedUser?.availablePoints
+    || 0;
+
   return {
     id: pickStringField(value, ['id', 'recordId']) || `pts-${index + 1}`,
     userId,
     userName,
-    userPhone: maskPhone(pickStringField(value, ['userPhone', 'phone', 'mobile'])),
+    userPhone: maskPhone(pickStringField(value, ['userPhone', 'phone', 'mobile']) || matchedUser?.phone || ''),
+    avatarUrl,
+    availablePoints,
     amount,
     type,
     source,
@@ -664,7 +678,7 @@ const mapPointsRecord = (value: unknown, index: number): MemberPointsRecord => {
   };
 };
 
-const mapBeanRecord = (value: unknown, index: number): BeanRecord => {
+const mapBeanRecord = (value: unknown, index: number, userLookup?: Map<string, UserSnapshot>): BeanRecord => {
   const userId = pickStringField(value, ['userId', 'memberId', 'uid', 'id']) || `partner-${index + 1}`;
   const userName = pickStringField(value, ['userName', 'name', 'memberName']) || `合伙人${index + 1}`;
   const amount = pickNumberField(value, ['amount', 'delta', 'changeAmount']);
@@ -678,11 +692,20 @@ const mapBeanRecord = (value: unknown, index: number): BeanRecord => {
         ? 'earn'
         : 'spend';
 
+  const matchedUser = userLookup?.get(userId);
+  const rawAvatarUrl = isPlainObject(value) && typeof value.avatarUrl === 'string' ? value.avatarUrl.trim() : undefined;
+  const avatarUrl = rawAvatarUrl || matchedUser?.avatarUrl || undefined;
+  const beanBalance = pickNumberField(value, ['beanBalance', 'beans', 'beanAmount', 'currentBeans', 'balanceAfter', 'afterBalance'])
+    || matchedUser?.beanBalance
+    || 0;
+
   return {
     id: pickStringField(value, ['id', 'recordId']) || `bean-${index + 1}`,
     userId,
     userName,
-    userPhone: maskPhone(pickStringField(value, ['userPhone', 'phone', 'mobile'])),
+    userPhone: maskPhone(pickStringField(value, ['userPhone', 'phone', 'mobile']) || matchedUser?.phone || ''),
+    avatarUrl,
+    beanBalance,
     amount,
     type,
     source,
@@ -893,6 +916,7 @@ const mapMemberListItem = (value: unknown, index: number): MemberListItem => {
     phone,
     avatarChar: resolveAvatarChar(memberName, value),
     avatarColorIdx: resolveAvatarColorIndex(memberId || memberName, value),
+    avatarUrl: (isPlainObject(value) && typeof value.avatarUrl === 'string' && value.avatarUrl.trim()) ? value.avatarUrl.trim() : (isPlainObject(value) && typeof value.avatarUrl === 'string') ? '' : undefined,
     status: normalizeMemberStatus(pickStringField(value, MEMBER_STATUS_CANDIDATES) || 'active'),
     level: normalizeMemberLevel(pickStringField(value, MEMBER_LEVEL_CANDIDATES) || 'free'),
     availablePoints: pickNumberField(value, ['availablePoints', 'pointsBalance', 'pointBalance', 'currentPoints']),
@@ -1090,6 +1114,44 @@ const requestMemberDetail = async (id: string): Promise<MemberDetail | null> => 
   return applyMembershipRevenueToMemberDetail(mapMemberDetail(memberDetailSource));
 };
 
+const readCachedPointsPageData = (): { records: MemberPointsRecord[]; users: MemberPointsPageUser[]; stats: MemberPointsStats } | null => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    const rawValue = localStorage.getItem(STORAGE_KEYS.MEMBER_POINTS_PAGE_DATA);
+    if (!rawValue) {
+      return null;
+    }
+
+    const parsedValue = JSON.parse(rawValue);
+    if (!isPlainObject(parsedValue) || !Array.isArray(parsedValue.records)) {
+      return null;
+    }
+
+    return {
+      records: parsedValue.records,
+      users: Array.isArray(parsedValue.users) ? parsedValue.users : [],
+      stats: isPlainObject(parsedValue.stats) ? parsedValue.stats : { totalRecords: 0, adminAdjustCount: 0, todayChangeCount: 0 },
+    };
+  } catch {
+    return null;
+  }
+};
+
+const persistPointsPageData = (data: { records: MemberPointsRecord[]; users: MemberPointsPageUser[]; stats: MemberPointsStats }): void => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    localStorage.setItem(STORAGE_KEYS.MEMBER_POINTS_PAGE_DATA, JSON.stringify(data));
+  } catch {
+    // localStorage 写入失败（如空间不足）时静默忽略
+  }
+};
+
 const requestMemberPointsPageData = async (): Promise<{
   records: MemberPointsRecord[];
   users: MemberPointsPageUser[];
@@ -1099,19 +1161,37 @@ const requestMemberPointsPageData = async (): Promise<{
     http.get<unknown>(MEMBER_POINTS_API_PATH, {
       skipGlobalErrorHandler: true,
       errorMessage: '获取积分记录失败',
+    }).catch((error: unknown) => {
+      console.warn('[memberPoints] 积分记录接口请求失败:', error);
+      return null;
     }),
     http.get<unknown>(MEMBER_LIST_API_PATH, {
       skipGlobalErrorHandler: true,
       errorMessage: '获取会员列表失败',
+    }).catch((error: unknown) => {
+      console.warn('[memberPoints] 会员列表接口请求失败:', error);
+      return null;
     }),
   ]);
 
-  const records = getNestedArray(recordsResponse, POINTS_RECORD_SOURCE_CANDIDATES).map((item, index) => mapPointsRecord(item, index));
+  console.log('[memberPoints] 积分记录接口原始返回:', recordsResponse);
+  console.log('[memberPoints] 会员列表接口原始返回:', usersResponse);
+
   const users: MemberPointsPageUser[] = resolveMemberListSource(usersResponse).map((item, index) => mapUserSnapshot(item, index));
+  const userLookup = new Map<string, MemberPointsPageUser>(users.map((user) => [user.id, user]));
+  const records = getNestedArray(recordsResponse, POINTS_RECORD_SOURCE_CANDIDATES)
+    .map((item, index) => mapPointsRecord(item, index, userLookup))
+    .sort((left, right) => right.createdAt - left.createdAt);
+
+  console.log('[memberPoints] 解析后记录数:', records.length, '用户数:', users.length);
+  if (records.length > 0) {
+    console.log('[memberPoints] 第一条记录:', records[0]);
+  }
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  return {
+  const result = {
     records,
     users,
     stats: {
@@ -1120,6 +1200,22 @@ const requestMemberPointsPageData = async (): Promise<{
       todayChangeCount: records.filter((record) => record.createdAt >= today.getTime()).length,
     },
   };
+
+  // 成功获取数据后缓存到 localStorage
+  if (records.length > 0 || users.length > 0) {
+    persistPointsPageData(result);
+  }
+
+  // 如果后端返回空数据，尝试从缓存中恢复
+  if (records.length === 0 && users.length === 0) {
+    const cachedData = readCachedPointsPageData();
+    if (cachedData && (cachedData.records.length > 0 || cachedData.users.length > 0)) {
+      console.log('[memberPoints] 后端返回空数据，从缓存恢复:', cachedData.records.length, '条记录');
+      return cachedData;
+    }
+  }
+
+  return result;
 };
 
 const requestPartnerBeansPageData = async (): Promise<{
@@ -1131,19 +1227,36 @@ const requestPartnerBeansPageData = async (): Promise<{
     http.get<unknown>(PARTNER_BEANS_API_PATH, {
       skipGlobalErrorHandler: true,
       errorMessage: '获取纯利豆记录失败',
+    }).catch((error: unknown) => {
+      console.warn('[partnerBeans] 纯利豆记录接口请求失败:', error);
+      return null;
     }),
     http.get<unknown>(MEMBER_LIST_API_PATH, {
       params: { partner: true },
       skipGlobalErrorHandler: true,
       errorMessage: '获取合伙人列表失败',
+    }).catch((error: unknown) => {
+      console.warn('[partnerBeans] 合伙人列表接口请求失败:', error);
+      return null;
     }),
   ]);
 
-  const records = getNestedArray(recordsResponse, POINTS_RECORD_SOURCE_CANDIDATES).map((item, index) => mapBeanRecord(item, index));
+  console.log('[partnerBeans] 记录接口原始返回:', recordsResponse);
+  console.log('[partnerBeans] 用户接口原始返回:', usersResponse);
+
   const rawUsers = getNestedArray(usersResponse, PARTNER_USERS_SOURCE_CANDIDATES);
   const users = rawUsers
     .map((item, index) => mapUserSnapshot(item, index))
     .filter((user) => user.isPartner || user.beanBalance > 0);
+  const userLookup = new Map<string, UserSnapshot>(users.map((user) => [user.id, user]));
+  const records = getNestedArray(recordsResponse, POINTS_RECORD_SOURCE_CANDIDATES)
+    .map((item, index) => mapBeanRecord(item, index, userLookup))
+    .sort((left, right) => right.createdAt - left.createdAt);
+
+  console.log('[partnerBeans] 解析后记录数:', records.length, '用户数:', users.length);
+  if (records.length > 0) {
+    console.log('[partnerBeans] 第一条记录:', records[0]);
+  }
 
   return {
     records,

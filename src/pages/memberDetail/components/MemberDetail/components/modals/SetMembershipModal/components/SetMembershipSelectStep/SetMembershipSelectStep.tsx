@@ -93,8 +93,12 @@ const SetMembershipSelectStep: React.FC<SetMembershipSelectStepProps> = ({
   return (
   <div className={styles.sheetBody}>
     <div className={styles.userCard}>
-      <div className={styles.userAvatar} style={{ background: avatarBg }} aria-hidden="true">
-        {member.avatarChar}
+      <div className={cx(styles.userAvatar, member.avatarUrl && styles.userAvatarWithImage)} style={member.avatarUrl ? undefined : { background: avatarBg }} aria-hidden="true">
+        {member.avatarUrl ? (
+          <img className={styles.userAvatarImg} src={member.avatarUrl} alt="" />
+        ) : (
+          member.avatarChar
+        )}
       </div>
       <div className={styles.userInfo}>
         <div className={styles.userNameRow}>

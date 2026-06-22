@@ -45,12 +45,25 @@
   font-weight: 800;
   color: #a855f7;
   flex-shrink: 0;
+  overflow: hidden;
 
   @media (min-width: @bp-mobile) {
     width: 4.4rem;
     height: 4.4rem;
     font-size: 1.7rem;
   }
+}
+
+.avatarWithImage {
+  background: transparent;
+  border-color: transparent;
+}
+
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 9999px;
 }
 
 .avatarApproved {

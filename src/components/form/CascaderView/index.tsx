@@ -3,11 +3,11 @@
 // 组装层：trigger 输入框 + 移动端面板 + PC 端下拉
 // 状态由 useCascaderState / usePickerPopup / useDeviceType 分别管理
 
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { SmallCloseIcon, ChevronDownIcon } from '@components/form/_shared/icons';
 import type { CascadePickerViewProps } from './types';
 import styles from './CascaderView.module.less';
-import { cx } from '@utils/utils';
+import { cx, safeNum } from '@utils/utils';
 import useDeviceType from '@components/form/_shared/useDeviceType';
 import usePickerPopup from '@components/form/_shared/usePickerPopup';
 import { useCascaderState } from './useCascaderState';
@@ -50,10 +50,17 @@ export const CascaderView: React.FC<CascadePickerViewProps> = ({
     handleClose();
   }, [handleClose]);
 
+  // ── PC 端：记录触发器位置，用于 portal 面板的 fixed 定位 ──
+  const triggerRef = useRef<HTMLDivElement | null>(null);
+  const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
+
   const handleTriggerClick = useCallback(() => {
     resetLevelRef.current();
+    if (!isMobile && triggerRef.current) {
+      setTriggerRect(triggerRef.current.getBoundingClientRect());
+    }
     handleOpen();
-  }, [handleOpen]);
+  }, [isMobile, handleOpen]);
 
   // ── 选中值状态 + 选择逻辑 ─────────────────────────────────────────────────
   const {
@@ -82,6 +89,9 @@ export const CascaderView: React.FC<CascadePickerViewProps> = ({
     resetLevelRef.current = resetLevel;
   });
 
+  // safeNum 用于确保 displayText 中数值安全（级联选项 value 可能为数字类型）
+  void safeNum;
+
   // ── 渲染 ──────────────────────────────────────────────────────────────────
   const arrowOpen = !isMobile && (visible || isClosing);
 
@@ -92,6 +102,7 @@ export const CascaderView: React.FC<CascadePickerViewProps> = ({
     >
       {/* 输入框触发区域 */}
       <div
+        ref={triggerRef}
         className={cx(
           styles['cascader-input'],
           status === 'error' && styles['cascader-input-error'],
@@ -147,12 +158,13 @@ export const CascaderView: React.FC<CascadePickerViewProps> = ({
           onMaskClick={handleCloseWithReset}
         />
       ) : (
-        // ── PC 端：绝对定位下拉多列 ───────────────────────────────────────────
-        visible && (
+        // ── PC 端：Portal 到 body，fixed 对齐触发器 ───────────────────────────
+        visible && triggerRect && (
           <CascaderPcDropdown
             isClosing={isClosing}
             allLevels={allLevels}
             selectedValue={internalValue}
+            triggerRect={triggerRect}
             onSelect={handlePcSelect}
             onAnimationEnd={handleAnimationEnd}
           />

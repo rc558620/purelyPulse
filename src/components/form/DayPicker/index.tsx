@@ -7,11 +7,12 @@
 // 文件结构：
 //   index.tsx                ← 本文件（组装层）
 //   useDayPickerState.ts     ← 面板内选中状态（selYear / selMonth / selDay / 确定 / 今天）
-//   DayPickerMobilePanel     ← 移动端底部 BottomSheet
-//   DayPickerPcDropdown      ← PC 端下拉面板
-import React, { useCallback } from 'react';
+//   DayPickerMobilePanel     ← 移动端底部 BottomSheet（portal 到 body）
+//   DayPickerPcDropdown      ← PC 端下拉面板（portal 到 body，fixed 对齐触发器）
+import React, { useCallback, useRef, useState } from 'react';
 import classNames from 'classnames';
 
+import { safeNum } from '@utils/utils';
 import useDeviceType  from '@components/form/_shared/useDeviceType';
 import usePickerPopup from '@components/form/_shared/usePickerPopup';
 import { CalendarIcon, CloseIcon } from '@components/form/_shared/icons';
@@ -64,7 +65,18 @@ const DayPicker: React.FC<DayPickerProps> = ({
     handleKeyDown,
   } = usePickerPopup({ isMobile });
 
-  const displayText = `${year}/${pad2(month)}/${pad2(day)}`;
+  // ── PC 端：记录触发器位置，用于 portal 面板的 fixed 定位 ──
+  const triggerRef = useRef<HTMLDivElement | null>(null);
+  const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
+
+  const handleTriggerOpen = useCallback(() => {
+    if (!isMobile && triggerRef.current) {
+      setTriggerRect(triggerRef.current.getBoundingClientRect());
+    }
+    handleOpen();
+  }, [isMobile, handleOpen]);
+
+  const displayText = `${safeNum(year)}/${pad2(safeNum(month))}/${pad2(safeNum(day))}`;
 
   const handleClearClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -78,8 +90,9 @@ const DayPicker: React.FC<DayPickerProps> = ({
 
       {/* ── Trigger ── */}
       <div
+        ref={triggerRef}
         className={classNames(styles.trigger, visible && styles.triggerOpen)}
-        onClick={handleOpen}
+        onClick={handleTriggerOpen}
         role="button"
         tabIndex={0}
         onKeyDown={handleKeyDown}
@@ -116,8 +129,8 @@ const DayPicker: React.FC<DayPickerProps> = ({
         />
       )}
 
-      {/* ── PC 端：下拉 Dropdown ── */}
-      {!isMobile && visible && (
+      {/* ── PC 端：下拉 Dropdown（Portal 到 body，fixed 对齐触发器）── */}
+      {!isMobile && visible && triggerRect && (
         <DayPickerPcDropdown
           year={year}
           month={month}
@@ -125,6 +138,7 @@ const DayPicker: React.FC<DayPickerProps> = ({
           pastYears={pastYears}
           futureYears={futureYears}
           isClosing={isClosing}
+          triggerRect={triggerRect}
           onConfirm={onChange}
           onClose={handleClose}
           onAnimationEnd={handleAnimationEnd}

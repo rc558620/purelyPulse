@@ -10,6 +10,7 @@ export const ROUTE_PATHS = {
     // ─── 个人中心 ────────────────────────────────────────────────
     profile: '/profile',
     changePassword: '/change-password',
+    changeNickname: '/change-nickname',
     // ─── 会员管理 ────────────────────────────────────────────────
     memberPoints: '/member-points',
     partnerBeans: '/partner-beans',

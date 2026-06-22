@@ -56,10 +56,11 @@ const PromotionDetailPartnerDetailView: React.FC<PromotionDetailPartnerDetailVie
             selectedPartner.rank === 1 && styles.partnerAvatarGold,
             selectedPartner.rank === 2 && styles.partnerAvatarSilver,
             selectedPartner.rank === 3 && styles.partnerAvatarBronze,
+            selectedPartner.avatarUrl && styles.partnerHeroAvatarWithImage,
           )}
           aria-hidden="true"
         >
-          {selectedPartner.avatar}
+          {selectedPartner.avatarUrl ? <img className={styles.partnerHeroAvatarImg} src={selectedPartner.avatarUrl} alt="" /> : selectedPartner.avatar}
         </div>
         <div className={styles.partnerHeroInfo}>
           <div className={styles.partnerHeroName}>{selectedPartner.name}</div>

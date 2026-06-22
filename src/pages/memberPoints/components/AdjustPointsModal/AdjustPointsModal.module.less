@@ -24,6 +24,7 @@
   height: 4rem;
   border-radius: 50%;
   background: linear-gradient(135deg, #84cc16, #4ade80);
+  border: 1.5px solid rgba(132, 204, 22, 0.3);
   color: #fff;
   font-size: 1.6rem;
   font-weight: 700;
@@ -31,6 +32,17 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.userAvatarWithImage {
+  background: transparent;
+}
+
+.userAvatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .userInfo {

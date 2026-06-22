@@ -39,10 +39,14 @@ const MemberListCard: React.FC<MemberListCardProps> = ({ member, onClick }) => {
     >
       {/* 头像 */}
       <div
-        className={cx(styles.memberAvatar, avatarColorClassName)}
+        className={cx(styles.memberAvatar, avatarColorClassName, member.avatarUrl && styles.memberAvatarWithImage)}
         aria-hidden="true"
       >
-        {avatarChar}
+        {member.avatarUrl ? (
+          <img className={styles.memberAvatarImg} src={member.avatarUrl} alt="" />
+        ) : (
+          avatarChar
+        )}
         {member.isPartner && (
           <span className={styles.partnerDot} aria-label="合伙人" />
         )}

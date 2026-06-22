@@ -77,8 +77,8 @@ const AdjustPointsModal: React.FC<AdjustPointsModalProps> = ({
     >
       <div className={styles.body}>
         <div className={styles.userCard}>
-          <div className={styles.userAvatar} aria-hidden="true">
-            {user.name[0]}
+          <div className={cx(styles.userAvatar, user.avatarUrl && styles.userAvatarWithImage)} aria-hidden="true">
+            {user.avatarUrl ? <img className={styles.userAvatarImg} src={user.avatarUrl} alt="" /> : user.name[0]}
           </div>
           <div className={styles.userInfo}>
             <span className={styles.userName}>{user.name}</span>

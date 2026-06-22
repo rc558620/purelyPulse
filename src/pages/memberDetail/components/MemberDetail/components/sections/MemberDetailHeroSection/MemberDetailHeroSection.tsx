@@ -64,8 +64,12 @@ const MemberDetailHeroSection: React.FC<MemberDetailHeroSectionProps> = React.me
   return (
     <div className={styles.root}>
       <div className={pageStyles.heroBanner}>
-        <div className={cx(pageStyles.heroAvatar, heroAvatarColorClassName)} aria-hidden="true">
-          {safeStr(member.avatarChar, '会')}
+        <div className={cx(pageStyles.heroAvatar, heroAvatarColorClassName, member.avatarUrl && pageStyles.heroAvatarWithImage)} aria-hidden="true">
+          {member.avatarUrl ? (
+            <img className={pageStyles.heroAvatarImg} src={member.avatarUrl} alt="" />
+          ) : (
+            safeStr(member.avatarChar, '会')
+          )}
           {member.isPartner ? <span className={pageStyles.heroPartnerDot} aria-label="合伙人" /> : null}
         </div>
 

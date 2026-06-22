@@ -11,6 +11,7 @@ export interface PartnerApplication {
   appliedAt: string;
   reason: string;
   avatar: string;
+  avatarUrl?: string;
   status: ApplicationStatus;
 }
 

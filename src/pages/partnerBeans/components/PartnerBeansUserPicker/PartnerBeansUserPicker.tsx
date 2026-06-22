@@ -57,7 +57,9 @@ const PartnerBeansUserPickerComponent: React.FC<PartnerBeansUserPickerProps> = (
               onClick={() => onSelect(user)}
               disabled={isSubmitting}
             >
-              <div className={styles.pickerAvatar} aria-hidden="true">{user.name[0]}</div>
+              <div className={`${styles.pickerAvatar} ${user.avatarUrl ? styles.pickerAvatarWithImage : ''}`} aria-hidden="true">
+                {user.avatarUrl ? <img className={styles.pickerAvatarImg} src={user.avatarUrl} alt="" /> : user.name[0]}
+              </div>
               <div className={styles.pickerUserInfo}>
                 <div className={styles.pickerUserNameRow}>
                   <span className={styles.pickerUserName}>{user.name}</span>

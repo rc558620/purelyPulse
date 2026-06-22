@@ -128,9 +128,11 @@ export const usePartnerBeansPage = (): UsePartnerBeansPageReturn => {
     if (activeTab === 'admin') {
       nextRecords = nextRecords.filter(({ record }) => record.source === 'admin_adjust');
     } else if (activeTab === 'earn') {
-      nextRecords = nextRecords.filter(({ record }) => record.type === 'earn');
+      // "获得"tab：只显示业务性获得（推广奖励等），排除管理员调整
+      nextRecords = nextRecords.filter(({ record }) => record.type === 'earn' && record.source !== 'admin_adjust');
     } else if (activeTab === 'spend') {
-      nextRecords = nextRecords.filter(({ record }) => record.type !== 'earn');
+      // "消耗/提现"tab：只显示业务性消耗（抵扣消费、提现等），排除管理员调整
+      nextRecords = nextRecords.filter(({ record }) => record.type !== 'earn' && record.source !== 'admin_adjust');
     }
 
     const normalizedQuery = deferredSearchQuery.trim().toLowerCase();
@@ -200,11 +202,14 @@ export const usePartnerBeansPage = (): UsePartnerBeansPageReturn => {
     try {
       await submitMemberBeansAdjustment(userId, delta, reason);
 
+      // 乐观更新：立即反映在前端
       const newRecord: PartnerBeansPageRecord = {
         id: fallbackKey('partner-bean-record'),
         userId,
         userName: targetUser.name,
         userPhone: targetUser.phone,
+        avatarUrl: targetUser.avatarUrl,
+        beanBalance: safeNum(targetUser.beanBalance + delta),
         amount: delta,
         type: delta > 0 ? 'earn' : 'spend',
         source: 'admin_adjust',
@@ -225,6 +230,16 @@ export const usePartnerBeansPage = (): UsePartnerBeansPageReturn => {
       )));
       setAdjustTarget(null);
       showToast({ type: 'success', message: delta >= 0 ? '纯利豆调整成功' : '纯利豆扣减成功' });
+
+      // 后台静默刷新，确保与后端数据一致
+      try {
+        const response = await fetchPartnerBeansPageData();
+        setRecords(response.records);
+        setUsers(response.users);
+        setStats(response.stats);
+      } catch {
+        // 静默刷新失败不影响用户，乐观更新数据已生效
+      }
     } catch (error) {
       showToast({
         type: 'error',

@@ -224,7 +224,29 @@
   }
 }
 
-/* ===== PC 端级联下拉面板 ===== */
+/* ===== PC 端级联下拉面板（portal 版）===== */
+/* 定位坐标通过 CSS 自定义属性 --cdp-top / --cdp-left 注入，由 CascaderPcDropdown 在 JS 侧写入 */
+.cascader-dropdown-portal {
+  position: fixed;
+  top: var(--cdp-top);
+  left: var(--cdp-left);
+  z-index: 9000;
+  background: @bg-white;
+  border: 1px solid @border-color;
+  border-radius: @radius-md;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08), 0 3px 6px rgba(0, 0, 0, 0.04);
+
+  // 入场：从顶部原点缩放展开（对齐 Ant Design 5 antSlideUpIn）
+  transform-origin: 0% 0%;
+  animation: cascaderSlideUpIn 0.2s cubic-bezier(0.23, 1, 0.32, 1) both;
+
+  // 退出动画：ease-in-quint，收缩 + 淡出
+  &.closing {
+    animation: cascaderSlideUpOut 0.2s cubic-bezier(0.755, 0.05, 0.855, 0.06) both;
+  }
+}
+
+/* ===== PC 端级联下拉面板（保留旧类名，供非 portal 场景或测试使用）===== */
 .cascader-dropdown-pc {
   position: absolute;
   top: calc(100% + 4px);

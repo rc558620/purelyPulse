@@ -68,8 +68,8 @@ const PartnerPayoutApplicationCard: React.FC<PartnerPayoutApplicationCardProps> 
         aria-expanded={expanded}
         tabIndex={0}
       >
-        <div className={cx(styles.avatar, styles[`avatar_${application.status}`])} aria-hidden="true">
-          {safeStr(application.partnerName).slice(0, 1)}
+        <div className={cx(styles.avatar, styles[`avatar_${application.status}`], application.partnerAvatarUrl && styles.avatarWithImage)} aria-hidden="true">
+          {application.partnerAvatarUrl ? <img className={styles.avatarImg} src={application.partnerAvatarUrl} alt="" /> : safeStr(application.partnerName).slice(0, 1)}
         </div>
 
         <div className={styles.cardInfo}>

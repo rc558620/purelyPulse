@@ -23,6 +23,10 @@ export interface MemberPointsRecord {
   userName: string;
   /** 用户手机（脱敏） */
   userPhone: string;
+  /** 用户头像 URL */
+  avatarUrl?: string;
+  /** 变动前可用积分余额 */
+  availablePoints: SafeNumber;
   /** 变动数量：正数=获得，负数=消耗/扣除 */
   amount: SafeNumber;
   /** 变动类型 */
@@ -61,6 +65,8 @@ export interface MemberPointsPageUser {
   beanBalance: SafeNumber;
   /** 是否是合伙人 */
   isPartner: boolean;
+  /** 用户头像 URL */
+  avatarUrl?: string;
 }
 
 /** 页面概览统计 */

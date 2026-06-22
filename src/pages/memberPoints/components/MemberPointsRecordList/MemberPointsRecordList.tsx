@@ -1,6 +1,6 @@
 // memberPoints 变动记录列表区块
 import React from 'react';
-import { cx, isNonEmptyArray, safeNum } from '@utils/utils';
+import { cx, isNonEmptyArray, safeNum, safeStr } from '@utils/utils';
 import type { MemberPointsRecord, MemberPointsSource } from '../../memberPoints.types';
 import { IconMemberPointsQuestion, IconMemberPointsRecordType } from '../MemberPointsIcons/MemberPointsIcons';
 import styles from './MemberPointsRecordList.module.less';
@@ -50,28 +50,42 @@ const MemberPointsRecordList: React.FC<MemberPointsRecordListProps> = React.memo
       <div className={styles.recordList}>
         {records.map((record) => {
           const amountVariant = getRecordAmountVariant(record);
+          const avatarChar = safeStr(record.userName, '会').slice(0, 1);
 
           return (
             <div key={record.id} className={styles.recordItem}>
+              {/* 用户头像 */}
               <div
-                className={cx(
-                  styles.recordIcon,
-                  amountVariant === 'earn' && styles.recordIconEarn,
-                  amountVariant === 'spend' && styles.recordIconSpend,
-                  amountVariant === 'expire' && styles.recordIconExpire,
-                )}
+                className={cx(styles.recordAvatar, record.avatarUrl && styles.recordAvatarWithImage)}
                 aria-hidden="true"
               >
-                <IconMemberPointsRecordType type={amountVariant} />
+                {record.avatarUrl ? (
+                  <img className={styles.recordAvatarImg} src={record.avatarUrl} alt="" />
+                ) : (
+                  avatarChar
+                )}
+                <span
+                  className={cx(
+                    styles.recordAvatarBadge,
+                    amountVariant === 'earn' && styles.recordAvatarBadgeEarn,
+                    amountVariant === 'spend' && styles.recordAvatarBadgeSpend,
+                    amountVariant === 'expire' && styles.recordAvatarBadgeExpire,
+                  )}
+                >
+                  <IconMemberPointsRecordType type={amountVariant} />
+                </span>
               </div>
 
               <div className={styles.recordInfo}>
                 <div className={styles.recordTopRow}>
                   <span className={styles.recordUserName}>{record.userName}</span>
                   <span className={styles.recordPhone}>{record.userPhone}</span>
+                </div>
+                <div className={styles.recordMetaRow}>
                   <span className={cx(styles.recordSourceTag, record.source === 'admin_adjust' && styles.recordSourceTagAdmin)}>
                     {MEMBER_POINTS_SOURCE_LABELS[record.source]}
                   </span>
+                  <span className={styles.recordBalance}>余额 {safeNum(record.availablePoints).toLocaleString('zh-CN')} 积分</span>
                 </div>
                 <div className={styles.recordDesc}>{record.description}</div>
                 <div className={styles.recordTime}>{formatRecordTime(record.createdAt)}</div>

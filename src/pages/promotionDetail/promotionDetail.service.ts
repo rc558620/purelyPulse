@@ -129,6 +129,15 @@ const normalizeDateLabel = (value: unknown, tab?: PromotionPeriodTab): string =>
     return `${numericValue}月`;
   }
 
+  // 年月组合值识别：6 位数字如 202406 → "2024年6月"
+  if (tab === 'month' && numericValue >= 100001 && numericValue <= 999912) {
+    const ymYear = Math.floor(numericValue / 100);
+    const ymMonth = numericValue % 100;
+    if (ymYear >= 1000 && ymYear <= 9999 && ymMonth >= 1 && ymMonth <= 12) {
+      return `${ymYear}年${ymMonth}月`;
+    }
+  }
+
   const timestamp = numericValue < 1_000_000_000_000 ? numericValue * 1000 : numericValue;
   const date = new Date(timestamp);
   if (Number.isNaN(date.getTime())) {
@@ -166,6 +175,38 @@ const normalizePhone = (value: unknown): string => {
   }
 
   return String(Math.trunc(numericValue));
+};
+
+/**
+ * 标准化省份名称：去除 省/市/自治区/特别行政区/壮族/回族/维吾尔 等后缀/中缀，
+ * 使 "浙江省" → "浙江"、"广西壮族自治区" → "广西"、"北京市" → "北京"，
+ * 确保 partner.province 与 region.province 在 derived hook 中能精确匹配。
+ */
+export const normalizeProvinceName = (name: string): string => {
+  const trimmed = name.trim();
+  if (!trimmed) {
+    return trimmed;
+  }
+
+  // 特殊自治区：全称 → 简称（必须在通用规则之前处理）
+  const specialRegionMap: Record<string, string> = {
+    '广西壮族自治区': '广西',
+    '宁夏回族自治区': '宁夏',
+    '新疆维吾尔自治区': '新疆',
+    '香港特别行政区': '香港',
+    '澳门特别行政区': '澳门',
+  };
+
+  const specialName = specialRegionMap[trimmed];
+  if (specialName) {
+    return specialName;
+  }
+
+  // 通用后缀去除
+  return trimmed
+    .replace(/自治区$/, '')
+    .replace(/省$/, '')
+    .replace(/市$/, '');
 };
 
 const resolveAvatarText = (explicitAvatar: unknown, name: string): string => {
@@ -266,7 +307,7 @@ const mapPartnerItem = (
     return null;
   }
 
-  const province = pickStringField(item, ['province', 'provinceName', 'region', 'regionName']) || fallbackProvince;
+  const province = normalizeProvinceName(pickStringField(item, ['province', 'provinceName', 'region', 'regionName']) || fallbackProvince);
   const city = pickStringField(item, ['city', 'cityName']) || province || '--';
   const district = pickStringField(item, ['district', 'districtName', 'area', 'areaName']);
   const series = mapPartnerSeries(response, item, id);
@@ -281,6 +322,7 @@ const mapPartnerItem = (
     revenue: toYuanAmount(item.revenue ?? item.amount ?? item.totalAmount ?? item.income),
     growth: pickNumberField(item, ['growth', 'growthRate', 'increaseRate', 'compareRate']),
     avatar: resolveAvatarText(item.avatar ?? item.avatarText, name),
+    avatarUrl: typeof item.avatarUrl === 'string' && item.avatarUrl.trim() ? item.avatarUrl.trim() : undefined,
     rank: Math.max(0, pickNumberField(item, ['rank', 'sort', 'orderNo', 'index'])),
     joinDate: normalizeDateText(item.joinDate ?? item.createdAt ?? item.applyTime ?? item.registerTime),
     phone: normalizePhone(item.phone ?? item.mobile ?? item.mobilePhone),
@@ -358,22 +400,36 @@ const mapPartners = (response: unknown): PromotionPartnerItem[] => {
   return dedupePartners([...directPartners, ...regionPartners]);
 };
 
+const hasRevenueField = (item: Record<string, unknown>): boolean =>
+  item.totalRevenue != null || item.revenue != null || item.totalAmount != null || item.amount != null;
+
+const hasOrdersField = (item: Record<string, unknown>): boolean =>
+  item.totalOrders != null || item.orders != null || item.orderCount != null || item.promotionOrders != null;
+
+const hasPartnerCountField = (item: Record<string, unknown>): boolean =>
+  item.partnerCount != null || item.partners != null || item.count != null || item.totalPartners != null;
+
 const mapRegionItem = (item: Record<string, unknown>, partners: PromotionPartnerItem[]): PromotionRegionItem | null => {
-  const province = pickStringField(item, ['province', 'provinceName', 'region', 'regionName', 'name', 'label']);
-  if (!province) {
+  const rawProvince = pickStringField(item, ['province', 'provinceName', 'region', 'regionName', 'name', 'label']);
+  if (!rawProvince) {
     return null;
   }
 
-  const scopedPartners = partners.filter((partner) => partner.province === province || (!partner.province && partner.city === province));
+  const province = normalizeProvinceName(rawProvince);
+  const scopedPartners = partners.filter((partner) => partner.province === province || partner.city === province);
 
   return {
     province,
     city: pickStringField(item, ['city', 'cityName']) || undefined,
-    partnerCount: pickNumberField(item, ['partnerCount', 'partners', 'count', 'totalPartners']) || scopedPartners.length,
-    totalOrders: pickNumberField(item, ['totalOrders', 'orders', 'orderCount', 'promotionOrders'])
-      || scopedPartners.reduce((sum, partner) => sum + partner.orders, 0),
-    totalRevenue: toYuanAmount(item.totalRevenue ?? item.revenue ?? item.totalAmount ?? item.amount)
-      || scopedPartners.reduce((sum, partner) => sum + partner.revenue, 0),
+    partnerCount: hasPartnerCountField(item)
+      ? pickNumberField(item, ['partnerCount', 'partners', 'count', 'totalPartners'])
+      : scopedPartners.length,
+    totalOrders: hasOrdersField(item)
+      ? pickNumberField(item, ['totalOrders', 'orders', 'orderCount', 'promotionOrders'])
+      : scopedPartners.reduce((sum, partner) => sum + partner.orders, 0),
+    totalRevenue: hasRevenueField(item)
+      ? toYuanAmount(item.totalRevenue ?? item.revenue ?? item.totalAmount ?? item.amount)
+      : scopedPartners.reduce((sum, partner) => sum + partner.revenue, 0),
     growth: pickNumberField(item, ['growth', 'growthRate', 'increaseRate', 'compareRate']),
   };
 };
@@ -384,6 +440,7 @@ const deriveRegionsFromPartners = (partners: PromotionPartnerItem[]): PromotionR
   partners.forEach((partner) => {
     const province = partner.province || partner.city || '未知地区';
     const currentRegion = regionMap.get(province);
+    // partner.province 已在 mapPartnerItem 中经过 normalizeProvinceName 标准化
     if (currentRegion) {
       currentRegion.partnerCount += 1;
       currentRegion.totalOrders += partner.orders;
@@ -437,9 +494,7 @@ const buildRequestParams = (query: PromotionDetailQuery): Record<string, string 
   const [provinceCode, cityCode, districtCode] = regionValues;
 
   return {
-    name: query.name || undefined,
     keyword: query.name || undefined,
-    partnerName: query.name || undefined,
     queryMode: query.queryMode,
     date: query.date ?? undefined,
     startDate: query.startDate ?? undefined,

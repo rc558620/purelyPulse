@@ -76,12 +76,25 @@
   color: @accent-dark;
   font-size: 1.5rem;
   font-weight: 800;
+  overflow: hidden;
 
   @media (min-width: @bp-mobile) {
     width: 4.4rem;
     height: 4.4rem;
     font-size: 1.7rem;
   }
+}
+
+.avatarWithImage {
+  background: transparent;
+  border-color: transparent;
+}
+
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 9999px;
 }
 
 .avatar_paid {

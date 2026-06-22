@@ -1,0 +1,39 @@
+@import (reference) '../../../../styles/variables.less';
+@import (reference) '../../../../styles/mixins.less';
+
+.formContainer {
+    width: 100%;
+    .flex-col();
+    margin-top: 2.4rem;
+}
+
+// ─── 输入框前缀图标容器 ──────────────────────────────────────────────────────
+
+.iconWrapper {
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+    z-index: 10;
+
+    .inputIcon {
+        width: 24px;
+        height: 24px;
+        color: @text-sub;
+        flex-shrink: 0;
+        transition: color 0.3s;
+    }
+
+    .separator {
+        width: 1px;
+        height: 1.6rem;
+        background-color: @border-color;
+        margin: 0 1.2rem;
+        flex-shrink: 0;
+    }
+}
+
+// ─── 提交按钮 ────────────────────────────────────────────────────────────────
+
+.submitButton {
+    margin-top: 3.2rem;
+}

@@ -1,3 +1,4 @@
+import { formatRegionValue } from '@constants/regionData';
 import { createKeyedInFlightRequest, http, resolveEnvPath } from '@utils/http';
 import { safeNum } from '@utils/utils';
 import { readMembershipRevenueSyncEvents } from '../memberList/memberList.service';
@@ -172,18 +173,29 @@ const formatRecordTime = (value: unknown): string => {
 };
 
 const buildRegionText = (value: unknown): string => {
-  const directRegion = pickStringField(value, ['region', 'regionName', 'areaName']);
+  const directRegion = formatRegionValue(
+    pickStringField(value, ['region', 'regionName', 'areaName', 'regionCode', 'areaCode', 'districtCode']),
+  );
   if (directRegion) {
     return directRegion;
   }
 
-  const parts = [
+  const regionLabels = [
     pickStringField(value, ['province', 'provinceName']),
     pickStringField(value, ['city', 'cityName']),
     pickStringField(value, ['district', 'districtName', 'area']),
   ].filter(Boolean);
+  if (regionLabels.length > 0) {
+    return regionLabels.join(' · ');
+  }
 
-  return parts.length > 0 ? parts.join(' · ') : '--';
+  const regionCodePath = [
+    pickStringField(value, ['provinceCode']),
+    pickStringField(value, ['cityCode']),
+    pickStringField(value, ['districtCode', 'areaCode']),
+  ].filter(Boolean);
+
+  return formatRegionValue(regionCodePath) || '--';
 };
 
 const resolveRevenueRoot = (response: unknown): Record<string, unknown> | null => {

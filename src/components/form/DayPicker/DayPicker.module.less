@@ -275,7 +275,26 @@
   }
 }
 
-// ─── PC 端下拉面板 ─────────────────────────────────────
+// ─── PC 端下拉面板（portal 版）──────────────────────────
+// 定位坐标通过 CSS 自定义属性 --dp-top / --dp-left / --dp-min-width 注入，
+// 由 DayPickerPcDropdown 在 JS 侧写入，避免直接内联样式。
+.dropdownPortal {
+  position: fixed;
+  top: var(--dp-top);
+  left: var(--dp-left);
+  min-width: max(var(--dp-min-width), 34rem);
+  z-index: 9000;
+  background: @bg-white;
+  border: 1px solid @border-color;
+  border-radius: @radius-lg;
+  box-shadow:
+    0 8px 32px fade(#1e293b, 14%),
+    0 2px 8px fade(#1e293b, 8%);
+  padding: 1.2rem 0 0;
+  animation: dropdownIn 0.18s cubic-bezier(0.22, 0.68, 0, 1.2) both;
+}
+
+// 保留旧类名，避免其他场景直接用 .dropdown 发生样式丢失
 .dropdown {
   position: absolute;
   top: calc(100% + 6px);
@@ -287,7 +306,7 @@
   box-shadow:
     0 8px 32px fade(#1e293b, 14%),
     0 2px 8px fade(#1e293b, 8%);
-  min-width: 34rem; // 三列比两列稍宽
+  min-width: 34rem;
   padding: 1.2rem 0 0;
   animation: dropdownIn 0.18s cubic-bezier(0.22, 0.68, 0, 1.2) both;
 }

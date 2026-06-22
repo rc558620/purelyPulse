@@ -137,8 +137,12 @@ const MemberAssetAdjustModal: React.FC<MemberAssetAdjustModalProps> = ({
 
         <div className={styles.sheetBody}>
           <div className={styles.userCard}>
-            <div className={cx(styles.userAvatar, avatarClassName)} aria-hidden="true">
-              {member.avatarChar}
+            <div className={cx(styles.userAvatar, avatarClassName, member.avatarUrl && styles.userAvatarWithImage)} aria-hidden="true">
+              {member.avatarUrl ? (
+                <img className={styles.userAvatarImg} src={member.avatarUrl} alt="" />
+              ) : (
+                member.avatarChar
+              )}
             </div>
             <div className={styles.userInfo}>
               <div className={styles.userNameRow}>

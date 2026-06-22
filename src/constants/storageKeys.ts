@@ -41,4 +41,6 @@ export const STORAGE_KEYS = {
   SALES_ORDERS: 'purely_profit_sales_orders',
   /** 会员等级手动设置产生的收入记录，存于 sessionStorage。 */
   MEMBERSHIP_REVENUE_EVENTS: 'purely_profit_membership_revenue_events',
+  /** 积分变动记录页面缓存，存于 localStorage。 */
+  MEMBER_POINTS_PAGE_DATA: 'purely_profit_member_points_page_data',
 } as const;

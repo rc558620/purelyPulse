@@ -234,6 +234,7 @@ const mapApplication = (rawValue: unknown): PartnerApplication | null => {
     appliedAt: pickFormattedDateTime(rawValue, APPLIED_AT_CANDIDATES),
     reason,
     avatar: resolveAvatar(name, rawValue),
+    avatarUrl: (isPlainObject(rawValue) && typeof rawValue.avatarUrl === 'string' && rawValue.avatarUrl.trim()) ? rawValue.avatarUrl.trim() : undefined,
     status,
   };
 };

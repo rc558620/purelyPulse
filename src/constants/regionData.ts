@@ -15,6 +15,8 @@ interface RegionPathParts {
 const ROOT_REGION_CODE = '86';
 const MUNICIPAL_PLACEHOLDER_LABEL = '市辖区';
 const MUNICIPALITY_CODES = new Set(['110000', '120000', '310000', '500000']);
+const REGION_CODE_PATTERN = /^\d{6}$/;
+const REGION_SEGMENT_SEPARATOR = /\s*(?:,|\/|>|\||·)\s*/;
 const parsedAreaData = areaData as AreaDataMap;
 
 const isMunicipalityCode = (code: string): boolean => MUNICIPALITY_CODES.has(code);
@@ -101,6 +103,40 @@ const toRegionSegments = (value: unknown): string[] => {
       return '';
     })
     .filter(Boolean);
+};
+
+const toLooseRegionSegments = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return toRegionSegments(value);
+  }
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return [String(Math.trunc(value))];
+  }
+
+  if (typeof value !== 'string') {
+    return [];
+  }
+
+  const trimmedValue = value.trim();
+  if (!trimmedValue) {
+    return [];
+  }
+
+  if (trimmedValue.startsWith('[') && trimmedValue.endsWith(']')) {
+    try {
+      const parsedValue = JSON.parse(trimmedValue) as unknown;
+      return toRegionSegments(parsedValue);
+    } catch {
+      return [];
+    }
+  }
+
+  return trimmedValue
+    .split(REGION_SEGMENT_SEPARATOR)
+    .map((segment) => segment.trim())
+    .filter(Boolean)
+    .slice(0, 3);
 };
 
 const createNormalizedRegionValue = ({
@@ -292,6 +328,47 @@ const findRegionPath = (value: unknown): RegionPathParts | null => {
   return findRegionPathByCodes(segments) ?? findRegionPathByLabels(segments);
 };
 
+const resolveRegionLabelsBySingleCode = (code: string): string[] => {
+  const provinceName = parsedAreaData[ROOT_REGION_CODE]?.[code];
+  if (provinceName) {
+    return [provinceName];
+  }
+
+  for (const [provinceCode, currentProvinceName] of Object.entries(parsedAreaData[ROOT_REGION_CODE] ?? {})) {
+    const cityGroups = parsedAreaData[provinceCode];
+    if (!cityGroups) {
+      continue;
+    }
+
+    if (isMunicipalityCode(provinceCode)) {
+      if (cityGroups[code]) {
+        return [currentProvinceName];
+      }
+
+      const municipalityRegionPath = findMunicipalityDistrictByCode(provinceCode, code);
+      if (municipalityRegionPath) {
+        return createNormalizedRegionValue(municipalityRegionPath).regionLabels;
+      }
+
+      continue;
+    }
+
+    const cityName = cityGroups[code];
+    if (cityName) {
+      return [currentProvinceName, cityName];
+    }
+
+    for (const [cityCode, currentCityName] of Object.entries(cityGroups)) {
+      const districtName = parsedAreaData[cityCode]?.[code];
+      if (districtName && !shouldSkipDistrictPlaceholder(cityCode, districtName)) {
+        return [currentProvinceName, currentCityName, districtName];
+      }
+    }
+  }
+
+  return [];
+};
+
 export interface NormalizedRegionValue {
   region: string[];
   regionLabels: string[];
@@ -318,3 +395,21 @@ export const normalizeRegionValue = (value: unknown): NormalizedRegionValue | nu
 export const normalizeRegionCodes = (value: unknown): CascadeValue[] => (
   normalizeRegionValue(value)?.region ?? []
 );
+
+export const formatRegionValue = (value: unknown): string => {
+  const segments = toLooseRegionSegments(value);
+  if (segments.length === 0) {
+    return '';
+  }
+
+  const normalizedRegion = normalizeRegionValue(segments);
+  if (normalizedRegion) {
+    return normalizedRegion.regionLabels.join(' · ');
+  }
+
+  if (segments.length === 1 && REGION_CODE_PATTERN.test(segments[0] ?? '')) {
+    return resolveRegionLabelsBySingleCode(segments[0] ?? '').join(' · ');
+  }
+
+  return segments.join(' · ');
+};

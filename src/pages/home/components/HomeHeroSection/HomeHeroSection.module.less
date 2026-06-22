@@ -7,13 +7,13 @@
   overflow: hidden;
   padding: 2.4rem 2rem;
   display: flex;
-  align-items: center;
-  gap: 1.6rem;
+  align-items: stretch;
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.7);
   border-radius: 20px;
+  min-height: 14rem;
   box-shadow:
     0 4px 24px rgba(0, 0, 0, 0.05),
     0 1px 4px rgba(0, 0, 0, 0.04),
@@ -33,8 +33,8 @@
   @media (min-width: @bp-mobile) {
     grid-column: 1 / -1;
     padding: 3.2rem 3.6rem;
-    gap: 3.2rem;
     border-radius: 24px;
+    min-height: 16rem;
 
     &::before {
       border-radius: 24px 24px 0 0;
@@ -43,10 +43,12 @@
 }
 
 .heroLeft {
-  flex: 1;
-  min-width: 0;
+  // 宽度由内容自然撑开，不强制拉伸；right: 46% 的绝对定位趋势图不占 flex 空间
+  width: auto;
+  flex-shrink: 0;
   .flex-col();
   gap: 1rem;
+  justify-content: center;
 }
 
 .heroLiveBadge {
@@ -139,16 +141,27 @@
 }
 
 .heroSparkline {
-  width: 120px;
-  flex-shrink: 0;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 62%;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 0 20px 20px 0;
 
   @media (min-width: @bp-mobile) {
-    width: 260px;
+    width: 68%;
+    border-radius: 0 24px 24px 0;
   }
 }
 
 .heroSparklineCanvas {
   width: 100%;
+  height: 100%;
+  display: block;
+  // 覆盖 Echarts 组件默认的 min-height，让趋势图随 heroCard 自适应
+  min-height: 0 !important;
 }
 
 .heroDecorCircle {

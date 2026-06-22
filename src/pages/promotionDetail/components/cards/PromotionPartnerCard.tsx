@@ -44,10 +44,11 @@ const PromotionPartnerCard: React.FC<PromotionPartnerCardProps> = ({
         partner.rank === 1 && styles.partnerAvatarGold,
         partner.rank === 2 && styles.partnerAvatarSilver,
         partner.rank === 3 && styles.partnerAvatarBronze,
+        partner.avatarUrl && styles.partnerAvatarWithImage,
       )}
       aria-hidden="true"
     >
-      {partner.avatar}
+      {partner.avatarUrl ? <img className={styles.partnerAvatarImg} src={partner.avatarUrl} alt="" /> : partner.avatar}
     </div>
 
     <div className={styles.partnerInfo}>

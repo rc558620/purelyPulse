@@ -275,6 +275,7 @@ const mapPartnerPayoutApplication = (rawValue: unknown): PartnerPayoutApplicatio
     partnerName,
     partnerPhone: partnerPhone || '--',
     partnerCity,
+    partnerAvatarUrl: (isPlainObject(rawValue) && typeof rawValue.partnerAvatarUrl === 'string' && rawValue.partnerAvatarUrl.trim()) ? rawValue.partnerAvatarUrl.trim() : undefined,
     amount: pickFenAmountField(rawValue),
     accountType,
     accountNo,

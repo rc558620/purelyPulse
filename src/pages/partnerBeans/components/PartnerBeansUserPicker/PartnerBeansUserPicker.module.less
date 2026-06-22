@@ -120,6 +120,7 @@
   height: 3.8rem;
   border-radius: 50%;
   background: linear-gradient(135deg, #f59e0b, #fbbf24);
+  border: 1.5px solid rgba(245, 158, 11, 0.35);
   color: #fff;
   font-size: 1.4rem;
   font-weight: 700;
@@ -127,6 +128,18 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.pickerAvatarWithImage {
+  background: transparent;
+}
+
+.pickerAvatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 .pickerUserInfo {

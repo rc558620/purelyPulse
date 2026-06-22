@@ -26,7 +26,9 @@ const PartnerBeansSummaryCardComponent: React.FC<PartnerBeansSummaryCardProps> =
       <div className={styles.partnerList}>
         {users.map((user) => (
           <div key={user.id} className={styles.partnerItem}>
-            <div className={styles.partnerAvatar} aria-hidden="true">{user.name[0]}</div>
+            <div className={`${styles.partnerAvatar} ${user.avatarUrl ? styles.partnerAvatarWithImage : ''}`} aria-hidden="true">
+              {user.avatarUrl ? <img className={styles.partnerAvatarImg} src={user.avatarUrl} alt="" /> : user.name[0]}
+            </div>
             <div className={styles.partnerInfo}>
               <span className={styles.partnerName}>{user.name}</span>
               <span className={styles.partnerPhone}>{user.phone}</span>

@@ -22,7 +22,7 @@ const formatPartnerBeansTime = (timestamp: number): string => {
   return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 };
 
-const renderRecordIcon = (record: PartnerBeansPageRecord): React.ReactNode => {
+const renderRecordTypeIcon = (record: PartnerBeansPageRecord): React.ReactNode => {
   if (record.type === 'earn') {
     return <IconPartnerBeansEarn />;
   }
@@ -43,11 +43,11 @@ const getRecordClassNames = (record: PartnerBeansPageRecord) => {
       isWithdraw && styles.recordAmountWithdraw,
       !isEarn && !isWithdraw && styles.recordAmountSpend,
     ),
-    iconClassName: cx(
-      styles.recordIcon,
-      isEarn && styles.recordIconEarn,
-      isWithdraw && styles.recordIconWithdraw,
-      !isEarn && !isWithdraw && styles.recordIconSpend,
+    typeIconClassName: cx(
+      styles.recordTypeIcon,
+      isEarn && styles.recordTypeIconEarn,
+      isWithdraw && styles.recordTypeIconWithdraw,
+      !isEarn && !isWithdraw && styles.recordTypeIconSpend,
     ),
   };
 };
@@ -66,8 +66,20 @@ const PartnerBeansRecordListComponent: React.FC<PartnerBeansRecordListProps> = (
 
           return (
             <div key={record.id} className={styles.recordItem}>
-              <div className={classNames.iconClassName} aria-hidden="true">
-                {renderRecordIcon(record)}
+              <div className={styles.recordLeft}>
+                <div
+                  className={cx(styles.recordAvatar, record.avatarUrl && styles.recordAvatarWithImage)}
+                  aria-hidden="true"
+                >
+                  {record.avatarUrl ? (
+                    <img className={styles.recordAvatarImg} src={record.avatarUrl} alt="" />
+                  ) : (
+                    record.userName[0]
+                  )}
+                </div>
+                <div className={classNames.typeIconClassName} aria-hidden="true">
+                  {renderRecordTypeIcon(record)}
+                </div>
               </div>
 
               <div className={styles.recordInfo}>
@@ -92,7 +104,12 @@ const PartnerBeansRecordListComponent: React.FC<PartnerBeansRecordListProps> = (
                     被推广人：{record.relatedUser}
                   </div>
                 ) : null}
-                <div className={styles.recordTime}>{formatPartnerBeansTime(record.createdAt)}</div>
+                <div className={styles.recordBottomRow}>
+                  <span className={styles.recordTime}>{formatPartnerBeansTime(record.createdAt)}</span>
+                  <span className={styles.recordBalance}>
+                    余额 <span className={styles.recordBalanceVal}>{safeNum(record.beanBalance).toLocaleString('zh-CN')}</span> 豆
+                  </span>
+                </div>
               </div>
 
               <div className={classNames.amountClassName}>

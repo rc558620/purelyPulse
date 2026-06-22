@@ -34,10 +34,14 @@ const SetSubAccountMemberCard: React.FC<SetSubAccountMemberCardProps> = ({
   return (
     <div className={styles.memberCard}>
       <div
-        className={cx(styles.memberAvatar, getAvatarColorClass(member.avatarColorIdx))}
+        className={cx(styles.memberAvatar, getAvatarColorClass(member.avatarColorIdx), member.avatarUrl && styles.memberAvatarWithImage)}
         aria-hidden="true"
       >
-        {safeStr(member.avatarChar, '会')}
+        {member.avatarUrl ? (
+          <img className={styles.memberAvatarImg} src={member.avatarUrl} alt="" />
+        ) : (
+          safeStr(member.avatarChar, '会')
+        )}
       </div>
       <div className={styles.memberInfo}>
         <div className={styles.memberNameRow}>

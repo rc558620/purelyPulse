@@ -74,6 +74,8 @@ export interface MemberDetail {
   avatarChar: string;
   /** 头像颜色索引 0-5。 */
   avatarColorIdx: number;
+  /** 用户头像 URL，未设置时为空串。 */
+  avatarUrl?: string;
   /** 当前会员状态。 */
   status: MemberStatus;
   /** 当前会员等级。 */
@@ -120,6 +122,8 @@ export interface MemberListItem {
   avatarChar: string;
   /** 头像颜色索引。 */
   avatarColorIdx: number;
+  /** 用户头像 URL，未设置时为空串。 */
+  avatarUrl?: string;
   /** 当前会员状态。 */
   status: MemberStatus;
   /** 当前会员等级。 */

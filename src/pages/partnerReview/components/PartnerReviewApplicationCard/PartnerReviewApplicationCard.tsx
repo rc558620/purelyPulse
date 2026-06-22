@@ -80,10 +80,11 @@ const PartnerReviewApplicationCard: React.FC<PartnerReviewApplicationCardProps> 
             styles.avatar,
             application.status === 'approved' && styles.avatarApproved,
             application.status === 'rejected' && styles.avatarRejected,
+            application.avatarUrl && styles.avatarWithImage,
           )}
           aria-hidden="true"
         >
-          {safeStr(application.avatar, '合').slice(0, 1)}
+          {application.avatarUrl ? <img className={styles.avatarImg} src={application.avatarUrl} alt="" /> : safeStr(application.avatar, '合').slice(0, 1)}
         </div>
 
         <div className={styles.cardInfo}>

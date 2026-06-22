@@ -28,6 +28,7 @@ export const routeDefinitions: AppRouteDefinition[] = [
     { path: ROUTE_PATHS.home, page: pages.home, wrap: withAuthGuard },
     { path: ROUTE_PATHS.profile, page: pages.profile, wrap: withAuthGuard },
     { path: ROUTE_PATHS.changePassword, page: pages.changePassword, wrap: withAuthGuard },
+    { path: ROUTE_PATHS.changeNickname, page: pages.changeNickname, wrap: withAuthGuard },
     { path: ROUTE_PATHS.partnerReview, page: pages.partnerReview, wrap: withAuthGuard },
     { path: ROUTE_PATHS.partnerPayout, page: pages.partnerPayout, wrap: withAuthGuard },
     { path: ROUTE_PATHS.revenueDetail, page: pages.revenueDetail, wrap: withAuthGuard },

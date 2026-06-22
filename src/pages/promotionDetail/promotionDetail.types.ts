@@ -34,6 +34,7 @@ export interface PromotionPartnerItem {
   revenue: number;
   growth: number;
   avatar: string;
+  avatarUrl?: string;
   rank: number;
   joinDate: string;
   phone: string;

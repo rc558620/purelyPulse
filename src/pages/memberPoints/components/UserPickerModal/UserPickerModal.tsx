@@ -1,6 +1,6 @@
 // 用户选择弹窗：在调整积分前选择目标会员。
 import React from 'react';
-import { isNonEmptyArray, safeNum } from '@utils/utils';
+import { cx, isNonEmptyArray, safeNum } from '@utils/utils';
 import { IconMemberPointsClose } from '../MemberPointsIcons/MemberPointsIcons';
 import type { MemberPointsPageUser } from '../../memberPoints.types';
 import styles from './UserPickerModal.module.less';
@@ -55,7 +55,9 @@ const UserPickerModal: React.FC<UserPickerModalProps> = ({
               onClick={() => onSelect(user)}
               disabled={isSubmitting}
             >
-              <div className={styles.avatar} aria-hidden="true">{user.name[0]}</div>
+              <div className={cx(styles.avatar, user.avatarUrl && styles.avatarWithImage)} aria-hidden="true">
+                {user.avatarUrl ? <img className={styles.avatarImg} src={user.avatarUrl} alt="" /> : user.name[0]}
+              </div>
               <div className={styles.userInfo}>
                 <span className={styles.userName}>{user.name}</span>
                 <span className={styles.userPhone}>{user.phone}</span>

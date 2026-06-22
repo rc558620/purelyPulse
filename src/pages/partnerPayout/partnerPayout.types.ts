@@ -13,6 +13,8 @@ export interface PartnerPayoutApplication {
   partnerPhone: string;
   /** 合伙人所在城市 */
   partnerCity: string;
+  /** 合伙人头像 URL */
+  partnerAvatarUrl?: string;
   /** 申请金额，单位分 */
   amount: number;
   /** 收款账户类型 */

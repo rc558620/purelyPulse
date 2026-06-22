@@ -23,6 +23,10 @@ export interface BeanRecord {
   userName: string;
   /** 用户手机（脱敏） */
   userPhone: string;
+  /** 用户头像 URL */
+  avatarUrl?: string;
+  /** 变动后纯利豆余额 */
+  beanBalance: SafeNumber;
   /** 变动数量：正数=获得，负数=消耗/提现 */
   amount: SafeNumber;
   /** 变动类型 */
@@ -63,6 +67,8 @@ export interface UserSnapshot {
   beanBalance: SafeNumber;
   /** 是否是合伙人 */
   isPartner: boolean;
+  /** 用户头像 URL */
+  avatarUrl?: string;
 }
 
 /** 纯利豆页面概览统计 */
