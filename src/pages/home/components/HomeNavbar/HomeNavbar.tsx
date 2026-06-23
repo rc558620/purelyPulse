@@ -9,7 +9,7 @@ import notificationsIcon from '@assets/image/Home/notifications.svg';
 import settingsIcon from '@assets/image/Home/settings.svg';
 import icSavings from '@assets/image/Additional/savings.svg';
 
-const HomeNavbar: React.FC = memo(() => {
+const HomeNavbar = memo(() => {
     const navigate = useAnimatedNavigate();
     const { userInfo } = useUser();
     const { avatar, storeName } = userInfo;

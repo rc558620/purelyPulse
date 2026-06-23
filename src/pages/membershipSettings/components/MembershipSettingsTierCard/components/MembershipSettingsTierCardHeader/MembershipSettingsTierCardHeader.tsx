@@ -1,5 +1,4 @@
 // 会员套餐卡片头部：展示套餐信息、当前价格与保存状态。
-import { memo } from 'react';
 import type { JSX } from 'react';
 import { cx } from '@utils/utils';
 import { IconMembershipCheck } from '../../../MembershipSettingsIcons/MembershipSettingsIcons';
@@ -22,7 +21,8 @@ interface MembershipSettingsTierCardHeaderProps {
   isDirty: boolean;
 }
 
-const MembershipSettingsTierCardHeader = memo(({
+// BUG-13 修复：移除无效 memo，父组件非 memo 且 props 每次输入都变，memo 无法拦截任何重渲染
+const MembershipSettingsTierCardHeader = ({
   config,
   toneClassNames,
   shouldShowCurrentPrice,
@@ -63,8 +63,6 @@ const MembershipSettingsTierCardHeader = memo(({
       {isDirty ? <span className={styles.dirtyDot} aria-label="有未保存的修改" /> : null}
     </div>
   );
-});
-
-MembershipSettingsTierCardHeader.displayName = 'MembershipSettingsTierCardHeader';
+};
 
 export default MembershipSettingsTierCardHeader;

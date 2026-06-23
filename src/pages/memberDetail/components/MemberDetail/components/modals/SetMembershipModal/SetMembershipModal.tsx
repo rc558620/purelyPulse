@@ -247,12 +247,14 @@ const SetMembershipModal: React.FC<SetMembershipModalProps> = ({
     const newLevel: MemberLevel = selectedDuration === 'free' ? 'free' : selectedDuration;
     setIsSubmitting(true);
     try {
-      await Promise.resolve(onConfirm(
+      await onConfirm(
         newLevel,
         selectedDuration === 'free' ? null : newExpiry,
         selectedDuration === 'lifetime' && lifetimeAmountFen !== null ? { amountFen: lifetimeAmountFen } : undefined,
-      ));
+      );
       onClose();
+    } catch {
+      // onConfirm 失败时不关闭弹窗，外部已处理 toast 提示
     } finally {
       setIsSubmitting(false);
     }

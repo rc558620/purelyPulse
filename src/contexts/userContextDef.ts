@@ -31,6 +31,8 @@ export interface UserContextType {
   setVerified: (verified: boolean) => void;
   /** 批量更新用户信息。 */
   updateUserInfo: (info: Partial<UserInfo>) => void;
+  /** 清空当前用户信息并清除持久化缓存。 */
+  clearUserInfo: () => void;
 }
 
 export const UserContext = createContext<UserContextType | null>(null);

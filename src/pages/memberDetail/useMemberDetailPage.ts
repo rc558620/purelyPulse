@@ -244,6 +244,7 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
         type: 'error',
         message: error instanceof Error ? error.message : '积分调整失败，请稍后重试',
       });
+      throw error;
     } finally {
       setSubmittingAction(null);
     }
@@ -264,6 +265,7 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
         type: 'error',
         message: error instanceof Error ? error.message : '纯利豆调整失败，请稍后重试',
       });
+      throw error;
     } finally {
       setSubmittingAction(null);
     }
@@ -291,6 +293,7 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
         type: 'error',
         message: error instanceof Error ? error.message : '会员等级设置失败，请稍后重试',
       });
+      throw error;
     } finally {
       setSubmittingAction(null);
     }

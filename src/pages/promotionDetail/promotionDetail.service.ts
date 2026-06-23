@@ -1,5 +1,5 @@
 import { createKeyedInFlightRequest, http, resolveEnvPath } from '@utils/http';
-import { safeNum } from '@utils/utils';
+import { fenToYuan, safeNum } from '@utils/utils';
 import type {
   PromotionDetailData,
   PromotionDetailQuery,
@@ -77,7 +77,7 @@ const toYuanAmount = (value: unknown): number => {
   }
 
   // Pulse promotion detail amount fields are returned in fen.
-  return safeNum(normalizedValue / 100);
+  return safeNum(fenToYuan(normalizedValue));
 };
 
 const pickStringField = (value: unknown, keys: readonly string[]): string => {
@@ -121,6 +121,23 @@ const normalizeDateLabel = (value: unknown, tab?: PromotionPeriodTab): string =>
     return '';
   }
 
+  // 优先识别时间戳：秒级（< 1e12）或毫秒级（>= 1e12），阈值 1e9 排除年/月小数字
+  if (numericValue >= 1_000_000_000) {
+    const timestamp = numericValue < 1_000_000_000_000 ? numericValue * 1000 : numericValue;
+    const date = new Date(timestamp);
+    if (!Number.isNaN(date.getTime())) {
+      if (tab === 'year') {
+        return `${date.getFullYear()}年`;
+      }
+
+      if (tab === 'month') {
+        return `${date.getMonth() + 1}月`;
+      }
+
+      return `${date.getMonth() + 1}/${date.getDate()}`;
+    }
+  }
+
   if (tab === 'year' && numericValue >= 1000 && numericValue <= 9999) {
     return `${numericValue}年`;
   }
@@ -138,21 +155,7 @@ const normalizeDateLabel = (value: unknown, tab?: PromotionPeriodTab): string =>
     }
   }
 
-  const timestamp = numericValue < 1_000_000_000_000 ? numericValue * 1000 : numericValue;
-  const date = new Date(timestamp);
-  if (Number.isNaN(date.getTime())) {
-    return String(numericValue);
-  }
-
-  if (tab === 'year') {
-    return `${date.getFullYear()}年`;
-  }
-
-  if (tab === 'month') {
-    return `${date.getMonth() + 1}月`;
-  }
-
-  return `${date.getMonth() + 1}/${date.getDate()}`;
+  return String(numericValue);
 };
 
 const normalizeDateText = (value: unknown): string => {

@@ -23,6 +23,8 @@ const getEmptyTitle = (activeTab: PartnerPayoutTabKey): string => {
   switch (activeTab) {
     case 'pending':
       return '暂无待处理记录';
+    case 'approved':
+      return '暂无审核中记录';
     case 'paid':
       return '暂无已打款记录';
     case 'rejected':

@@ -1,13 +1,7 @@
-// useUser Hook，优先读取旧 Context 注入值，否则回退到 Zustand 全局状态。
-import { useContext } from 'react';
+// useUser Hook，直接从 Zustand 全局状态获取用户信息。
+// 不再通过 Context 回退，避免 Provider 外使用时数据源不一致。
 import { useUserStore } from '@stores';
-import { UserContext } from './userContextDef';
 import type { UserContextType } from './userContextDef';
 
-/** 获取用户状态 Hook，兼容测试和历史 Context 包装。 */
-export const useUser = (): UserContextType => {
-  const context = useContext(UserContext);
-  const store = useUserStore();
-
-  return context ?? store;
-};
+/** 获取用户状态 Hook，统一从 Zustand store 读取。 */
+export const useUser = (): UserContextType => useUserStore();

@@ -1,6 +1,6 @@
 // 合伙人打款页顶部汇总条
 import React from 'react';
-import { cx, fmtAmount, safeNum } from '@utils/utils';
+import { cx, fenToYuan, fmtAmount, safeNum } from '@utils/utils';
 import styles from './PartnerPayoutSummaryBar.module.less';
 
 interface PartnerPayoutSummaryBarProps {
@@ -26,12 +26,12 @@ const PartnerPayoutSummaryBar: React.FC<PartnerPayoutSummaryBarProps> = ({
     </div>
     <div className={styles.summaryDivider} aria-hidden="true" />
     <div className={styles.summaryItem}>
-      <div className={styles.summaryVal}>¥{fmtAmount(safeNum(pendingAmount) / 100)}</div>
+      <div className={styles.summaryVal}>¥{fmtAmount(fenToYuan(safeNum(pendingAmount)))}</div>
       <div className={styles.summaryLabel}>待打款金额</div>
     </div>
     <div className={styles.summaryDivider} aria-hidden="true" />
     <div className={styles.summaryItem}>
-      <div className={styles.summaryVal}>¥{fmtAmount(safeNum(paidAmount) / 100)}</div>
+      <div className={styles.summaryVal}>¥{fmtAmount(fenToYuan(safeNum(paidAmount)))}</div>
       <div className={styles.summaryLabel}>已打款累计</div>
     </div>
   </div>

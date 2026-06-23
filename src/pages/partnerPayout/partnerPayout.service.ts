@@ -211,17 +211,19 @@ const normalizeStatus = (value: string): PartnerPayoutStatus => {
     case 'completed':
     case 'done':
       return 'paid';
+    case 'approved':
+    case 'reviewing':
+    case 'processing':
+      return 'approved';
     case 'rejected':
     case 'reject':
     case 'failed':
     case 'cancelled':
       return 'rejected';
-    case 'approved':
-    case 'reviewing':
-    case 'processing':
     case 'pending':
     case 'waiting':
     case 'submitted':
+      return 'pending';
     default:
       return 'pending';
   }
@@ -291,6 +293,7 @@ const mapPartnerPayoutApplication = (rawValue: unknown): PartnerPayoutApplicatio
 const computeStats = (applications: PartnerPayoutApplication[]): PartnerPayoutStats => ({
   totalCount: applications.length,
   pendingCount: applications.filter((application) => application.status === 'pending').length,
+  approvedCount: applications.filter((application) => application.status === 'approved').length,
   paidCount: applications.filter((application) => application.status === 'paid').length,
   rejectedCount: applications.filter((application) => application.status === 'rejected').length,
 });
@@ -305,6 +308,7 @@ const mapStats = (response: unknown, applications: PartnerPayoutApplication[]): 
   return {
     totalCount: pickNumberField(statsSource, ['totalCount', 'total', 'allCount']) || applications.length,
     pendingCount: pickNumberField(statsSource, ['pendingCount', 'waitingCount', 'todoCount']) || applications.filter((application) => application.status === 'pending').length,
+    approvedCount: pickNumberField(statsSource, ['approvedCount', 'reviewingCount', 'processingCount']) || applications.filter((application) => application.status === 'approved').length,
     paidCount: pickNumberField(statsSource, ['paidCount', 'successCount', 'doneCount']) || applications.filter((application) => application.status === 'paid').length,
     rejectedCount: pickNumberField(statsSource, ['rejectedCount', 'failedCount']) || applications.filter((application) => application.status === 'rejected').length,
   };
@@ -327,11 +331,11 @@ const requestPartnerPayoutList = async (): Promise<{ applications: PartnerPayout
   };
 };
 
-const submitPartnerPayoutAction = async (rawPath: string, id: string, action: 'approve' | 'reject'): Promise<void> => {
+const submitPartnerPayoutAction = async (rawPath: string, id: string, action: 'approve' | 'reject', options?: { rejectReason?: string }): Promise<void> => {
   const requestTarget = resolveActionPath(rawPath, id);
   const payload = action === 'approve'
     ? { txnNo: '' }
-    : { rejectReason: '打款申请已拒绝' };
+    : { rejectReason: options?.rejectReason ?? '打款申请已拒绝' };
   await http.patch<unknown, Record<string, unknown>>(
     requestTarget.url,
     payload,
@@ -352,6 +356,6 @@ export const submitPartnerPayoutApprove = async (id: string): Promise<void> => {
   await submitPartnerPayoutAction(PARTNER_PAYOUT_APPROVE_API_PATH, id, 'approve');
 };
 
-export const submitPartnerPayoutReject = async (id: string): Promise<void> => {
-  await submitPartnerPayoutAction(PARTNER_PAYOUT_REJECT_API_PATH, id, 'reject');
+export const submitPartnerPayoutReject = async (id: string, rejectReason?: string): Promise<void> => {
+  await submitPartnerPayoutAction(PARTNER_PAYOUT_REJECT_API_PATH, id, 'reject', { rejectReason });
 };

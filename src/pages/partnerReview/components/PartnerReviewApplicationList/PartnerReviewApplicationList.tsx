@@ -16,10 +16,8 @@ interface PartnerReviewApplicationListProps {
   submittingActionType: ReviewSubmitAction | null;
   /** 切换展开态 */
   onToggleExpand: (id: string) => void;
-  /** 审核通过 */
-  onApprove: (id: string) => Promise<void>;
-  /** 审核拒绝 */
-  onReject: (id: string) => Promise<void>;
+  /** 打开确认弹窗 */
+  onOpenConfirm: (application: PartnerApplication, action: ReviewSubmitAction) => void;
 }
 
 const PartnerReviewApplicationList: React.FC<PartnerReviewApplicationListProps> = memo(({
@@ -28,8 +26,7 @@ const PartnerReviewApplicationList: React.FC<PartnerReviewApplicationListProps> 
   submittingActionId,
   submittingActionType,
   onToggleExpand,
-  onApprove,
-  onReject,
+  onOpenConfirm,
 }) => (
   <div className={styles.listWrap}>
     {isNonEmptyArray(applications)
@@ -41,8 +38,7 @@ const PartnerReviewApplicationList: React.FC<PartnerReviewApplicationListProps> 
           isSubmitting={submittingActionId === application.id}
           submittingActionType={submittingActionId === application.id ? submittingActionType : null}
           onToggleExpand={onToggleExpand}
-          onApprove={onApprove}
-          onReject={onReject}
+          onOpenConfirm={onOpenConfirm}
         />
       ))
       : null}

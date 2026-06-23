@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useDebounceFn } from 'ahooks';
 
 /**
@@ -20,10 +20,17 @@ export function useIsMobile(breakpoint = 768, wait = 150): boolean {
     { wait },
   );
 
+  // 用 ref 保存最新的防抖回调，避免 run 引用变化导致 listener 频繁重注册
+  const handleResizeRef = useRef(handleResize);
   useEffect(() => {
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    handleResizeRef.current = handleResize;
   }, [handleResize]);
+
+  useEffect(() => {
+    const onResize = () => handleResizeRef.current();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   return isMobile;
 }

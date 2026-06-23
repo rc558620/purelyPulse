@@ -131,7 +131,7 @@ export const usePartnerBeansPage = (): UsePartnerBeansPageReturn => {
       // "获得"tab：只显示业务性获得（推广奖励等），排除管理员调整
       nextRecords = nextRecords.filter(({ record }) => record.type === 'earn' && record.source !== 'admin_adjust');
     } else if (activeTab === 'spend') {
-      // "消耗/提现"tab：只显示业务性消耗（抵扣消费、提现等），排除管理员调整
+      // "消耗/提现"tab：合并展示 spend（抵扣消费）和 withdraw（提现），排除管理员调整
       nextRecords = nextRecords.filter(({ record }) => record.type !== 'earn' && record.source !== 'admin_adjust');
     }
 
@@ -202,44 +202,43 @@ export const usePartnerBeansPage = (): UsePartnerBeansPageReturn => {
     try {
       await submitMemberBeansAdjustment(userId, delta, reason);
 
-      // 乐观更新：立即反映在前端
-      const newRecord: PartnerBeansPageRecord = {
-        id: fallbackKey('partner-bean-record'),
-        userId,
-        userName: targetUser.name,
-        userPhone: targetUser.phone,
-        avatarUrl: targetUser.avatarUrl,
-        beanBalance: safeNum(targetUser.beanBalance + delta),
-        amount: delta,
-        type: delta > 0 ? 'earn' : 'spend',
-        source: 'admin_adjust',
-        description: reason,
-        createdAt: Date.now(),
-      };
-
-      setRecords((prevRecords) => {
-        const nextRecords = [newRecord, ...prevRecords];
-        setStats(buildPartnerBeansStats(nextRecords));
-        return nextRecords;
-      });
-
-      setUsers((prevUsers) => prevUsers.map((user) => (
-        user.id === userId
-          ? { ...user, beanBalance: safeNum(user.beanBalance + delta) }
-          : user
-      )));
-      setAdjustTarget(null);
-      showToast({ type: 'success', message: delta >= 0 ? '纯利豆调整成功' : '纯利豆扣减成功' });
-
-      // 后台静默刷新，确保与后端数据一致
+      // 提交成功后重新从后端拉取最新数据，确保数据一致性
       try {
         const response = await fetchPartnerBeansPageData();
         setRecords(response.records);
         setUsers(response.users);
         setStats(response.stats);
       } catch {
-        // 静默刷新失败不影响用户，乐观更新数据已生效
+        // 后端刷新失败时退回乐观更新
+        const newRecord: PartnerBeansPageRecord = {
+          id: fallbackKey('partner-bean-record'),
+          userId,
+          userName: targetUser.name,
+          userPhone: targetUser.phone,
+          avatarUrl: targetUser.avatarUrl,
+          beanBalance: safeNum(targetUser.beanBalance + delta),
+          amount: delta,
+          type: delta > 0 ? 'earn' : 'spend',
+          source: 'admin_adjust',
+          description: reason,
+          createdAt: Date.now(),
+        };
+
+        setRecords((prevRecords) => {
+          const nextRecords = [newRecord, ...prevRecords];
+          setStats(buildPartnerBeansStats(nextRecords));
+          return nextRecords;
+        });
+
+        setUsers((prevUsers) => prevUsers.map((user) => (
+          user.id === userId
+            ? { ...user, beanBalance: safeNum(user.beanBalance + delta) }
+            : user
+        )));
       }
+
+      setAdjustTarget(null);
+      showToast({ type: 'success', message: delta >= 0 ? '纯利豆调整成功' : '纯利豆扣减成功' });
     } catch (error) {
       showToast({
         type: 'error',

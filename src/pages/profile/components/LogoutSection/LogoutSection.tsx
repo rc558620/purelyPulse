@@ -2,7 +2,6 @@
 import React, { useState, useCallback } from 'react';
 import Button from '@components/ui/action/Button';
 import { Modal } from '@components/overlay/Modal';
-import { showToast } from '@components/ui/feedback/Toast';
 import styles from '../../profile.module.less';
 
 interface LogoutSectionProps {
@@ -16,7 +15,6 @@ const LogoutSection: React.FC<LogoutSectionProps> = ({ onLogout }) => {
 
     const handleConfirm = useCallback(() => {
         setVisible(false);
-        showToast({ message: '已退出登录', type: 'success' });
         onLogout();
     }, [onLogout]);
 

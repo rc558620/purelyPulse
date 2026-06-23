@@ -3,11 +3,7 @@ import React, { memo } from 'react';
 import styles from './LoginHeader.module.less';
 import icSavings from '@assets/image/Additional/savings.svg';
 
-/**
- * 登录页顶部品牌 Logo 区。
- *
- * 静态内容，无 props，配合 memo 确保引用稳定、永不重渲染。
- */
+// 登录页顶部品牌 Logo 区，静态内容无 props，配合 memo 确保永不重渲染。
 const LoginHeader: React.FC = memo(() => (
     <header className={styles.logoSection}>
         <div className={styles.logoWrapper}>

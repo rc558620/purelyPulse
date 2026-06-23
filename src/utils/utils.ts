@@ -24,6 +24,10 @@ export const isNonEmptyArray = <T>(arr: T[] | undefined | null): arr is T[] =>
 export const fmtAmount = (n: number): string =>
   n.toLocaleString('zh-CN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
+/** 分转元：避免浮点精度问题（101 分 → 1.01 元，而非 1.0100000000000002） */
+export const fenToYuan = (fen: number): number =>
+  Math.round(fen) / 100;
+
 /** 千分位格式化（不改变小数精度） */
 export const formatNumber = (num: number | string | null | undefined): string => {
   const n = typeof num === 'number' ? `${num}` : safeStr(num, '0');

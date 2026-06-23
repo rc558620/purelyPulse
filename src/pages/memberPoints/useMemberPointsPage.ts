@@ -46,7 +46,8 @@ const EMPTY_STATS: MemberPointsStats = {
 
 const normalizeQuery = (value: string): string => value.trim().toLowerCase();
 
-const buildStats = (records: MemberPointsRecord[]): MemberPointsStats => {
+/** 根据 records 前端推导 stats（仅用于乐观更新回退场景，service 层为主数据源） */
+const deriveStatsFromRecords = (records: MemberPointsRecord[]): MemberPointsStats => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -233,11 +234,9 @@ export const useMemberPointsPage = (): UseMemberPointsPageReturn => {
           createdAt: Date.now(),
         };
 
-        setRecords((prev) => {
-          const nextRecords = [newRecord, ...prev];
-          setStats(buildStats(nextRecords));
-          return nextRecords;
-        });
+        const nextRecords = [newRecord, ...records];
+        setRecords(nextRecords);
+        setStats(deriveStatsFromRecords(nextRecords));
         setUsers((prev) => prev.map((user) => (
           user.id === userId
             ? { ...user, availablePoints: safeNum(user.availablePoints + delta) }

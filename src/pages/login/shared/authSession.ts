@@ -35,9 +35,10 @@ export const clearPersistedAccessToken = (): void => {
 /** 从 sessionStorage 读取用户信息缓存。 */
 export { readPersistedUserInfo };
 
-/** 持久化用户信息。 */
+/** 持久化用户信息，返回规范化后的用户数据。 */
 export const persistUserInfo = (value: UserInfo): UserInfo => {
-  useUserStore.getState().updateUserInfo(value);
+  const normalized = { ...DEFAULT_USER_INFO, ...value };
+  useUserStore.getState().updateUserInfo(normalized);
   return useUserStore.getState().userInfo;
 };
 

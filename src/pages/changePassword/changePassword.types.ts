@@ -26,6 +26,14 @@ export type PasswordFieldKey = keyof ChangePasswordFormDTO;
 /** 修改密码表单校验规则集合。 */
 export type ChangePasswordFormRules = Record<keyof ChangePasswordFormDTO, ValidatorRule[]>;
 
+/** 构建校验规则时注入的 form 实例方法子集。 */
+export interface ChangePasswordFormHelper {
+    /** 读取指定字段的当前值。 */
+    getFieldValue: (name: keyof ChangePasswordFormDTO) => unknown;
+    /** 触发指定字段的即时重校验（用于跨字段联动）。 */
+    validateSingleField: (name: keyof ChangePasswordFormDTO) => Promise<boolean>;
+}
+
 /** 密码字段展示配置。 */
 export interface PasswordFieldConfig {
     /** 字段名。 */
@@ -90,21 +98,45 @@ export const normalizeChangePasswordPayload = (
 
 /**
  * 构建修改密码表单校验规则，支持注入 form 实例实现跨字段校验。
- * @param getFieldValue - 从 form 实例获取字段值的函数。
+ * @param helper - 表单实例方法子集，用于读取字段值与联动重校验。
  * @returns 各字段对应的 ValidatorRule 数组映射。
  */
 export const buildChangePasswordRules = (
-    getFieldValue: (name: keyof ChangePasswordFormDTO) => unknown,
+    helper: ChangePasswordFormHelper,
 ): ChangePasswordFormRules => {
+    const { getFieldValue, validateSingleField } = helper;
     const requiredRule = (message: string): ValidatorRule => ({ required: true, message });
 
     return {
         oldPassword: [
             requiredRule('请输入当前密码'),
+            {
+                validator: (value: unknown): void => {
+                    const trimmed = normalizeFieldValue(value);
+                    if (trimmed.length === 0) {
+                        throw new Error('请输入当前密码');
+                    }
+                    if (!PASSWORD_PATTERN.test(trimmed)) {
+                        throw new Error('密码长度至少为6位');
+                    }
+                },
+            },
         ],
         newPassword: [
             requiredRule('请设置新密码'),
-            { pattern: PASSWORD_PATTERN, message: '密码长度至少为6位' },
+            {
+                validator: async (value: unknown): Promise<void> => {
+                    const trimmed = normalizeFieldValue(value);
+                    if (trimmed.length === 0) {
+                        throw new Error('请设置新密码');
+                    }
+                    if (!PASSWORD_PATTERN.test(trimmed)) {
+                        throw new Error('密码长度至少为6位');
+                    }
+                    // 新密码变更时，若确认密码已被校验过（dirty），则联动重校验
+                    await validateSingleField('confirmPassword');
+                },
+            },
         ],
         confirmPassword: [
             requiredRule('请再次输入新密码'),
@@ -112,6 +144,9 @@ export const buildChangePasswordRules = (
                 validator: (value: unknown): void => {
                     const newPassword = normalizeFieldValue(getFieldValue('newPassword'));
                     const confirm = normalizeFieldValue(value);
+                    if (confirm.length === 0) {
+                        throw new Error('请再次输入新密码');
+                    }
                     if (newPassword !== confirm) {
                         throw new Error('两次输入的密码不一致');
                     }

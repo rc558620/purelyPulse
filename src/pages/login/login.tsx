@@ -1,4 +1,4 @@
-// 登录页面：账号密码登录入口，包含品牌 Logo 区、表单区及底部协议链接。
+// 登录页面：账号密码登录入口，包含品牌 Logo 区和表单区。
 import React, { memo } from 'react';
 import AuthPageLayout from './shared/AuthPageLayout/AuthPageLayout';
 import LoginHeader from './components/LoginHeader/LoginHeader';
@@ -11,11 +11,11 @@ const Login: React.FC = memo(() => {
         form,
         showPassword,
         isSubmitting,
+        phoneRules,
+        passwordRules,
         togglePasswordVisibility,
         handleFinish,
         handleFinishFailed,
-        handleNavigateToRegister,
-        handleNavigateToForgotPassword,
     } = useLoginForm();
 
     return (
@@ -28,11 +28,11 @@ const Login: React.FC = memo(() => {
                 form={form}
                 showPassword={showPassword}
                 isSubmitting={isSubmitting}
+                phoneRules={phoneRules}
+                passwordRules={passwordRules}
                 onTogglePassword={togglePasswordVisibility}
                 onFinish={handleFinish}
                 onFinishFailed={handleFinishFailed}
-                onNavigateToRegister={handleNavigateToRegister}
-                onNavigateToForgotPassword={handleNavigateToForgotPassword}
             />
         </AuthPageLayout>
     );

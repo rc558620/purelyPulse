@@ -1,6 +1,6 @@
 // partnerBeans 合伙人选择弹层
 import React from 'react';
-import { isNonEmptyArray, safeNum } from '@utils/utils';
+import { cx, isNonEmptyArray, safeNum } from '@utils/utils';
 import { IconPartnerBeansClose } from '../PartnerBeansIcons/PartnerBeansIcons';
 import type { PartnerBeansPageUser } from '../../partnerBeans.types';
 import styles from './PartnerBeansUserPicker.module.less';
@@ -57,7 +57,7 @@ const PartnerBeansUserPickerComponent: React.FC<PartnerBeansUserPickerProps> = (
               onClick={() => onSelect(user)}
               disabled={isSubmitting}
             >
-              <div className={`${styles.pickerAvatar} ${user.avatarUrl ? styles.pickerAvatarWithImage : ''}`} aria-hidden="true">
+              <div className={cx(styles.pickerAvatar, user.avatarUrl && styles.pickerAvatarWithImage)} aria-hidden="true">
                 {user.avatarUrl ? <img className={styles.pickerAvatarImg} src={user.avatarUrl} alt="" /> : user.name[0]}
               </div>
               <div className={styles.pickerUserInfo}>

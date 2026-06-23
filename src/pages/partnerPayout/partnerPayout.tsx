@@ -4,6 +4,7 @@ import PageHeader from '@components/ui/layout/PageHeader';
 import { isNonEmptyArray } from '@utils/utils';
 import { useAnimatedNavigate } from '@hooks/useAnimatedNavigate';
 import PartnerPayoutApplicationCard from './components/PartnerPayoutApplicationCard/PartnerPayoutApplicationCard';
+import PartnerPayoutConfirmDialog from './components/PartnerPayoutConfirmDialog/PartnerPayoutConfirmDialog';
 import PartnerPayoutFilterBar from './components/PartnerPayoutFilterBar/PartnerPayoutFilterBar';
 import PartnerPayoutPageState from './components/PartnerPayoutPageState/PartnerPayoutPageState';
 import PartnerPayoutSummaryBar from './components/PartnerPayoutSummaryBar/PartnerPayoutSummaryBar';
@@ -18,13 +19,16 @@ const PartnerPayout: React.FC = () => {
     submittingApplicationId,
     filteredApplications,
     isLoading,
+    isSubmitting,
     errorMessage,
     summary,
     stats,
+    confirmState,
     handleTabChange,
     handleApplicationToggle,
-    handleApprove,
-    handleReject,
+    handleOpenConfirm,
+    handleCloseConfirm,
+    handleConfirmSubmit,
     handleRetry,
   } = usePartnerPayoutPage();
 
@@ -80,14 +84,25 @@ const PartnerPayout: React.FC = () => {
                 application={application}
                 expanded={expandedApplicationId === application.id}
                 isSubmitting={submittingApplicationId === application.id}
+                isAnySubmitting={isSubmitting}
                 onToggle={handleApplicationToggle}
-                onApprove={handleApprove}
-                onReject={handleReject}
+                onApprove={(id) => handleOpenConfirm(id, 'approve')}
+                onReject={(id) => handleOpenConfirm(id, 'reject')}
               />
             ))}
           </div>
         ) : null}
       </main>
+
+      {confirmState.visible && confirmState.application ? (
+        <PartnerPayoutConfirmDialog
+          application={confirmState.application}
+          action={confirmState.action}
+          isSubmitting={isSubmitting}
+          onConfirm={handleConfirmSubmit}
+          onCancel={handleCloseConfirm}
+        />
+      ) : null}
     </div>
   );
 };

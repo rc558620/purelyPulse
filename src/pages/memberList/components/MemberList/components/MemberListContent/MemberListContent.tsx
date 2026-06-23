@@ -13,8 +13,8 @@ interface MemberListContentProps {
   isLoading: boolean;
   /** 是否刷新中 */
   isRefreshing: boolean;
-  /** 错误信息（无错误为 null） */
-  errorMessage: string | null;
+  /** 错误信息（无错误为空字符串） */
+  errorMessage: string;
   /** 重新加载回调 */
   onRetry: () => void;
   /** 卡片点击回调 */

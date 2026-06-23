@@ -1,5 +1,5 @@
 // 合伙人纯利豆调整弹窗
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import OperationModalShell from '@components/overlay/OperationModalShell/OperationModalShell';
 import { cx, isNonEmptyArray, safeNum } from '@utils/utils';
 import type { AdjustDir, UserSnapshot } from '../../partnerBeans.shared.types';
@@ -35,14 +35,20 @@ const AdjustBeanModal: React.FC<AdjustBeanModalProps> = ({
   const parsedAmount = Math.max(0, parseInt(amount, 10) || 0);
   const delta = dir === 'add' ? parsedAmount : -parsedAmount;
   const previewBalance = user.beanBalance + delta;
-  const isValid = parsedAmount > 0 && reason.trim().length > 0;
+  const isBalanceInsufficient = dir === 'subtract' && parsedAmount > user.beanBalance;
+  const isValid = parsedAmount > 0 && reason.trim().length > 0 && !isBalanceInsufficient;
+
+  // 使用 ref 保存最新提交参数，避免 useCallback 闭包捕获旧值
+  const pendingSubmitRef = useRef({ userId: user.id, delta, reason: reason.trim() });
+  pendingSubmitRef.current = { userId: user.id, delta, reason: reason.trim() };
 
   const handleConfirm = useCallback((): void => {
     if (!isValid || isSubmitting) {
       return;
     }
-    void onConfirm(user.id, delta, reason.trim());
-  }, [delta, isSubmitting, isValid, onConfirm, reason, user.id]);
+    const { userId, delta: latestDelta, reason: latestReason } = pendingSubmitRef.current;
+    void onConfirm(userId, latestDelta, latestReason);
+  }, [isSubmitting, isValid, onConfirm]);
 
   const handleAmountChange = useCallback((event: React.ChangeEvent<HTMLInputElement>): void => {
     const value = event.target.value.replace(/\D/g, '');
@@ -175,15 +181,20 @@ const AdjustBeanModal: React.FC<AdjustBeanModalProps> = ({
 
         {parsedAmount > 0 ? (
           <div className={styles.previewCard}>
-            <span className={styles.previewLabel}>操作后余额预览</span>
-            <div className={styles.previewRow}>
-              <span className={styles.previewOld}>{safeNum(user.beanBalance).toLocaleString('zh-CN')}</span>
-              <IconPartnerBeansPreviewArrow color="#94a3b8" />
-              <span className={cx(styles.previewNew, dir === 'add' ? styles.previewNewAdd : styles.previewNewSub)}>
-                {safeNum(previewBalance).toLocaleString('zh-CN')}
-              </span>
-              <span className={styles.previewUnit}>纯利豆</span>
+            <div className={styles.previewCardRow}>
+              <span className={styles.previewLabel}>操作后余额预览</span>
+              <div className={styles.previewRow}>
+                <span className={styles.previewOld}>{safeNum(user.beanBalance).toLocaleString('zh-CN')}</span>
+                <IconPartnerBeansPreviewArrow color="#94a3b8" />
+                <span className={cx(styles.previewNew, dir === 'add' ? styles.previewNewAdd : styles.previewNewSub)}>
+                  {safeNum(previewBalance).toLocaleString('zh-CN')}
+                </span>
+                <span className={styles.previewUnit}>纯利豆</span>
+              </div>
             </div>
+            {isBalanceInsufficient ? (
+              <span className={styles.previewWarning}>减少数量不能超过当前余额</span>
+            ) : null}
           </div>
         ) : null}
       </div>

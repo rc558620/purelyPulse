@@ -220,7 +220,7 @@ const MemberDetail: React.FC = () => {
         />
 
         {/* 会员备注卡（有备注才渲染） */}
-        {member.remark ? <MemberDetailRemarkCard remark={member.remark} /> : null}
+        {member.remark?.trim() ? <MemberDetailRemarkCard remark={member.remark} /> : null}
       </main>
 
       <Suspense fallback={null}>

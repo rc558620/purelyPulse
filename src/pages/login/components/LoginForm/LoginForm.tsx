@@ -1,6 +1,6 @@
 // 登录表单字段区：包含手机号、密码输入框及提交操作，纯展示组件。
-import React, { memo, type MouseEvent } from 'react';
-import { Form, FormItem, type FormInstance } from '@components/form';
+import React, { memo } from 'react';
+import { Form, FormItem, type FormInstance, type ValidatorRule } from '@components/form';
 import { Input } from '@components/form/Input/Input';
 import Button from '@components/ui/action/Button';
 import InputPrefixIcon from '@pages/login/shared/InputPrefixIcon/InputPrefixIcon';
@@ -21,22 +21,24 @@ export interface LoginFormProps {
     showPassword: boolean;
     /** 当前是否处于登录提交中。 */
     isSubmitting: boolean;
+    /** 手机号字段校验规则。 */
+    phoneRules: ValidatorRule[];
+    /** 密码字段校验规则。 */
+    passwordRules: ValidatorRule[];
     /** 切换密码明/密文显示状态。 */
     onTogglePassword: () => void;
     /** 表单校验通过后的提交回调。 */
     onFinish: (values: LoginFormDTO) => void;
     /** 表单校验失败回调。 */
     onFinishFailed: (errors: LoginFormErrors) => void;
-    /** 跳转至注册页回调。 */
-    onNavigateToRegister: (event: MouseEvent<HTMLAnchorElement>) => void;
-    /** 跳转至找回密码页回调。 */
-    onNavigateToForgotPassword: (event: MouseEvent<HTMLAnchorElement>) => void;
 }
 
 const LoginForm: React.FC<LoginFormProps> = memo(({
     form,
     showPassword,
     isSubmitting,
+    phoneRules,
+    passwordRules,
     onTogglePassword,
     onFinish,
     onFinishFailed,
@@ -47,17 +49,17 @@ const LoginForm: React.FC<LoginFormProps> = memo(({
         onFinishFailed={onFinishFailed}
         className={styles.formContainer}
     >
-        <FormItem name="phone" label="账号">
+        <FormItem name="phone" label="账号" rules={phoneRules}>
             <Input
                 type="tel"
-                placeholder="请输入账号"
+                placeholder="请输入手机号"
                 autoComplete="username"
                 prefix={PREFIX_PHONE}
                 disabled={isSubmitting}
             />
         </FormItem>
 
-        <FormItem name="password" label="密码">
+        <FormItem name="password" label="密码" rules={passwordRules}>
             <Input
                 type={showPassword ? 'text' : 'password'}
                 placeholder="请输入密码"

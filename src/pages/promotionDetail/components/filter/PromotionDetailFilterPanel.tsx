@@ -45,10 +45,10 @@ const PromotionDetailFilterPanel: React.FC<PromotionDetailFilterPanelProps> = ({
   onRegionChange,
   onQueryModeChange,
   onDayChange,
-  onDayClear,
+  onDayReset,
   onRangeStartChange,
   onRangeEndChange,
-  onRangeClear,
+  onRangeReset,
   onRetry,
 }) => (
   <>
@@ -99,10 +99,10 @@ const PromotionDetailFilterPanel: React.FC<PromotionDetailFilterPanelProps> = ({
           rangeEndDay={rangeEndDay}
           onQueryModeChange={onQueryModeChange}
           onDayChange={onDayChange}
-          onDayClear={onDayClear}
+          onDayReset={onDayReset}
           onRangeStartChange={onRangeStartChange}
           onRangeEndChange={onRangeEndChange}
-          onRangeClear={onRangeClear}
+          onRangeReset={onRangeReset}
         />
 
         <div className={styles.formActions}>

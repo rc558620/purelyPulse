@@ -160,6 +160,8 @@ export const loginWithPassword = async (payload: LoginSubmitDTO): Promise<LoginS
 const requestAuthProfile = async (): Promise<UserInfo> => {
   const response = await http.get<unknown>(AUTH_PROFILE_API_PATH, {
     errorMessage: '获取当前用户信息失败',
+    // 登录流程中 401 不应触发全局登出处理（token 可能尚未完全生效）
+    skipUnauthorizedHandler: true,
   });
 
   return mapAuthProfile(response);

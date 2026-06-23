@@ -56,6 +56,11 @@ const formatDateText = (year: number, month: number, day: number): string => (
   `${safeNum(year)}/${String(safeNum(month)).padStart(2, '0')}/${String(safeNum(day)).padStart(2, '0')}`
 );
 
+/** 构建请求参数用的日期字符串（YYYY-MM-DD），与后端 API 格式一致 */
+const formatDateParam = (year: number, month: number, day: number): string => (
+  `${safeNum(year)}-${String(safeNum(month)).padStart(2, '0')}-${String(safeNum(day)).padStart(2, '0')}`
+);
+
 const resolveRegionSelection = (region: CascadeValue[]): RegionSelectionResult => {
   if (region.length === 0) {
     return { labels: [], text: '全部地区' };
@@ -74,6 +79,19 @@ const getDateParts = (value: Date): DateParts => ({
   month: safeNum(value.getMonth() + 1),
   day: safeNum(value.getDate()),
 });
+
+const toRegionCodeString = (value: CascadeValue): string => {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (typeof value === 'number') {
+    // 区划编码为 6 位数字字符串（如 "110000"），数字类型需补零
+    return String(value).padStart(6, '0');
+  }
+
+  return String(value ?? '');
+};
 
 export const usePromotionDetailFilterState = (): UsePromotionDetailFilterStateReturn => {
   const initialDateRef = useRef(new Date());
@@ -113,10 +131,10 @@ export const usePromotionDetailFilterState = (): UsePromotionDetailFilterStateRe
   const buildSearchQuery = useCallback((name: string): PromotionDetailQuery => ({
     name: name.trim(),
     queryMode,
-    date: queryMode === 'day' ? formatDateText(dayYear, dayMonth, dayDay) : null,
-    startDate: queryMode === 'range' ? formatDateText(rangeStartYear, rangeStartMonth, rangeStartDay) : null,
-    endDate: queryMode === 'range' ? formatDateText(rangeEndYear, rangeEndMonth, rangeEndDay) : null,
-    regionValues: region.filter(Boolean).map((item) => String(item)),
+    date: queryMode === 'day' ? formatDateParam(dayYear, dayMonth, dayDay) : null,
+    startDate: queryMode === 'range' ? formatDateParam(rangeStartYear, rangeStartMonth, rangeStartDay) : null,
+    endDate: queryMode === 'range' ? formatDateParam(rangeEndYear, rangeEndMonth, rangeEndDay) : null,
+    regionValues: region.filter(Boolean).map(toRegionCodeString),
   }), [dayDay, dayMonth, dayYear, queryMode, rangeEndDay, rangeEndMonth, rangeEndYear, rangeStartDay, rangeStartMonth, rangeStartYear, region]);
 
   const buildSearchMeta = useCallback((): PromotionDetailQueryMeta => ({

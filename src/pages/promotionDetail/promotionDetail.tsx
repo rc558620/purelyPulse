@@ -121,7 +121,7 @@ const PromotionDetail: React.FC = () => {
     setDayDay(day);
   }, [setDayDay, setDayMonth, setDayYear]);
 
-  const handleDayClear = useCallback(() => {
+  const handleDayReset = useCallback(() => {
     const nextDate = new Date();
     setDayYear(nextDate.getFullYear());
     setDayMonth(nextDate.getMonth() + 1);
@@ -140,7 +140,7 @@ const PromotionDetail: React.FC = () => {
     setRangeEndDay(day);
   }, [setRangeEndDay, setRangeEndMonth, setRangeEndYear]);
 
-  const handleRangeClear = useCallback(() => {
+  const handleRangeReset = useCallback(() => {
     const nextDate = new Date();
     setRangeStartYear(nextDate.getFullYear());
     setRangeStartMonth(nextDate.getMonth() + 1);
@@ -158,8 +158,8 @@ const PromotionDetail: React.FC = () => {
   ]);
 
   const regionViewProps = useMemo(() => ({
-    isLoading: showRegionFilterPanel ? isLoading : false,
-    errorMessage: showRegionFilterPanel ? errorMessage : '',
+    isLoading,
+    errorMessage,
     regionDisplayText,
     dateDisplayText,
     filteredRegions,
@@ -176,7 +176,6 @@ const PromotionDetail: React.FC = () => {
     isLoading,
     regionDisplayText,
     retryLoad,
-    showRegionFilterPanel,
     totalOrders,
     totalPartners,
     totalRevenue,
@@ -258,10 +257,10 @@ const PromotionDetail: React.FC = () => {
             onRegionChange={setRegion}
             onQueryModeChange={setQueryMode}
             onDayChange={handleDayChange}
-            onDayClear={handleDayClear}
+            onDayReset={handleDayReset}
             onRangeStartChange={handleRangeStartChange}
             onRangeEndChange={handleRangeEndChange}
-            onRangeClear={handleRangeClear}
+            onRangeReset={handleRangeReset}
             onRetry={retryLoad}
           />
         ) : null}

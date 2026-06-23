@@ -1,7 +1,6 @@
 // 修改密码页面表单逻辑 Hook：管理表单实例、校验规则、密码可见性与提交流程。
 import { useCallback, useState } from 'react';
 import { showToast } from '@components/ui/feedback/Toast';
-import { useUser } from '@/contexts';
 import { useAnimatedNavigate } from '@hooks/useAnimatedNavigate';
 import { ROUTE_PATHS } from '@router/paths';
 import { clearAuthSession } from '@pages/login/shared/authSession';
@@ -17,6 +16,7 @@ import type {
     ChangePasswordFormRules,
     PasswordFieldKey,
 } from '../changePassword.types';
+import type { FormInstance } from '@components/form';
 
 /** useChangePasswordForm 返回值。 */
 export interface UseChangePasswordFormReturn {
@@ -41,7 +41,6 @@ export interface UseChangePasswordFormReturn {
 /** 修改密码表单逻辑 Hook。 */
 export const useChangePasswordForm = (): UseChangePasswordFormReturn => {
     const navigate = useAnimatedNavigate();
-    const { clearUserInfo } = useUser();
 
     const [passwordVisibility, setPasswordVisibility] = useState<Record<PasswordFieldKey, boolean>>({
         oldPassword: false,
@@ -57,14 +56,14 @@ export const useChangePasswordForm = (): UseChangePasswordFormReturn => {
         handleFinish,
         handleFinishFailed,
     } = useSettingsForm<ChangePasswordFormDTO>({
-        buildRules: (currentForm) => buildChangePasswordRules(
-            (name) => currentForm.getFieldValue(name),
-        ),
+        buildRules: (currentForm: FormInstance<ChangePasswordFormDTO>) => buildChangePasswordRules({
+            getFieldValue: (name) => currentForm.getFieldValue(name),
+            validateSingleField: (name) => currentForm.validateSingleField(name),
+        }),
         onSubmit: async (values) => {
             const payload = normalizeChangePasswordPayload(values);
             await changePassword(payload);
             clearAuthSession();
-            clearUserInfo();
             showToast({ message: '密码修改成功，请重新登录', type: 'success' });
             navigate(ROUTE_PATHS.login, { replace: true });
         },

@@ -1,6 +1,7 @@
-// 合伙人申请审核卡片：负责单条申请的摘要与审核操作展示。
+// 合伙人申请审核卡片：负责单条申请的摘要展示与打开确认弹窗。
 import React, { memo, useCallback } from 'react';
 import { cx, safeStr } from '@utils/utils';
+import CollapseTransition from '@components/ui/layout/CollapseTransition/CollapseTransition';
 import {
   IconPartnerReviewApprove,
   IconPartnerReviewExpandArrow,
@@ -23,14 +24,12 @@ interface PartnerReviewApplicationCardProps {
   expanded: boolean;
   /** 当前是否提交中 */
   isSubmitting: boolean;
-  /** 当前提交动作 */
+  /** 当前提交动作类型 */
   submittingActionType: ReviewSubmitAction | null;
   /** 切换展开态 */
   onToggleExpand: (id: string) => void;
-  /** 审核通过 */
-  onApprove: (id: string) => Promise<void>;
-  /** 审核拒绝 */
-  onReject: (id: string) => Promise<void>;
+  /** 打开确认弹窗 */
+  onOpenConfirm: (application: PartnerApplication, action: ReviewSubmitAction) => void;
 }
 
 const PartnerReviewApplicationCard: React.FC<PartnerReviewApplicationCardProps> = memo(({
@@ -39,8 +38,7 @@ const PartnerReviewApplicationCard: React.FC<PartnerReviewApplicationCardProps> 
   isSubmitting,
   submittingActionType,
   onToggleExpand,
-  onApprove,
-  onReject,
+  onOpenConfirm,
 }) => {
   const statusConfig = PARTNER_REVIEW_STATUS_CONFIG[application.status];
 
@@ -55,15 +53,16 @@ const PartnerReviewApplicationCard: React.FC<PartnerReviewApplicationCardProps> 
     }
   }, [application.id, onToggleExpand]);
 
+  // Bug #1: 点击操作按钮打开确认弹窗，替代原来的直接提交
   const handleRejectClick = useCallback((event: React.MouseEvent<HTMLButtonElement>): void => {
     event.stopPropagation();
-    void onReject(application.id);
-  }, [application.id, onReject]);
+    onOpenConfirm(application, 'reject');
+  }, [application, onOpenConfirm]);
 
   const handleApproveClick = useCallback((event: React.MouseEvent<HTMLButtonElement>): void => {
     event.stopPropagation();
-    void onApprove(application.id);
-  }, [application.id, onApprove]);
+    onOpenConfirm(application, 'approve');
+  }, [application, onOpenConfirm]);
 
   return (
     <div className={cx(styles.card, expanded && styles.cardExpanded)}>
@@ -112,19 +111,21 @@ const PartnerReviewApplicationCard: React.FC<PartnerReviewApplicationCardProps> 
         </div>
       </div>
 
-      {expanded ? (
+      {/* Bug #6: 使用 CollapseTransition 公共组件实现展开/收起过渡动画 */}
+      <CollapseTransition expanded={expanded}>
         <div className={styles.cardDetail}>
           <div className={styles.reasonLabel}>申请理由</div>
           <p className={styles.reasonText}>{safeStr(application.reason, '暂无申请理由')}</p>
 
           {application.status === 'pending' ? (
             <div className={styles.actionRow}>
+              {/* Bug #7: 提交期间仅禁用被点击方向的按钮，未点击方向可正常操作 */}
               <button
                 type="button"
                 className={styles.rejectBtn}
                 onClick={handleRejectClick}
                 aria-label={`拒绝 ${safeStr(application.name, '该合伙人')} 的申请`}
-                disabled={isSubmitting}
+                disabled={isSubmitting && submittingActionType === 'reject'}
               >
                 <IconPartnerReviewReject />
                 {isSubmitting && submittingActionType === 'reject' ? '处理中...' : '不通过'}
@@ -134,7 +135,7 @@ const PartnerReviewApplicationCard: React.FC<PartnerReviewApplicationCardProps> 
                 className={styles.approveBtn}
                 onClick={handleApproveClick}
                 aria-label={`通过 ${safeStr(application.name, '该合伙人')} 的申请`}
-                disabled={isSubmitting}
+                disabled={isSubmitting && submittingActionType === 'approve'}
               >
                 <IconPartnerReviewApprove />
                 {isSubmitting && submittingActionType === 'approve' ? '处理中...' : '通过'}
@@ -142,7 +143,7 @@ const PartnerReviewApplicationCard: React.FC<PartnerReviewApplicationCardProps> 
             </div>
           ) : null}
         </div>
-      ) : null}
+      </CollapseTransition>
     </div>
   );
 });

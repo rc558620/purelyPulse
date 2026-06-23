@@ -288,10 +288,28 @@ const mergeRevenueTypes = (
   });
 
   const totalAfter = Array.from(amountMap.values()).reduce((sum, value) => safeNum(sum + value), 0);
-  return labelOrder.map((label) => ({
-    label,
-    value: totalAfter > 0 ? safeNum(Number((((amountMap.get(label) ?? 0) / totalAfter) * 100).toFixed(1))) : 0,
-  }));
+
+  if (totalAfter <= 0) {
+    return labelOrder.map((label) => ({ label, value: 0 }));
+  }
+
+  const rawPercentages = labelOrder.map((label) => {
+    const amount = amountMap.get(label) ?? 0;
+    return { label, raw: safeNum(Number(((amount / totalAfter) * 100).toFixed(1))) };
+  });
+
+  // 尾差补偿：将四舍五入误差加到最大项上，确保百分比总和精确为 100。
+  const rawSum = rawPercentages.reduce((sum, item) => safeNum(sum + item.raw), 0);
+  const roundingDelta = safeNum(Number((100 - rawSum).toFixed(1)));
+  if (roundingDelta !== 0 && rawPercentages.length > 0) {
+    const maxIndex = rawPercentages.reduce(
+      (maxIdx, item, idx, arr) => (item.raw > arr[maxIdx].raw ? idx : maxIdx),
+      0,
+    );
+    rawPercentages[maxIndex].raw = safeNum(rawPercentages[maxIndex].raw + roundingDelta);
+  }
+
+  return rawPercentages.map((item) => ({ label: item.label, value: item.raw }));
 };
 
 const applyMembershipRevenueEventsToOverview = (
@@ -347,6 +365,9 @@ export const createEmptyHomeOverview = (): HomeOverviewData => ({
 export interface HomeOverviewQuery {
   revenuePeriod: RevenuePeriod;
   region?: string;
+  customDate?: string;
+  customRangeStart?: string;
+  customRangeEnd?: string;
 }
 
 const resolveRevenueRoot = (response: unknown): Record<string, unknown> | null => {
@@ -566,6 +587,9 @@ const requestHomeOverview = async (query: HomeOverviewQuery): Promise<HomeOvervi
     params: {
       revenuePeriod: query.revenuePeriod,
       region: query.region || undefined,
+      customDate: query.customDate || undefined,
+      customRangeStart: query.customRangeStart || undefined,
+      customRangeEnd: query.customRangeEnd || undefined,
     },
     skipGlobalErrorHandler: true,
     errorMessage: '获取首页总览失败',

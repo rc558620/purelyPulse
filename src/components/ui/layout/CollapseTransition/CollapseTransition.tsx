@@ -18,6 +18,8 @@ const CollapseTransition = memo(function CollapseTransition({
   const innerRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(0);
 
+  // Bug #8: 依赖数组需包含 expanded，确保展开/收起时重新测量子元素高度。
+  // 仅靠 ResizeObserver 无法覆盖所有场景（如 display 变化触发的重排）。
   useLayoutEffect(() => {
     const node = innerRef.current;
     if (!node) return;
@@ -42,7 +44,7 @@ const CollapseTransition = memo(function CollapseTransition({
     return () => {
       observer.disconnect();
     };
-  }, []);
+  }, [expanded]);
 
   return (
     <div

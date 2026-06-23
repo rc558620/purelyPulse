@@ -256,3 +256,25 @@
     color: #94a3b8;
   }
 }
+
+// ─── 加载更多按钮 ──────────────────────────────────────────────────
+.loadMoreBtn {
+  width: 100%;
+  padding: 1.4rem;
+  border: none;
+  border-top: 1px solid @border-color;
+  background: transparent;
+  color: @primary;
+  font-size: 1.3rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s;
+
+  &:hover {
+    background: rgba(132, 204, 22, 0.04);
+  }
+
+  &:active {
+    background: rgba(132, 204, 22, 0.08);
+  }
+}

@@ -7,8 +7,8 @@ import type { FormContextType, FormErrorMap, FormInstance, FormRequiredMark, For
 export interface FormProps<T extends FormValues = FormValues> {
     /** 外部传入的表单实例。 */
     form?: FormInstance<T>;
-    /** 表单校验通过后的提交回调。 */
-    onFinish?: (values: T) => void;
+    /** 表单校验通过后的提交回调（支持异步）。 */
+    onFinish?: (values: T) => void | Promise<void>;
     /** 表单校验失败后的回调。 */
     onFinishFailed?: (errors: FormErrorMap<T>) => void;
     /** 表单子节点。 */
@@ -48,7 +48,9 @@ const InternalForm = <T extends FormValues = FormValues>({
         }
         try {
             const values = await formInstanceRef.current.validateFields();
-            onFinishRef.current?.(values);
+            // Bug 4 修复：await 异步 onFinish，确保异常能被 catch 捕获
+            // 而不是静默吞掉导致 submitting 永远不会重置为 false
+            await onFinishRef.current?.(values);
         } catch (errors) {
             onFinishFailedRef.current?.(errors as FormErrorMap<T>);
         }

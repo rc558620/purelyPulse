@@ -302,9 +302,7 @@ const mapServerMemberListItem = (value: PulseServerMemberListItemLike): MemberLi
   invitedCount: normalizeOptionalCount(value.invitedCount),
   rechargeCount: normalizeOptionalCount(value.rechargeCount),
   remark: normalizeOptionalString(value.remark),
-  membershipExpiry: value.membershipExpiry === null || value.expireAt === null || value.membershipExpireAt === null
-    ? null
-    : normalizeTimestamp(value.membershipExpiry ?? value.expireAt ?? value.membershipExpireAt, 0) || undefined,
+  membershipExpiry: resolveMembershipExpiry(value),
 });
 
 const mapServerMemberDetail = (value: PulseServerMemberDetailLike): MemberDetail => ({
@@ -313,17 +311,15 @@ const mapServerMemberDetail = (value: PulseServerMemberDetailLike): MemberDetail
   rechargeCount: normalizeOptionalCount(value.rechargeCount) ?? value.rechargeHistory.length,
   invitedCount: normalizeOptionalCount(value.invitedCount) ?? 0,
   rechargeHistory: value.rechargeHistory.map((record) => mapServerRechargeRecord(record)),
-  membershipExpiry: value.membershipExpiry === null || value.expireAt === null || value.membershipExpireAt === null
-    ? null
-    : normalizeTimestamp(value.membershipExpiry ?? value.expireAt ?? value.membershipExpireAt, 0) || undefined,
+  membershipExpiry: resolveMembershipExpiry(value),
   subAccountCapability: mapSubAccountCapability(value),
 });
 
 const getServerMemberListStats = (
   members: MemberListItem[],
-  payload: PulseServerMembersResponseLike,
+  _payload: PulseServerMembersResponseLike,
 ): MemberListStats => ({
-  totalCount: payload.total,
+  totalCount: members.length,
   activeCount: members.filter((member) => member.status === 'active').length,
   partnerCount: members.filter((member) => member.isPartner).length,
   bannedCount: members.filter((member) => member.status === 'banned').length,
@@ -483,6 +479,32 @@ const normalizeTimestamp = (value: unknown, fallbackValue: number): number => {
   }
 
   return fallbackValue;
+};
+
+/**
+ * 从多个候选字段中解析会员到期时间。
+ * 逻辑：依次尝试 membershipExpiry / expireAt / membershipExpireAt，
+ * 仅当最终采纳的字段值为 null 时才返回 null（表示"明确无到期"），
+ * 未提供的字段不参与 null 判定，避免误丢有效值。
+ */
+const resolveMembershipExpiry = (
+  rawValue: Record<string, unknown>,
+): number | null | undefined => {
+  const candidates = ['membershipExpiry', 'expireAt', 'membershipExpireAt'] as const;
+
+  // 找到第一个非 undefined 的候选字段
+  for (const key of candidates) {
+    const fieldValue = rawValue[key];
+    if (fieldValue !== undefined) {
+      if (fieldValue === null) {
+        return null;
+      }
+      const normalized = normalizeTimestamp(fieldValue, 0);
+      return normalized > 0 ? normalized : undefined;
+    }
+  }
+
+  return undefined;
 };
 
 const resolveAvatarChar = (name: string, rawValue: unknown): string => {
@@ -916,7 +938,7 @@ const mapMemberListItem = (value: unknown, index: number): MemberListItem => {
     phone,
     avatarChar: resolveAvatarChar(memberName, value),
     avatarColorIdx: resolveAvatarColorIndex(memberId || memberName, value),
-    avatarUrl: (isPlainObject(value) && typeof value.avatarUrl === 'string' && value.avatarUrl.trim()) ? value.avatarUrl.trim() : (isPlainObject(value) && typeof value.avatarUrl === 'string') ? '' : undefined,
+    avatarUrl: (isPlainObject(value) && typeof value.avatarUrl === 'string' && value.avatarUrl.trim()) ? value.avatarUrl.trim() : undefined,
     status: normalizeMemberStatus(pickStringField(value, MEMBER_STATUS_CANDIDATES) || 'active'),
     level: normalizeMemberLevel(pickStringField(value, MEMBER_LEVEL_CANDIDATES) || 'free'),
     availablePoints: pickNumberField(value, ['availablePoints', 'pointsBalance', 'pointBalance', 'currentPoints']),
@@ -933,9 +955,7 @@ const mapMemberListItem = (value: unknown, index: number): MemberListItem => {
     invitedCount: pickNumberField(value, ['invitedCount', 'inviteCount', 'referralCount', 'promotionCount']) || undefined,
     rechargeCount: pickNumberField(value, ['rechargeCount', 'rechargeTimes', 'payCount']) || undefined,
     remark: pickStringField(value, REMARK_CANDIDATES) || undefined,
-    membershipExpiry: isPlainObject(value) && (value.membershipExpiry === null || value.expireAt === null || value.membershipExpireAt === null)
-      ? null
-      : normalizeTimestamp(isPlainObject(value) ? value.membershipExpiry ?? value.expireAt ?? value.membershipExpireAt : undefined, 0) || undefined,
+    membershipExpiry: isPlainObject(value) ? resolveMembershipExpiry(value) : undefined,
   };
 };
 
@@ -962,9 +982,7 @@ const mapMemberDetail = (value: unknown): MemberDetail => {
     invitedCount: pickNumberField(value, ['invitedCount', 'inviteCount', 'referralCount', 'promotionCount']),
     rechargeHistory,
     remark: pickStringField(value, REMARK_CANDIDATES) || undefined,
-    membershipExpiry: isPlainObject(value) && (value.membershipExpiry === null || value.expireAt === null || value.membershipExpireAt === null)
-      ? null
-      : normalizeTimestamp(isPlainObject(value) ? value.membershipExpiry ?? value.expireAt ?? value.membershipExpireAt : undefined, 0) || undefined,
+    membershipExpiry: isPlainObject(value) ? resolveMembershipExpiry(value) : undefined,
     subAccountCapability: mapSubAccountCapability(value),
   };
 };
@@ -1030,8 +1048,8 @@ const filterMembersByExpiry = (members: MemberListItem[], expiry: MemberFilterEx
   const thresholdMs = now + days * dayMs;
 
   return members.filter((member) => {
-    // 排除 free 和 lifetime 会员
-    if (member.level === 'lifetime' || member.level === 'free') {
+    // 排除 free 会员（免费会员无到期概念）
+    if (member.level === 'free') {
       return false;
     }
     // 排除没有到期时间的会员
@@ -1174,19 +1192,16 @@ const requestMemberPointsPageData = async (): Promise<{
     }),
   ]);
 
-  console.log('[memberPoints] 积分记录接口原始返回:', recordsResponse);
-  console.log('[memberPoints] 会员列表接口原始返回:', usersResponse);
+  // 两个接口均失败时，抛出错误让 hook 层展示错误状态
+  if (recordsResponse === null && usersResponse === null) {
+    throw new Error('获取积分数据失败，请检查网络后重试');
+  }
 
   const users: MemberPointsPageUser[] = resolveMemberListSource(usersResponse).map((item, index) => mapUserSnapshot(item, index));
   const userLookup = new Map<string, MemberPointsPageUser>(users.map((user) => [user.id, user]));
   const records = getNestedArray(recordsResponse, POINTS_RECORD_SOURCE_CANDIDATES)
     .map((item, index) => mapPointsRecord(item, index, userLookup))
     .sort((left, right) => right.createdAt - left.createdAt);
-
-  console.log('[memberPoints] 解析后记录数:', records.length, '用户数:', users.length);
-  if (records.length > 0) {
-    console.log('[memberPoints] 第一条记录:', records[0]);
-  }
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -1210,7 +1225,7 @@ const requestMemberPointsPageData = async (): Promise<{
   if (records.length === 0 && users.length === 0) {
     const cachedData = readCachedPointsPageData();
     if (cachedData && (cachedData.records.length > 0 || cachedData.users.length > 0)) {
-      console.log('[memberPoints] 后端返回空数据，从缓存恢复:', cachedData.records.length, '条记录');
+      // 后端返回空数据，从缓存恢复
       return cachedData;
     }
   }
@@ -1241,9 +1256,6 @@ const requestPartnerBeansPageData = async (): Promise<{
     }),
   ]);
 
-  console.log('[partnerBeans] 记录接口原始返回:', recordsResponse);
-  console.log('[partnerBeans] 用户接口原始返回:', usersResponse);
-
   const rawUsers = getNestedArray(usersResponse, PARTNER_USERS_SOURCE_CANDIDATES);
   const users = rawUsers
     .map((item, index) => mapUserSnapshot(item, index))
@@ -1252,11 +1264,6 @@ const requestPartnerBeansPageData = async (): Promise<{
   const records = getNestedArray(recordsResponse, POINTS_RECORD_SOURCE_CANDIDATES)
     .map((item, index) => mapBeanRecord(item, index, userLookup))
     .sort((left, right) => right.createdAt - left.createdAt);
-
-  console.log('[partnerBeans] 解析后记录数:', records.length, '用户数:', users.length);
-  if (records.length > 0) {
-    console.log('[partnerBeans] 第一条记录:', records[0]);
-  }
 
   return {
     records,

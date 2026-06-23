@@ -36,19 +36,28 @@ export function useRouteTransition() {
   // ── 1. 跨断点时自动清除 history state 中的 transition ──────────────────────
   const prevIsMobileRef = useRef(isMobile);
 
+  // 用 ref 保存最新的 location / navigate，避免 effect 闭包持有过期引用
+  const locationRef = useRef(location);
+  useEffect(() => {
+    locationRef.current = location;
+  }, [location]);
+
   useEffect(() => {
     if (prevIsMobileRef.current === isMobile) return;
     prevIsMobileRef.current = isMobile;
 
+    // 通过 ref 读取最新的 location，避免闭包陷阱
+    const currentLocation = locationRef.current;
+
     // 精准清除 transition，保留其余业务 state（如 fromRegister 等）
-    const currentState = location.state as Record<string, unknown> | null;
+    const currentState = currentLocation.state as Record<string, unknown> | null;
     const merged = { ...currentState };
     delete merged['transition'];
-    navigate(location.pathname + location.search + location.hash, {
+    navigate(currentLocation.pathname + currentLocation.search + currentLocation.hash, {
       replace: true,
       state: Object.keys(merged).length > 0 ? merged : null,
     });
-  }, [isMobile]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isMobile, navigate]);
 
   // ── 2. 解析动画意图 ────────────────────────────────────────────────────────
   const isPop = navType === 'POP';

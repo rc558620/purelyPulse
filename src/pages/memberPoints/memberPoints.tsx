@@ -81,6 +81,7 @@ const MemberPoints: React.FC = () => {
 
       {adjustTarget ? (
         <AdjustPointsModal
+          key={adjustTarget.id}
           user={adjustTarget}
           onClose={handleCloseAdjust}
           onConfirm={handleConfirmAdjust}

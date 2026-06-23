@@ -97,8 +97,10 @@ const MemberAssetAdjustModal: React.FC<MemberAssetAdjustModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      await Promise.resolve(onConfirm(delta, reason.trim()));
+      await onConfirm(delta, reason.trim());
       onClose();
+    } catch {
+      // onConfirm 失败时不关闭弹窗，外部已处理 toast 提示
     } finally {
       setIsSubmitting(false);
     }

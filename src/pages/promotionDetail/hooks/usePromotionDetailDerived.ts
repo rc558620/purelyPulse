@@ -74,7 +74,7 @@ const comparePartnerDisplayOrder = (
 };
 
 /**
- * 地区名匹配：对 label 和 partner 字段都做省份名标准化后再比较，
+ * 地区名匹配：对 label 和 partner 字段都做省份名标准化后再精确比较，
  * 避免子串匹配误判（如 "南" 匹配 "湖南"/"海南"）和后缀不一致（如 "浙江省" vs "浙江"）。
  */
 const isRegionFieldMatched = (partnerFieldValue: string, label: string): boolean => {
@@ -85,17 +85,8 @@ const isRegionFieldMatched = (partnerFieldValue: string, label: string): boolean
   const normalizedLabel = normalizeProvinceName(label);
   const normalizedField = normalizeProvinceName(partnerFieldValue);
 
-  // 精确匹配优先（标准化后 "浙江" === "浙江"）
-  if (normalizedField === normalizedLabel) {
-    return true;
-  }
-
-  // 兼容 label 比 partner 字段更具体的情况（如 label="杭州市", field="浙江"）
-  if (normalizedField.includes(normalizedLabel) || normalizedLabel.includes(normalizedField)) {
-    return true;
-  }
-
-  return false;
+  // 仅允许标准化后精确匹配（如 "浙江" === "浙江"）
+  return normalizedField === normalizedLabel;
 };
 
 const isPartnerMatched = (

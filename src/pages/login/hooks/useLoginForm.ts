@@ -1,5 +1,5 @@
 // 登录页表单逻辑 Hook：封装表单实例、密码可见性、真实登录提交与跳转逻辑。
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useForm } from '@components/form';
 import { showToast } from '@components/ui/feedback/Toast';
@@ -7,6 +7,7 @@ import { useAnimatedNavigate } from '@hooks/useAnimatedNavigate';
 import { usePasswordVisibility } from '@hooks/usePasswordVisibility';
 import { ROUTE_PATHS } from '@/router/paths';
 import type { LoginFormDTO, LoginFormErrors } from '@pages/login/login.types';
+import { PHONE_PATTERN, PASSWORD_PATTERN } from '@pages/login/shared/authValidation';
 import { fetchAuthProfile, loginWithPassword } from '../shared/auth.service';
 import { clearAuthSession, persistAccessToken, syncAuthProfileToSession } from '../shared/authSession';
 
@@ -18,25 +19,22 @@ export interface UseLoginFormReturn {
     showPassword: boolean;
     /** 当前是否处于登录提交中。 */
     isSubmitting: boolean;
+    /** 手机号字段校验规则。 */
+    phoneRules: import('@components/form').ValidatorRule[];
+    /** 密码字段校验规则。 */
+    passwordRules: import('@components/form').ValidatorRule[];
     /** 切换密码明/密文显示状态。 */
     togglePasswordVisibility: () => void;
     /** 表单校验通过后的提交回调。 */
     handleFinish: (values: LoginFormDTO) => void;
     /** 表单校验失败回调。 */
     handleFinishFailed: (errors: LoginFormErrors) => void;
-    /** 跳转至注册页（用于锚点 onClick）。 */
-    handleNavigateToRegister: (event: React.MouseEvent<HTMLAnchorElement>) => void;
-    /** 跳转至找回密码页（用于锚点 onClick）。 */
-    handleNavigateToForgotPassword: (event: React.MouseEvent<HTMLAnchorElement>) => void;
-    /** 跳转至用户协议页（用于锚点 onClick）。 */
-    handleNavigateToAgreement: (event: React.MouseEvent<HTMLAnchorElement>) => void;
-    /** 跳转至隐私政策页（用于锚点 onClick）。 */
-    handleNavigateToPrivacy: (event: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
 const resolveLoginRedirectPath = (search: string): string => {
     const redirect = new URLSearchParams(search).get('redirect')?.trim() ?? '';
-    if (!redirect.startsWith('/')) {
+    // 防御 Open Redirect：必须以 / 开头且第二个字符不能是 /（避免 //evil.com 绕过）
+    if (!redirect.startsWith('/') || redirect.startsWith('//')) {
         return ROUTE_PATHS.home;
     }
     return redirect;
@@ -49,14 +47,30 @@ const resolveLoginRedirectPath = (search: string): string => {
  * - 维护表单实例
  * - 管理密码可见性状态（showPassword），委托给 {@link usePasswordVisibility}
  * - 封装真实登录提交、token 持久化与用户信息初始化
- * - 封装各页面跳转处理，阻止默认锚点行为
  */
+
+// 手机号字段校验规则（模块级常量，引用稳定）
+const PHONE_RULES: import('@components/form').ValidatorRule[] = [
+    { required: true, message: '请输入手机号' },
+    { pattern: PHONE_PATTERN, message: '请输入正确的手机号' },
+];
+
+// 密码字段校验规则（模块级常量，引用稳定）
+const PASSWORD_RULES: import('@components/form').ValidatorRule[] = [
+    { required: true, message: '请输入密码' },
+    { pattern: PASSWORD_PATTERN, message: '密码至少 6 位' },
+];
+
+/** 登录页表单逻辑 Hook。 */
+
 export const useLoginForm = (): UseLoginFormReturn => {
     const navigate = useAnimatedNavigate();
     const location = useLocation();
     const [form] = useForm<LoginFormDTO>();
     const { visibility, toggle } = usePasswordVisibility(['password']);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+    // 用 ref 追踪提交状态，避免闭包陈旧值导致重复提交
+    const isSubmittingRef = useRef(false);
 
     /** 切换密码字段明文/密文显示状态。 */
     const togglePasswordVisibility = useCallback((): void => {
@@ -64,7 +78,13 @@ export const useLoginForm = (): UseLoginFormReturn => {
     }, [toggle]);
 
     const submitLogin = useCallback(async (values: LoginFormDTO): Promise<void> => {
+        // 使用 ref 守卫，防止闭包陈旧值导致的重复提交
+        if (isSubmittingRef.current) {
+            return;
+        }
+
         let shouldRollbackSession = false;
+        isSubmittingRef.current = true;
         setIsSubmitting(true);
 
         try {
@@ -92,14 +112,12 @@ export const useLoginForm = (): UseLoginFormReturn => {
 
             showToast({ type: 'error', message: '登录失败，请稍后重试' });
         } finally {
+            isSubmittingRef.current = false;
             setIsSubmitting(false);
         }
     }, [location.search, navigate]);
 
-    /**
-     * 表单校验通过后的提交回调。
-     * @param values - 已通过校验的表单字段值。
-     */
+    /** 表单校验通过后的提交回调。 */
     const handleFinish = useCallback((values: LoginFormDTO): void => {
         void submitLogin(values);
     }, [submitLogin]);
@@ -112,48 +130,14 @@ export const useLoginForm = (): UseLoginFormReturn => {
         showToast({ type: 'warning', message: '请先完善登录信息' });
     }, []);
 
-    const handleNavigateToRegister = useCallback(
-        (event: React.MouseEvent<HTMLAnchorElement>): void => {
-            event.preventDefault();
-            navigate('/register');
-        },
-        [navigate],
-    );
-
-    const handleNavigateToForgotPassword = useCallback(
-        (event: React.MouseEvent<HTMLAnchorElement>): void => {
-            event.preventDefault();
-            navigate('/forgot-password');
-        },
-        [navigate],
-    );
-
-    const handleNavigateToAgreement = useCallback(
-        (event: React.MouseEvent<HTMLAnchorElement>): void => {
-            event.preventDefault();
-            navigate('/user-agreement');
-        },
-        [navigate],
-    );
-
-    const handleNavigateToPrivacy = useCallback(
-        (event: React.MouseEvent<HTMLAnchorElement>): void => {
-            event.preventDefault();
-            navigate('/privacy-policy');
-        },
-        [navigate],
-    );
-
     return {
         form,
         showPassword: visibility.password,
         isSubmitting,
+        phoneRules: PHONE_RULES,
+        passwordRules: PASSWORD_RULES,
         togglePasswordVisibility,
         handleFinish,
         handleFinishFailed,
-        handleNavigateToRegister,
-        handleNavigateToForgotPassword,
-        handleNavigateToAgreement,
-        handleNavigateToPrivacy,
     };
 };

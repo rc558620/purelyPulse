@@ -7,6 +7,7 @@ import styles from './PartnerPayoutFilterBar.module.less';
 const PARTNER_PAYOUT_TAB_OPTIONS: Array<{ value: PartnerPayoutTabKey; label: string }> = [
   { value: 'all', label: '全部' },
   { value: 'pending', label: '待处理' },
+  { value: 'approved', label: '审核中' },
   { value: 'paid', label: '已打款' },
   { value: 'rejected', label: '已拒绝' },
 ];

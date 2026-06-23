@@ -61,7 +61,7 @@ const ChangeNicknameForm: React.FC<ChangeNicknameFormProps> = memo(({
                 type="text"
                 placeholder={NICKNAME_FIELD_CONFIG.placeholder}
                 maxLength={NICKNAME_FIELD_CONFIG.maxLength}
-                autoComplete="name"
+                autoComplete="nickname"
                 prefix={PREFIX_USER}
             />
         </FormItem>

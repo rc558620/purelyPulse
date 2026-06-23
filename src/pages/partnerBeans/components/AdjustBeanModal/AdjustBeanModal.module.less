@@ -267,12 +267,18 @@
 // ─── 预览卡 ──────────────────────────────────────────────────────────
 .previewCard {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 0.6rem;
   padding: 1.2rem 1.6rem;
   background: rgba(245, 158, 11, 0.06);
   border-radius: 1rem;
   border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.previewCardRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .previewLabel {
@@ -308,4 +314,10 @@
 .previewUnit {
   font-size: 1.2rem;
   color: @text-sub;
+}
+
+.previewWarning {
+  font-size: 1.2rem;
+  color: #ef4444;
+  font-weight: 500;
 }

@@ -4,7 +4,7 @@ import { safeNum } from '@utils/utils';
 /** UI 安全数字类型 */
 type SafeNumber = ReturnType<typeof safeNum>;
 
-/** 纯利豆记录变动类型 */
+/** 纯利豆记录变动类型。earn=获得，spend=消耗，withdraw=提现；"消耗/提现"tab 合并展示 spend 和 withdraw */
 export type BeanChangeType = 'earn' | 'spend' | 'withdraw';
 
 /** 纯利豆记录来源 */

@@ -75,7 +75,7 @@ export function usePeriodTabIndicator<T>(
   // 每次 measure 更新时同步到 ref，ResizeObserver 回调通过 ref 调用
   useEffect(() => {
     measureRef.current = measure;
-  });
+  }, [measure]);
 
   // 激活项变化时同步测量，保证指示器即时跟随
   useLayoutEffect(() => {

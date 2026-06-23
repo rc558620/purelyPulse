@@ -77,7 +77,7 @@ const BanManagementListSectionComponent: React.FC<BanManagementListSectionProps>
             key={member.id}
             member={member}
             isExpanded={expandedId === member.id}
-            isRefreshing={isRefreshing && expandedId === member.id}
+            isRefreshing={isRefreshing}
             isSubmitting={isSubmitting && submittingMemberId === member.id}
             onToggleExpand={onToggleExpand}
             onOpenConfirm={onOpenConfirm}

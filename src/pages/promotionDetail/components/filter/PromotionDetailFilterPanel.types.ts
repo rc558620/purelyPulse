@@ -30,9 +30,9 @@ export interface PromotionDetailFilterPanelProps {
   onRegionChange: (value: CascadeValue[]) => void;
   onQueryModeChange: (mode: PromotionQueryMode) => void;
   onDayChange: (year: number, month: number, day: number) => void;
-  onDayClear: () => void;
+  onDayReset: () => void;
   onRangeStartChange: (year: number, month: number, day: number) => void;
   onRangeEndChange: (year: number, month: number, day: number) => void;
-  onRangeClear: () => void;
+  onRangeReset: () => void;
   onRetry: () => void;
 }

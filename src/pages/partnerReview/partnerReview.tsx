@@ -1,9 +1,10 @@
-// 合伙人申请审核页面：负责装配头部、筛选、状态区与申请列表。
+// 合伙人申请审核页面：负责装配头部、筛选、状态区、申请列表与确认弹窗。
 import React from 'react';
 import PageHeader from '@components/ui/layout/PageHeader';
 import { useAnimatedNavigate } from '@hooks/useAnimatedNavigate';
 import { isNonEmptyArray } from '@utils/utils';
 import PartnerReviewApplicationList from './components/PartnerReviewApplicationList/PartnerReviewApplicationList';
+import PartnerReviewConfirmDialog from './components/PartnerReviewConfirmDialog/PartnerReviewConfirmDialog';
 import PartnerReviewFilterBar from './components/PartnerReviewFilterBar/PartnerReviewFilterBar';
 import PartnerReviewPageState from './components/PartnerReviewPageState/PartnerReviewPageState';
 import PartnerReviewSummaryBar from './components/PartnerReviewSummaryBar/PartnerReviewSummaryBar';
@@ -21,14 +22,17 @@ const PartnerReview: React.FC = () => {
     submittingActionType,
     errorMessage,
     stats,
+    confirmTarget,
     setActiveTab,
     handleToggleExpand,
-    handleApprove,
-    handleReject,
+    handleOpenConfirm,
+    handleCancelConfirm,
+    handleConfirm,
     retryLoad,
   } = usePartnerReviewPage();
 
   const showEmptyState = !isLoading && !errorMessage && !isNonEmptyArray(filteredApplications);
+  const isSubmitting = Boolean(submittingActionId);
 
   return (
     <div className={styles.pageContainer}>
@@ -82,11 +86,21 @@ const PartnerReview: React.FC = () => {
             submittingActionId={submittingActionId}
             submittingActionType={submittingActionType}
             onToggleExpand={handleToggleExpand}
-            onApprove={handleApprove}
-            onReject={handleReject}
+            onOpenConfirm={handleOpenConfirm}
           />
         ) : null}
       </main>
+
+      {/* Bug #1: 审核操作确认弹窗 */}
+      {confirmTarget ? (
+        <PartnerReviewConfirmDialog
+          application={confirmTarget.application}
+          action={confirmTarget.action}
+          isSubmitting={isSubmitting}
+          onConfirm={handleConfirm}
+          onCancel={handleCancelConfirm}
+        />
+      ) : null}
     </div>
   );
 };

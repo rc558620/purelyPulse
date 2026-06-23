@@ -101,6 +101,7 @@ export const useRevenueDetail = (): UseRevenueDetailReturn => {
   const [rangeEndDay, setRangeEndDay] = useState(safeNum(now.getDate()));
   const [region, setRegion] = useState<CascadeValue[]>([]);
   const [visibleRecordCount, setVisibleRecordCount] = useState(DEFAULT_VISIBLE_RECORD_COUNT);
+  const prevRecordsLengthRef = useRef(0);
   const requestIdRef = useRef(0);
   const isFirstLoadRef = useRef(true);
 
@@ -172,8 +173,13 @@ export const useRevenueDetail = (): UseRevenueDetailReturn => {
   }, [loadRevenueDetail, query]);
 
   useEffect(() => {
-    setVisibleRecordCount(DEFAULT_VISIBLE_RECORD_COUNT);
-  }, [data.records]);
+    // 仅在记录条数减少时（筛选条件切换导致数据重置）重置分页，
+    // 实时事件追加导致的记录增长不重置，避免用户已加载的记录缩短
+    if (data.records.length < prevRecordsLengthRef.current) {
+      setVisibleRecordCount(DEFAULT_VISIBLE_RECORD_COUNT);
+    }
+    prevRecordsLengthRef.current = data.records.length;
+  }, [data.records.length]);
 
   useEffect(() => {
     const handleMembershipRevenueSync = (event: Event): void => {

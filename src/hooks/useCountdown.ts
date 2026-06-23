@@ -34,7 +34,7 @@ export const useCountdown = (): UseCountdownReturn => {
     const countdownRef = useRef(countdown);
     useEffect(() => {
         countdownRef.current = countdown;
-    });
+    }, [countdown]);
 
     // 每秒递减定时器
     useEffect(() => {

@@ -1,6 +1,9 @@
 @import (reference) '../../../../styles/variables.less';
 @import (reference) '../../../../styles/mixins.less';
 
+@accent: #84cc16;
+@accent-dark: #65a30d;
+
 .dialogOverlay {
   position: fixed;
   inset: 0;
@@ -57,16 +60,16 @@
   .flex-center();
 }
 
-.dialogIconBan {
+.dialogIconApprove {
+  background: fade(@accent, 10%);
+  color: @accent-dark;
+  border: 2px solid fade(@accent, 25%);
+}
+
+.dialogIconReject {
   background: rgba(239, 68, 68, 0.1);
   color: #ef4444;
   border: 2px solid rgba(239, 68, 68, 0.2);
-}
-
-.dialogIconUnban {
-  background: rgba(16, 185, 129, 0.1);
-  color: @emerald-500;
-  border: 2px solid rgba(16, 185, 129, 0.2);
 }
 
 .dialogTitle {
@@ -131,7 +134,6 @@
   font-weight: 700;
 }
 
-// Bug #10: 选"其他"时的自定义原因输入框
 .dialogCustomReasonInput {
   width: 100%;
   padding: 0.8rem 1.2rem;
@@ -200,22 +202,22 @@
   }
 }
 
-.dialogConfirmBtnBan {
+.dialogConfirmBtnApprove {
+  background: linear-gradient(135deg, @accent, @accent-dark);
+  box-shadow: 0 4px 14px fade(@accent, 35%);
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, @accent-dark, #4d7c0f);
+    box-shadow: 0 6px 18px fade(@accent, 45%);
+  }
+}
+
+.dialogConfirmBtnReject {
   background: linear-gradient(135deg, #ef4444, #dc2626);
   box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
 
   &:hover:not(:disabled) {
     background: linear-gradient(135deg, #dc2626, #b91c1c);
     box-shadow: 0 6px 18px rgba(239, 68, 68, 0.42);
-  }
-}
-
-.dialogConfirmBtnUnban {
-  background: linear-gradient(135deg, @emerald-500, #059669);
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
-
-  &:hover:not(:disabled) {
-    background: linear-gradient(135deg, #059669, #047857);
-    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.42);
   }
 }

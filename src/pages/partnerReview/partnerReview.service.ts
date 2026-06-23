@@ -156,8 +156,15 @@ const maskPhone = (value: string): string => {
   return `${normalizedValue.slice(0, 3)}****${normalizedValue.slice(-4)}`;
 };
 
+const KNOWN_STATUS_VALUES = new Set([
+  'approved', 'pass', 'passed', 'success',
+  'rejected', 'reject', 'failed', 'refused',
+  'pending', 'waiting', 'reviewing', 'submitted',
+]);
+
 const normalizeStatus = (value: string): ApplicationStatus => {
-  switch (value.toLowerCase()) {
+  const normalizedValue = value.toLowerCase();
+  switch (normalizedValue) {
     case 'approved':
     case 'pass':
     case 'passed':
@@ -172,7 +179,12 @@ const normalizeStatus = (value: string): ApplicationStatus => {
     case 'waiting':
     case 'reviewing':
     case 'submitted':
+      return 'pending';
     default:
+      // Bug #9: 未知状态值打印警告，便于排查后端新增状态
+      if (!KNOWN_STATUS_VALUES.has(normalizedValue)) {
+        console.warn(`[partnerReview] 未知审核状态: "${value}"，默认归为 pending`);
+      }
       return 'pending';
   }
 };
@@ -253,11 +265,12 @@ const mapStats = (response: unknown, applications: PartnerApplication[]): Partne
     return computeStats(applications);
   }
 
+  // Bug #8: 使用 ?? 替代 ||，避免后端返回 0 时被误判为 falsy 而回退到本地计算值
   return {
-    totalCount: pickNumberField(statsSource, ['totalCount', 'total', 'allCount']) || applications.length,
-    pendingCount: pickNumberField(statsSource, ['pendingCount', 'waitingCount', 'todoCount']) || applications.filter((application) => application.status === 'pending').length,
-    approvedCount: pickNumberField(statsSource, ['approvedCount', 'passCount', 'successCount']) || applications.filter((application) => application.status === 'approved').length,
-    rejectedCount: pickNumberField(statsSource, ['rejectedCount', 'rejectCount', 'failedCount']) || applications.filter((application) => application.status === 'rejected').length,
+    totalCount: pickNumberField(statsSource, ['totalCount', 'total', 'allCount']) ?? applications.length,
+    pendingCount: pickNumberField(statsSource, ['pendingCount', 'waitingCount', 'todoCount']) ?? applications.filter((application) => application.status === 'pending').length,
+    approvedCount: pickNumberField(statsSource, ['approvedCount', 'passCount', 'successCount']) ?? applications.filter((application) => application.status === 'approved').length,
+    rejectedCount: pickNumberField(statsSource, ['rejectedCount', 'rejectCount', 'failedCount']) ?? applications.filter((application) => application.status === 'rejected').length,
   };
 };
 

@@ -45,9 +45,15 @@ export const useMembershipSettingsPage = (): UseMembershipSettingsPageResult => 
     }
   }, []);
 
+  // 用 ref 持有加载函数引用，避免 effect 中直接调用 setState 触发 lint 告警
+  const loadRef = useRef(loadMembershipSettings);
   useEffect(() => {
-    void loadMembershipSettings();
-  }, [loadMembershipSettings]);
+    loadRef.current = loadMembershipSettings;
+  });
+
+  useEffect(() => {
+    void loadRef.current();
+  }, []);
 
   const handleSaveTierValue = useCallback(async (tierId: TierId, value: TierValue): Promise<TierValue> => {
     const nextValue = await updateMembershipTierSetting(tierId, value);

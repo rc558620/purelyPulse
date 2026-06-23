@@ -10,6 +10,11 @@ interface BanManagementStatusBadgeProps {
 }
 
 export const BanManagementStatusBadge: React.FC<BanManagementStatusBadgeProps> = ({ status }) => {
+  // Bug #11: 对 'all' 筛选值做显式处理，避免误显示为"正常"
+  if (status === 'all') {
+    return null;
+  }
+
   if (status === 'banned') {
     return (
       <span className={cx(styles.statusBadge, styles.statusBadgeBanned)}>

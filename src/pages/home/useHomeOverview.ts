@@ -19,6 +19,7 @@ export const useHomeOverview = (query: HomeOverviewQuery): UseHomeOverviewReturn
   const [hasLoaded, setHasLoaded] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const requestIdRef = useRef(0);
+  const loadOverviewRef = useRef<() => Promise<void>>();
 
   const loadOverview = useCallback(async (): Promise<void> => {
     requestIdRef.current += 1;
@@ -47,6 +48,9 @@ export const useHomeOverview = (query: HomeOverviewQuery): UseHomeOverviewReturn
     }
   }, [query]);
 
+  // 同步最新 loadOverview 到 ref，事件监听回调通过 ref 调用，避免依赖变化导致监听真空期。
+  loadOverviewRef.current = loadOverview;
+
   useEffect(() => {
     void loadOverview();
   }, [loadOverview]);
@@ -59,18 +63,18 @@ export const useHomeOverview = (query: HomeOverviewQuery): UseHomeOverviewReturn
         return;
       }
 
-      void loadOverview();
+      void loadOverviewRef.current?.();
     };
 
     window.addEventListener(MEMBERSHIP_REVENUE_SYNC_EVENT, handleMembershipRevenueSync);
     return () => {
       window.removeEventListener(MEMBERSHIP_REVENUE_SYNC_EVENT, handleMembershipRevenueSync);
     };
-  }, [loadOverview]);
+  }, []);
 
   const retryLoad = useCallback((): void => {
-    void loadOverview();
-  }, [loadOverview]);
+    void loadOverviewRef.current?.();
+  }, []);
 
   return {
     overview,

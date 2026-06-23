@@ -5,7 +5,7 @@ import {
   IconMembershipQuarterly,
   IconMembershipYearly,
 } from './components/MembershipSettingsIcons/MembershipSettingsIcons';
-import type { MembershipTierConfig, MembershipTierValuesMap, TierId, TierValue } from './membershipSettings.types';
+import type { MembershipTierConfig, MembershipTierValuesMap } from './membershipSettings.types';
 
 export const MEMBERSHIP_TIER_CONFIGS: MembershipTierConfig[] = [
   {
@@ -47,5 +47,3 @@ export const MEMBERSHIP_TIER_DEFAULT_VALUES: MembershipTierValuesMap = {
     lifetimeDays: '730',
   },
 };
-
-export const MEMBERSHIP_TIER_DEFAULT_VALUE_BY_ID: Record<TierId, TierValue> = MEMBERSHIP_TIER_DEFAULT_VALUES;

@@ -17,12 +17,10 @@ const UPDATE_MEMBERSHIP_SETTINGS_API_PATH = resolveEnvPath(
   '/pulse/membership-settings/{level}',
 );
 
-const MEMBERSHIP_SETTING_PLAN_IDS: TierId[] = [
-  'monthly',
-  'quarterly',
-  'yearly',
-  'lifetime',
-];
+// BUG-08 修复：从 TierId 类型自动推导，避免与类型不同步
+const MEMBERSHIP_SETTING_PLAN_IDS: readonly TierId[] = (
+  Object.keys(MEMBERSHIP_TIER_DEFAULT_VALUES) as TierId[]
+);
 
 interface MembershipSettingItemResponse {
   /** 套餐标识。 */
@@ -52,10 +50,14 @@ interface UpdateLifetimeMembershipPayload extends UpdateMembershipPricePayload {
   validDays: number;
 }
 
-const cloneTierValue = (value: TierValue): TierValue => ({
-  price: value.price,
-  lifetimeDays: value.lifetimeDays,
-});
+// BUG-11 修复：非 lifetime 套餐不应包含 lifetimeDays 键
+const cloneTierValue = (value: TierValue): TierValue => {
+  if ('lifetimeDays' in value && value.lifetimeDays !== undefined) {
+    return { price: value.price, lifetimeDays: value.lifetimeDays };
+  }
+
+  return { price: value.price };
+};
 
 export const createDefaultMembershipTierValues = (): MembershipTierValuesMap => ({
   monthly: cloneTierValue(MEMBERSHIP_TIER_DEFAULT_VALUES.monthly),
@@ -72,10 +74,13 @@ const isTierId = (value: unknown): value is TierId => (
   typeof value === 'string' && MEMBERSHIP_SETTING_PLAN_IDS.includes(value as TierId)
 );
 
-const normalizePriceText = (rawPrice: string): string => {
+// BUG-12 修复：收敛为唯一的价格文本格式化函数，供 service 层和 shared 层共用
+export const normalizePriceText = (rawPrice: string): string => {
   const normalizedPrice = rawPrice.trim();
+
+  // BUG-07 修复：空字符串保持空串，不做默认值替换（校验由 validateTierValue 负责）
   if (!normalizedPrice) {
-    return '0';
+    return '';
   }
 
   const priceValue = safeNum(Number.parseFloat(normalizedPrice), 0);
@@ -133,20 +138,19 @@ const assertMembershipSettingsResponse = (value: unknown): MembershipSettingsRes
   return value;
 };
 
-const assertMembershipSettingItemResponse = (value: unknown): MembershipSettingItemResponse => {
-  if (!isMembershipSettingItemResponse(value)) {
-    throw new Error('会员套餐配置保存响应结构不符合预期');
+// BUG-11 修复：非 lifetime 套餐不附加 lifetimeDays 字段
+const mapSettingItemToTierValue = (item: MembershipSettingItemResponse): TierValue => {
+  if (item.planId === 'lifetime') {
+    return {
+      price: normalizePriceText(fenToYuanText(item.price)),
+      lifetimeDays: normalizeLifetimeDaysText(item.validDays === null ? undefined : String(item.validDays)),
+    };
   }
 
-  return value;
+  return {
+    price: normalizePriceText(fenToYuanText(item.price)),
+  };
 };
-
-const mapSettingItemToTierValue = (item: MembershipSettingItemResponse): TierValue => ({
-  price: normalizePriceText(fenToYuanText(item.price)),
-  lifetimeDays: item.planId === 'lifetime'
-    ? normalizeLifetimeDaysText(item.validDays === null ? undefined : String(item.validDays))
-    : undefined,
-});
 
 const mapMembershipSettingsResponse = (payload: MembershipSettingsResponse): MembershipTierValuesMap => {
   const nextValues = createDefaultMembershipTierValues();
@@ -165,23 +169,26 @@ const mapMembershipSettingsResponse = (payload: MembershipSettingsResponse): Mem
   return nextValues;
 };
 
+// BUG-09 修复：对 tierId 进行 URL 编码
 const resolveUpdateTierPath = (tierId: TierId): string => {
+  const encodedTierId = encodeURIComponent(tierId);
   if (UPDATE_MEMBERSHIP_SETTINGS_API_PATH.includes('{level}')) {
-    return UPDATE_MEMBERSHIP_SETTINGS_API_PATH.replace('{level}', tierId);
+    return UPDATE_MEMBERSHIP_SETTINGS_API_PATH.replace('{level}', encodedTierId);
   }
 
   if (UPDATE_MEMBERSHIP_SETTINGS_API_PATH.includes(':level')) {
-    return UPDATE_MEMBERSHIP_SETTINGS_API_PATH.replace(':level', tierId);
+    return UPDATE_MEMBERSHIP_SETTINGS_API_PATH.replace(':level', encodedTierId);
   }
 
-  return `${UPDATE_MEMBERSHIP_SETTINGS_API_PATH.replace(/\/$/, '')}/${tierId}`;
+  return `${UPDATE_MEMBERSHIP_SETTINGS_API_PATH.replace(/\/$/, '')}/${encodedTierId}`;
 };
 
 const buildUpdatePayload = (
   tierId: TierId,
   value: TierValue,
 ): UpdateMembershipPricePayload | UpdateLifetimeMembershipPayload => {
-  const normalizedPrice = normalizePriceText(value.price);
+  // 防御：空价格不应走到此函数（由 validateTierValue 拦截），但兜底为 '0'
+  const normalizedPrice = normalizePriceText(value.price) || '0';
   if (tierId === 'lifetime') {
     return {
       price: toFenAmount(normalizedPrice),
@@ -208,6 +215,7 @@ export const fetchMembershipSettings = createKeyedInFlightRequest(
   async (): Promise<MembershipTierValuesMap> => requestMembershipSettings(),
 );
 
+// BUG-04 修复：对 PATCH 返回值添加兜底映射，当后端返回不完整时回退到提交值
 export const updateMembershipTierSetting = async (
   tierId: TierId,
   value: TierValue,
@@ -221,5 +229,21 @@ export const updateMembershipTierSetting = async (
     },
   );
 
-  return mapSettingItemToTierValue(assertMembershipSettingItemResponse(response));
+  // 优先尝试按完整 MembershipSettingItemResponse 解析
+  if (isMembershipSettingItemResponse(response)) {
+    return mapSettingItemToTierValue(response);
+  }
+
+  // 兜底：后端返回部分字段时，基于提交值做价格回写
+  const normalizedPrice = normalizePriceText(value.price);
+  if (tierId === 'lifetime') {
+    return {
+      price: normalizedPrice,
+      lifetimeDays: normalizeLifetimeDaysText(value.lifetimeDays),
+    };
+  }
+
+  return {
+    price: normalizedPrice,
+  };
 };

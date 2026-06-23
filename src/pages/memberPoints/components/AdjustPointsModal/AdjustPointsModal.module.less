@@ -256,12 +256,18 @@
 // ─── 预览卡 ──────────────────────────────────────────────────────────
 .previewCard {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 0.6rem;
   padding: 1.2rem 1.6rem;
   background: rgba(132, 204, 22, 0.06);
   border-radius: 1rem;
   border: 1px solid rgba(132, 204, 22, 0.2);
+}
+
+.previewCardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .previewLabel {
@@ -297,4 +303,10 @@
 .previewUnit {
   font-size: 1.2rem;
   color: @text-sub;
+}
+
+.insufficientTip {
+  font-size: 1.15rem;
+  color: #ef4444;
+  font-weight: 500;
 }

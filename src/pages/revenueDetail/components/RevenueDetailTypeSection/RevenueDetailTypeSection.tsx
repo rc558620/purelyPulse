@@ -20,7 +20,16 @@ const RevenueDetailTypeSectionComponent = ({
   revenueTypes,
   pieOption,
   chartHeight,
-}: RevenueDetailTypeSectionProps): React.JSX.Element => (
+}: RevenueDetailTypeSectionProps): React.JSX.Element => {
+  // 饼图中心显示占比最大的类型百分比，比显示类型数量更有业务意义
+  const dominantType = revenueTypes.reduce<RevenueTypeItem | null>(
+    (max, item) => (max === null || item.value > max.value ? item : max),
+    null,
+  );
+  const centerValue = dominantType ? `${safeNum(dominantType.value)}%` : '--';
+  const centerLabel = dominantType?.label ?? '暂无数据';
+
+  return (
   <RevenueDetailChartCard
     className={cx(sharedStyles.typeSection, styles.root)}
     title="充值类型分布"
@@ -31,8 +40,8 @@ const RevenueDetailTypeSectionComponent = ({
       <div className={sharedStyles.typePieWrap}>
         <ChartRenderer option={pieOption} className={sharedStyles.chartCanvas} height={chartHeight} />
         <div className={sharedStyles.typePieCenter} aria-hidden="true">
-          <span className={sharedStyles.typePieCenterVal}>{revenueTypes.length}</span>
-          <span className={sharedStyles.typePieCenterLbl}>类型</span>
+          <span className={sharedStyles.typePieCenterVal}>{centerValue}</span>
+          <span className={sharedStyles.typePieCenterLbl}>{centerLabel}</span>
         </div>
       </div>
 
@@ -57,7 +66,8 @@ const RevenueDetailTypeSectionComponent = ({
       </div>
     </div>
   </RevenueDetailChartCard>
-);
+  );
+};
 
 export const RevenueDetailTypeSection = memo(RevenueDetailTypeSectionComponent);
 

@@ -16,6 +16,8 @@ interface HomeRevenueFiltersProps {
   revenuePeriod: RevenuePeriod;
   onRegionChange: (value: CascadeValue[]) => void;
   onRevenuePeriodChange: (value: RevenuePeriod) => void;
+  onCustomDateChange: (date: string | undefined) => void;
+  onCustomRangeChange: (start: string | undefined, end: string | undefined) => void;
 }
 
 interface HomeFilterDateValue {
@@ -49,11 +51,16 @@ const createRangeStartValue = (): HomeFilterDateValue => {
   };
 };
 
+const formatDateValue = (value: HomeFilterDateValue): string =>
+  `${safeNum(value.year)}-${String(safeNum(value.month)).padStart(2, '0')}-${String(safeNum(value.day)).padStart(2, '0')}`;
+
 const HomeRevenueFilters = memo(({
   rankRegion,
   revenuePeriod,
   onRegionChange,
   onRevenuePeriodChange,
+  onCustomDateChange,
+  onCustomRangeChange,
 }: HomeRevenueFiltersProps): React.JSX.Element => {
   const [isCustomDate, setIsCustomDate] = useState(false);
   const [isCustomRange, setIsCustomRange] = useState(false);
@@ -62,33 +69,55 @@ const HomeRevenueFilters = memo(({
   const [rangeEnd, setRangeEnd] = useState<HomeFilterDateValue>(() => createCurrentDateValue());
 
   const handleToggleCustomDate = (): void => {
-    setIsCustomDate((prev) => !prev);
+    setIsCustomDate((prev) => {
+      const next = !prev;
+      if (!next) {
+        onCustomDateChange(undefined);
+      }
+      return next;
+    });
     setIsCustomRange(false);
+    onCustomRangeChange(undefined, undefined);
   };
 
   const handleToggleCustomRange = (): void => {
-    setIsCustomRange((prev) => !prev);
+    setIsCustomRange((prev) => {
+      const next = !prev;
+      if (!next) {
+        onCustomRangeChange(undefined, undefined);
+      }
+      return next;
+    });
     setIsCustomDate(false);
+    onCustomDateChange(undefined);
   };
 
   const handleCustomDayClear = (): void => {
     setIsCustomDate(false);
+    onCustomDateChange(undefined);
   };
 
   const handleCustomDateChange = (year: number, month: number, day: number): void => {
-    setCustomDate({ year, month, day });
+    const next = { year, month, day };
+    setCustomDate(next);
+    onCustomDateChange(formatDateValue(next));
   };
 
   const handleRangeStartChange = (year: number, month: number, day: number): void => {
-    setRangeStart({ year, month, day });
+    const next = { year, month, day };
+    setRangeStart(next);
+    onCustomRangeChange(formatDateValue(next), formatDateValue(rangeEnd));
   };
 
   const handleRangeEndChange = (year: number, month: number, day: number): void => {
-    setRangeEnd({ year, month, day });
+    const next = { year, month, day };
+    setRangeEnd(next);
+    onCustomRangeChange(formatDateValue(rangeStart), formatDateValue(next));
   };
 
   const handleRangeClear = (): void => {
     setIsCustomRange(false);
+    onCustomRangeChange(undefined, undefined);
   };
 
   const customDateBtnText = isCustomDate

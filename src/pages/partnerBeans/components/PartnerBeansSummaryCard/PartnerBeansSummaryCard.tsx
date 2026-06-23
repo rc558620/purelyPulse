@@ -1,6 +1,6 @@
 // partnerBeans 合伙人余额总览区块
 import React from 'react';
-import { isNonEmptyArray, safeNum } from '@utils/utils';
+import { cx, isNonEmptyArray, safeNum } from '@utils/utils';
 import { IconPartnerBeansSummary } from '../PartnerBeansIcons/PartnerBeansIcons';
 import PartnerBeansPageState from '../PartnerBeansPageState/PartnerBeansPageState';
 import type { PartnerBeansPageUser } from '../../partnerBeans.types';
@@ -26,7 +26,7 @@ const PartnerBeansSummaryCardComponent: React.FC<PartnerBeansSummaryCardProps> =
       <div className={styles.partnerList}>
         {users.map((user) => (
           <div key={user.id} className={styles.partnerItem}>
-            <div className={`${styles.partnerAvatar} ${user.avatarUrl ? styles.partnerAvatarWithImage : ''}`} aria-hidden="true">
+            <div className={cx(styles.partnerAvatar, user.avatarUrl && styles.partnerAvatarWithImage)} aria-hidden="true">
               {user.avatarUrl ? <img className={styles.partnerAvatarImg} src={user.avatarUrl} alt="" /> : user.name[0]}
             </div>
             <div className={styles.partnerInfo}>

@@ -4,7 +4,7 @@ import { useAnimatedNavigate } from '@hooks/useAnimatedNavigate';
 import { ROUTE_PATHS } from '../../router/paths';
 import type { CascadeValue } from '@components/form/CascaderView/types';
 import { normalizeRegionValue } from '@constants/regionData';
-import type { RevenuePeriod } from './home.types';
+import type { HomeRevenuePeriodData, RevenuePeriod } from './home.types';
 import { useHomeOverview } from './useHomeOverview';
 import HomeHeroSection from './components/HomeHeroSection/HomeHeroSection';
 import HomeNavbar from './components/HomeNavbar/HomeNavbar';
@@ -20,6 +20,9 @@ const Home = (): React.JSX.Element => {
   const navigate = useAnimatedNavigate();
   const [revenuePeriod, setRevenuePeriod] = useState<RevenuePeriod>('month');
   const [rankRegion, setRankRegion] = useState<CascadeValue[]>([]);
+  const [customDate, setCustomDate] = useState<string | undefined>(undefined);
+  const [customRangeStart, setCustomRangeStart] = useState<string | undefined>(undefined);
+  const [customRangeEnd, setCustomRangeEnd] = useState<string | undefined>(undefined);
   const rankRegionLabel = useMemo(() => {
     const regionLabels = normalizeRegionValue(rankRegion)?.regionLabels ?? [];
     return regionLabels[regionLabels.length - 1] || undefined;
@@ -27,7 +30,10 @@ const Home = (): React.JSX.Element => {
   const homeOverviewQuery = useMemo(() => ({
     revenuePeriod,
     region: rankRegionLabel,
-  }), [rankRegionLabel, revenuePeriod]);
+    customDate,
+    customRangeStart,
+    customRangeEnd,
+  }), [rankRegionLabel, revenuePeriod, customDate, customRangeStart, customRangeEnd]);
   const { overview, isLoading, hasLoaded, errorMessage, retryLoad } = useHomeOverview(homeOverviewQuery);
 
   const handleRankRegionChange = useCallback((value: CascadeValue[]): void => {
@@ -36,6 +42,15 @@ const Home = (): React.JSX.Element => {
 
   const handleRevenuePeriodChange = useCallback((value: RevenuePeriod): void => {
     setRevenuePeriod(value);
+  }, []);
+
+  const handleCustomDateChange = useCallback((date: string | undefined): void => {
+    setCustomDate(date);
+  }, []);
+
+  const handleCustomRangeChange = useCallback((start: string | undefined, end: string | undefined): void => {
+    setCustomRangeStart(start);
+    setCustomRangeEnd(end);
   }, []);
 
   const handleNavigateRevenueDetail = useCallback((): void => {
@@ -48,7 +63,8 @@ const Home = (): React.JSX.Element => {
 
   const isInitialLoading = isLoading && !hasLoaded;
   const showInitialError = !isLoading && !hasLoaded && Boolean(errorMessage);
-  const revenueSummary = overview.revenueByPeriod[revenuePeriod];
+  const emptyRevenuePeriodData = useMemo<HomeRevenuePeriodData>(() => ({ dates: [], values: [], total: 0, avg: 0, growth: 0 }), []);
+  const revenueSummary = overview.revenueByPeriod[revenuePeriod] ?? emptyRevenuePeriodData;
 
   return (
     <div className={styles.pageContainer}>
@@ -80,6 +96,8 @@ const Home = (): React.JSX.Element => {
               revenuePeriod={revenuePeriod}
               onRegionChange={handleRankRegionChange}
               onRevenuePeriodChange={handleRevenuePeriodChange}
+              onCustomDateChange={handleCustomDateChange}
+              onCustomRangeChange={handleCustomRangeChange}
             />
             <HomeRevenueSection
               revenuePeriod={revenuePeriod}

@@ -22,8 +22,10 @@ interface ProfileMenuItem {
     label: string;
     /** 描述文案。 */
     description: string;
-    /** 左侧图标。 */
-    icon: React.ReactNode;
+    /** 左侧图标组件类型（非实例，延迟渲染以避免模块顶层创建 JSX）。 */
+    IconComponent: React.FC<{ className?: string }>;
+    /** 图标颜色样式类名。 */
+    iconClassName: string;
     /** 跳转路径。 */
     path: string;
 }
@@ -34,14 +36,16 @@ const PROFILE_MENU_ITEMS: ProfileMenuItem[] = [
         id: 'change-nickname',
         label: '修改昵称',
         description: '设置您的个人展示昵称',
-        icon: <IconUser />,
+        IconComponent: IconUser,
+        iconClassName: styles.menuIconNickname,
         path: ROUTE_PATHS.changeNickname,
     },
     {
         id: 'change-password',
         label: '修改密码',
         description: '定期修改密码保护账户安全',
-        icon: <IconLock />,
+        IconComponent: IconLock,
+        iconClassName: styles.menuIconPassword,
         path: ROUTE_PATHS.changePassword,
     },
 ];
@@ -49,10 +53,10 @@ const PROFILE_MENU_ITEMS: ProfileMenuItem[] = [
 /** 个人中心页面 */
 const Profile: React.FC = () => {
     const navigate = useAnimatedNavigate();
-    const { userInfo, updateUserInfo, clearUserInfo } = useUser();
+    const { userInfo, updateUserInfo } = useUser();
     const { avatar, name: userName, phone: userPhone } = userInfo;
 
-    // 进入页面时刷新一次 profile 数据
+    // 进入页面时刷新一次 profile 数据（仅在挂载时执行）
     useEffect(() => {
         let cancelled = false;
 
@@ -62,8 +66,8 @@ const Profile: React.FC = () => {
                 if (cancelled) {
                     return;
                 }
+                // syncAuthProfileToSession 内部同时更新 Zustand store 和 sessionStorage
                 syncAuthProfileToSession(profile);
-                updateUserInfo(profile);
             } catch {
                 // 请求失败时保留本地会话缓存兜底展示
             }
@@ -74,7 +78,7 @@ const Profile: React.FC = () => {
         return () => {
             cancelled = true;
         };
-    }, [updateUserInfo]);
+    }, []);
 
     const handleAvatarChange = useCallback(
         async (croppedImageUrl: string): Promise<void> => {
@@ -90,12 +94,11 @@ const Profile: React.FC = () => {
         [navigate],
     );
 
-    // 退出登录：清空会话后跳回登录页
+    // 退出登录：清空会话后跳回登录页（SPA 内跳转，保持过渡动画一致性）
     const handleLogout = useCallback(() => {
         clearAuthSession();
-        clearUserInfo();
-        window.location.href = ROUTE_PATHS.login;
-    }, [clearUserInfo]);
+        navigate(ROUTE_PATHS.login, { replace: true });
+    }, [navigate]);
 
     return (
         <div className={styles.profileContainer}>
@@ -120,7 +123,7 @@ const Profile: React.FC = () => {
                                 <MenuRow
                                     label={item.label}
                                     description={item.description}
-                                    icon={item.icon}
+                                    icon={<item.IconComponent className={item.iconClassName} />}
                                     onClick={() => handleMenuClick(item)}
                                 />
                             )}

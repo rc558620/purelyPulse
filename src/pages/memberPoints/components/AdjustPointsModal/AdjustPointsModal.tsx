@@ -43,14 +43,17 @@ const AdjustPointsModal: React.FC<AdjustPointsModalProps> = ({
   const parsedAmount = Math.max(0, parseInt(amount, 10) || 0);
   const delta = dir === 'add' ? parsedAmount : -parsedAmount;
   const previewBalance = user.availablePoints + delta;
-  const isValid = parsedAmount > 0 && reason.trim().length > 0;
+  const isInsufficientBalance = dir === 'subtract' && parsedAmount > user.availablePoints;
+  const isValid = parsedAmount > 0 && reason.trim().length > 0 && !isInsufficientBalance;
 
   const handleConfirm = useCallback((): void => {
     if (!isValid || isSubmitting) {
       return;
     }
 
-    void onConfirm(user.id, delta, reason.trim());
+    onConfirm(user.id, delta, reason.trim()).catch(() => {
+      // 错误已由 hook 层 showToast 处理，此处仅阻止 Unhandled Promise Rejection
+    });
   }, [delta, isSubmitting, isValid, onConfirm, reason, user.id]);
 
   const handleAmountChange = useCallback((event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -183,15 +186,20 @@ const AdjustPointsModal: React.FC<AdjustPointsModalProps> = ({
 
         {parsedAmount > 0 ? (
           <div className={styles.previewCard}>
-            <span className={styles.previewLabel}>操作后余额预览</span>
-            <div className={styles.previewRow}>
-              <span className={styles.previewOld}>{safeNum(user.availablePoints).toLocaleString('zh-CN')}</span>
-              <IconMemberPointsPreviewArrow color="#94a3b8" />
-              <span className={cx(styles.previewNew, dir === 'add' ? styles.previewNewAdd : styles.previewNewSub)}>
-                {safeNum(previewBalance).toLocaleString('zh-CN')}
-              </span>
-              <span className={styles.previewUnit}>积分</span>
+            <div className={styles.previewCardTop}>
+              <span className={styles.previewLabel}>操作后余额预览</span>
+              <div className={styles.previewRow}>
+                <span className={styles.previewOld}>{safeNum(user.availablePoints).toLocaleString('zh-CN')}</span>
+                <IconMemberPointsPreviewArrow color="#94a3b8" />
+                <span className={cx(styles.previewNew, dir === 'add' ? styles.previewNewAdd : styles.previewNewSub)}>
+                  {safeNum(previewBalance).toLocaleString('zh-CN')}
+                </span>
+                <span className={styles.previewUnit}>积分</span>
+              </div>
             </div>
+            {isInsufficientBalance ? (
+              <span className={styles.insufficientTip}>扣减数量超过当前余额，无法提交</span>
+            ) : null}
           </div>
         ) : null}
       </div>

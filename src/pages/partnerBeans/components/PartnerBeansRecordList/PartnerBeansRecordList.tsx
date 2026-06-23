@@ -92,6 +92,7 @@ const PartnerBeansRecordListComponent: React.FC<PartnerBeansRecordListProps> = (
                       record.source === 'admin_adjust' && styles.recordSourceTagAdmin,
                       record.source === 'promo_reward' && styles.recordSourceTagPromo,
                       record.source === 'withdrawal' && styles.recordSourceTagWithdraw,
+                      record.source === 'deduct_payment' && styles.recordSourceTagDeduct,
                     )}
                   >
                     {PARTNER_BEANS_SOURCE_LABELS[record.source]}

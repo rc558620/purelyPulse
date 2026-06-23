@@ -23,7 +23,7 @@ const PromotionDetailRecordList: React.FC<PromotionDetailRecordListProps> = ({
       <span className={styles.detailListTitle}>推广明细</span>
       <span className={styles.detailListCount}>{formatPromotionDetailCount(periodRecords.length)} 条</span>
     </div>
-    {!showEmptyState ? (
+    {!showEmptyState && isNonEmptyArray(periodRecords) ? (
       <>
         <div className={styles.detailListTableHead}>
           <span className={styles.detailThPeriod}>
@@ -52,4 +52,4 @@ const PromotionDetailRecordList: React.FC<PromotionDetailRecordListProps> = ({
   </div>
 );
 
-export default PromotionDetailRecordList;
+export default React.memo(PromotionDetailRecordList);

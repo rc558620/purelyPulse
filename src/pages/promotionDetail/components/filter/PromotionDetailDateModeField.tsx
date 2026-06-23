@@ -25,10 +25,10 @@ export interface PromotionDetailDateModeFieldProps {
   rangeEndDay: number;
   onQueryModeChange: (mode: PromotionQueryMode) => void;
   onDayChange: (year: number, month: number, day: number) => void;
-  onDayClear: () => void;
+  onDayReset: () => void;
   onRangeStartChange: (year: number, month: number, day: number) => void;
   onRangeEndChange: (year: number, month: number, day: number) => void;
-  onRangeClear: () => void;
+  onRangeReset: () => void;
 }
 
 const PromotionDetailDateModeField: React.FC<PromotionDetailDateModeFieldProps> = ({
@@ -45,10 +45,10 @@ const PromotionDetailDateModeField: React.FC<PromotionDetailDateModeFieldProps> 
   rangeEndDay,
   onQueryModeChange,
   onDayChange,
-  onDayClear,
+  onDayReset,
   onRangeStartChange,
   onRangeEndChange,
-  onRangeClear,
+  onRangeReset,
 }) => (
   <>
     <div className={styles.fieldGroup}>
@@ -86,7 +86,7 @@ const PromotionDetailDateModeField: React.FC<PromotionDetailDateModeFieldProps> 
           month={safeNum(dayMonth)}
           day={safeNum(dayDay)}
           onChange={onDayChange}
-          onClear={onDayClear}
+          onClear={onDayReset}
         />
       </div>
     ) : null}
@@ -106,7 +106,7 @@ const PromotionDetailDateModeField: React.FC<PromotionDetailDateModeFieldProps> 
           endDay={safeNum(rangeEndDay)}
           onStartChange={onRangeStartChange}
           onEndChange={onRangeEndChange}
-          onClear={onRangeClear}
+          onClear={onRangeReset}
         />
       </div>
     ) : null}

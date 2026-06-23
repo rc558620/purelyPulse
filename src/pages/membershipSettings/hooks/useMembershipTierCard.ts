@@ -11,17 +11,18 @@ import type {
 
 const sanitizePriceInput = (value: string): string => {
   const cleanedValue = value.replace(/[^\d.]/g, '');
-  const parts = cleanedValue.split('.');
+  const dotIndex = cleanedValue.indexOf('.');
 
-  if (parts.length > 2) {
-    return `${parts[0]}.${parts.slice(1).join('')}`;
+  // 无小数点，直接返回
+  if (dotIndex === -1) {
+    return cleanedValue;
   }
 
-  if (parts[1] !== undefined && parts[1].length > 2) {
-    return `${parts[0]}.${parts[1].slice(0, 2)}`;
-  }
+  // 只保留第一个小数点，后续小数点全部移除
+  const integerPart = cleanedValue.slice(0, dotIndex + 1);
+  const decimalPart = cleanedValue.slice(dotIndex + 1).replace(/\./g, '').slice(0, 2);
 
-  return cleanedValue;
+  return `${integerPart}${decimalPart}`;
 };
 
 const sanitizeDaysInput = (value: string): string => value.replace(/\D/g, '').slice(0, 5);
@@ -81,7 +82,29 @@ export const useMembershipTierCard = (
   const [justSaved, setJustSaved] = useState(false);
   const savedTimerRef = useRef<number | null>(null);
 
+  // BUG-01 修复：用 ref 标记是否正在保存，防止闭包读取过期的 isSaving
+  const isSavingRef = useRef(false);
+
+  // BUG-02 修复：用 ref 持有最新的 value，避免闭包捕获旧值
+  const valueRef = useRef(value);
+
+  // BUG-10 修复：用 ref 标记是否为保存成功触发的 initialValue 更新
+  const isSaveTriggeredUpdateRef = useRef(false);
+
   useEffect(() => {
+    // 同步 valueRef，保证事件处理函数中读到的值最新
+    valueRef.current = value;
+  });
+
+  useEffect(() => {
+    // BUG-10 修复：如果是保存成功触发的更新，不清除 justSaved
+    if (isSaveTriggeredUpdateRef.current) {
+      isSaveTriggeredUpdateRef.current = false;
+      setValue({ ...initialValue });
+      setSavedValue({ ...initialValue });
+      return;
+    }
+
     clearSavedTimer(savedTimerRef);
     const nextValue = { ...initialValue };
     setValue(nextValue);
@@ -128,21 +151,31 @@ export const useMembershipTierCard = (
   }, []);
 
   const handleSave = useCallback(async (): Promise<void> => {
-    const validationMessage = validateTierValue(config, value);
+    // BUG-01 修复：用 ref 防止重复提交
+    if (isSavingRef.current) {
+      return;
+    }
+
+    const currentValue = valueRef.current;
+    const validationMessage = validateTierValue(config, currentValue);
 
     if (validationMessage) {
       showToast({ message: validationMessage, type: 'error' });
       return;
     }
 
+    isSavingRef.current = true;
     setIsSaving(true);
 
     try {
-      const nextSavedValue = await onSaveValue(config.id, value);
+      const nextSavedValue = await onSaveValue(config.id, currentValue);
       setValue(nextSavedValue);
       setSavedValue(nextSavedValue);
       setJustSaved(true);
       showToast({ message: `${config.label}已保存`, type: 'success' });
+
+      // BUG-10 修复：标记后续的 initialValue 更新是保存触发的
+      isSaveTriggeredUpdateRef.current = true;
 
       clearSavedTimer(savedTimerRef);
 
@@ -150,11 +183,13 @@ export const useMembershipTierCard = (
         setJustSaved(false);
       }, 3000);
     } catch {
+      // BUG-06 修复：保存失败时不更新 value/savedValue，保持 isDirty 为 true，允许重试
       showToast({ message: '保存失败，请稍后重试', type: 'error' });
     } finally {
+      isSavingRef.current = false;
       setIsSaving(false);
     }
-  }, [config, onSaveValue, value]);
+  }, [config, onSaveValue]);
 
   return {
     value,

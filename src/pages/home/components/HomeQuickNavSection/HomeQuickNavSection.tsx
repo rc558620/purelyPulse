@@ -24,7 +24,7 @@ interface HomeQuickNavSectionProps {
 }
 
 const QUICK_NAV_ITEMS: HomeQuickNavItemConfig[] = [
-  { title: '打款管理', desc: '合伙人收益发放', ariaLabel: '合伙人打款管理', path: ROUTE_PATHS.partnerPayout, tone: 'green', icon: 'payout' },
+  { title: '打款管理', desc: '合伙人收益发放', ariaLabel: '合伙人打款管理', path: ROUTE_PATHS.partnerPayout, tone: 'green', icon: 'payout', showPendingBadge: true },
   { title: '申请审核', desc: '合伙人申请处理', ariaLabel: '合伙人申请审核', path: ROUTE_PATHS.partnerReview, tone: 'purple', icon: 'review', showPendingBadge: true },
   { title: '纯利豆', desc: '合伙人豆管理', ariaLabel: '纯利豆管理', path: ROUTE_PATHS.partnerBeans, tone: 'amber', icon: 'beans' },
   { title: '积分管理', desc: '会员积分增减', ariaLabel: '会员积分管理', path: ROUTE_PATHS.memberPoints, tone: 'blue', icon: 'points' },

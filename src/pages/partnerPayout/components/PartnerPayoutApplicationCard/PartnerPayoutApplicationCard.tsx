@@ -1,6 +1,6 @@
 // 合伙人打款申请卡片
 import React from 'react';
-import { cx, fmtAmount, safeStr } from '@utils/utils';
+import { cx, fenToYuan, fmtAmount, safeStr } from '@utils/utils';
 import {
   IconPartnerPayoutApprove,
   IconPartnerPayoutExpandArrow,
@@ -33,20 +33,23 @@ interface PartnerPayoutApplicationCardProps {
   application: PartnerPayoutApplication;
   /** 当前是否展开 */
   expanded: boolean;
-  /** 当前是否提交中 */
+  /** 当前卡片是否提交中 */
   isSubmitting: boolean;
+  /** 是否有任意卡片正在提交中 */
+  isAnySubmitting: boolean;
   /** 切换展开态 */
   onToggle: (id: string) => void;
-  /** 确认打款 */
-  onApprove: (id: string) => Promise<void>;
-  /** 拒绝打款 */
-  onReject: (id: string) => Promise<void>;
+  /** 确认打款（打开确认弹窗） */
+  onApprove: (id: string) => void;
+  /** 拒绝打款（打开确认弹窗） */
+  onReject: (id: string) => void;
 }
 
-const PartnerPayoutApplicationCard: React.FC<PartnerPayoutApplicationCardProps> = React.memo(({
+const PartnerPayoutApplicationCard: React.FC<PartnerPayoutApplicationCardProps> = React.memo(({  
   application,
   expanded,
   isSubmitting,
+  isAnySubmitting,
   onToggle,
   onApprove,
   onReject,
@@ -88,7 +91,7 @@ const PartnerPayoutApplicationCard: React.FC<PartnerPayoutApplicationCardProps> 
         </div>
 
         <div className={styles.cardRight}>
-          <div className={styles.cardAmount}>¥{fmtAmount(application.amount / 100)}</div>
+          <div className={styles.cardAmount}>¥{fmtAmount(fenToYuan(application.amount))}</div>
           <div className={styles[statusConfig.className]}>{statusConfig.label}</div>
           <IconPartnerPayoutExpandArrow className={cx(styles.expandArrow, expanded && styles.expandArrowOpen)} />
         </div>
@@ -114,7 +117,7 @@ const PartnerPayoutApplicationCard: React.FC<PartnerPayoutApplicationCardProps> 
             <div className={styles.detailItem}>
               <span className={styles.detailLabel}>申请金额</span>
               <span className={cx(styles.detailVal, styles.detailValAmount)}>
-                ¥{fmtAmount(application.amount / 100)}
+                ¥{fmtAmount(fenToYuan(application.amount))}
               </span>
             </div>
             {application.txnNo ? (
@@ -145,10 +148,10 @@ const PartnerPayoutApplicationCard: React.FC<PartnerPayoutApplicationCardProps> 
                 className={styles.rejectBtn}
                 onClick={(event) => {
                   event.stopPropagation();
-                  void onReject(application.id);
+                  onReject(application.id);
                 }}
                 aria-label={`拒绝 ${safeStr(application.partnerName, '该合伙人')} 的打款申请`}
-                disabled={isSubmitting}
+                disabled={isAnySubmitting}
               >
                 <IconPartnerPayoutReject />
                 {isSubmitting ? '处理中...' : '拒绝'}
@@ -158,10 +161,10 @@ const PartnerPayoutApplicationCard: React.FC<PartnerPayoutApplicationCardProps> 
                 className={styles.approveBtn}
                 onClick={(event) => {
                   event.stopPropagation();
-                  void onApprove(application.id);
+                  onApprove(application.id);
                 }}
                 aria-label={`确认打款给 ${safeStr(application.partnerName, '该合伙人')}`}
-                disabled={isSubmitting}
+                disabled={isAnySubmitting}
               >
                 <IconPartnerPayoutApprove />
                 {isSubmitting ? '处理中...' : '确认打款'}

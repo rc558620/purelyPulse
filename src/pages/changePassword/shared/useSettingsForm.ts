@@ -66,6 +66,10 @@ export function useSettingsForm<T extends object>(
         setSubmitting(true);
         try {
             await onSubmit(values, form);
+        } catch (error) {
+            // Bug 4 修复：捕获业务异常（如网络错误），防止异常冒泡到 Form.handleSubmit
+            // 被误当作校验错误传给 onFinishFailed。业务层应自行处理错误提示。
+            console.error('Settings form submit failed:', error);
         } finally {
             setSubmitting(false);
         }

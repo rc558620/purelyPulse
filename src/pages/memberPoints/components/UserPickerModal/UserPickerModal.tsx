@@ -1,5 +1,6 @@
 // 用户选择弹窗：在调整积分前选择目标会员。
-import React from 'react';
+import React, { useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { cx, isNonEmptyArray, safeNum } from '@utils/utils';
 import { IconMemberPointsClose } from '../MemberPointsIcons/MemberPointsIcons';
 import type { MemberPointsPageUser } from '../../memberPoints.types';
@@ -21,57 +22,82 @@ const UserPickerModal: React.FC<UserPickerModalProps> = ({
   onKeywordChange,
   onClose,
   onSelect,
-}) => (
-  <div className={styles.bodyOverlay} onClick={onClose} role="dialog" aria-modal="true" aria-label="选择要调整积分的用户">
-    <div className={styles.modalCard} onClick={(event) => event.stopPropagation()}>
-      <div className={styles.header}>
-        <span className={styles.title}>选择用户</span>
-        <button type="button" className={styles.closeButton} onClick={onClose} aria-label="关闭">
-          <IconMemberPointsClose />
-        </button>
+}) => {
+  // ESC 键关闭弹窗
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [onClose]);
+
+  // 弹窗打开时锁定背景页面滚动
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
+
+  return ReactDOM.createPortal(
+    <div className={styles.bodyOverlay} onClick={onClose} role="dialog" aria-modal="true" aria-label="选择要调整积分的用户">
+      <div className={styles.modalCard} onClick={(event) => event.stopPropagation()}>
+        <div className={styles.header}>
+          <span className={styles.title}>选择用户</span>
+          <button type="button" className={styles.closeButton} onClick={onClose} aria-label="关闭">
+            <IconMemberPointsClose />
+          </button>
+        </div>
+        <div className={styles.searchSection}>
+          <input
+            className={styles.searchInput}
+            type="text"
+            placeholder="搜索姓名或手机号..."
+            value={keyword}
+            onChange={(event) => onKeywordChange(event.target.value)}
+            autoFocus
+            aria-label="搜索用户"
+          />
+        </div>
+        <div className={styles.userList}>
+          {!isNonEmptyArray(users) ? (
+            <div className={styles.emptyState} role="status">
+              <span>暂无匹配用户</span>
+            </div>
+          ) : (
+            users.map((user) => (
+              <button
+                key={user.id}
+                type="button"
+                className={styles.userButton}
+                onClick={() => onSelect(user)}
+                disabled={isSubmitting}
+              >
+                <div className={cx(styles.avatar, user.avatarUrl && styles.avatarWithImage)} aria-hidden="true">
+                  {user.avatarUrl ? <img className={styles.avatarImg} src={user.avatarUrl} alt="" /> : user.name[0]}
+                </div>
+                <div className={styles.userInfo}>
+                  <span className={styles.userName}>{user.name}</span>
+                  <span className={styles.userPhone}>{user.phone}</span>
+                </div>
+                <div className={styles.balance}>
+                  <span className={styles.balanceValue}>{safeNum(user.availablePoints).toLocaleString('zh-CN')}</span>
+                  <span className={styles.balanceLabel}>积分</span>
+                </div>
+              </button>
+            ))
+          )}
+        </div>
       </div>
-      <div className={styles.searchSection}>
-        <input
-          className={styles.searchInput}
-          type="text"
-          placeholder="搜索姓名或手机号..."
-          value={keyword}
-          onChange={(event) => onKeywordChange(event.target.value)}
-          autoFocus
-          aria-label="搜索用户"
-        />
-      </div>
-      <div className={styles.userList}>
-        {!isNonEmptyArray(users) ? (
-          <div className={styles.emptyState} role="status">
-            <span>暂无匹配用户</span>
-          </div>
-        ) : (
-          users.map((user) => (
-            <button
-              key={user.id}
-              type="button"
-              className={styles.userButton}
-              onClick={() => onSelect(user)}
-              disabled={isSubmitting}
-            >
-              <div className={cx(styles.avatar, user.avatarUrl && styles.avatarWithImage)} aria-hidden="true">
-                {user.avatarUrl ? <img className={styles.avatarImg} src={user.avatarUrl} alt="" /> : user.name[0]}
-              </div>
-              <div className={styles.userInfo}>
-                <span className={styles.userName}>{user.name}</span>
-                <span className={styles.userPhone}>{user.phone}</span>
-              </div>
-              <div className={styles.balance}>
-                <span className={styles.balanceValue}>{safeNum(user.availablePoints).toLocaleString('zh-CN')}</span>
-                <span className={styles.balanceLabel}>积分</span>
-              </div>
-            </button>
-          ))
-        )}
-      </div>
-    </div>
-  </div>
-);
+    </div>,
+    document.body,
+  );
+};
 
 export default UserPickerModal;

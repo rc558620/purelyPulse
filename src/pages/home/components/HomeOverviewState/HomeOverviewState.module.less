@@ -1,4 +1,5 @@
 @import (reference) '../../../../styles/variables.less';
+@import (reference) '../../../../styles/breakpoints.less';
 
 .statusCard {
   background: rgba(255, 255, 255, 0.9);
@@ -10,13 +11,16 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
   padding: 3.2rem 2rem;
   min-height: 24rem;
-  grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 1.2rem;
   text-align: center;
+
+  @media (min-width: @bp-mobile) {
+    grid-column: 1 / -1;
+  }
 }
 
 .statusTitle {

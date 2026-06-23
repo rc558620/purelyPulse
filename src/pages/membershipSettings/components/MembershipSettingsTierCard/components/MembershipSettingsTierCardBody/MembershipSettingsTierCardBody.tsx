@@ -1,5 +1,4 @@
 // 会员套餐卡片内容区：负责渲染字段输入与保存按钮。
-import { memo } from 'react';
 import type { JSX } from 'react';
 import { cx } from '@utils/utils';
 import {
@@ -32,7 +31,8 @@ interface MembershipSettingsTierCardBodyProps {
   onSave: () => Promise<void>;
 }
 
-const MembershipSettingsTierCardBody = memo(({
+// BUG-14 修复：移除无效 memo，value 每次输入都变，memo 无法拦截任何重渲染
+const MembershipSettingsTierCardBody = ({
   config,
   value,
   toneClassNames,
@@ -113,8 +113,6 @@ const MembershipSettingsTierCardBody = memo(({
       </button>
     </div>
   </div>
-));
-
-MembershipSettingsTierCardBody.displayName = 'MembershipSettingsTierCardBody';
+);
 
 export default MembershipSettingsTierCardBody;

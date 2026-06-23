@@ -14,8 +14,6 @@ export const DEFAULT_USER_INFO: UserInfo = {
 };
 
 export interface UserStore extends UserContextType {
-  /** 清空当前用户信息。 */
-  clearUserInfo: () => void;
   /** 设置用户态初始化中标记。 */
   setIsInitializing: (isInitializing: boolean) => void;
 }
@@ -100,6 +98,12 @@ export const readPersistedUserInfo = (): UserInfo => {
     return DEFAULT_USER_INFO;
   }
 
+  /** 优先从已初始化的 store 读取，避免重复解析 sessionStorage 导致与 merge 逻辑不同步。 */
+  const storeState = useUserStore.getState();
+  if (storeState.userInfo.id || storeState.userInfo.name || storeState.userInfo.phone) {
+    return storeState.userInfo;
+  }
+
   try {
     const raw = sessionStorage.getItem(STORAGE_KEYS.USER_INFO);
     if (!raw) {
@@ -149,8 +153,10 @@ export const useUserStore = create<UserStore>()(
           }));
         },
         clearUserInfo: () => {
-          set({ userInfo: DEFAULT_USER_INFO });
+          set({ userInfo: DEFAULT_USER_INFO, isInitializing: false });
           useUserStore.persist.clearStorage();
+          sessionStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+          localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
         },
         setIsInitializing: (isInitializing) => {
           set({ isInitializing });

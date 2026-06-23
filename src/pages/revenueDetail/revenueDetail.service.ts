@@ -1,6 +1,6 @@
 import { formatRegionValue } from '@constants/regionData';
 import { createKeyedInFlightRequest, http, resolveEnvPath } from '@utils/http';
-import { safeNum } from '@utils/utils';
+import { fenToYuan, safeNum } from '@utils/utils';
 import { readMembershipRevenueSyncEvents } from '../memberList/memberList.service';
 import type { MembershipRevenueSyncPayload } from '../memberList/memberList.service';
 import type {
@@ -74,14 +74,16 @@ const normalizeNumber = (value: unknown): number => {
   return 0;
 };
 
+const isFieldPresent = (value: unknown): boolean => value !== undefined && value !== null;
+
 const toYuanAmount = (value: unknown): number => {
-  const normalizedValue = normalizeNumber(value);
-  if (!normalizedValue) {
+  if (!isFieldPresent(value)) {
     return 0;
   }
 
+  const normalizedValue = normalizeNumber(value);
   // Pulse revenue detail amount fields are returned in fen.
-  return safeNum(normalizedValue / 100);
+  return fenToYuan(normalizedValue);
 };
 
 const pickNumberField = (value: unknown, keys: readonly string[]): number => {
@@ -90,6 +92,10 @@ const pickNumberField = (value: unknown, keys: readonly string[]): number => {
   }
 
   for (const key of keys) {
+    if (!(key in value)) {
+      continue;
+    }
+
     const candidate = value[key];
     const normalizedValue = normalizeNumber(candidate);
     if (normalizedValue !== 0 || candidate === 0 || candidate === '0') {
@@ -289,6 +295,26 @@ const isMembershipRevenueEventInPeriod = (timestamp: number, period: RevenuePeri
   return timestamp >= startTime && timestamp <= endTime;
 };
 
+const resolvePeriodTimeRange = (query: RevenueDetailQuery): { startTime: number; endTime: number } | null => {
+  if (query.date) {
+    const parsedDate = parseDateText(query.date);
+    if (!parsedDate) return null;
+    const start = getStartOfDay(parsedDate).getTime();
+    const end = getStartOfDay(new Date(parsedDate.getFullYear(), parsedDate.getMonth(), parsedDate.getDate() + 1)).getTime() - 1;
+    return { startTime: start, endTime: end };
+  }
+
+  if (query.startDate || query.endDate) {
+    const start = query.startDate ? getStartOfDay(parseDateText(query.startDate) ?? new Date(0)).getTime() : Number.NEGATIVE_INFINITY;
+    const end = query.endDate
+      ? getStartOfDay(new Date((parseDateText(query.endDate) ?? new Date(0)).getFullYear(), (parseDateText(query.endDate) ?? new Date(0)).getMonth(), (parseDateText(query.endDate) ?? new Date(0)).getDate() + 1)).getTime() - 1
+      : Number.POSITIVE_INFINITY;
+    return { startTime: start, endTime: end };
+  }
+
+  return null;
+};
+
 const matchesRevenueDetailQuery = (event: MembershipRevenueSyncPayload, query: RevenueDetailQuery): boolean => {
   if (query.regionValues.length > 0) {
     return false;
@@ -305,6 +331,11 @@ const matchesRevenueDetailQuery = (event: MembershipRevenueSyncPayload, query: R
     return eventDate >= startDate && eventDate <= endDate;
   }
 
+  const customRange = resolvePeriodTimeRange(query);
+  if (customRange) {
+    return event.createdAt >= customRange.startTime && event.createdAt <= customRange.endTime;
+  }
+
   return isMembershipRevenueEventInPeriod(event.createdAt, query.period, new Date());
 };
 
@@ -313,7 +344,7 @@ const mergeAmountIntoTrend = (
   values: number[],
   event: MembershipRevenueSyncPayload,
 ): { dates: string[]; values: number[] } => {
-  const amountYuan = safeNum(event.amountFen / 100);
+  const amountYuan = fenToYuan(event.amountFen);
   const label = formatDateLabel(event.createdAt) || '今日';
   const nextDates = [...dates];
   const nextValues = [...values];
@@ -324,6 +355,7 @@ const mergeAmountIntoTrend = (
     return { dates: nextDates, values: nextValues };
   }
 
+  // 趋势图为空，直接插入新标签
   if (nextValues.length === 0) {
     return {
       dates: [label],
@@ -331,20 +363,14 @@ const mergeAmountIntoTrend = (
     };
   }
 
-  if (nextDates.length === nextValues.length && nextDates.every((item) => item.includes('/'))) {
-    nextDates.push(label);
-    nextValues.push(amountYuan);
-    return { dates: nextDates, values: nextValues };
-  }
-
-  const lastIndex = nextValues.length - 1;
-  nextValues[lastIndex] = safeNum(nextValues[lastIndex] + amountYuan);
+  // 新日期不在已有标签中：追加新标签+值，而非归到最后一天
+  nextDates.push(label);
+  nextValues.push(amountYuan);
   return { dates: nextDates, values: nextValues };
 };
 
 const mergeRevenueTypes = (
   revenueTypes: RevenueTypeItem[],
-  totalBefore: number,
   events: MembershipRevenueSyncPayload[],
 ): RevenueTypeItem[] => {
   if (events.length === 0) {
@@ -360,22 +386,24 @@ const mergeRevenueTypes = (
     }
   });
 
-  const amountMap = new Map<string, number>();
+  // 将现有百分比直接作为权重值，新增事件金额（元）也作为权重值
+  // 同一量纲下归一化，避免百分比→绝对金额→百分比的精度丢失
+  const weightMap = new Map<string, number>();
   labelOrder.forEach((label) => {
-    amountMap.set(label, 0);
+    weightMap.set(label, 0);
   });
 
   revenueTypes.forEach((item) => {
-    amountMap.set(item.label, safeNum(totalBefore * safeNum(item.value) / 100));
+    weightMap.set(item.label, safeNum(item.value));
   });
   events.forEach((event) => {
-    amountMap.set(event.revenueTypeLabel, safeNum((amountMap.get(event.revenueTypeLabel) ?? 0) + safeNum(event.amountFen / 100)));
+    weightMap.set(event.revenueTypeLabel, safeNum((weightMap.get(event.revenueTypeLabel) ?? 0) + fenToYuan(event.amountFen)));
   });
 
-  const totalAfter = Array.from(amountMap.values()).reduce((sum, value) => safeNum(sum + value), 0);
+  const totalWeight = Array.from(weightMap.values()).reduce((sum, value) => safeNum(sum + value), 0);
   return labelOrder.map((label) => ({
     label,
-    value: totalAfter > 0 ? safeNum(Number((((amountMap.get(label) ?? 0) / totalAfter) * 100).toFixed(1))) : 0,
+    value: totalWeight > 0 ? safeNum(Number((((weightMap.get(label) ?? 0) / totalWeight) * 100).toFixed(1))) : 0,
   }));
 };
 
@@ -400,7 +428,7 @@ const buildManualRevenueRecord = (event: MembershipRevenueSyncPayload): RevenueR
   id: `membership-revenue-${event.memberId}-${event.createdAt}-${event.level}`,
   user: event.memberName,
   type: event.revenueTypeLabel,
-  amount: safeNum(event.amountFen / 100),
+  amount: fenToYuan(event.amountFen),
   region: '--',
   time: formatRecordTime(event.createdAt),
 });
@@ -422,10 +450,10 @@ const applyMembershipRevenueEventsToRevenueDetail = (
     dates: [...detail.trend.dates],
     values: [...detail.trend.values],
   });
-  const addedTotal = events.reduce((sum, event) => safeNum(sum + safeNum(event.amountFen / 100)), 0);
+  const addedTotal = events.reduce((sum, event) => safeNum(sum + fenToYuan(event.amountFen)), 0);
   const peakByDay = events.reduce<Map<string, number>>((accumulator, event) => {
     const label = formatDateLabel(event.createdAt) || '今日';
-    accumulator.set(label, safeNum((accumulator.get(label) ?? 0) + safeNum(event.amountFen / 100)));
+    accumulator.set(label, safeNum((accumulator.get(label) ?? 0) + fenToYuan(event.amountFen)));
     return accumulator;
   }, new Map<string, number>());
   const addedPeak = Array.from(peakByDay.values()).reduce((maxValue, value) => Math.max(maxValue, value), 0);
@@ -445,7 +473,7 @@ const applyMembershipRevenueEventsToRevenueDetail = (
       peak: Math.max(detail.summary.peak, addedPeak),
     },
     trend,
-    revenueTypes: mergeRevenueTypes(detail.revenueTypes, detail.summary.total, events),
+    revenueTypes: mergeRevenueTypes(detail.revenueTypes, events),
     records: manualRecords.concat(detail.records),
     totalRecords: safeNum(detail.totalRecords + events.length),
   };
@@ -525,7 +553,8 @@ const mapRecords = (response: unknown): RevenueRecordItem[] => {
         return null;
       }
 
-      const id = pickStringField(item, ['id', 'recordId', 'orderId', 'tradeNo']) || `record-${Math.random().toString(36).slice(2, 10)}`;
+      const id = pickStringField(item, ['id', 'recordId', 'orderId', 'tradeNo'])
+        || `record-${pickStringField(item, ['user', 'userName', 'memberName'])}-${safeNum(normalizeNumber(item.amount ?? item.payAmount))}-${pickStringField(item, ['time', 'createdAt', 'payTime'])}`;
       const user = pickStringField(item, ['user', 'userName', 'memberName', 'customerName']) || '未知用户';
       const type = pickStringField(item, ['type', 'typeName', 'memberCardType', 'category']) || '其他充值';
 

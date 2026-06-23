@@ -2,7 +2,7 @@
 // 数值字段仅做类型建模，UI 展示统一在消费层经 safeNum 处理。
 export type PartnerPayoutStatus = 'pending' | 'approved' | 'paid' | 'rejected';
 export type PartnerPayoutAccountType = 'wechat' | 'alipay' | 'bank';
-export type PartnerPayoutTabKey = 'all' | 'pending' | 'paid' | 'rejected';
+export type PartnerPayoutTabKey = 'all' | 'pending' | 'approved' | 'paid' | 'rejected';
 
 export interface PartnerPayoutApplication {
   /** 申请主键 */
@@ -49,10 +49,23 @@ export interface PartnerPayoutStats {
   totalCount: number;
   /** 待处理记录数 */
   pendingCount: number;
+  /** 审核中记录数 */
+  approvedCount: number;
   /** 已打款记录数 */
   paidCount: number;
   /** 已拒绝记录数 */
   rejectedCount: number;
+}
+
+export type PartnerPayoutConfirmAction = 'approve' | 'reject';
+
+export interface PartnerPayoutConfirmState {
+  /** 是否显示确认弹窗 */
+  visible: boolean;
+  /** 弹窗操作类型 */
+  action: PartnerPayoutConfirmAction;
+  /** 待操作的申请数据 */
+  application: PartnerPayoutApplication | null;
 }
 
 export interface UsePartnerPayoutPageReturn {
@@ -74,14 +87,18 @@ export interface UsePartnerPayoutPageReturn {
   summary: PartnerPayoutSummary;
   /** 页面状态统计 */
   stats: PartnerPayoutStats;
+  /** 弹窗确认状态 */
+  confirmState: PartnerPayoutConfirmState;
   /** 切换筛选标签 */
   handleTabChange: (tab: PartnerPayoutTabKey) => void;
   /** 切换申请卡片展开态 */
   handleApplicationToggle: (id: string) => void;
-  /** 确认打款 */
-  handleApprove: (id: string) => Promise<void>;
-  /** 拒绝打款 */
-  handleReject: (id: string) => Promise<void>;
+  /** 打开确认弹窗 */
+  handleOpenConfirm: (id: string, action: PartnerPayoutConfirmAction) => void;
+  /** 关闭确认弹窗 */
+  handleCloseConfirm: () => void;
+  /** 弹窗确认提交 */
+  handleConfirmSubmit: (action: PartnerPayoutConfirmAction, rejectReason?: string) => Promise<void>;
   /** 重新加载页面数据 */
   handleRetry: () => void;
 }

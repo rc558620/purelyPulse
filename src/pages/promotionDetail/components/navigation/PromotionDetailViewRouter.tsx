@@ -13,7 +13,7 @@ import type { PromotionViewMode } from '../../promotionDetail.types';
 
 export interface PromotionDetailViewRouterProps {
   viewMode: PromotionViewMode;
-  regionViewProps: PromotionDetailRegionViewProps;
+  regionViewProps: PromotionDetailRegionViewProps | null;
   partnerViewProps: PromotionDetailPartnerViewProps | null;
   partnerDetailViewProps: PromotionDetailPartnerDetailViewProps | null;
 }
@@ -30,6 +30,11 @@ const PromotionDetailViewRouter: React.FC<PromotionDetailViewRouterProps> = ({
 
   if (viewMode === 'partners' && partnerViewProps) {
     return <PromotionDetailPartnerView {...partnerViewProps} />;
+  }
+
+  // 降级兜底：regionViewProps 为 null 时不应发生，但做防御性处理
+  if (!regionViewProps) {
+    return null;
   }
 
   return <PromotionDetailRegionView {...regionViewProps} />;

@@ -1,5 +1,6 @@
 // 修改昵称页面类型、字段配置与校验规则。
-import type { FormErrorMap, ValidatorRule } from '@components/form';
+import type { FormErrorMap, FormInstance, ValidatorRule } from '@components/form';
+import { normalizeFieldValue } from '@pages/login/shared/authValidation';
 
 /** 修改昵称表单 DTO。 */
 export interface ChangeNicknameFormDTO {
@@ -43,18 +44,6 @@ export interface ChangeNicknameRequestDTO {
 }
 
 /**
- * 规范化字段值：去除首尾空格。
- * @param value - 原始输入值。
- * @returns 规范化后的字符串。
- */
-export const normalizeFieldValue = (value: unknown): string => {
-    if (typeof value === 'string') {
-        return value.trim();
-    }
-    return '';
-};
-
-/**
  * 规范化修改昵称提交数据，并映射到后端字段。
  * @param values - 原始表单值。
  * @returns 去除空白后的接口请求参数。
@@ -66,10 +55,15 @@ export const normalizeChangeNicknamePayload = (
 });
 
 /**
- * 构建修改昵称表单校验规则。
+ * 构建修改昵称表单校验规则，支持注入 form 实例与当前昵称。
+ * @param form - 表单实例（由 useSettingsForm 传入，保持签名一致）。
+ * @param currentNickname - 用户当前昵称（用于同值校验）。
  * @returns 各字段对应的 ValidatorRule 数组映射。
  */
-export const buildChangeNicknameRules = (): ChangeNicknameFormRules => ({
+export const buildChangeNicknameRules = (
+    form: FormInstance<ChangeNicknameFormDTO>,
+    currentNickname: string,
+): ChangeNicknameFormRules => ({
     nickname: [
         {
             required: true,
@@ -78,11 +72,16 @@ export const buildChangeNicknameRules = (): ChangeNicknameFormRules => ({
         {
             validator: (value: unknown): void => {
                 const trimmed = normalizeFieldValue(value);
+                // 仅空格输入时 required 不会拦截（原始值非空串），此处兜底
                 if (trimmed.length === 0) {
-                    throw new Error('昵称不能为空');
+                    throw new Error('请输入新昵称');
                 }
                 if (trimmed.length > NICKNAME_FIELD_CONFIG.maxLength) {
                     throw new Error(`昵称长度不能超过${NICKNAME_FIELD_CONFIG.maxLength}个字符`);
+                }
+                // 新昵称与当前昵称相同时无需修改
+                if (trimmed === currentNickname.trim()) {
+                    throw new Error('新昵称与当前昵称相同');
                 }
             },
         },
