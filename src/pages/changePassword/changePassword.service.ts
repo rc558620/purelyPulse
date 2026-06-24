@@ -4,6 +4,7 @@ import type {
     ChangePasswordRequestDTO,
     ChangePasswordResponseDTO,
 } from './changePassword.types';
+import { rsaEncrypt } from '@utils/rsaEncrypt';
 
 const DEFAULT_CHANGE_PASSWORD_API_PATH = '/auth/change-password';
 
@@ -16,12 +17,19 @@ export const resolveChangePasswordApiPath = (): string =>
 
 /**
  * 提交修改密码请求。
+ * 密码字段 RSA 加密后提交。
  * @param payload - 按 purelyprofit-server `POST /auth/change-password` 协议映射后的参数。
  */
 export const changePassword = async (payload: ChangePasswordRequestDTO): Promise<void> => {
-    await http.post<ChangePasswordResponseDTO, ChangePasswordRequestDTO>(
+    const encryptedPayload = {
+        ...payload,
+        currentPassword: await rsaEncrypt(payload.currentPassword),
+        newPassword: await rsaEncrypt(payload.newPassword),
+    };
+
+    await http.post<ChangePasswordResponseDTO, typeof encryptedPayload>(
         resolveChangePasswordApiPath(),
-        payload,
+        encryptedPayload,
         {
             errorMessage: '修改密码失败，请稍后重试',
         },

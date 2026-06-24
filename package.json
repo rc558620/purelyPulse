@@ -20,6 +20,7 @@
     "china-area-data": "^5.0.1",
     "classnames": "^2.5.1",
     "echarts": "^6.0.0",
+    "jsencrypt": "^3.5.4",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-easy-crop": "^5.5.7",

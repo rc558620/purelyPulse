@@ -1,6 +1,7 @@
 // 认证服务层：封装登录请求、当前用户信息拉取与响应字段映射。
 import { ApiError, createSingletonInFlightRequest, http, resolveEnvPath } from '@utils/http';
 import type { UserInfo } from '@contexts';
+import { rsaEncrypt } from '@utils/rsaEncrypt';
 
 const LOGIN_API_PATH = resolveEnvPath(import.meta.env.VITE_LOGIN_API_PATH, '/auth/login');
 const AUTH_PROFILE_API_PATH = resolveEnvPath(import.meta.env.VITE_AUTH_PROFILE_API_PATH, '/auth/me');
@@ -136,14 +137,16 @@ const mapAuthProfile = (payload: unknown): UserInfo => {
   };
 };
 
-/** 账号密码登录，并提取统一 accessToken。 */
+/** 账号密码登录，密码字段 RSA 加密后提交。 */
 export const loginWithPassword = async (payload: LoginSubmitDTO): Promise<LoginSuccessResult> => {
+  const encryptedPassword = await rsaEncrypt(payload.password);
+
   const response = await http.post<unknown, Record<string, string>>(
     LOGIN_API_PATH,
     {
       phone: payload.phone,
       account: payload.phone,
-      password: payload.password,
+      password: encryptedPassword,
     },
     {
       skipAuth: true,
