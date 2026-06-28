@@ -197,6 +197,8 @@ export const configureHttpClient = (config: HttpClientRuntimeConfig): void => {
 export const httpClient = axios.create({
   baseURL: HTTP_CONFIG.baseURL,
   timeout: HTTP_CONFIG.timeout,
+  // 开启 withCredentials：浏览器自动携带 HttpOnly Cookie（含 accessToken）
+  withCredentials: true,
   headers: {
     Accept: 'application/json',
     'X-Requested-With': 'XMLHttpRequest',
@@ -212,9 +214,22 @@ httpClient.interceptors.request.use((config) => {
     headers.set('Content-Type', 'application/json;charset=UTF-8');
   }
 
-  const token = !requestConfig.skipAuth ? runtimeConfig.getAccessToken?.() : undefined;
-  if (token && !headers.get('Authorization')) {
-    headers.set('Authorization', `Bearer ${token}`);
+  // Token 认证：优先使用 HttpOnly Cookie（withCredentials），
+  // 仅当 runtimeConfig 显式提供 getAccessToken 时才走 Authorization header（兼容旧模式）
+  if (!requestConfig.skipAuth && !headers.get('Authorization')) {
+    const token = runtimeConfig.getAccessToken?.();
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
+  }
+
+  // CSRF Token：对有请求体的方法自动注入 X-CSRF-Token
+  const method = requestConfig.method?.toLowerCase();
+  if ((method === 'post' || method === 'put' || method === 'patch' || method === 'delete') && !headers.get('X-CSRF-Token')) {
+    const csrfToken = runtimeConfig.getCsrfToken?.();
+    if (csrfToken) {
+      headers.set('X-CSRF-Token', csrfToken);
+    }
   }
 
   requestConfig.headers = headers;

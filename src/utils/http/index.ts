@@ -7,6 +7,12 @@ export {
   http,
   httpClient,
 } from './client';
+export {
+  clearCsrfToken,
+  extractCsrfTokenFromResponse,
+  getCsrfToken,
+  persistCsrfToken,
+} from './csrf';
 export type {
   HttpBusinessEnvelope,
   HttpClientContract,

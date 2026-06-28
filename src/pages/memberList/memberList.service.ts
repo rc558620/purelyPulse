@@ -2,7 +2,7 @@
 import { createKeyedInFlightRequest, http, resolveEnvPath } from '@utils/http';
 import { safeNum } from '@utils/utils';
 import { STORAGE_KEYS } from '@constants/storageKeys';
-import { MEMBER_STATUS_SYNC_EVENT, MEMBERSHIP_REVENUE_CONFIG, MEMBERSHIP_REVENUE_SYNC_EVENT } from './memberList.constants';
+import { MEMBER_CANCEL_SYNC_EVENT, MEMBER_STATUS_SYNC_EVENT, MEMBERSHIP_REVENUE_CONFIG, MEMBERSHIP_REVENUE_SYNC_EVENT } from './memberList.constants';
 import type {
   MemberPointsPageUser,
   MemberPointsRecord,
@@ -42,6 +42,7 @@ const ADJUST_PARTNER_BEANS_API_PATH = resolveEnvPath(import.meta.env.VITE_ADJUST
 const SET_MEMBERSHIP_API_PATH = resolveEnvPath(import.meta.env.VITE_SET_MEMBERSHIP_API_PATH, '/pulse/membership/admin/members/{id}/membership');
 const MEMBER_BAN_API_PATH = resolveEnvPath(import.meta.env.VITE_MEMBER_BAN_API_PATH, '/pulse/membership/admin/members/{id}/ban');
 const MEMBER_UNBAN_API_PATH = resolveEnvPath(import.meta.env.VITE_MEMBER_UNBAN_API_PATH, '/pulse/membership/admin/members/{id}/unban');
+const MEMBER_CANCEL_API_PATH = resolveEnvPath(import.meta.env.VITE_MEMBER_CANCEL_API_PATH, '/pulse/membership/admin/members/{id}/cancel');
 const SET_SUB_ACCOUNT_QUOTA_API_PATH = resolveEnvPath(import.meta.env.VITE_SET_SUB_ACCOUNT_QUOTA_API_PATH, '/pulse/membership/admin/members/{id}/sub-accounts/quota');
 const MEMBER_CLUB_STATS_API_PATH = resolveEnvPath(import.meta.env.VITE_MEMBER_CLUB_STATS_API_PATH, '/pulse/membership/admin/members/{id}/club-stats');
 const MEMBER_AVATAR_COLOR_COUNT = 6;
@@ -531,14 +532,7 @@ const resolveAvatarColorIndex = (seedValue: string, rawValue: unknown): number =
   return hashValue % MEMBER_AVATAR_COLOR_COUNT;
 };
 
-const maskPhone = (value: string): string => {
-  const normalizedValue = value.replace(/\s+/g, '');
-  if (!/^1\d{10}$/.test(normalizedValue)) {
-    return normalizedValue;
-  }
-
-  return `${normalizedValue.slice(0, 3)}****${normalizedValue.slice(-4)}`;
-};
+// maskPhone 已移除：purelyPulse 为商家管理后台，需完整展示用户手机号，不再脱敏。
 
 const normalizeMemberStatus = (value: string): MemberStatus => {
   switch (value.toLowerCase()) {
@@ -688,7 +682,7 @@ const mapPointsRecord = (value: unknown, index: number, userLookup?: Map<string,
     id: pickStringField(value, ['id', 'recordId']) || `pts-${index + 1}`,
     userId,
     userName,
-    userPhone: maskPhone(pickStringField(value, ['userPhone', 'phone', 'mobile']) || matchedUser?.phone || ''),
+    userPhone: pickStringField(value, ['userPhone', 'phone', 'mobile']) || matchedUser?.phone || '',
     avatarUrl,
     availablePoints,
     amount,
@@ -725,7 +719,7 @@ const mapBeanRecord = (value: unknown, index: number, userLookup?: Map<string, U
     id: pickStringField(value, ['id', 'recordId']) || `bean-${index + 1}`,
     userId,
     userName,
-    userPhone: maskPhone(pickStringField(value, ['userPhone', 'phone', 'mobile']) || matchedUser?.phone || ''),
+    userPhone: pickStringField(value, ['userPhone', 'phone', 'mobile']) || matchedUser?.phone || '',
     avatarUrl,
     beanBalance,
     amount,
@@ -928,7 +922,7 @@ const mapMemberListItem = (value: unknown, index: number): MemberListItem => {
 
   const memberId = pickStringField(value, MEMBER_ID_CANDIDATES) || `member-${index + 1}`;
   const memberName = pickStringField(value, MEMBER_NAME_CANDIDATES) || `会员${index + 1}`;
-  const phone = maskPhone(pickStringField(value, MEMBER_PHONE_CANDIDATES));
+  const phone = pickStringField(value, MEMBER_PHONE_CANDIDATES);
   const partnerLevel = pickStringField(value, PARTNER_LEVEL_CANDIDATES);
   const isPartner = pickBooleanField(value, ['isPartner', 'partner', 'partnerMember']) || Boolean(partnerLevel);
 
@@ -1423,6 +1417,21 @@ export const submitMemberBan = async (memberId: string, reason: string): Promise
 /** 提交会员解封。 */
 export const submitMemberUnban = async (memberId: string): Promise<void> => {
   await submitMemberStatusRequest(MEMBER_UNBAN_API_PATH, memberId, 'active');
+};
+
+/** 提交注销会员账号（不可逆，注销后视同未注册）。 */
+export const submitMemberCancelAccount = async (memberId: string): Promise<void> => {
+  const requestTarget = resolveMemberActionPath(MEMBER_CANCEL_API_PATH, memberId);
+  await http.post<unknown, Record<string, unknown>>(requestTarget.url, { memberId, userId: memberId, id: memberId }, {
+    params: requestTarget.params,
+    skipGlobalErrorHandler: true,
+    errorMessage: '注销账号失败，请稍后重试',
+  });
+};
+
+/** 广播会员注销事件，驱动列表移除或标记刷新。 */
+export const emitMemberCancelSync = (memberId: string): void => {
+  window.dispatchEvent(new CustomEvent<{ memberId: string }>(MEMBER_CANCEL_SYNC_EVENT, { detail: { memberId } }));
 };
 
 /** 获取积分页主数据。 */

@@ -17,6 +17,13 @@ const PARTNER_REVIEW_STATUS_CONFIG: Record<ApplicationStatus, { label: string; c
   rejected: { label: '已拒绝', className: 'statusRejected' },
 };
 
+const PARTNER_INTENTION_CONFIG: Record<string, { label: string; className: string }> = {
+  agent: { label: '代理推广', className: 'intentionAgent' },
+  invest: { label: '投资入股', className: 'intentionInvest' },
+  resource: { label: '资源合作', className: 'intentionResource' },
+  other: { label: '其他合作', className: 'intentionOther' },
+};
+
 interface PartnerReviewApplicationCardProps {
   /** 申请数据 */
   application: PartnerApplication;
@@ -93,6 +100,11 @@ const PartnerReviewApplicationCard: React.FC<PartnerReviewApplicationCardProps> 
               <IconPartnerReviewLocation className={styles.cityIcon} />
               {safeStr(application.city, '--')}
             </span>
+            {application.intention && (
+              <span className={cx(styles.intentionBadge, styles[PARTNER_INTENTION_CONFIG[application.intention]?.className || ''])}>
+                {PARTNER_INTENTION_CONFIG[application.intention]?.label || '--'}
+              </span>
+            )}
           </div>
           <div className={styles.cardMeta}>
             <span>{safeStr(application.phone, '--')}</span>

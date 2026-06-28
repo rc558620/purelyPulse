@@ -550,6 +550,56 @@
   }
 }
 
+// 注销账号按钮（深红色，比普通封禁更醒目）
+.cancelAccountBtn {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.2rem 0.5rem 1rem;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(220, 38, 38, 0.45);
+  background: rgba(220, 38, 38, 0.07);
+  color: #b91c1c;
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+  align-self: flex-start;
+
+  &:hover {
+    background: rgba(220, 38, 38, 0.14);
+    border-color: rgba(220, 38, 38, 0.65);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(220, 38, 38, 0.18);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  @media (min-width: @bp-mobile) {
+    font-size: 1.3rem;
+    padding: 0.6rem 1.4rem 0.6rem 1.2rem;
+  }
+}
+
+// 已注销账号的状态徽章
+.statusCancelled {
+  background: rgba(113, 113, 122, 0.12);
+  color: #71717a;
+}
+
 // ─── 核心数据卡网格 ────────────────────────────────────────────────
 .metricsGrid {
   display: grid;

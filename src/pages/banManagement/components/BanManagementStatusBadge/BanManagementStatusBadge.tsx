@@ -28,6 +28,10 @@ export const BanManagementStatusBadge: React.FC<BanManagementStatusBadgeProps> =
     return <span className={cx(styles.statusBadge, styles.statusBadgeInactive)}>未活跃</span>;
   }
 
+  if (status === 'cancelled') {
+    return <span className={cx(styles.statusBadge, styles.statusBadgeCancelled)}>已注销</span>;
+  }
+
   return (
     <span className={cx(styles.statusBadge, styles.statusBadgeActive)}>
       <IconStatusDot />

@@ -9,7 +9,7 @@ import { ROUTE_PATHS } from '@/router/paths';
 import type { LoginFormDTO, LoginFormErrors } from '@pages/login/login.types';
 import { PHONE_PATTERN, PASSWORD_PATTERN } from '@pages/login/shared/authValidation';
 import { fetchAuthProfile, loginWithPassword } from '../shared/auth.service';
-import { clearAuthSession, persistAccessToken, syncAuthProfileToSession } from '../shared/authSession';
+import { clearAuthSession, markAuthenticated, syncAuthProfileToSession } from '../shared/authSession';
 
 /** useLoginForm 返回值类型。 */
 export interface UseLoginFormReturn {
@@ -92,7 +92,7 @@ export const useLoginForm = (): UseLoginFormReturn => {
                 phone: values.phone.trim(),
                 password: values.password,
             });
-            persistAccessToken(loginResult.accessToken);
+            markAuthenticated(loginResult.accessToken);
             shouldRollbackSession = true;
 
             const profile = await fetchAuthProfile();
@@ -126,7 +126,8 @@ export const useLoginForm = (): UseLoginFormReturn => {
      * 表单校验失败时的回调，接收各字段错误映射。
      * @param errors - 各字段名对应的错误提示文案。
      */
-    const handleFinishFailed = useCallback((_errors: LoginFormErrors): void => {
+    const handleFinishFailed = useCallback(// eslint-disable-next-line @typescript-eslint/no-unused-vars
+        (_errors: LoginFormErrors): void => {
         showToast({ type: 'warning', message: '请先完善登录信息' });
     }, []);
 

@@ -78,7 +78,8 @@ export default defineConfig({
   plugins: [react()],
   base,
   server: {
-    host: true,
+    // 仅监听 localhost，防止公共网络暴露开发服务器
+    host: 'localhost',
     proxy: {
       '/api': {
         target: 'http://localhost:3000',
@@ -90,6 +91,10 @@ export default defineConfig({
     alias,
   },
   build: {
+    // 生产构建移除 console 和 debugger
+    esbuild: {
+      drop: ['console', 'debugger'],
+    },
     modulePreload: {
       resolveDependencies: (_filename, deps, context) => {
         if (context.hostType !== 'html') return deps

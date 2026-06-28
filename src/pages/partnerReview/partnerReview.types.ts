@@ -9,6 +9,9 @@ export type ReviewFilterTab = 'all' | 'pending' | 'approved' | 'rejected';
 /** 审核提交动作 */
 export type ReviewSubmitAction = 'approve' | 'reject';
 
+/** 合伙人合作意向 */
+export type PartnerIntention = 'agent' | 'invest' | 'resource' | 'other';
+
 /** 合伙人申请信息 */
 export interface PartnerApplication {
   /** 申请唯一标识 */
@@ -29,6 +32,8 @@ export interface PartnerApplication {
   avatarUrl?: string;
   /** 审核状态 */
   status: ApplicationStatus;
+  /** 合作意向 */
+  intention: PartnerIntention;
 }
 
 /** 合伙人审核统计 */

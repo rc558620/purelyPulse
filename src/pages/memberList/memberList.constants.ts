@@ -17,6 +17,7 @@ export const STATUS_LABEL: Record<MemberStatus, string> = {
   active: '正常',
   inactive: '未活跃',
   banned: '已封禁',
+  cancelled: '已注销',
 };
 
 /** 会员头像背景色表。 */
@@ -31,6 +32,9 @@ export const AVATAR_COLORS = [
 
 /** 会员状态变更后的跨页面同步事件名。 */
 export const MEMBER_STATUS_SYNC_EVENT = 'member-status-sync';
+
+/** 会员注销后的跨页面同步事件名。 */
+export const MEMBER_CANCEL_SYNC_EVENT = 'member-cancel-sync';
 
 /** 会员等级设置产生收入后的跨页面同步事件名。 */
 export const MEMBERSHIP_REVENUE_SYNC_EVENT = 'membership-revenue-sync';

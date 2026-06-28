@@ -9,6 +9,7 @@ import { UserProvider } from '@contexts';
 import { configureHttpClient } from '@utils/http';
 import { ROUTE_PATHS } from '@/router/paths';
 import { clearAuthSession, getPersistedAccessToken } from '@pages/login/shared/authSession';
+import { getCsrfToken, clearCsrfToken } from '@utils/http';
 
 import styles from './App.module.less';
 
@@ -79,8 +80,10 @@ function App() {
   useEffect(() => {
     configureHttpClient({
       getAccessToken: getPersistedAccessToken,
+      getCsrfToken,
       onUnauthorized: () => {
         clearAuthSession();
+        clearCsrfToken();
 
         if (window.location.pathname === ROUTE_PATHS.login) {
           return;

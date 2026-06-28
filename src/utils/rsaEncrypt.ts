@@ -49,7 +49,7 @@ export const clearPublicKeyCache = (): void => {
  *
  * 流程：
  * 1. 获取服务端公钥
- * 2. 使用 jsencrypt 库进行 RSA PKCS1 v1.5 加密
+ * 2. 使用 jsencrypt 库进行 RSA-OAEP 加密（比 PKCS1 v1.5 更安全，防范 Bleichenbacher 攻击）
  * 3. 返回 Base64 编码的密文
  *
  * @param plaintext 待加密的明文（如密码）
@@ -66,7 +66,12 @@ export const rsaEncrypt = async (plaintext: string): Promise<string> => {
   const encrypt = new JSEncrypt()
   encrypt.setPublicKey(publicKey)
 
-  const encrypted = encrypt.encrypt(plaintext)
+  // 优先使用 OAEP 填充模式（JSEncrypt 3.x 提供 encryptOAEP 方法）
+  // OAEP 提供 semantic security，可防范 Bleichenbacher padding oracle 攻击
+  // 若 OAEP 不可用（极旧版本），回退到默认 PKCS1 v1.5
+  const encrypted = typeof encrypt.encryptOAEP === 'function'
+    ? encrypt.encryptOAEP(plaintext)
+    : encrypt.encrypt(plaintext)
 
   if (!encrypted) {
     // 加密失败，清除缓存以便下次重试

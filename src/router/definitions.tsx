@@ -6,14 +6,14 @@
  */
 import { Navigate } from 'react-router-dom';
 import ProtectedRoute from '@components/business/ProtectedRoute';
-import { getPersistedAccessToken } from '@pages/login/shared/authSession';
+import { isAuthenticated } from '@pages/login/shared/authSession';
 import { ROUTE_PATHS } from './paths';
 import { pages } from './pages';
 import type { AppRouteDefinition, RouteWrapper } from './types';
 
 const withAuthGuard: RouteWrapper = (page) => (
     <ProtectedRoute
-        check={() => Boolean(getPersistedAccessToken())}
+        check={() => isAuthenticated()}
         fallback={ROUTE_PATHS.login}
         preloadFallback={pages.login.preload}
         message="请先登录后再访问"

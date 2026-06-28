@@ -1,0 +1,186 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/mixins.less';
+
+// ─── 根节点（不影响文档流） ───────────────────────────────────────────
+.root {
+  display: contents;
+}
+
+// ─── 警示警告横条 ───────────────────────────────────────────────────
+.warningBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.2rem 1.4rem;
+  border-radius: 1.2rem;
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.warningBannerIcon {
+  flex-shrink: 0;
+  color: #dc2626;
+  margin-top: 0.05rem;
+}
+
+.warningBannerText {
+  font-size: 1.2rem;
+  line-height: 1.65;
+  color: #dc2626;
+  font-weight: 600;
+}
+
+// ─── 后果清单 ────────────────────────────────────────────────────────
+.consequenceList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.consequenceItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  font-size: 1.2rem;
+  color: @text-sub;
+  line-height: 1.55;
+}
+
+.consequenceDot {
+  flex-shrink: 0;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.55);
+  margin-top: 0.5rem;
+}
+
+// ─── 确认输入区 ──────────────────────────────────────────────────────
+.confirmSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.confirmLabel {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: @text-main;
+  line-height: 1.5;
+
+  em {
+    font-style: normal;
+    font-weight: 800;
+    color: #dc2626;
+    background: rgba(239, 68, 68, 0.08);
+    padding: 0.1rem 0.4rem;
+    border-radius: 0.4rem;
+  }
+}
+
+.confirmInput {
+  width: 100%;
+  padding: 1rem 1.2rem;
+  border-radius: 1.1rem;
+  border: 1.5px solid @border-color;
+  background: rgba(248, 250, 252, 0.95);
+  color: @text-main;
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &::placeholder {
+    color: @text-slate-400;
+    letter-spacing: normal;
+    font-weight: 400;
+  }
+
+  &:focus {
+    border-color: rgba(239, 68, 68, 0.45);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  }
+
+  &:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+}
+
+.confirmInputValid {
+  border-color: rgba(239, 68, 68, 0.55);
+  background: rgba(239, 68, 68, 0.04);
+}
+
+// ─── 操作按钮行 ──────────────────────────────────────────────────────
+.actions {
+  display: flex;
+  gap: 0.9rem;
+}
+
+.cancelBtn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 1.2rem;
+  border-radius: 1.2rem;
+  border: 1px solid @border-color;
+  background: rgba(248, 250, 252, 0.9);
+  color: @text-sub;
+  font-size: 1.3rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+
+  &:hover {
+    background: rgba(241, 245, 249, 0.95);
+    border-color: rgba(148, 163, 184, 0.55);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.confirmBtn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem 1.2rem;
+  border-radius: 1.2rem;
+  border: none;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+  font-size: 1.3rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.22);
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, #f87171, #ef4444);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+}

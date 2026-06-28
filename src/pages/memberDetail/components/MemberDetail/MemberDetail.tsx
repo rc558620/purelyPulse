@@ -24,8 +24,9 @@ const SetSubAccountModal = lazy(() => import('./components/modals/SetSubAccountM
 const SubAccountDetailModal = lazy(() => import('./components/modals/SubAccountDetailModal/SubAccountDetailModal'));
 const MemberDetailClubStatsModal = lazy(() => import('./components/modals/MemberDetailClubStatsModal/MemberDetailClubStatsModal'));
 const MemberDetailSalesStatsModal = lazy(() => import('./components/modals/MemberDetailSalesStatsModal/MemberDetailSalesStatsModal'));
+const CancelAccountModal = lazy(() => import('./components/modals/CancelAccountModal/CancelAccountModal'));
 
-type ActiveModal = 'points' | 'beans' | 'membership' | 'status' | 'subAccount' | 'subAccountDetail' | 'clubStats' | 'salesStats' | null;
+type ActiveModal = 'points' | 'beans' | 'membership' | 'status' | 'subAccount' | 'subAccountDetail' | 'clubStats' | 'salesStats' | 'cancelAccount' | null;
 
 const DAY_MS = 86_400_000;
 
@@ -48,6 +49,7 @@ const MemberDetail: React.FC = () => {
     isSubmittingMembership,
     isSubmittingBan,
     isSubmittingSubAccount,
+    isSubmittingCancel,
     isSubmittingAction,
     handleAdjustPoints,
     handleAdjustBeans,
@@ -55,6 +57,7 @@ const MemberDetail: React.FC = () => {
     handleBanMember,
     handleUnbanMember,
     handleSetSubAccountQuota,
+    handleCancelAccount,
     retryLoadMember,
   } = useMemberDetailPage(id);
 
@@ -91,6 +94,7 @@ const MemberDetail: React.FC = () => {
   const isSubAccountDetailModalOpen = activeModal === 'subAccountDetail';
   const isClubStatsModalOpen = activeModal === 'clubStats';
   const isSalesStatsModalOpen = activeModal === 'salesStats';
+  const isCancelAccountModalOpen = activeModal === 'cancelAccount';
 
   const handleBack = useCallback((): void => {
     navigate(-1);
@@ -132,6 +136,17 @@ const MemberDetail: React.FC = () => {
   const handleOpenSalesStatsModal = useCallback((): void => {
     setActiveModal('salesStats');
   }, []);
+
+  const handleOpenCancelAccountModal = useCallback((): void => {
+    setActiveModal('cancelAccount');
+  }, []);
+
+  const handleCancelAccountConfirm = useCallback(async (): Promise<void> => {
+    const didCancel = await handleCancelAccount();
+    if (didCancel) {
+      setActiveModal(null);
+    }
+  }, [handleCancelAccount]);
 
   const handleCloseStatusModal = useCallback((): void => {
     if (isSubmittingBan) {
@@ -193,12 +208,14 @@ const MemberDetail: React.FC = () => {
           isSubmittingMembership={isSubmittingMembership}
           isSubmittingBan={isSubmittingBan}
           isSubmittingSubAccount={isSubmittingSubAccount}
+          isSubmittingCancel={isSubmittingCancel}
           onOpenMembershipModal={handleOpenMembershipModal}
           onOpenStatusModal={handleOpenStatusModal}
           onOpenSubAccountModal={handleOpenSubAccountModal}
           onOpenSubAccountDetailModal={handleOpenSubAccountDetailModal}
           onOpenClubStatsModal={handleOpenClubStatsModal}
           onOpenSalesStatsModal={handleOpenSalesStatsModal}
+          onOpenCancelAccountModal={handleOpenCancelAccountModal}
         />
 
         {/* 核心数据网格：积分、豆、充值额、邀请数 */}
@@ -310,6 +327,17 @@ const MemberDetail: React.FC = () => {
             memberId={member.id}
             memberName={member.name}
             onClose={handleCloseModal}
+          />
+        ) : null}
+
+        {/* 注销账号弹窗：二次确认不可逆的账号注销操作 */}
+        {isCancelAccountModalOpen ? (
+          <CancelAccountModal
+            memberName={member.name}
+            memberPhone={member.phone}
+            isSubmitting={isSubmittingCancel}
+            onClose={handleCloseModal}
+            onConfirm={handleCancelAccountConfirm}
           />
         ) : null}
       </Suspense>

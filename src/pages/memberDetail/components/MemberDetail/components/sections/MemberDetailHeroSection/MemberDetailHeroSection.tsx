@@ -9,6 +9,7 @@ import {
   IconShieldCheck,
   IconStarBadge,
   IconSubAccount,
+  IconUserMinus,
 } from '@pages/memberDetail/components/MemberDetailIcons/MemberDetailIcons';
 import { LEVEL_LABEL, STATUS_LABEL } from '@pages/memberList/memberList.constants';
 import type { MemberDetail, MemberLevel } from '@pages/memberList/memberList.types';
@@ -25,6 +26,8 @@ interface MemberDetailHeroSectionProps {
   isSubmittingMembership: boolean;
   isSubmittingBan: boolean;
   isSubmittingSubAccount: boolean;
+  /** 是否正在提交注销操作。 */
+  isSubmittingCancel: boolean;
   onOpenMembershipModal: () => void;
   onOpenStatusModal: () => void;
   onOpenSubAccountModal: () => void;
@@ -33,13 +36,16 @@ interface MemberDetailHeroSectionProps {
   onOpenClubStatsModal: () => void;
   /** 打开营业详情弹窗。 */
   onOpenSalesStatsModal: () => void;
+  /** 打开注销账号确认弹窗。 */
+  onOpenCancelAccountModal: () => void;
 }
 
-const STATUS_CLASS_MAP = {
+const STATUS_CLASS_MAP: Record<string, string> = {
   active: pageStyles.statusActive,
   inactive: pageStyles.statusInactive,
   banned: pageStyles.statusBanned,
-} as const;
+  cancelled: pageStyles.statusCancelled,
+};
 
 const MemberDetailHeroSection: React.FC<MemberDetailHeroSectionProps> = React.memo(({
   member,
@@ -50,16 +56,20 @@ const MemberDetailHeroSection: React.FC<MemberDetailHeroSectionProps> = React.me
   isSubmittingMembership,
   isSubmittingBan,
   isSubmittingSubAccount,
+  isSubmittingCancel,
   onOpenMembershipModal,
   onOpenStatusModal,
   onOpenSubAccountModal,
   onOpenSubAccountDetailModal,
   onOpenClubStatsModal,
   onOpenSalesStatsModal,
+  onOpenCancelAccountModal,
 }) => {
   const subAccountCapability = member.subAccountCapability;
   const subAccountQuota = subAccountCapability?.subAccountQuota ?? 0;
   const heroAvatarColorClassName = pageStyles[`heroAvatarColor_${member.avatarColorIdx % 6}`];
+  // 已注销的账号不允许任何操作
+  const isCancelledMember = member.status === 'cancelled';
 
   return (
     <div className={styles.root}>
@@ -158,20 +168,36 @@ const MemberDetailHeroSection: React.FC<MemberDetailHeroSectionProps> = React.me
               <IconSalesBarChart width={13} height={13} strokeWidth={2.2} />
               营业详情
             </button>
-            <button
-              type="button"
-              className={cx(pageStyles.memberStatusBtn, isBannedMember ? pageStyles.memberStatusBtnSafe : pageStyles.memberStatusBtnDanger)}
-              onClick={onOpenStatusModal}
-              aria-label={isBannedMember ? '解除会员封禁' : '封禁会员'}
-              disabled={isSubmittingAction}
-            >
-              {isBannedMember ? (
-                <IconShieldCheck width={13} height={13} strokeWidth={2.3} />
-              ) : (
-                <IconBanCircle width={13} height={13} strokeWidth={2.3} />
-              )}
-              {isSubmittingBan ? (isBannedMember ? '解封中...' : '封禁中...') : (isBannedMember ? '解除封禁' : '封禁账号')}
-            </button>
+            {/* 封禁 / 解封按钮（已注销的账号不展示） */}
+            {!isCancelledMember ? (
+              <button
+                type="button"
+                className={cx(pageStyles.memberStatusBtn, isBannedMember ? pageStyles.memberStatusBtnSafe : pageStyles.memberStatusBtnDanger)}
+                onClick={onOpenStatusModal}
+                aria-label={isBannedMember ? '解除会员封禁' : '封禁会员'}
+                disabled={isSubmittingAction}
+              >
+                {isBannedMember ? (
+                  <IconShieldCheck width={13} height={13} strokeWidth={2.3} />
+                ) : (
+                  <IconBanCircle width={13} height={13} strokeWidth={2.3} />
+                )}
+                {isSubmittingBan ? (isBannedMember ? '解封中...' : '封禁中...') : (isBannedMember ? '解除封禁' : '封禁账号')}
+              </button>
+            ) : null}
+            {/* 注销账号按钮（已注销的账号不展示） */}
+            {!isCancelledMember ? (
+              <button
+                type="button"
+                className={pageStyles.cancelAccountBtn}
+                onClick={onOpenCancelAccountModal}
+                aria-label="注销账号"
+                disabled={isSubmittingAction}
+              >
+                <IconUserMinus width={13} height={13} strokeWidth={2.2} />
+                {isSubmittingCancel ? '注销中...' : '注销账号'}
+              </button>
+            ) : null}
           </div>
         </div>
       </div>

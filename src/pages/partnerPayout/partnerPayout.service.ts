@@ -178,14 +178,7 @@ const pickFormattedDateTime = (value: unknown, keys: readonly string[]): string 
   return '--';
 };
 
-const maskPhone = (value: string): string => {
-  const normalizedValue = value.replace(/\s+/g, '');
-  if (!/^1\d{10}$/.test(normalizedValue)) {
-    return normalizedValue;
-  }
-
-  return `${normalizedValue.slice(0, 3)}****${normalizedValue.slice(-4)}`;
-};
+// maskPhone 已移除：purelyPulse 为商家管理后台，需完整展示用户手机号，不再脱敏。
 
 const normalizeAccountType = (value: string): PartnerPayoutAccountType => {
   switch (value.toLowerCase()) {
@@ -265,7 +258,7 @@ const mapPartnerPayoutApplication = (rawValue: unknown): PartnerPayoutApplicatio
 
   const paidAt = pickFormattedDateTime(rawValue, PAID_AT_CANDIDATES);
   const partnerName = pickStringField(rawValue, PARTNER_NAME_CANDIDATES) || '未命名合伙人';
-  const partnerPhone = maskPhone(pickStringField(rawValue, PARTNER_PHONE_CANDIDATES));
+  const partnerPhone = pickStringField(rawValue, PARTNER_PHONE_CANDIDATES);
   const partnerCity = pickStringField(rawValue, PARTNER_CITY_CANDIDATES) || '--';
   const accountType = normalizeAccountType(pickStringField(rawValue, ACCOUNT_TYPE_CANDIDATES));
   const accountNo = pickStringField(rawValue, ACCOUNT_NO_CANDIDATES) || '--';

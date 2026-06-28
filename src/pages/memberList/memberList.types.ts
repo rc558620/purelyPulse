@@ -1,7 +1,7 @@
 // 会员列表 / 会员详情模块 — 类型定义。
 
 /** 会员状态。 */
-export type MemberStatus = 'active' | 'inactive' | 'banned';
+export type MemberStatus = 'active' | 'inactive' | 'banned' | 'cancelled';
 
 // ─── 子账号类型 ────────────────────────────────────────────────────────────
 

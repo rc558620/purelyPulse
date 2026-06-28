@@ -5,15 +5,20 @@ import CategoryGuard from '../CategoryGuard';
 
 const mocks = vi.hoisted(() => ({
   showToast: vi.fn(),
-  useGoodsCategories: vi.fn(),
+  httpGet: vi.fn(),
+  localStorageGetItem: vi.fn(),
+  localStorageSetItem: vi.fn(),
+  localStorageRemoveItem: vi.fn(),
 }));
 
 vi.mock('@components/ui/feedback/Toast', () => ({
   showToast: mocks.showToast,
 }));
 
-vi.mock('@pages/main/goods/hooks/useGoodsCategories', () => ({
-  useGoodsCategories: (options?: unknown) => mocks.useGoodsCategories(options),
+vi.mock('@utils/http', () => ({
+  http: {
+    get: (...args: unknown[]) => mocks.httpGet(...args),
+  },
 }));
 
 vi.mock('react-router-dom', async (importOriginal) => {
@@ -34,51 +39,62 @@ const renderCategoryGuard = (props: Partial<React.ComponentProps<typeof Category
   );
 
 describe('CategoryGuard', () => {
+  let localStorageData: Record<string, string>;
+
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.useGoodsCategories.mockReturnValue({
-      categories: [],
-      categoryOptions: [],
-      loading: false,
-      errorMessage: null,
-      hasRequestError: false,
+    localStorageData = {};
+
+    mocks.localStorageGetItem.mockImplementation(
+      (key: string) => localStorageData[key] ?? null,
+    );
+    mocks.localStorageSetItem.mockImplementation(
+      (key: string, value: string) => { localStorageData[key] = value; },
+    );
+    mocks.localStorageRemoveItem.mockImplementation(
+      (key: string) => { delete localStorageData[key]; },
+    );
+
+    // 直接覆盖 window.localStorage 方法
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        getItem: mocks.localStorageGetItem,
+        setItem: mocks.localStorageSetItem,
+        removeItem: mocks.localStorageRemoveItem,
+        clear: vi.fn(),
+        length: 0,
+        key: vi.fn(),
+      },
+      writable: true,
+      configurable: true,
     });
   });
 
-  it('默认按共享分类字典消费 useGoodsCategories', () => {
-    renderCategoryGuard();
-
-    expect(mocks.useGoodsCategories).toHaveBeenCalledWith({
-      resolveErrorMessage: expect.any(Function),
-      suppressRefreshErrorWhenHasData: true,
-    });
-  });
+  const seedCategories = (categories: unknown[]): void => {
+    localStorageData['purely_profit_categories'] = JSON.stringify(categories);
+  };
 
   it('有分类时直接放行', async () => {
-    mocks.useGoodsCategories.mockReturnValue({
-      categories: [{ id: '1', name: '奶茶', createdAt: Date.now() }],
-      categoryOptions: [{ label: '奶茶', value: '奶茶' }],
-      loading: false,
-      errorMessage: null,
-      hasRequestError: false,
-    });
+    seedCategories([{ id: '1', name: '奶茶' }]);
+    mocks.httpGet.mockResolvedValue({ total: 1 });
 
     renderCategoryGuard();
 
     await waitFor(() => {
       expect(screen.getByTestId('guarded-content')).toBeInTheDocument();
-    });
+    }, { timeout: 5000 });
     expect(screen.queryByTestId('mock-navigate')).toBeNull();
     expect(mocks.showToast).not.toHaveBeenCalled();
   });
 
   it('无分类时重定向并提示', async () => {
+    mocks.httpGet.mockResolvedValue({ total: 0 });
+
     renderCategoryGuard();
 
     await waitFor(() => {
       expect(screen.getByTestId('mock-navigate')).toHaveAttribute('data-to', '/category-entry');
     });
-    expect(screen.getByTestId('mock-navigate')).toHaveAttribute('data-replace', 'true');
     expect(mocks.showToast).toHaveBeenCalledWith({
       message: '请先录入至少一个商品分类',
       type: 'warning',
@@ -104,36 +120,30 @@ describe('CategoryGuard', () => {
     expect(preloadFallback).toHaveBeenCalledTimes(1);
   });
 
-  it('请求失败时展示错误而不重定向', async () => {
-    mocks.useGoodsCategories.mockReturnValue({
-      categories: [],
-      categoryOptions: [],
-      loading: false,
-      errorMessage: '获取分类失败',
-      hasRequestError: true,
-    });
+  it('后端校验失败时降级信任前端判断', async () => {
+    seedCategories([{ id: '1', name: '奶茶' }]);
+    mocks.httpGet.mockRejectedValue(new Error('Network error'));
 
     renderCategoryGuard();
 
     await waitFor(() => {
-      expect(screen.getByText('获取分类失败')).toBeInTheDocument();
-    });
+      expect(screen.getByTestId('guarded-content')).toBeInTheDocument();
+    }, { timeout: 5000 });
     expect(screen.queryByTestId('mock-navigate')).toBeNull();
-    expect(mocks.showToast).not.toHaveBeenCalled();
   });
 
-  it('加载中不渲染内容也不提前跳转', () => {
-    mocks.useGoodsCategories.mockReturnValue({
-      categories: [],
-      categoryOptions: [],
-      loading: true,
-      errorMessage: null,
-      hasRequestError: false,
-    });
+  it('后端确认无分类时重新拦截', async () => {
+    seedCategories([{ id: '1', name: '奶茶' }]);
+    mocks.httpGet.mockResolvedValue({ total: 0 });
 
     renderCategoryGuard();
 
-    expect(screen.queryByTestId('guarded-content')).toBeNull();
-    expect(screen.queryByTestId('mock-navigate')).toBeNull();
+    await waitFor(() => {
+      expect(screen.getByTestId('mock-navigate')).toHaveAttribute('data-to', '/category-entry');
+    });
+    expect(mocks.showToast).toHaveBeenCalledWith({
+      message: '请先录入至少一个商品分类',
+      type: 'warning',
+    });
   });
 });

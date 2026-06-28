@@ -4,6 +4,7 @@ import { safeNum } from '@utils/utils';
 import type {
   ApplicationStatus,
   PartnerApplication,
+  PartnerIntention,
   PartnerReviewStats,
 } from './partnerReview.types';
 
@@ -21,6 +22,7 @@ const APPLIED_AT_CANDIDATES = ['appliedAt', 'applyTime', 'createdAt', 'submitTim
 const REASON_CANDIDATES = ['reason', 'applyReason', 'remark', 'description'] as const;
 const AVATAR_CANDIDATES = ['avatar', 'avatarText', 'avatarInitial'] as const;
 const STATUS_CANDIDATES = ['status', 'reviewStatus', 'partnerStatus', 'state'] as const;
+const INTENTION_CANDIDATES = ['intention', 'cooperationType', 'partnerType', 'partnerIntention'] as const;
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> => (
   typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -147,14 +149,7 @@ const pickFormattedDateTime = (value: unknown, keys: readonly string[]): string 
   return '--';
 };
 
-const maskPhone = (value: string): string => {
-  const normalizedValue = value.replace(/\s+/g, '');
-  if (!/^1\d{10}$/.test(normalizedValue)) {
-    return normalizedValue;
-  }
-
-  return `${normalizedValue.slice(0, 3)}****${normalizedValue.slice(-4)}`;
-};
+// maskPhone 已移除：purelyPulse 为商家管理后台，需完整展示用户手机号，不再脱敏。
 
 const KNOWN_STATUS_VALUES = new Set([
   'approved', 'pass', 'passed', 'success',
@@ -186,6 +181,23 @@ const normalizeStatus = (value: string): ApplicationStatus => {
         console.warn(`[partnerReview] 未知审核状态: "${value}"，默认归为 pending`);
       }
       return 'pending';
+  }
+};
+
+const normalizeIntention = (value: string): PartnerIntention => {
+  const normalizedValue = value.toLowerCase().trim();
+  switch (normalizedValue) {
+    case 'agent':
+      return 'agent';
+    case 'invest':
+      return 'invest';
+    case 'resource':
+      return 'resource';
+    case 'other':
+      return 'other';
+    default:
+      console.warn(`[partnerReview] 未知合作意向: "${value}"，默认归为 other`);
+      return 'other';
   }
 };
 
@@ -233,10 +245,11 @@ const mapApplication = (rawValue: unknown): PartnerApplication | null => {
   }
 
   const name = pickStringField(rawValue, NAME_CANDIDATES) || '未命名申请人';
-  const phone = maskPhone(pickStringField(rawValue, PHONE_CANDIDATES)) || '--';
+  const phone = pickStringField(rawValue, PHONE_CANDIDATES) || '--';
   const city = pickStringField(rawValue, CITY_CANDIDATES) || '--';
   const reason = pickStringField(rawValue, REASON_CANDIDATES) || '暂无申请理由';
   const status = normalizeStatus(pickStringField(rawValue, STATUS_CANDIDATES));
+  const intention = normalizeIntention(pickStringField(rawValue, INTENTION_CANDIDATES));
 
   return {
     id,
@@ -248,6 +261,7 @@ const mapApplication = (rawValue: unknown): PartnerApplication | null => {
     avatar: resolveAvatar(name, rawValue),
     avatarUrl: (isPlainObject(rawValue) && typeof rawValue.avatarUrl === 'string' && rawValue.avatarUrl.trim()) ? rawValue.avatarUrl.trim() : undefined,
     status,
+    intention,
   };
 };
 

@@ -327,6 +327,24 @@ export const IconLevelPie = (props: SvgProps): React.JSX.Element => (
   </svg>
 );
 
+/** 注销账号：不可逆账号删除危险操作。 */
+export const IconUserMinus = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="currentColor" strokeWidth={2.2} {...props}>
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <line x1="22" y1="11" x2="16" y2="11" />
+  </svg>
+);
+
+/** 危险警示：不可逆操作的二次确认标识。 */
+export const IconAlertOctagon = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={24} height={24} fill="none" stroke="currentColor" strokeWidth={2} {...props}>
+    <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" />
+    <line x1="12" y1="8" x2="12" y2="12" />
+    <line x1="12" y1="16" x2="12.01" y2="16" />
+  </svg>
+);
+
 /** 槽位格子：子账号配额格子指示。 */
 export const IconSlotGrid = (props: SvgProps): React.JSX.Element => (
   <svg aria-hidden="true" viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="currentColor" strokeWidth={2} {...props}>

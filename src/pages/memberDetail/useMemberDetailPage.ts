@@ -6,10 +6,12 @@ import { MEMBERSHIP_TIER_DEFAULT_VALUES } from '../membershipSettings/membership
 import { fetchMembershipSettings } from '../membershipSettings/membershipSettings.service';
 import { MEMBER_STATUS_SYNC_EVENT } from '../memberList/memberList.constants';
 import {
+  emitMemberCancelSync,
   emitMemberStatusSync,
   fetchMemberDetail,
   submitMemberBan,
   submitMemberBeansAdjustment,
+  submitMemberCancelAccount,
   submitMemberMembership,
   submitMemberPointsAdjustment,
   submitMemberUnban,
@@ -52,6 +54,8 @@ interface UseMemberDetailPageReturn {
   isSubmittingBan: boolean;
   /** 是否正在提交子账号配额设置。 */
   isSubmittingSubAccount: boolean;
+  /** 是否正在提交注销账号。 */
+  isSubmittingCancel: boolean;
   /** 是否有任一提交动作进行中。 */
   isSubmittingAction: boolean;
   /** 调整积分并提交。 */
@@ -66,11 +70,13 @@ interface UseMemberDetailPageReturn {
   handleUnbanMember: () => Promise<boolean>;
   /** 设置子账号配额并提交（平台侧）。角色分配由商家在 purelyProfit 端操作。 */
   handleSetSubAccountQuota: (quota: number) => Promise<boolean>;
+  /** 注销当前会员账号（不可逆）。 */
+  handleCancelAccount: () => Promise<boolean>;
   /** 重试拉取详情。 */
   retryLoadMember: () => void;
 }
 
-type MemberSubmitAction = 'points' | 'beans' | 'membership' | 'ban' | 'subAccount' | null;
+type MemberSubmitAction = 'points' | 'beans' | 'membership' | 'ban' | 'subAccount' | 'cancel' | null;
 
 const DEFAULT_LIFETIME_MEMBERSHIP_DAYS = Number.parseInt(MEMBERSHIP_TIER_DEFAULT_VALUES.lifetime.lifetimeDays ?? '730', 10);
 const DEFAULT_LIFETIME_MEMBERSHIP_AMOUNT_FEN = Math.round(Number(MEMBERSHIP_TIER_DEFAULT_VALUES.lifetime.price) * 100);
@@ -353,6 +359,29 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
     }
   }, [loadMember, member, submittingAction]);
 
+  const handleCancelAccount = useCallback(async (): Promise<boolean> => {
+    if (!member || submittingAction) {
+      return false;
+    }
+
+    setSubmittingAction('cancel');
+    try {
+      await submitMemberCancelAccount(member.id);
+      setMember((prev) => (prev ? { ...prev, status: 'cancelled' } : prev));
+      emitMemberCancelSync(member.id);
+      showToast({ type: 'success', message: '账号已注销，该用户已无任何记录' });
+      return true;
+    } catch (error) {
+      showToast({
+        type: 'error',
+        message: error instanceof Error ? error.message : '注销账号失败，请稍后重试',
+      });
+      return false;
+    } finally {
+      setSubmittingAction(null);
+    }
+  }, [member, submittingAction]);
+
   const handleSetSubAccountQuota = useCallback(async (
     quota: number,
   ): Promise<boolean> => {
@@ -397,6 +426,7 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
     isSubmittingMembership: submittingAction === 'membership',
     isSubmittingBan: submittingAction === 'ban',
     isSubmittingSubAccount: submittingAction === 'subAccount',
+    isSubmittingCancel: submittingAction === 'cancel',
     isSubmittingAction: submittingAction !== null,
     handleAdjustPoints,
     handleAdjustBeans,
@@ -404,6 +434,7 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
     handleBanMember,
     handleUnbanMember,
     handleSetSubAccountQuota,
+    handleCancelAccount,
     retryLoadMember,
   };
 };

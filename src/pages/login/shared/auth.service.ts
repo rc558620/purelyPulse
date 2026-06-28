@@ -94,13 +94,7 @@ const pickBooleanField = (value: unknown, keys: readonly string[]): boolean => {
   return false;
 };
 
-const maskPhone = (value: string): string => {
-  const digits = value.replace(/\s+/g, '');
-  if (!/^1\d{10}$/.test(digits)) {
-    return digits;
-  }
-  return `${digits.slice(0, 3)}****${digits.slice(-4)}`;
-};
+// maskPhone 已移除：purelyPulse 为商家管理后台，需完整展示用户手机号，不再脱敏。
 
 const extractAccessToken = (payload: unknown): string => {
   const directToken = pickStringField(payload, TOKEN_FIELD_CANDIDATES);
@@ -130,7 +124,7 @@ const mapAuthProfile = (payload: unknown): UserInfo => {
   return {
     id: pickStringField(userSource, USER_ID_CANDIDATES),
     name: pickStringField(userSource, USER_NAME_CANDIDATES),
-    phone: maskPhone(pickStringField(userSource, PHONE_CANDIDATES)),
+    phone: pickStringField(userSource, PHONE_CANDIDATES),
     avatar: pickStringField(userSource, AVATAR_CANDIDATES),
     verified: pickBooleanField(userSource, VERIFIED_CANDIDATES),
     storeName: pickStringField(storeSource, STORE_NAME_CANDIDATES),

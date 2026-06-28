@@ -48,10 +48,28 @@ const hasPersistedAccessToken = (): boolean => {
     return false;
   }
 
-  return Boolean(
-    sessionStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)
-      ?? localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN),
-  );
+  const authFlag = sessionStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)
+    ?? localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+
+  if (!authFlag) {
+    return false;
+  }
+
+  // 前端过期校验：token 已过期则视为无认证
+  const expiresRaw = sessionStorage.getItem(STORAGE_KEYS.TOKEN_EXPIRES_AT)
+    ?? localStorage.getItem(STORAGE_KEYS.TOKEN_EXPIRES_AT);
+  if (expiresRaw) {
+    const expiresAt = Number(expiresRaw);
+    if (Number.isFinite(expiresAt) && Date.now() / 1000 > expiresAt) {
+      sessionStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+      sessionStorage.removeItem(STORAGE_KEYS.TOKEN_EXPIRES_AT);
+      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.TOKEN_EXPIRES_AT);
+      return false;
+    }
+  }
+
+  return true;
 };
 
 const userSessionStorage: PersistStorage<PersistedUserStore> = {
@@ -156,7 +174,9 @@ export const useUserStore = create<UserStore>()(
           set({ userInfo: DEFAULT_USER_INFO, isInitializing: false });
           useUserStore.persist.clearStorage();
           sessionStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+          sessionStorage.removeItem(STORAGE_KEYS.TOKEN_EXPIRES_AT);
           localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+          localStorage.removeItem(STORAGE_KEYS.TOKEN_EXPIRES_AT);
         },
         setIsInitializing: (isInitializing) => {
           set({ isInitializing });

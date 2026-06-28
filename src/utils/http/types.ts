@@ -10,6 +10,8 @@ export interface HttpBusinessEnvelope<T> {
 
 export interface HttpClientRuntimeConfig {
   getAccessToken?: () => string | null | undefined;
+  /** 获取 CSRF Token，用于写入 X-CSRF-Token 请求头。 */
+  getCsrfToken?: () => string | null | undefined;
   onUnauthorized?: (error: ApiError) => void;
   onError?: (error: ApiError) => void;
 }

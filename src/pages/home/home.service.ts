@@ -488,11 +488,19 @@ const mapPartnerStats = (response: unknown): Pick<HomeOverviewData, 'partnerStat
     avgPerPartner: toYuanAmount(partnerRoot.avgPerPartner ?? partnerRoot.avgIncome ?? partnerRoot.averageRevenue),
   } : createEmptyPartnerStats();
 
+  // 后端将 pendingApplicationCount 放在响应顶层，优先从顶层读取，
+  // 再 fallback 到 reviewRoot → partnerRoot 子对象中查找。
+  const topLevelPendingCount = isPlainObject(response)
+    ? pickNumberField(response, ['pendingApplicationCount', 'pendingReviewCount', 'pendingCount'])
+    : 0;
+
   return {
     partnerStats,
-    pendingApplicationCount: reviewRoot
-      ? pickNumberField(reviewRoot, ['pendingApplicationCount', 'pendingCount', 'waitingCount', 'todoCount'])
-      : pickNumberField(partnerRoot, ['pendingApplicationCount', 'pendingReviewCount', 'pendingCount']),
+    pendingApplicationCount: topLevelPendingCount > 0
+      ? topLevelPendingCount
+      : reviewRoot
+        ? pickNumberField(reviewRoot, ['pendingApplicationCount', 'pendingCount', 'waitingCount', 'todoCount'])
+        : pickNumberField(partnerRoot, ['pendingApplicationCount', 'pendingReviewCount', 'pendingCount']),
   };
 };
 
