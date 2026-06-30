@@ -1,6 +1,6 @@
 // 合伙人打款确认弹窗：承载确认打款与拒绝打款的二次确认交互。
 import React, { useCallback, useState } from 'react';
-import { cx, fenToYuan, safeStr } from '@utils/utils';
+import { cx, safeStr } from '@utils/utils';
 import { IconPartnerPayoutApprove, IconPartnerPayoutReject } from '../PartnerPayoutIcons/PartnerPayoutIcons';
 import type { PartnerPayoutApplication } from '../../partnerPayout.types';
 import styles from './PartnerPayoutConfirmDialog.module.less';
@@ -77,7 +77,7 @@ const PartnerPayoutConfirmDialog: React.FC<PartnerPayoutConfirmDialogProps> = ({
         </h2>
         <p className={styles.dialogDesc}>
           {isApprove
-            ? `确认后将向 ${safeStr(application.accountName, '--')} 的${safeStr(application.accountNo, '--')} 打款 ¥${safeStr(String(fenToYuan(application.amount)), '--')}，此操作不可撤回。`
+            ? `确认后将向 ${safeStr(application.accountName, '--')} 的${safeStr(application.accountNo, '--')} 打款 ¥${safeStr(application.amountDisplay, '--')}，此操作不可撤回。`
             : '拒绝后该申请将标记为已拒绝，合伙人可重新发起申请。'}
         </p>
 

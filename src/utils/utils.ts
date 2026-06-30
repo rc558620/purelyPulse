@@ -20,13 +20,7 @@ export function dirOf(n: number): 'up' | 'down' | 'flat' {
 export const isNonEmptyArray = <T>(arr: T[] | undefined | null): arr is T[] =>
   Array.isArray(arr) && arr.length > 0;
 
-/** 金额格式化：中文本地化，最多保留 2 位小数（¥3,200 / ¥12.5） */
-export const fmtAmount = (n: number): string =>
-  n.toLocaleString('zh-CN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-
-/** 分转元：避免浮点精度问题（101 分 → 1.01 元，而非 1.0100000000000002） */
-export const fenToYuan = (fen: number): number =>
-  Math.round(fen) / 100;
+// 前端禁止金额转换和格式化。所有金额展示值由后端直接返回 xxxDisplay 字段。
 
 /** 千分位格式化（不改变小数精度） */
 export const formatNumber = (num: number | string | null | undefined): string => {

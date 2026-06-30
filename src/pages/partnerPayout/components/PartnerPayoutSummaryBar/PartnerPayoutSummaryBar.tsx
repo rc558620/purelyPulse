@@ -1,21 +1,22 @@
 // 合伙人打款页顶部汇总条
+// 金额展示值由后端直接返回，前端不再做分转元和格式化。
 import React from 'react';
-import { cx, fenToYuan, fmtAmount, safeNum } from '@utils/utils';
+import { cx, safeNum } from '@utils/utils';
 import styles from './PartnerPayoutSummaryBar.module.less';
 
 interface PartnerPayoutSummaryBarProps {
   /** 待处理申请数 */
   pendingCount: number;
-  /** 待打款金额，单位分 */
-  pendingAmount: number;
-  /** 已打款累计金额，单位分 */
-  paidAmount: number;
+  /** 待打款金额展示值（后端直接返回，前端不再分转元） */
+  pendingAmountDisplay: string;
+  /** 已打款累计金额展示值（后端直接返回，前端不再分转元） */
+  paidAmountDisplay: string;
 }
 
 const PartnerPayoutSummaryBar: React.FC<PartnerPayoutSummaryBarProps> = ({
   pendingCount,
-  pendingAmount,
-  paidAmount,
+  pendingAmountDisplay,
+  paidAmountDisplay,
 }) => (
   <div className={styles.summaryBar}>
     <div className={styles.summaryItem}>
@@ -26,12 +27,12 @@ const PartnerPayoutSummaryBar: React.FC<PartnerPayoutSummaryBarProps> = ({
     </div>
     <div className={styles.summaryDivider} aria-hidden="true" />
     <div className={styles.summaryItem}>
-      <div className={styles.summaryVal}>¥{fmtAmount(fenToYuan(safeNum(pendingAmount)))}</div>
+      <div className={styles.summaryVal}>¥{pendingAmountDisplay || '0'}</div>
       <div className={styles.summaryLabel}>待打款金额</div>
     </div>
     <div className={styles.summaryDivider} aria-hidden="true" />
     <div className={styles.summaryItem}>
-      <div className={styles.summaryVal}>¥{fmtAmount(fenToYuan(safeNum(paidAmount)))}</div>
+      <div className={styles.summaryVal}>¥{paidAmountDisplay || '0'}</div>
       <div className={styles.summaryLabel}>已打款累计</div>
     </div>
   </div>

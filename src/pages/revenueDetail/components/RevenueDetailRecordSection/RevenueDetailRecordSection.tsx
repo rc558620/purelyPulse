@@ -2,7 +2,7 @@
 import { memo } from 'react';
 import type * as React from 'react';
 import { EmptyState } from '@components/ui/feedback';
-import { cx, fmtAmount, isNonEmptyArray, safeNum } from '@utils/utils';
+import { cx, isNonEmptyArray, safeNum } from '@utils/utils';
 import {
   IconRevenueDetailChevronDown,
   IconRevenueDetailEmpty,
@@ -50,7 +50,7 @@ const RevenueDetailRecordSectionComponent = ({
                 <span className={sharedStyles.detailRegion}>{record.region}</span>
               </div>
               <div className={sharedStyles.detailRight}>
-                <span className={sharedStyles.detailAmount}>+¥{fmtAmount(record.amount)}</span>
+                <span className={sharedStyles.detailAmount}>+¥{record.amountDisplay}</span>
                 <span className={sharedStyles.detailTime}>{record.time}</span>
               </div>
             </div>

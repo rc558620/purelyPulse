@@ -7,7 +7,7 @@ import {
   IconStarBadge,
 } from '../MemberListIcons/MemberListIcons';
 import { LEVEL_LABEL } from '../../../../memberList.constants';
-import { formatMemberAmount, formatMemberRelativeTime, formatMemberExpiry } from '../../../../memberList.utils';
+import { formatMemberRelativeTime, formatMemberExpiry } from '../../../../memberList.utils';
 import type { MemberListItem } from '../../../../memberList.types';
 import styles from '../../../../memberList.module.less';
 
@@ -26,7 +26,7 @@ const MemberListCard: React.FC<MemberListCardProps> = ({ member, onClick }) => {
   const pointsText = useMemo(() => `${safeNum(member.availablePoints).toLocaleString('zh-CN')} 积分`, [member.availablePoints]);
   const beanText = useMemo(() => `${safeNum(member.beanBalance).toLocaleString('zh-CN')} 豆`, [member.beanBalance]);
   const activeTimeText = useMemo(() => `活跃 ${formatMemberRelativeTime(member.lastActiveAt)}`, [member.lastActiveAt]);
-  const rechargeAmountText = useMemo(() => `¥${formatMemberAmount(member.totalRecharged)}`, [member.totalRecharged]);
+  const rechargeAmountText = useMemo(() => `¥${member.totalRechargedDisplay || '0'}`, [member.totalRechargedDisplay]);
   const expiryText = useMemo(() => formatMemberExpiry(member.membershipExpiry, member.level), [member.membershipExpiry, member.level]);
   const ariaLabel = useMemo(() => `查看 ${safeStr(member.name, '会员')} 的会员详情`, [member.name]);
 

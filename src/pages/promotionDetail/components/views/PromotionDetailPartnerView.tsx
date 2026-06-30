@@ -1,7 +1,7 @@
 // 推广详情合伙人视图：负责地区概况、合伙人列表与空态展示。
 import React from 'react';
 import { EmptyState } from '@components/ui/feedback';
-import { cx, fmtAmount, isNonEmptyArray, safeNum } from '@utils/utils';
+import { cx, isNonEmptyArray, safeNum } from '@utils/utils';
 import {
   IconPromotionDetailEmpty,
   IconPromotionDetailLocation,
@@ -50,7 +50,7 @@ const PromotionDetailPartnerView: React.FC<PromotionDetailPartnerViewProps> = ({
           <span className={styles.regionSummaryLbl}>推广单</span>
         </div>
         <div className={styles.regionSummaryStatItem}>
-          <span className={cx(styles.regionSummaryNum, styles.colorEmerald)}>¥{fmtAmount(selectedRegion.totalRevenue)}</span>
+          <span className={cx(styles.regionSummaryNum, styles.colorEmerald)}>¥{selectedRegion.totalRevenueDisplay || '0'}</span>
           <span className={styles.regionSummaryLbl}>总收益</span>
         </div>
       </div>

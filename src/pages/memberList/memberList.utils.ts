@@ -1,11 +1,7 @@
 import { safeNum } from '@utils/utils';
 import type { MemberLevel } from './memberList.types';
 
-/** 格式化会员金额（分转元，保留整数展示）。 */
-export function formatMemberAmount(fen: number): string {
-  if (safeNum(fen) === 0) return '0';
-  return (safeNum(fen) / 100).toFixed(0);
-}
+// 前端禁止金额转换。formatMemberAmount 已删除，会员金额展示值由后端直接返回 xxxDisplay 字段。
 
 /** 格式化会员最近活跃的相对时间文案。 */
 export function formatMemberRelativeTime(timestamp: number): string {

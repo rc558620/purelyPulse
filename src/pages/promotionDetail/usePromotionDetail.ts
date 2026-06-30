@@ -48,7 +48,7 @@ interface UsePromotionDetailPageReturn {
   filteredRegions: PromotionRegionItem[];
   totalPartners: number;
   totalOrders: number;
-  totalRevenue: number;
+  totalRevenueDisplay: string;
   currentPartners: PromotionPartnerItem[];
   periodRecords: PromotionPeriodRecord[];
   detailTotal: {
@@ -180,7 +180,7 @@ export const usePromotionDetail = (): UsePromotionDetailPageReturn => {
     filteredRegions: derivedState.filteredRegions,
     totalPartners: derivedState.totalPartners,
     totalOrders: derivedState.totalOrders,
-    totalRevenue: derivedState.totalRevenue,
+    totalRevenueDisplay: derivedState.totalRevenueDisplay,
     currentPartners: derivedState.currentPartners,
     periodRecords: derivedState.periodRecords,
     detailTotal: derivedState.detailTotal,

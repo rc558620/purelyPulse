@@ -51,6 +51,7 @@ const DAY_MS = 86_400_000;
 const EMPTY_MEMBER_LIST_STATS: MemberListStats = {
   totalCount: 0,
   activeCount: 0,
+  inactiveCount: 0,
   partnerCount: 0,
   bannedCount: 0,
 };
@@ -107,7 +108,7 @@ interface PulseServerMemberListItemLike {
   availablePoints: number;
   beanBalance: number;
   isPartner: boolean;
-  totalRecharged: number;
+  totalRechargedDisplay: string;
   registeredAt: number;
   lastActiveAt: number;
   partnerLevel?: string;
@@ -170,7 +171,7 @@ const isServerMemberListItemLike = (value: unknown): value is PulseServerMemberL
   && isFiniteNumber(value.availablePoints)
   && isFiniteNumber(value.beanBalance)
   && typeof value.isPartner === 'boolean'
-  && isFiniteNumber(value.totalRecharged)
+  && typeof value.totalRechargedDisplay === 'string'
   && isFiniteNumber(value.registeredAt)
   && isFiniteNumber(value.lastActiveAt)
 );
@@ -297,7 +298,7 @@ const mapServerMemberListItem = (value: PulseServerMemberListItemLike): MemberLi
   beanBalance: safeNum(value.beanBalance),
   isPartner: value.isPartner,
   partnerLevel: normalizeOptionalString(value.partnerLevel),
-  totalRecharged: safeNum(value.totalRecharged),
+  totalRechargedDisplay: value.totalRechargedDisplay ?? '',
   registeredAt: value.registeredAt,
   lastActiveAt: value.lastActiveAt,
   invitedCount: normalizeOptionalCount(value.invitedCount),
@@ -316,15 +317,31 @@ const mapServerMemberDetail = (value: PulseServerMemberDetailLike): MemberDetail
   subAccountCapability: mapSubAccountCapability(value),
 });
 
+// 从后端响应结构中提取统计数据，前端不再 reduce 累加。
 const getServerMemberListStats = (
-  members: MemberListItem[],
-  _payload: PulseServerMembersResponseLike,
-): MemberListStats => ({
-  totalCount: members.length,
-  activeCount: members.filter((member) => member.status === 'active').length,
-  partnerCount: members.filter((member) => member.isPartner).length,
-  bannedCount: members.filter((member) => member.status === 'banned').length,
-});
+  _members: MemberListItem[],
+  payload: PulseServerMembersResponseLike,
+): MemberListStats => {
+  const stats = payload.stats ?? payload.summary;
+  if (isPlainObject(stats)) {
+    return {
+      totalCount: safeNum((stats as Record<string, unknown>).totalCount ?? (stats as Record<string, unknown>).total ?? 0),
+      activeCount: safeNum((stats as Record<string, unknown>).activeCount ?? (stats as Record<string, unknown>).normalCount ?? 0),
+      inactiveCount: safeNum((stats as Record<string, unknown>).inactiveCount ?? (stats as Record<string, unknown>).dormantCount ?? 0),
+      partnerCount: safeNum((stats as Record<string, unknown>).partnerCount ?? 0),
+      bannedCount: safeNum((stats as Record<string, unknown>).bannedCount ?? (stats as Record<string, unknown>).disabledCount ?? 0),
+    };
+  }
+
+  // 后端未提供 stats 对象时，从顶层字段提取
+  return {
+    totalCount: safeNum(payload.totalCount ?? payload.total ?? 0),
+    activeCount: safeNum(payload.activeCount ?? payload.normalCount ?? 0),
+    inactiveCount: safeNum(payload.inactiveCount ?? payload.dormantCount ?? 0),
+    partnerCount: safeNum(payload.partnerCount ?? 0),
+    bannedCount: safeNum(payload.bannedCount ?? payload.disabledCount ?? 0),
+  };
+};
 
 const getNestedRecord = (value: unknown, keys: readonly string[]): Record<string, unknown> | null => {
   if (!isPlainObject(value)) {
@@ -426,40 +443,20 @@ const pickNumberField = (value: unknown, keys: readonly string[]): number => {
   return 0;
 };
 
-const toFenAmount = (value: number, isYuan: boolean): number => {
-  const normalizedValue = Number.isFinite(value) ? value : 0;
-  if (isYuan) {
-    return Math.round(normalizedValue * 100);
-  }
-  return Math.round(normalizedValue);
-};
-
-const pickFenAmountField = (
-  value: unknown,
-  fenKeys: readonly string[],
-  yuanKeys: readonly string[],
-): number => {
+/** 直接从后端响应中读取金额展示字符串字段，前端不做转换 */
+const pickDisplayField = (value: unknown, keys: readonly string[]): string => {
   if (!isPlainObject(value)) {
-    return 0;
+    return '';
   }
 
-  for (const key of fenKeys) {
+  for (const key of keys) {
     const candidate = value[key];
-    const normalizedValue = normalizeNumber(candidate);
-    if (normalizedValue !== 0 || candidate === 0 || candidate === '0') {
-      return toFenAmount(normalizedValue, false);
+    if (typeof candidate === 'string' && candidate.trim()) {
+      return candidate.trim();
     }
   }
 
-  for (const key of yuanKeys) {
-    const candidate = value[key];
-    const normalizedValue = normalizeNumber(candidate);
-    if (normalizedValue !== 0 || candidate === 0 || candidate === '0') {
-      return toFenAmount(normalizedValue, true);
-    }
-  }
-
-  return 0;
+  return '';
 };
 
 const normalizeTimestamp = (value: unknown, fallbackValue: number): number => {
@@ -732,28 +729,24 @@ const mapBeanRecord = (value: unknown, index: number, userLookup?: Map<string, U
   };
 };
 
+// 后端权威计算统计数据，前端仅做字段映射，不再 reduce 回退。
+// 使用 ?? 避免后端返回 0 时被误兜底。
 const buildMemberListStats = (members: MemberListItem[], payload: unknown): MemberListStats => {
   if (isServerMembersResponseLike(payload)) {
     return getServerMemberListStats(members, payload);
   }
 
-  const computedStats = members.reduce<MemberListStats>((stats, member) => ({
-    totalCount: stats.totalCount + 1,
-    activeCount: stats.activeCount + (member.status === 'active' ? 1 : 0),
-    partnerCount: stats.partnerCount + (member.isPartner ? 1 : 0),
-    bannedCount: stats.bannedCount + (member.status === 'banned' ? 1 : 0),
-  }), { ...EMPTY_MEMBER_LIST_STATS });
-
   const statsSource = getNestedRecord(payload, MEMBER_STATS_SOURCE_CANDIDATES) ?? (isPlainObject(payload) ? payload : null);
   if (!statsSource) {
-    return computedStats;
+    return { ...EMPTY_MEMBER_LIST_STATS };
   }
 
   return {
-    totalCount: pickNumberField(statsSource, ['totalCount', 'total', 'memberCount']) || computedStats.totalCount,
-    activeCount: pickNumberField(statsSource, ['activeCount', 'normalCount']) || computedStats.activeCount,
-    partnerCount: pickNumberField(statsSource, ['partnerCount']) || computedStats.partnerCount,
-    bannedCount: pickNumberField(statsSource, ['bannedCount', 'disabledCount']) || computedStats.bannedCount,
+    totalCount: pickNumberField(statsSource, ['totalCount', 'total', 'memberCount']) ?? 0,
+    activeCount: pickNumberField(statsSource, ['activeCount', 'normalCount']) ?? 0,
+    inactiveCount: pickNumberField(statsSource, ['inactiveCount', 'dormantCount']) ?? 0,
+    partnerCount: pickNumberField(statsSource, ['partnerCount']) ?? 0,
+    bannedCount: pickNumberField(statsSource, ['bannedCount', 'disabledCount']) ?? 0,
   };
 };
 
@@ -761,142 +754,21 @@ export interface MembershipRevenueSyncPayload {
   memberId: string;
   memberName: string;
   level: Exclude<MemberLevel, 'free'>;
-  amountFen: number;
+  /** 金额展示值（后端直接返回，前端不再分转元）。 */
+  amountDisplay: string;
   planName: string;
   revenueTypeLabel: string;
   createdAt: number;
 }
 
-const MEMBERSHIP_REVENUE_EVENT_LIMIT = 200;
 
-const buildMembershipRevenueRecordId = (event: MembershipRevenueSyncPayload): string => (
-  `membership-revenue-${event.memberId}-${event.createdAt}-${event.level}`
-);
-
-const normalizeMembershipRevenueSyncPayload = (value: unknown): MembershipRevenueSyncPayload | null => {
-  if (!isPlainObject(value)) {
-    return null;
-  }
-
-  const memberId = normalizeOptionalString(value.memberId) ?? '';
-  const normalizedLevel = normalizeMemberLevel(normalizeOptionalString(value.level) ?? 'free');
-  const amountFen = normalizeNumber(value.amountFen);
-  const planName = normalizeOptionalString(value.planName) ?? '';
-  const revenueTypeLabel = normalizeOptionalString(value.revenueTypeLabel) ?? '';
-  const createdAt = normalizeTimestamp(value.createdAt, 0);
-
-  if (!memberId || normalizedLevel === 'free' || amountFen <= 0 || !planName || !revenueTypeLabel || !createdAt) {
-    return null;
-  }
-
-  return {
-    memberId,
-    memberName: normalizeOptionalString(value.memberName) ?? `会员${memberId}`,
-    level: normalizedLevel,
-    amountFen,
-    planName,
-    revenueTypeLabel,
-    createdAt,
-  };
-};
-
-const readStoredMembershipRevenueSyncEvents = (): MembershipRevenueSyncPayload[] => {
-  if (typeof window === 'undefined') {
-    return [];
-  }
-
-  try {
-    const rawValue = sessionStorage.getItem(STORAGE_KEYS.MEMBERSHIP_REVENUE_EVENTS);
-    if (!rawValue) {
-      return [];
-    }
-
-    const parsedValue = JSON.parse(rawValue);
-    if (!Array.isArray(parsedValue)) {
-      sessionStorage.removeItem(STORAGE_KEYS.MEMBERSHIP_REVENUE_EVENTS);
-      return [];
-    }
-
-    return parsedValue
-      .map((item) => normalizeMembershipRevenueSyncPayload(item))
-      .filter((item): item is MembershipRevenueSyncPayload => item !== null);
-  } catch {
-    sessionStorage.removeItem(STORAGE_KEYS.MEMBERSHIP_REVENUE_EVENTS);
-    return [];
-  }
-};
-
-const persistMembershipRevenueSyncEvents = (events: MembershipRevenueSyncPayload[]): void => {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  if (events.length === 0) {
-    sessionStorage.removeItem(STORAGE_KEYS.MEMBERSHIP_REVENUE_EVENTS);
-    return;
-  }
-
-  sessionStorage.setItem(
-    STORAGE_KEYS.MEMBERSHIP_REVENUE_EVENTS,
-    JSON.stringify(events.slice(-MEMBERSHIP_REVENUE_EVENT_LIMIT)),
-  );
-};
-
-export const readMembershipRevenueSyncEvents = (): MembershipRevenueSyncPayload[] => (
-  readStoredMembershipRevenueSyncEvents()
-);
-
-const appendMembershipRevenueSyncEvent = (payload: MembershipRevenueSyncPayload): void => {
-  persistMembershipRevenueSyncEvents(readStoredMembershipRevenueSyncEvents().concat(payload));
-};
-
-const applyMembershipRevenueToMemberListItem = (member: MemberListItem): MemberListItem => {
-  const relatedEvents = readStoredMembershipRevenueSyncEvents().filter((item) => item.memberId === member.id);
-  if (relatedEvents.length === 0) {
-    return member;
-  }
-
-  const addedAmountFen = relatedEvents.reduce((sum, item) => safeNum(sum + item.amountFen), 0);
-  return {
-    ...member,
-    totalRecharged: safeNum(member.totalRecharged + addedAmountFen),
-    rechargeCount: safeNum((member.rechargeCount ?? 0) + relatedEvents.length),
-  };
-};
-
-const applyMembershipRevenueToMemberDetail = (member: MemberDetail): MemberDetail => {
-  const relatedEvents = readStoredMembershipRevenueSyncEvents()
-    .filter((item) => item.memberId === member.id)
-    .sort((left, right) => right.createdAt - left.createdAt);
-  if (relatedEvents.length === 0) {
-    return member;
-  }
-
-  const addedAmountFen = relatedEvents.reduce((sum, item) => safeNum(sum + item.amountFen), 0);
-  const manualRechargeHistory = relatedEvents.map<RechargeRecord>((item) => ({
-    id: buildMembershipRevenueRecordId(item),
-    planName: item.planName,
-    amount: item.amountFen,
-    pointsAwarded: 0,
-    channel: 'manual',
-    createdAt: item.createdAt,
-  }));
-
-  return {
-    ...member,
-    totalRecharged: safeNum(member.totalRecharged + addedAmountFen),
-    rechargeCount: safeNum((member.rechargeCount ?? member.rechargeHistory.length) + relatedEvents.length),
-    rechargeHistory: manualRechargeHistory.concat(member.rechargeHistory),
-  };
-};
 
 const mapRechargeRecord = (value: unknown, index: number, memberId: string): RechargeRecord => {
   const recordId = pickStringField(value, ['id', 'recordId', 'rechargeId']) || `${memberId}-recharge-${index + 1}`;
   const planName = pickStringField(value, RECHARGE_PLAN_CANDIDATES) || '会员充值';
-  const amount = pickFenAmountField(
+  const amountDisplay = pickDisplayField(
     value,
-    ['amountFen', 'amount', 'rechargeAmountFen', 'totalFen'],
-    ['amountYuan', 'amountValue', 'rechargeAmountYuan', 'totalAmount'],
+    ['amountDisplay', 'rechargeAmountDisplay', 'totalDisplay'],
   );
   const pointsAwarded = pickNumberField(value, ['pointsAwarded', 'rewardPoints', 'points']);
   const channel = normalizeRechargeChannel(pickStringField(value, RECHARGE_CHANNEL_CANDIDATES) || 'wechat');
@@ -908,7 +780,7 @@ const mapRechargeRecord = (value: unknown, index: number, memberId: string): Rec
   return {
     id: recordId,
     planName,
-    amount,
+    amountDisplay,
     pointsAwarded,
     channel,
     createdAt,
@@ -939,10 +811,9 @@ const mapMemberListItem = (value: unknown, index: number): MemberListItem => {
     beanBalance: pickNumberField(value, ['beanBalance', 'beans', 'beanAmount', 'currentBeans']),
     isPartner,
     partnerLevel: partnerLevel || undefined,
-    totalRecharged: pickFenAmountField(
+    totalRechargedDisplay: pickDisplayField(
       value,
-      ['totalRechargedFen', 'totalRecharged', 'rechargeTotalFen', 'totalRechargeAmountFen'],
-      ['totalRechargedYuan', 'rechargeTotalAmount', 'totalRechargeAmount'],
+      ['totalRechargedDisplay', 'rechargeTotalDisplay', 'totalRechargeAmountDisplay'],
     ),
     registeredAt: normalizeTimestamp(isPlainObject(value) ? value.registeredAt ?? value.createdAt ?? value.joinTime : undefined, Date.now() - 30 * DAY_MS),
     lastActiveAt: normalizeTimestamp(isPlainObject(value) ? value.lastActiveAt ?? value.latestActiveAt ?? value.activeAt : undefined, Date.now()),
@@ -967,10 +838,9 @@ const mapMemberDetail = (value: unknown): MemberDetail => {
     ...memberListItem,
     totalPointsEarned: pickNumberField(value, ['totalPointsEarned', 'earnedPoints', 'pointsTotal']),
     partnerLevel: partnerLevel || undefined,
-    totalRecharged: pickFenAmountField(
+    totalRechargedDisplay: pickDisplayField(
       value,
-      ['totalRechargedFen', 'totalRecharged', 'rechargeTotalFen', 'totalRechargeAmountFen'],
-      ['totalRechargedYuan', 'rechargeTotalAmount', 'totalRechargeAmount'],
+      ['totalRechargedDisplay', 'rechargeTotalDisplay', 'totalRechargeAmountDisplay'],
     ),
     rechargeCount: pickNumberField(value, ['rechargeCount', 'rechargeTimes', 'payCount']) || rechargeHistory.length,
     invitedCount: pickNumberField(value, ['invitedCount', 'inviteCount', 'referralCount', 'promotionCount']),
@@ -1068,8 +938,7 @@ const requestMemberList = async (query: MemberListQuery): Promise<{ members: Mem
   });
 
   let memberList = resolveMemberListSource(response)
-    .map((item, index) => mapMemberListItem(item, index))
-    .map((item) => applyMembershipRevenueToMemberListItem(item));
+    .map((item, index) => mapMemberListItem(item, index));
 
   if (query.expiry !== 'all') {
     memberList = filterMembersByExpiry(memberList, query.expiry);
@@ -1123,7 +992,7 @@ const requestMemberDetail = async (id: string): Promise<MemberDetail | null> => 
     return null;
   }
 
-  return applyMembershipRevenueToMemberDetail(mapMemberDetail(memberDetailSource));
+  return mapMemberDetail(memberDetailSource);
 };
 
 const readCachedPointsPageData = (): { records: MemberPointsRecord[]; users: MemberPointsPageUser[]; stats: MemberPointsStats } | null => {
@@ -1339,7 +1208,6 @@ export const emitMembershipRevenueSync = (payload: MembershipRevenueSyncPayload)
     return;
   }
 
-  appendMembershipRevenueSyncEvent(payload);
   window.dispatchEvent(new CustomEvent<MembershipRevenueSyncPayload>(MEMBERSHIP_REVENUE_SYNC_EVENT, { detail: payload }));
 };
 
@@ -1368,7 +1236,7 @@ export const submitMemberMembership = async (
   memberId: string,
   level: MemberLevel,
   membershipExpiry: number | null,
-  options?: { memberName?: string; amountFen?: number },
+  options?: { memberName?: string; amountDisplay?: string },
 ): Promise<void> => {
   const requestTarget = resolveMemberActionPath(SET_MEMBERSHIP_API_PATH, memberId);
   const isNonExpiringLevel = level === 'free';
@@ -1399,9 +1267,9 @@ export const submitMemberMembership = async (
       memberId,
       memberName: options?.memberName?.trim() || `会员${memberId}`,
       level,
-      amountFen: level === 'lifetime' && typeof options?.amountFen === 'number'
-        ? options.amountFen
-        : config.amountFen,
+      amountDisplay: level === 'lifetime' && typeof options?.amountDisplay === 'string' && options.amountDisplay.trim()
+        ? options.amountDisplay.trim()
+        : config.amountDisplay,
       planName: config.planName,
       revenueTypeLabel: config.revenueTypeLabel,
       createdAt: Date.now(),
@@ -1479,15 +1347,15 @@ export const submitSubAccountQuota = async (
 
 /** 兜底的空运营数据，接口异常时使用。 */
 const EMPTY_CLUB_STATS: ClubMemberStats = {
-  pendingBalanceFen: 0,
-  totalRechargeFen: 0,
+  pendingBalanceDisplay: '',
+  totalRechargeDisplay: '',
   totalMemberCount: 0,
   rechargeCount: 0,
-  todayRechargeFen: 0,
-  monthRechargeFen: 0,
-  quarterRechargeFen: 0,
-  yearRechargeFen: 0,
-  lastYearRechargeFen: 0,
+  todayRechargeDisplay: '',
+  monthRechargeDisplay: '',
+  quarterRechargeDisplay: '',
+  yearRechargeDisplay: '',
+  lastYearRechargeDisplay: '',
   levelBreakdown: { free: 0, gold: 0, platinum: 0, diamond: 0 },
 };
 
@@ -1520,21 +1388,21 @@ const normalizeClubStats = (raw: unknown): ClubMemberStats => {
     return EMPTY_CLUB_STATS;
   }
 
-  const pendingBalanceFen = pickNumberField(raw, CLUB_STATS_PENDING_BALANCE_CANDIDATES);
-  const totalRechargeFen = pickNumberField(raw, CLUB_STATS_TOTAL_RECHARGE_CANDIDATES);
+  const pendingBalanceDisplay = pickDisplayField(raw, ['pendingBalanceDisplay', 'pendingBalanceFen', 'pendingBalance', 'inTransitBalance']);
+  const totalRechargeDisplay = pickDisplayField(raw, ['totalRechargeDisplay', 'totalRechargeFen', 'totalRecharge', 'totalAmount']);
   const totalMemberCount = pickNumberField(raw, CLUB_STATS_TOTAL_MEMBER_CANDIDATES);
   const rechargeCount = pickNumberField(raw, CLUB_STATS_RECHARGE_COUNT_CANDIDATES);
-  const todayRechargeFen = pickNumberField(raw, CLUB_STATS_TODAY_RECHARGE_CANDIDATES);
-  const monthRechargeFen = pickNumberField(raw, CLUB_STATS_MONTH_RECHARGE_CANDIDATES);
-  const quarterRechargeFen = pickNumberField(raw, CLUB_STATS_QUARTER_RECHARGE_CANDIDATES);
-  const yearRechargeFen = pickNumberField(raw, CLUB_STATS_YEAR_RECHARGE_CANDIDATES);
-  const lastYearRechargeFen = pickNumberField(raw, CLUB_STATS_LAST_YEAR_RECHARGE_CANDIDATES);
+  const todayRechargeDisplay = pickDisplayField(raw, ['todayRechargeDisplay', 'todayRechargeFen', 'todayRecharge', 'todayAmount']);
+  const monthRechargeDisplay = pickDisplayField(raw, ['monthRechargeDisplay', 'monthRechargeFen', 'monthRecharge', 'monthAmount']);
+  const quarterRechargeDisplay = pickDisplayField(raw, ['quarterRechargeDisplay', 'quarterRechargeFen', 'quarterRecharge', 'quarterAmount']);
+  const yearRechargeDisplay = pickDisplayField(raw, ['yearRechargeDisplay', 'yearRechargeFen', 'yearRecharge', 'yearAmount']);
+  const lastYearRechargeDisplay = pickDisplayField(raw, ['lastYearRechargeDisplay', 'lastYearRechargeFen', 'lastYearRecharge', 'lastYearAmount']);
 
   const levelBreakdownKey = CLUB_STATS_LEVEL_BREAKDOWN_CANDIDATES.find((key) => isPlainObject(raw[key]));
   const levelBreakdownRaw = levelBreakdownKey ? raw[levelBreakdownKey] : undefined;
   const levelBreakdown = normalizeClubMemberLevelBreakdown(levelBreakdownRaw);
 
-  return { pendingBalanceFen, totalRechargeFen, totalMemberCount, rechargeCount, todayRechargeFen, monthRechargeFen, quarterRechargeFen, yearRechargeFen, lastYearRechargeFen, levelBreakdown };
+  return { pendingBalanceDisplay, totalRechargeDisplay, totalMemberCount, rechargeCount, todayRechargeDisplay, monthRechargeDisplay, quarterRechargeDisplay, yearRechargeDisplay, lastYearRechargeDisplay, levelBreakdown };
 };
 
 /** 获取指定商家（会员）的 purelyClub C 端会员运营统计。 */
@@ -1584,13 +1452,13 @@ const normalizeGrowthPct = (value: unknown): number | null => {
 /** 安全归一化单个数据点。 */
 const normalizeDataPoint = (raw: unknown): SalesPeriodDataPoint => {
   if (!isPlainObject(raw)) {
-    return { label: '', salesFen: 0, profitFen: 0 };
+    return { label: '', salesDisplay: '', profitDisplay: '' };
   }
 
   return {
     label: pickStringField(raw, ['label', 'name', 'timeLabel']),
-    salesFen: pickNumberField(raw, ['salesFen', 'sales', 'revenueFen', 'amount']),
-    profitFen: pickNumberField(raw, ['profitFen', 'profit', 'grossProfitFen']),
+    salesDisplay: pickDisplayField(raw, ['salesDisplay', 'salesFen', 'sales', 'revenueFen', 'amount']),
+    profitDisplay: pickDisplayField(raw, ['profitDisplay', 'profitFen', 'profit', 'grossProfitFen']),
   };
 };
 
@@ -1614,8 +1482,8 @@ const normalizePeriodSummary = (raw: unknown, fallbackPeriod: SalesPeriodType): 
   if (!isPlainObject(raw)) {
     return {
       period: fallbackPeriod,
-      totalSalesFen: 0,
-      totalProfitFen: 0,
+      totalSalesDisplay: '',
+      totalProfitDisplay: '',
       salesGrowthPct: null,
       profitGrowthPct: null,
       dataPoints: [],
@@ -1624,8 +1492,8 @@ const normalizePeriodSummary = (raw: unknown, fallbackPeriod: SalesPeriodType): 
 
   return {
     period: (pickStringField(raw, ['period']) || fallbackPeriod) as SalesPeriodType,
-    totalSalesFen: pickNumberField(raw, TOTAL_SALES_FEN_CANDIDATES),
-    totalProfitFen: pickNumberField(raw, TOTAL_PROFIT_FEN_CANDIDATES),
+    totalSalesDisplay: pickDisplayField(raw, ['totalSalesDisplay', 'totalSalesFen', 'totalSales', 'salesTotal', 'totalRevenueFen']),
+    totalProfitDisplay: pickDisplayField(raw, ['totalProfitDisplay', 'totalProfitFen', 'totalProfit', 'profitTotal', 'grossProfitFen']),
     salesGrowthPct: pickGrowthPct(raw, SALES_GROWTH_PCT_CANDIDATES),
     profitGrowthPct: pickGrowthPct(raw, PROFIT_GROWTH_PCT_CANDIDATES),
     dataPoints: normalizeDataPoints(raw.dataPoints ?? raw.points ?? raw.chartData),
@@ -1650,8 +1518,8 @@ const normalizeSalesStats = (raw: unknown): MemberSalesStats => {
 const buildEmptySalesStats = (): MemberSalesStats => {
   const emptyPeriod = (period: SalesPeriodType): SalesPeriodSummary => ({
     period,
-    totalSalesFen: 0,
-    totalProfitFen: 0,
+    totalSalesDisplay: '',
+    totalProfitDisplay: '',
     salesGrowthPct: null,
     profitGrowthPct: null,
     dataPoints: [],

@@ -43,8 +43,8 @@ const PartnerPayout: React.FC = () => {
       <main className={styles.contentWrapper}>
         <PartnerPayoutSummaryBar
           pendingCount={summary.pendingCount}
-          pendingAmount={summary.pendingAmount}
-          paidAmount={summary.paidAmount}
+          pendingAmountDisplay={summary.pendingAmountDisplay}
+          paidAmountDisplay={summary.paidAmountDisplay}
         />
 
         <PartnerPayoutFilterBar

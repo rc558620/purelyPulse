@@ -52,8 +52,8 @@ export interface RechargeRecord {
   id: string;
   /** 套餐名称。 */
   planName: string;
-  /** 充值金额（分）。 */
-  amount: number;
+  /** 充值金额展示值（后端直接返回，前端不再分转元）。 */
+  amountDisplay: string;
   /** 积分奖励。 */
   pointsAwarded: number;
   /** 支付渠道。 */
@@ -94,8 +94,8 @@ export interface MemberDetail {
   isPartner: boolean;
   /** 合伙人等级。 */
   partnerLevel?: string;
-  /** 累计充值金额（分）。 */
-  totalRecharged: number;
+  /** 累计充值金额展示值（后端直接返回，前端不再分转元）。 */
+  totalRechargedDisplay: string;
   /** 充值次数。 */
   rechargeCount: number;
   /** 推广带来的新用户数。 */
@@ -136,8 +136,8 @@ export interface MemberListItem {
   isPartner: boolean;
   /** 合伙人等级。 */
   partnerLevel?: string;
-  /** 累计充值金额（分）。 */
-  totalRecharged: number;
+  /** 累计充值金额展示值（后端直接返回，前端不再分转元）。 */
+  totalRechargedDisplay: string;
   /** 注册时间。 */
   registeredAt: number;
   /** 最近活跃时间。 */
@@ -177,6 +177,8 @@ export interface MemberListStats {
   totalCount: number;
   /** 活跃会员数。 */
   activeCount: number;
+  /** 未活跃会员数（后端权威计算，前端不再反推）。 */
+  inactiveCount: number;
   /** 合伙人数。 */
   partnerCount: number;
   /** 封禁人数。 */
@@ -202,24 +204,24 @@ export interface ClubMemberLevelBreakdown {
 
 /** 该商家在 purelyClub 的会员运营统计（owner 视角）。 */
 export interface ClubMemberStats {
-  /** 顾客在途余额合计（分），即全部顾客当前储值余额之和。 */
-  pendingBalanceFen: number;
-  /** 会员充值总金额（分）。 */
-  totalRechargeFen: number;
+  /** 顾客在途余额展示值（后端直接返回，前端不再分转元）。 */
+  pendingBalanceDisplay: string;
+  /** 会员充值总金额展示值（后端直接返回，前端不再分转元）。 */
+  totalRechargeDisplay: string;
   /** 会员用户总数。 */
   totalMemberCount: number;
   /** 累计充值笔数。 */
   rechargeCount: number;
-  /** 今日储值金额（分）。 */
-  todayRechargeFen: number;
-  /** 本月储值金额（分）。 */
-  monthRechargeFen: number;
-  /** 本季储值金额（分）。 */
-  quarterRechargeFen: number;
-  /** 本年储值金额（分）。 */
-  yearRechargeFen: number;
-  /** 去年储值金额（分）。 */
-  lastYearRechargeFen: number;
+  /** 今日储值金额展示值（后端直接返回，前端不再分转元）。 */
+  todayRechargeDisplay: string;
+  /** 本月储值金额展示值（后端直接返回，前端不再分转元）。 */
+  monthRechargeDisplay: string;
+  /** 本季储值金额展示值（后端直接返回，前端不再分转元）。 */
+  quarterRechargeDisplay: string;
+  /** 本年储值金额展示值（后端直接返回，前端不再分转元）。 */
+  yearRechargeDisplay: string;
+  /** 去年储值金额展示值（后端直接返回，前端不再分转元）。 */
+  lastYearRechargeDisplay: string;
   /** 各等级会员数量分布。 */
   levelBreakdown: ClubMemberLevelBreakdown;
 }
@@ -230,10 +232,10 @@ export interface ClubMemberStats {
 export interface SalesPeriodDataPoint {
   /** 时间标签（如"周一"、"1月"等）。 */
   label: string;
-  /** 销售额（分）。 */
-  salesFen: number;
-  /** 利润（分）。 */
-  profitFen: number;
+  /** 销售额展示值（后端直接返回，前端不再分转元）。 */
+  salesDisplay: string;
+  /** 利润展示值（后端直接返回，前端不再分转元）。 */
+  profitDisplay: string;
 }
 
 /** 销售统计时间维度类型。 */
@@ -243,10 +245,10 @@ export type SalesPeriodType = 'today' | 'week' | 'month' | 'year' | 'lastYear';
 export interface SalesPeriodSummary {
   /** 时间维度。 */
   period: SalesPeriodType;
-  /** 销售总额（分）。 */
-  totalSalesFen: number;
-  /** 利润总额（分）。 */
-  totalProfitFen: number;
+  /** 销售总额展示值（后端直接返回，前端不再分转元）。 */
+  totalSalesDisplay: string;
+  /** 利润总额展示值（后端直接返回，前端不再分转元）。 */
+  totalProfitDisplay: string;
   /** 销售额环比增幅（百分比，null = 无数据）。 */
   salesGrowthPct: number | null;
   /** 利润环比增幅（百分比，null = 无数据）。 */

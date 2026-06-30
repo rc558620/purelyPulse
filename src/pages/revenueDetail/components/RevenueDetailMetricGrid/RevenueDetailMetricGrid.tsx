@@ -2,7 +2,7 @@
 import { memo } from 'react';
 import type * as React from 'react';
 import AnimatedNumber from '@components/ui/data-display/AnimatedNumber/AnimatedNumber';
-import { cx, fmtAmount, isNonEmptyArray, safeNum } from '@utils/utils';
+import { cx, isNonEmptyArray, safeNum } from '@utils/utils';
 import {
   IconRevenueDetailCalendar,
   IconRevenueDetailCurrency,
@@ -55,7 +55,7 @@ const REVENUE_METRIC_CARD_CONFIGS: ReadonlyArray<RevenueMetricCardConfig> = [
     renderValue: ({ summary, revenuePeriod }) => (
       <>
         <span className={sharedStyles.bentoValPrefix}>¥</span>
-        <AnimatedNumber value={fmtAmount(summary.total)} triggerKey={`b-total-${revenuePeriod}`} />
+        <AnimatedNumber value={summary.totalDisplay} triggerKey={`b-total-${revenuePeriod}`} />
       </>
     ),
   },
@@ -68,7 +68,7 @@ const REVENUE_METRIC_CARD_CONFIGS: ReadonlyArray<RevenueMetricCardConfig> = [
     renderValue: ({ summary, revenuePeriod }) => (
       <>
         <span className={sharedStyles.bentoValPrefix}>¥</span>
-        <AnimatedNumber value={fmtAmount(summary.avg)} triggerKey={`b-avg-${revenuePeriod}`} />
+        <AnimatedNumber value={summary.avgDisplay} triggerKey={`b-avg-${revenuePeriod}`} />
       </>
     ),
   },
@@ -91,7 +91,7 @@ const REVENUE_METRIC_CARD_CONFIGS: ReadonlyArray<RevenueMetricCardConfig> = [
     renderValue: ({ summary, revenuePeriod }) => (
       <>
         <span className={sharedStyles.bentoValPrefix}>¥</span>
-        <AnimatedNumber value={fmtAmount(summary.peak)} triggerKey={`b-peak-${revenuePeriod}`} />
+        <AnimatedNumber value={summary.peakDisplay} triggerKey={`b-peak-${revenuePeriod}`} />
       </>
     ),
   },

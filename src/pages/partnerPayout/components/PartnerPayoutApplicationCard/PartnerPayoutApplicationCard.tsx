@@ -1,6 +1,6 @@
 // 合伙人打款申请卡片
 import React from 'react';
-import { cx, fenToYuan, fmtAmount, safeStr } from '@utils/utils';
+import { cx, safeStr } from '@utils/utils';
 import {
   IconPartnerPayoutApprove,
   IconPartnerPayoutExpandArrow,
@@ -91,7 +91,7 @@ const PartnerPayoutApplicationCard: React.FC<PartnerPayoutApplicationCardProps> 
         </div>
 
         <div className={styles.cardRight}>
-          <div className={styles.cardAmount}>¥{fmtAmount(fenToYuan(application.amount))}</div>
+          <div className={styles.cardAmount}>¥{application.amountDisplay || '0'}</div>
           <div className={styles[statusConfig.className]}>{statusConfig.label}</div>
           <IconPartnerPayoutExpandArrow className={cx(styles.expandArrow, expanded && styles.expandArrowOpen)} />
         </div>
@@ -117,7 +117,7 @@ const PartnerPayoutApplicationCard: React.FC<PartnerPayoutApplicationCardProps> 
             <div className={styles.detailItem}>
               <span className={styles.detailLabel}>申请金额</span>
               <span className={cx(styles.detailVal, styles.detailValAmount)}>
-                ¥{fmtAmount(fenToYuan(application.amount))}
+                ¥{application.amountDisplay || '0'}
               </span>
             </div>
             {application.txnNo ? (

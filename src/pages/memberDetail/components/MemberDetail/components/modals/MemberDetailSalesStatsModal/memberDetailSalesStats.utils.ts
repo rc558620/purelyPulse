@@ -1,23 +1,9 @@
-// 营业详情弹窗工具函数：金额格式化与 ECharts 配置生成。
+// 营业详情弹窗工具函数：ECharts 配置生成。
+// 前端禁止金额转换。formatAmountFen/fenToYuan 已删除，金额展示值由后端直接返回 xxxDisplay 字段。
 import { safeNum } from '@utils/utils';
 
 /** 图表数据视角类型（销售额 or 利润）。 */
 export type ChartMetric = 'sales' | 'profit';
-
-/** 将分转为元。 */
-export const fenToYuan = (fen: number): number => fen / 100;
-
-/** 将分格式化为带万/亿的可读字符串。 */
-export const formatAmountFen = (fen: number): string => {
-  const yuan = safeNum(fen) / 100;
-  if (yuan >= 100_000_000) {
-    return `${(yuan / 100_000_000).toFixed(2)}亿`;
-  }
-  if (yuan >= 10_000) {
-    return `${(yuan / 10_000).toFixed(2)}万`;
-  }
-  return yuan.toFixed(2);
-};
 
 /** 格式化增幅百分比显示。 */
 export const formatGrowth = (pct: number | null): string => {
@@ -51,7 +37,7 @@ const getBarGradient = (metric: ChartMetric): object => {
 /** 根据标签数组、数值数组与指标类型生成完整 ECharts 柱状图配置。 */
 export const buildChartOption = (
   labels: string[],
-  values: number[],
+  values: string[],
   metric: ChartMetric,
 ): object => ({
   animation: true,
@@ -66,11 +52,11 @@ export const buildChartOption = (
     padding: [8, 14],
     textStyle: { color: '#fff', fontSize: 12 },
     formatter: (params: unknown): string => {
-      const items = params as Array<{ name: string; value: number }>;
+      const items = params as Array<{ name: string; value: string }>;
       if (!items[0]) return '';
       const metricLabel = metric === 'sales' ? '销售额' : '利润';
       return `<span style="font-size:11px;opacity:0.65">${items[0].name}</span><br/>
-              <b style="font-size:13px">${metricLabel} ¥${(items[0].value).toFixed(2)}元</b>`;
+              <b style="font-size:13px">${metricLabel} ¥${items[0].value}</b>`;
     },
   },
   xAxis: {
@@ -86,16 +72,12 @@ export const buildChartOption = (
     },
   },
   yAxis: {
-    type: 'value',
+    type: 'category',
+    data: values,
+    axisLine: { show: false },
+    axisTick: { show: false },
     splitLine: { lineStyle: { color: '#f1f5f9', type: 'dashed' } },
-    axisLabel: {
-      color: '#94a3b8',
-      fontSize: 10,
-      formatter: (v: number): string => {
-        if (v >= 10000) return `${(v / 10000).toFixed(0)}万`;
-        return String(v);
-      },
-    },
+    axisLabel: { show: false },
   },
   series: [{
     type: 'bar',

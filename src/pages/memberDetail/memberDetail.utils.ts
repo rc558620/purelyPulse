@@ -1,5 +1,7 @@
 import { safeNum } from '@utils/utils';
 
+// 前端禁止金额转换。formatMemberAmount 已删除，会员金额展示值由后端直接返回 xxxDisplay 字段。
+
 /** 格式化会员详情中的日期文案（yyyy.MM.dd）。 */
 export function formatMemberDate(timestamp: number): string {
   const date = new Date(safeNum(timestamp));
@@ -7,11 +9,7 @@ export function formatMemberDate(timestamp: number): string {
   return `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())}`;
 }
 
-/** 格式化金额（分转元，保留整数展示）。 */
-export function formatMemberAmount(fen: number): string {
-  if (safeNum(fen) === 0) return '0';
-  return (safeNum(fen) / 100).toFixed(0);
-}
+// formatMemberAmount 已删除：前端不做分转元转换。消费方应直接使用后端返回的 xxxDisplay 字段。
 
 /** 格式化最近活跃的相对时间文案。 */
 export function formatMemberRelativeTime(timestamp: number): string {

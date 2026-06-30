@@ -20,16 +20,7 @@ import type { ClubMemberStats } from '@pages/memberList/memberList.types';
 import { fetchMemberClubStats } from '@pages/memberList/memberList.service';
 import styles from './MemberDetailClubStatsModal.module.less';
 
-/** 格式化运营统计金额（分转元），保留最多 2 位小数，去除尾部多余 0。
- * 与 formatMemberAmount（整数截断）不同，此函数用于运营统计弹窗中的今日/本月/本年等
- * 按时间窗口聚合的金额，这些值更可能出现非整数元的场景。
- */
-const formatClubAmount = (fen: number): string => {
-  const value = safeNum(fen) / 100;
-  if (value === 0) return '0';
-  // toFixed(2) 保留两位小数，parseFloat + String 去除尾部 0（如 388.50 → "388.5"，388.00 → "388"）
-  return String(Number.parseFloat(value.toFixed(2)));
-};
+// 前端禁止金额转换。formatClubAmount 已删除，运营统计金额展示值由后端直接返回 xxxDisplay 字段。
 
 interface MemberDetailClubStatsModalProps {
   /** 目标会员 id（商家侧标识）。 */
@@ -192,7 +183,7 @@ const MemberDetailClubStatsModal: React.FC<MemberDetailClubStatsModalProps> = ({
           {/* 右侧：大金额 */}
           <div className={styles.heroAmount}>
             <span className={styles.heroAmountUnit}>¥</span>
-            {formatClubAmount(stats.pendingBalanceFen)}
+            {stats.pendingBalanceDisplay || '0'}
           </div>
         </div>
 
@@ -203,7 +194,7 @@ const MemberDetailClubStatsModal: React.FC<MemberDetailClubStatsModalProps> = ({
               <IconRechargeTotal width={18} height={18} strokeWidth={2.2} />
             </div>
             <div className={styles.statCardBody}>
-              <div className={styles.statValue}>¥{formatClubAmount(stats.totalRechargeFen)}</div>
+              <div className={styles.statValue}>¥{stats.totalRechargeDisplay || '0'}</div>
               <div className={styles.statLabel}>会员充值总金额</div>
             </div>
           </div>
@@ -249,7 +240,7 @@ const MemberDetailClubStatsModal: React.FC<MemberDetailClubStatsModalProps> = ({
               <div className={styles.rechargeDetailBody}>
                 <div className={styles.rechargeDetailValue}>
                   <span className={styles.rechargeDetailCurrency}>¥</span>
-                  {formatClubAmount(stats.todayRechargeFen)}
+                  {stats.todayRechargeDisplay || '0'}
                 </div>
                 <div className={styles.rechargeDetailLabel}>今日储值</div>
               </div>
@@ -262,7 +253,7 @@ const MemberDetailClubStatsModal: React.FC<MemberDetailClubStatsModalProps> = ({
               <div className={styles.rechargeDetailBody}>
                 <div className={styles.rechargeDetailValue}>
                   <span className={styles.rechargeDetailCurrency}>¥</span>
-                  {formatClubAmount(stats.monthRechargeFen)}
+                  {stats.monthRechargeDisplay || '0'}
                 </div>
                 <div className={styles.rechargeDetailLabel}>本月储值</div>
               </div>
@@ -275,7 +266,7 @@ const MemberDetailClubStatsModal: React.FC<MemberDetailClubStatsModalProps> = ({
               <div className={styles.rechargeDetailBody}>
                 <div className={styles.rechargeDetailValue}>
                   <span className={styles.rechargeDetailCurrency}>¥</span>
-                  {formatClubAmount(stats.quarterRechargeFen)}
+                  {stats.quarterRechargeDisplay || '0'}
                 </div>
                 <div className={styles.rechargeDetailLabel}>本季储值</div>
               </div>
@@ -288,7 +279,7 @@ const MemberDetailClubStatsModal: React.FC<MemberDetailClubStatsModalProps> = ({
               <div className={styles.rechargeDetailBody}>
                 <div className={styles.rechargeDetailValue}>
                   <span className={styles.rechargeDetailCurrency}>¥</span>
-                  {formatClubAmount(stats.yearRechargeFen)}
+                  {stats.yearRechargeDisplay || '0'}
                 </div>
                 <div className={styles.rechargeDetailLabel}>今年储值</div>
               </div>
@@ -301,7 +292,7 @@ const MemberDetailClubStatsModal: React.FC<MemberDetailClubStatsModalProps> = ({
               <div className={styles.rechargeDetailBody}>
                 <div className={styles.rechargeDetailValue}>
                   <span className={styles.rechargeDetailCurrency}>¥</span>
-                  {formatClubAmount(stats.lastYearRechargeFen)}
+                  {stats.lastYearRechargeDisplay || '0'}
                 </div>
                 <div className={styles.rechargeDetailLabel}>去年储值</div>
               </div>

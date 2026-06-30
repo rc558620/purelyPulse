@@ -1,6 +1,6 @@
 // 地区卡片：负责渲染单个地区排行与汇总信息。
 import React from 'react';
-import { cx, fmtAmount, safeNum } from '@utils/utils';
+import { cx, safeNum } from '@utils/utils';
 import {
   IconPromotionDetailChevronRight,
   IconPromotionDetailLocation,
@@ -65,7 +65,7 @@ const PromotionRegionCard: React.FC<PromotionRegionCardProps> = ({
         </div>
         <div className={styles.regionStatDivider} aria-hidden="true" />
         <div className={styles.regionStatItem}>
-          <span className={cx(styles.regionStatVal, styles.regionStatRevenue)}>¥{fmtAmount(regionItem.totalRevenue)}</span>
+          <span className={cx(styles.regionStatVal, styles.regionStatRevenue)}>¥{regionItem.totalRevenueDisplay || '0'}</span>
           <span className={styles.regionStatLbl}>收益</span>
         </div>
         <div className={styles.regionStatDivider} aria-hidden="true" />

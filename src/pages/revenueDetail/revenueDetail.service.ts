@@ -1,8 +1,6 @@
 import { formatRegionValue } from '@constants/regionData';
 import { createKeyedInFlightRequest, http, resolveEnvPath } from '@utils/http';
-import { fenToYuan, safeNum } from '@utils/utils';
-import { readMembershipRevenueSyncEvents } from '../memberList/memberList.service';
-import type { MembershipRevenueSyncPayload } from '../memberList/memberList.service';
+import { safeNum } from '@utils/utils';
 import type {
   RevenueDetailData,
   RevenueDetailQuery,
@@ -76,14 +74,20 @@ const normalizeNumber = (value: unknown): number => {
 
 const isFieldPresent = (value: unknown): boolean => value !== undefined && value !== null;
 
-const toYuanAmount = (value: unknown): number => {
-  if (!isFieldPresent(value)) {
-    return 0;
+/** 直接从后端响应中读取金额展示字符串字段，前端不做转换 */
+const pickDisplayField = (value: unknown, keys: readonly string[]): string => {
+  if (!isPlainObject(value)) {
+    return '';
   }
 
-  const normalizedValue = normalizeNumber(value);
-  // Pulse revenue detail amount fields are returned in fen.
-  return fenToYuan(normalizedValue);
+  for (const key of keys) {
+    const candidate = (value as Record<string, unknown>)[key];
+    if (typeof candidate === 'string' && candidate.trim()) {
+      return candidate.trim();
+    }
+  }
+
+  return '';
 };
 
 const pickNumberField = (value: unknown, keys: readonly string[]): number => {
@@ -236,16 +240,16 @@ const buildPeriodRoot = (response: unknown, period: RevenuePeriod): Record<strin
 };
 
 const createEmptySummary = (): RevenueDetailSummary => ({
-  total: 0,
-  avg: 0,
+  totalDisplay: '',
+  avgDisplay: '',
   growth: 0,
   orders: 0,
-  peak: 0,
+  peakDisplay: '',
 });
 
 const createEmptyTrend = (): RevenueDetailTrend => ({
   dates: [],
-  values: [],
+  valuesDisplay: [],
 });
 
 export const createEmptyRevenueDetail = (): RevenueDetailData => ({
@@ -255,229 +259,6 @@ export const createEmptyRevenueDetail = (): RevenueDetailData => ({
   records: [],
   totalRecords: 0,
 });
-
-const getStartOfDay = (date: Date): Date => new Date(date.getFullYear(), date.getMonth(), date.getDate());
-
-const getStartOfWeek = (date: Date): Date => {
-  const start = getStartOfDay(date);
-  const day = start.getDay();
-  const offset = day === 0 ? 6 : day - 1;
-  start.setDate(start.getDate() - offset);
-  return start;
-};
-
-const getStartOfMonth = (date: Date): Date => new Date(date.getFullYear(), date.getMonth(), 1);
-
-const getStartOfQuarter = (date: Date): Date => new Date(date.getFullYear(), Math.floor(date.getMonth() / 3) * 3, 1);
-
-const parseDateText = (value: string | null): Date | null => {
-  if (!value) {
-    return null;
-  }
-
-  const [year, month, day] = value.split('/').map((item) => Number(item));
-  if (!year || !month || !day) {
-    return null;
-  }
-
-  return new Date(year, month - 1, day);
-};
-
-const isMembershipRevenueEventInPeriod = (timestamp: number, period: RevenuePeriod, now: Date): boolean => {
-  const endTime = now.getTime();
-  const startTime = (
-    period === 'today' ? getStartOfDay(now)
-      : period === 'week' ? getStartOfWeek(now)
-        : period === 'month' ? getStartOfMonth(now)
-          : getStartOfQuarter(now)
-  ).getTime();
-
-  return timestamp >= startTime && timestamp <= endTime;
-};
-
-const resolvePeriodTimeRange = (query: RevenueDetailQuery): { startTime: number; endTime: number } | null => {
-  if (query.date) {
-    const parsedDate = parseDateText(query.date);
-    if (!parsedDate) return null;
-    const start = getStartOfDay(parsedDate).getTime();
-    const end = getStartOfDay(new Date(parsedDate.getFullYear(), parsedDate.getMonth(), parsedDate.getDate() + 1)).getTime() - 1;
-    return { startTime: start, endTime: end };
-  }
-
-  if (query.startDate || query.endDate) {
-    const start = query.startDate ? getStartOfDay(parseDateText(query.startDate) ?? new Date(0)).getTime() : Number.NEGATIVE_INFINITY;
-    const end = query.endDate
-      ? getStartOfDay(new Date((parseDateText(query.endDate) ?? new Date(0)).getFullYear(), (parseDateText(query.endDate) ?? new Date(0)).getMonth(), (parseDateText(query.endDate) ?? new Date(0)).getDate() + 1)).getTime() - 1
-      : Number.POSITIVE_INFINITY;
-    return { startTime: start, endTime: end };
-  }
-
-  return null;
-};
-
-const matchesRevenueDetailQuery = (event: MembershipRevenueSyncPayload, query: RevenueDetailQuery): boolean => {
-  if (query.regionValues.length > 0) {
-    return false;
-  }
-
-  const eventDate = getStartOfDay(new Date(event.createdAt)).getTime();
-  if (query.date) {
-    return eventDate === getStartOfDay(parseDateText(query.date) ?? new Date(0)).getTime();
-  }
-
-  if (query.startDate || query.endDate) {
-    const startDate = query.startDate ? getStartOfDay(parseDateText(query.startDate) ?? new Date(0)).getTime() : Number.NEGATIVE_INFINITY;
-    const endDate = query.endDate ? getStartOfDay(parseDateText(query.endDate) ?? new Date(8.64e15)).getTime() : Number.POSITIVE_INFINITY;
-    return eventDate >= startDate && eventDate <= endDate;
-  }
-
-  const customRange = resolvePeriodTimeRange(query);
-  if (customRange) {
-    return event.createdAt >= customRange.startTime && event.createdAt <= customRange.endTime;
-  }
-
-  return isMembershipRevenueEventInPeriod(event.createdAt, query.period, new Date());
-};
-
-const mergeAmountIntoTrend = (
-  dates: string[],
-  values: number[],
-  event: MembershipRevenueSyncPayload,
-): { dates: string[]; values: number[] } => {
-  const amountYuan = fenToYuan(event.amountFen);
-  const label = formatDateLabel(event.createdAt) || '今日';
-  const nextDates = [...dates];
-  const nextValues = [...values];
-  const labelIndex = nextDates.findIndex((item) => item === label);
-
-  if (labelIndex >= 0 && nextValues[labelIndex] !== undefined) {
-    nextValues[labelIndex] = safeNum(nextValues[labelIndex] + amountYuan);
-    return { dates: nextDates, values: nextValues };
-  }
-
-  // 趋势图为空，直接插入新标签
-  if (nextValues.length === 0) {
-    return {
-      dates: [label],
-      values: [amountYuan],
-    };
-  }
-
-  // 新日期不在已有标签中：追加新标签+值，而非归到最后一天
-  nextDates.push(label);
-  nextValues.push(amountYuan);
-  return { dates: nextDates, values: nextValues };
-};
-
-const mergeRevenueTypes = (
-  revenueTypes: RevenueTypeItem[],
-  events: MembershipRevenueSyncPayload[],
-): RevenueTypeItem[] => {
-  if (events.length === 0) {
-    return revenueTypes;
-  }
-
-  const labelOrder: string[] = [];
-  const labelSet = new Set<string>();
-  [...DEFAULT_REVENUE_TYPE_LABELS, ...revenueTypes.map((item) => item.label), ...events.map((item) => item.revenueTypeLabel)].forEach((label) => {
-    if (!labelSet.has(label)) {
-      labelSet.add(label);
-      labelOrder.push(label);
-    }
-  });
-
-  // 将现有百分比直接作为权重值，新增事件金额（元）也作为权重值
-  // 同一量纲下归一化，避免百分比→绝对金额→百分比的精度丢失
-  const weightMap = new Map<string, number>();
-  labelOrder.forEach((label) => {
-    weightMap.set(label, 0);
-  });
-
-  revenueTypes.forEach((item) => {
-    weightMap.set(item.label, safeNum(item.value));
-  });
-  events.forEach((event) => {
-    weightMap.set(event.revenueTypeLabel, safeNum((weightMap.get(event.revenueTypeLabel) ?? 0) + fenToYuan(event.amountFen)));
-  });
-
-  const totalWeight = Array.from(weightMap.values()).reduce((sum, value) => safeNum(sum + value), 0);
-  return labelOrder.map((label) => ({
-    label,
-    value: totalWeight > 0 ? safeNum(Number((((weightMap.get(label) ?? 0) / totalWeight) * 100).toFixed(1))) : 0,
-  }));
-};
-
-const resolveAverageDivisor = (query: RevenueDetailQuery, trendLength: number): number => {
-  if (query.date) {
-    return 1;
-  }
-
-  if (query.startDate && query.endDate) {
-    const startDate = parseDateText(query.startDate);
-    const endDate = parseDateText(query.endDate);
-    if (startDate && endDate) {
-      const diffDays = Math.floor((getStartOfDay(endDate).getTime() - getStartOfDay(startDate).getTime()) / 86_400_000) + 1;
-      return Math.max(diffDays, 1);
-    }
-  }
-
-  return Math.max(trendLength, 1);
-};
-
-const buildManualRevenueRecord = (event: MembershipRevenueSyncPayload): RevenueRecordItem => ({
-  id: `membership-revenue-${event.memberId}-${event.createdAt}-${event.level}`,
-  user: event.memberName,
-  type: event.revenueTypeLabel,
-  amount: fenToYuan(event.amountFen),
-  region: '--',
-  time: formatRecordTime(event.createdAt),
-});
-
-const applyMembershipRevenueEventsToRevenueDetail = (
-  detail: RevenueDetailData,
-  query: RevenueDetailQuery,
-): RevenueDetailData => {
-  const events = readMembershipRevenueSyncEvents()
-    .filter((event) => matchesRevenueDetailQuery(event, query))
-    .sort((left, right) => left.createdAt - right.createdAt);
-  if (events.length === 0) {
-    return detail;
-  }
-
-  const trend = events.reduce<{ dates: string[]; values: number[] }>((accumulator, event) => (
-    mergeAmountIntoTrend(accumulator.dates, accumulator.values, event)
-  ), {
-    dates: [...detail.trend.dates],
-    values: [...detail.trend.values],
-  });
-  const addedTotal = events.reduce((sum, event) => safeNum(sum + fenToYuan(event.amountFen)), 0);
-  const peakByDay = events.reduce<Map<string, number>>((accumulator, event) => {
-    const label = formatDateLabel(event.createdAt) || '今日';
-    accumulator.set(label, safeNum((accumulator.get(label) ?? 0) + fenToYuan(event.amountFen)));
-    return accumulator;
-  }, new Map<string, number>());
-  const addedPeak = Array.from(peakByDay.values()).reduce((maxValue, value) => Math.max(maxValue, value), 0);
-  const total = safeNum(detail.summary.total + addedTotal);
-  const avgDivisor = resolveAverageDivisor(query, trend.values.length);
-  const manualRecords = [...events]
-    .sort((left, right) => right.createdAt - left.createdAt)
-    .map((event) => buildManualRevenueRecord(event));
-
-  return {
-    ...detail,
-    summary: {
-      ...detail.summary,
-      total,
-      avg: safeNum(total / avgDivisor),
-      orders: safeNum(detail.summary.orders + events.length),
-      peak: Math.max(detail.summary.peak, addedPeak),
-    },
-    trend,
-    revenueTypes: mergeRevenueTypes(detail.revenueTypes, events),
-    records: manualRecords.concat(detail.records),
-    totalRecords: safeNum(detail.totalRecords + events.length),
-  };
-};
 
 const mapSummary = (response: unknown, period: RevenuePeriod): RevenueDetailSummary => {
   const summaryRoot = getNestedRecord(response, ['revenueSummary', 'summary', 'stats', 'overview'])
@@ -489,11 +270,11 @@ const mapSummary = (response: unknown, period: RevenuePeriod): RevenueDetailSumm
   }
 
   return {
-    total: toYuanAmount(summaryRoot.total ?? summaryRoot.totalAmount ?? summaryRoot.revenue ?? summaryRoot.amount),
-    avg: toYuanAmount(summaryRoot.avg ?? summaryRoot.avgAmount ?? summaryRoot.averageAmount),
+    totalDisplay: pickDisplayField(summaryRoot, ['totalDisplay', 'totalFen', 'totalAmount', 'revenue', 'amount', 'total']),
+    avgDisplay: pickDisplayField(summaryRoot, ['avgDisplay', 'avgFen', 'avgAmount', 'averageAmount', 'avg']),
     growth: pickNumberField(summaryRoot, ['growth', 'growthRate', 'compareRate', 'increaseRate']),
     orders: pickNumberField(summaryRoot, ['orders', 'orderCount', 'totalOrders', 'count']),
-    peak: toYuanAmount(summaryRoot.peak ?? summaryRoot.peakAmount ?? summaryRoot.maxAmount),
+    peakDisplay: pickDisplayField(summaryRoot, ['peakDisplay', 'peakFen', 'peakAmount', 'maxAmount', 'peak']),
   };
 };
 
@@ -507,13 +288,18 @@ const mapTrend = (response: unknown, period: RevenuePeriod): RevenueDetailTrend 
   }
 
   const dates = pickStringArray(trendRoot, ['dates', 'labels', 'xAxis', 'categories']);
-  const values = pickNumberArray(trendRoot, ['values', 'data', 'series', 'amounts']);
+  const valuesDisplay = getNestedArray(trendRoot, ['valuesDisplay', 'values', 'data', 'series', 'amounts'])
+    .map((item): string => {
+      if (typeof item === 'string' && item.trim()) return item.trim();
+      return '';
+    })
+    .filter(Boolean);
 
   return {
     dates: dates.length > 0
       ? dates
       : getNestedArray(trendRoot, ['dates', 'labels', 'xAxis', 'categories']).map((item) => formatDateLabel(item)).filter(Boolean),
-    values,
+    valuesDisplay,
   };
 };
 
@@ -562,7 +348,7 @@ const mapRecords = (response: unknown): RevenueRecordItem[] => {
         id,
         user,
         type,
-        amount: toYuanAmount(item.amount ?? item.payAmount ?? item.revenue),
+        amountDisplay: pickDisplayField(item, ['amountDisplay', 'amountFen', 'amount', 'payAmount', 'revenue']),
         region: buildRegionText(item),
         time: formatRecordTime(item.time ?? item.createdAt ?? item.payTime),
       };
@@ -609,7 +395,7 @@ const requestRevenueDetail = async (query: RevenueDetailQuery): Promise<RevenueD
     errorMessage: '获取充值收入明细失败',
   });
 
-  return applyMembershipRevenueEventsToRevenueDetail(mapRevenueDetail(response, query.period), query);
+  return mapRevenueDetail(response, query.period);
 };
 
 export const fetchRevenueDetail = createKeyedInFlightRequest(

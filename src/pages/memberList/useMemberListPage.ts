@@ -40,6 +40,7 @@ interface UseMemberListPageReturn {
 const EMPTY_MEMBER_LIST_STATS: MemberListStats = {
   totalCount: 0,
   activeCount: 0,
+  inactiveCount: 0,
   partnerCount: 0,
   bannedCount: 0,
 };

@@ -8,7 +8,7 @@ import {
   STATUS_LABEL,
 } from '../../../memberList/memberList.constants';
 import type { MemberListItem } from '../../../memberList/memberList.types';
-import { formatFenAmount, formatRelativeTime } from '../../banManagement.utils';
+import { formatRelativeTime } from '../../banManagement.utils';
 import { BanManagementStatusBadge } from '../BanManagementStatusBadge/BanManagementStatusBadge';
 import {
   IconBanCircleSlash,
@@ -101,7 +101,7 @@ const BanManagementMemberCardComponent: React.FC<BanManagementMemberCardProps> =
         <div className={styles.detailStats}>
           <div className={styles.detailStatItem}>
             <span className={styles.detailStatVal}>
-              {safeNum(member.totalRecharged) > 0 ? `¥${formatFenAmount(member.totalRecharged)}` : '—'}
+              {member.totalRechargedDisplay ? `¥${member.totalRechargedDisplay}` : '—'}
             </span>
             <span className={styles.detailStatLabel}>累计充值</span>
           </div>

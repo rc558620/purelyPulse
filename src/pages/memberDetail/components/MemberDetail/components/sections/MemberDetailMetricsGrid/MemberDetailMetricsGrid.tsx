@@ -9,7 +9,7 @@ import {
   IconStarBadge,
 } from '@pages/memberDetail/components/MemberDetailIcons/MemberDetailIcons';
 import type { MemberDetail } from '@pages/memberList/memberList.types';
-import { formatMemberAmount } from '../../../../../memberDetail.utils';
+// 前端禁止金额转换，直接使用后端返回的展示字段
 import pageStyles from '../../../../../memberDetail.module.less';
 import styles from './MemberDetailMetricsGrid.module.less';
 
@@ -80,7 +80,7 @@ const MemberDetailMetricsGrid: React.FC<MemberDetailMetricsGridProps> = React.me
         <div className={pageStyles.metricIconWrap} aria-hidden="true">
           <IconBankCard />
         </div>
-        <div className={pageStyles.metricValue}>¥{formatMemberAmount(member.totalRecharged)}</div>
+        <div className={pageStyles.metricValue}>¥{member.totalRechargedDisplay || '0'}</div>
         <div className={pageStyles.metricLabel}>累计充值</div>
         <div className={pageStyles.metricSub}>共 {safeNum(member.rechargeCount)} 笔</div>
       </div>

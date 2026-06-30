@@ -1,4 +1,5 @@
-// 推广详情结果派生 hook：负责筛选结果、分组缓存与详情统计，聚合数值最终在 UI 层按 safeNum 规则展示。
+// 推广详情结果派生 hook：负责筛选结果、分组缓存与详情统计。
+// 金额汇总由后端权威计算（data.summary / data.detailTotal），前端不再 reduce 累加金额。
 import { useMemo } from 'react';
 import { normalizeProvinceName } from '../promotionDetail.service';
 import type {
@@ -6,15 +7,9 @@ import type {
   PromotionDetailQuery,
   PromotionDetailQueryMeta,
   PromotionPartnerItem,
-  PromotionPeriodRecord,
   PromotionPeriodTab,
   PromotionRegionItem,
 } from '../promotionDetail.types';
-
-interface DetailTotal {
-  orders: number;
-  revenue: number;
-}
 
 export interface UsePromotionDetailDerivedParams {
   data: PromotionDetailData;
@@ -33,28 +28,11 @@ export interface UsePromotionDetailDerivedReturn {
   filteredRegions: PromotionRegionItem[];
   totalPartners: number;
   totalOrders: number;
-  totalRevenue: number;
+  totalRevenueDisplay: string;
   currentPartners: PromotionPartnerItem[];
-  periodRecords: PromotionPeriodRecord[];
-  detailTotal: DetailTotal;
+  periodRecords: PromotionPartnerItem['series']['day'];
+  detailTotal: PromotionDetailData['detailTotal'];
 }
-
-interface RegionSummary {
-  totalPartners: number;
-  totalOrders: number;
-  totalRevenue: number;
-}
-
-const EMPTY_REGION_SUMMARY: RegionSummary = {
-  totalPartners: 0,
-  totalOrders: 0,
-  totalRevenue: 0,
-};
-
-const EMPTY_DETAIL_TOTAL: DetailTotal = {
-  orders: 0,
-  revenue: 0,
-};
 
 const normalizeNameKeyword = (value: string): string => value.trim();
 
@@ -151,12 +129,6 @@ export const usePromotionDetailDerived = ({
     return data.regions.filter((regionItem) => matchedPartnerProvinceSet.has(regionItem.province));
   }, [data.partners, data.regions, hasClientFilter, matchedPartnerProvinceSet, submittedQuery]);
 
-  const regionSummary = useMemo(() => matchedPartners.reduce<RegionSummary>((summary, partner) => ({
-    totalPartners: summary.totalPartners + 1,
-    totalOrders: summary.totalOrders + partner.orders,
-    totalRevenue: summary.totalRevenue + partner.revenue,
-  }), EMPTY_REGION_SUMMARY), [matchedPartners]);
-
   const partnersByProvince = useMemo(() => {
     const provincePartnerMap = new Map<string, PromotionPartnerItem[]>();
 
@@ -194,11 +166,6 @@ export const usePromotionDetailDerived = ({
     return selectedPartner.series[periodTab] ?? [];
   }, [periodTab, selectedPartner]);
 
-  const detailTotal = useMemo(() => periodRecords.reduce<DetailTotal>((summary, record) => ({
-    orders: summary.orders + record.orders,
-    revenue: summary.revenue + record.revenue,
-  }), EMPTY_DETAIL_TOTAL), [periodRecords]);
-
   const regionDisplayText = submittedQuery ? submittedQueryMeta.regionDisplayText : currentRegionText;
   const dateDisplayText = submittedQuery ? submittedQueryMeta.dateDisplayText : currentDateText;
 
@@ -206,11 +173,11 @@ export const usePromotionDetailDerived = ({
     regionDisplayText,
     dateDisplayText,
     filteredRegions,
-    totalPartners: regionSummary.totalPartners,
-    totalOrders: regionSummary.totalOrders,
-    totalRevenue: regionSummary.totalRevenue,
+    totalPartners: data.summary.totalPartners,
+    totalOrders: data.summary.totalOrders,
+    totalRevenueDisplay: data.summary.totalRevenueDisplay,
     currentPartners,
     periodRecords,
-    detailTotal,
+    detailTotal: data.detailTotal,
   };
 };

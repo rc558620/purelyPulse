@@ -37,18 +37,4 @@ export const formatRelativeTime = (timestamp: number): string => {
   });
 };
 
-/** 分转元并保留整数展示。 */
-export const formatFenAmount = (fen: number): string => {
-  const value = safeNum(fen);
-
-  if (value === 0) {
-    return '0';
-  }
-
-  // Bug #7: 处理负数金额（退款场景）和极小绝对值（如 -1 分 → "0"）
-  const yuan = value / 100;
-  // toFixed(0) 对 -0.01 会返回 "-0"，需特殊处理
-  const rounded = Math.round(yuan);
-
-  return String(rounded);
-};
+// formatFenAmount 已删除：前端不做分转元转换。金额展示值由后端直接返回 xxxDisplay 字段。

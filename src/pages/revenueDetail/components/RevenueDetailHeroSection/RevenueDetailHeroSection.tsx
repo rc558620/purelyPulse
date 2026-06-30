@@ -2,7 +2,7 @@
 import { memo } from 'react';
 import type * as React from 'react';
 import AnimatedNumber from '@components/ui/data-display/AnimatedNumber/AnimatedNumber';
-import { cx, fmtAmount, safeNum } from '@utils/utils';
+import { cx, safeNum } from '@utils/utils';
 import {
   IconRevenueDetailDocument,
   IconRevenueDetailTrendUp,
@@ -36,7 +36,7 @@ const RevenueDetailHeroSectionComponent = ({
         </div>
         <div className={sharedStyles.heroAmount}>
           <span className={sharedStyles.heroCurrency}>¥</span>
-          <AnimatedNumber value={fmtAmount(summary.total)} triggerKey={`hero-${revenuePeriod}`} />
+          <AnimatedNumber value={summary.totalDisplay} triggerKey={`hero-${revenuePeriod}`} />
         </div>
         <div className={sharedStyles.heroMeta}>
           <div className={sharedStyles.heroMetaItem}>
@@ -56,14 +56,14 @@ const RevenueDetailHeroSectionComponent = ({
         <div className={sharedStyles.heroSecItem}>
           <span className={sharedStyles.heroSecLabel}>日均收入</span>
           <span className={sharedStyles.heroSecVal}>
-            ¥<AnimatedNumber value={fmtAmount(summary.avg)} triggerKey={`avg-${revenuePeriod}`} />
+            ¥<AnimatedNumber value={summary.avgDisplay} triggerKey={`avg-${revenuePeriod}`} />
           </span>
         </div>
         <div className={sharedStyles.heroSecDivider} aria-hidden="true" />
         <div className={sharedStyles.heroSecItem}>
           <span className={sharedStyles.heroSecLabel}>单日峰值</span>
           <span className={sharedStyles.heroSecVal}>
-            ¥<AnimatedNumber value={fmtAmount(summary.peak)} triggerKey={`peak-${revenuePeriod}`} />
+            ¥<AnimatedNumber value={summary.peakDisplay} triggerKey={`peak-${revenuePeriod}`} />
           </span>
         </div>
       </div>

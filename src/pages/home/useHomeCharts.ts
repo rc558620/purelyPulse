@@ -1,6 +1,7 @@
 // 首页图表 hooks：统一封装在线趋势与充值收入图表的 option / height。
+// 金额展示值由后端直接返回字符串，前端不再做分转元和格式化。
 import { useMemo } from 'react';
-import { fmtAmount, isNonEmptyArray } from '@utils/utils';
+import { isNonEmptyArray } from '@utils/utils';
 import type { HomeRevenuePeriodData, RevenuePeriod } from './home.types';
 import { HOME_CHART_HEIGHTS } from './home.constants';
 
@@ -52,7 +53,8 @@ export const useHomeRevenueChart = (
   revenueSummary: HomeRevenuePeriodData,
 ): UseHomeRevenueChartReturn => {
   const revenueDates = isNonEmptyArray(revenueSummary.dates) ? revenueSummary.dates : ['暂无数据'];
-  const revenueValues = isNonEmptyArray(revenueSummary.values) ? revenueSummary.values : [0];
+  // values 现在是 string[]，直接传给 ECharts；空时用 ['0'] 占位
+  const revenueValues = isNonEmptyArray(revenueSummary.values) ? revenueSummary.values : ['0'];
 
   const revenueChartOption = useMemo<echarts.EChartsOption>(() => ({
     grid: { top: 16, bottom: 40, left: 52, right: 16 },
@@ -62,9 +64,10 @@ export const useHomeRevenueChart = (
       borderColor: '#e2e8f0',
       borderWidth: 1,
       textStyle: { color: '#1e293b', fontSize: 12 },
+      // values 已是后端返回的展示字符串，直接显示
       formatter: (params: unknown) => {
-        const firstPoint = (params as { axisValue: string; value: number }[])[0];
-        return `${firstPoint.axisValue}：¥${fmtAmount(firstPoint.value)}`;
+        const firstPoint = (params as { axisValue: string; value: string }[])[0];
+        return `${firstPoint.axisValue}：¥${firstPoint.value}`;
       },
     },
     xAxis: {
@@ -80,15 +83,12 @@ export const useHomeRevenueChart = (
       boundaryGap: false,
     },
     yAxis: {
-      type: 'value',
+      type: 'category',
+      data: revenueValues,
       axisLine: { show: false },
       axisTick: { show: false },
       splitLine: { lineStyle: { color: '#f1f5f9' } },
-      axisLabel: {
-        color: '#94a3b8',
-        fontSize: 10,
-        formatter: (value: number) => (value >= 10000 ? `${(value / 10000).toFixed(1)}w` : String(value)),
-      },
+      axisLabel: { show: false },
     },
     series: [{
       type: 'line',

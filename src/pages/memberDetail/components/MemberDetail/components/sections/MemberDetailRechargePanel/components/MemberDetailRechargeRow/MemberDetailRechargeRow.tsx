@@ -2,7 +2,7 @@ import React from 'react';
 import { cx, safeNum, safeStr } from '@utils/utils';
 import { IconPaymentChannel } from '@pages/memberDetail/components/MemberDetailIcons/MemberDetailIcons';
 import { MEMBER_RECHARGE_CHANNEL_LABEL } from '../../../../../../../memberDetail.constants';
-import { formatMemberAmount, formatMemberDate } from '../../../../../../../memberDetail.utils';
+import { formatMemberDate } from '../../../../../../../memberDetail.utils';
 import type { RechargeRecord } from '@pages/memberList/memberList.types';
 import pageStyles from '../../../../../../../memberDetail.module.less';
 
@@ -44,7 +44,7 @@ const MemberDetailRechargeRow: React.FC<MemberDetailRechargeRowProps> = ({ recor
         </div>
       </div>
       <div className={pageStyles.rechargeRight}>
-        <span className={cx(pageStyles.rechargeAmtValue, getPlanColorClass(record.planName))}>¥{formatMemberAmount(record.amount)}</span>
+        <span className={cx(pageStyles.rechargeAmtValue, getPlanColorClass(record.planName))}>¥{record.amountDisplay || '0'}</span>
         <span className={pageStyles.rechargePoints}>+{safeNum(record.pointsAwarded)} 积分</span>
       </div>
     </div>

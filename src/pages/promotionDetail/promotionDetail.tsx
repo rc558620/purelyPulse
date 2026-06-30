@@ -41,7 +41,7 @@ const PromotionDetail: React.FC = () => {
     filteredRegions,
     totalPartners,
     totalOrders,
-    totalRevenue,
+    totalRevenueDisplay,
     currentPartners,
     periodRecords,
     detailTotal,
@@ -165,7 +165,7 @@ const PromotionDetail: React.FC = () => {
     filteredRegions,
     totalPartners,
     totalOrders,
-    totalRevenue,
+    totalRevenueDisplay,
     onRetry: retryLoad,
     onRegionClick: handleRegionClick,
   }), [
@@ -178,7 +178,7 @@ const PromotionDetail: React.FC = () => {
     retryLoad,
     totalOrders,
     totalPartners,
-    totalRevenue,
+    totalRevenueDisplay,
   ]);
 
   const partnerViewProps = useMemo(() => {

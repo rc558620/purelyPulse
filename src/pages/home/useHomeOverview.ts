@@ -1,6 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { MEMBERSHIP_REVENUE_SYNC_EVENT } from '../memberList/memberList.constants';
-import type { MembershipRevenueSyncPayload } from '../memberList/memberList.service';
 import { createEmptyHomeOverview, fetchHomeOverview } from './home.service';
 import type { HomeOverviewQuery } from './home.service';
 import type { HomeOverviewData } from './home.types';
@@ -48,29 +46,12 @@ export const useHomeOverview = (query: HomeOverviewQuery): UseHomeOverviewReturn
     }
   }, [query]);
 
-  // 同步最新 loadOverview 到 ref，事件监听回调通过 ref 调用，避免依赖变化导致监听真空期。
+  // 同步最新 loadOverview 到 ref，retryLoad 通过 ref 调用，避免依赖变化导致闭包过期。
   loadOverviewRef.current = loadOverview;
 
   useEffect(() => {
     void loadOverview();
   }, [loadOverview]);
-
-  useEffect(() => {
-    const handleMembershipRevenueSync = (event: Event): void => {
-      const customEvent = event as CustomEvent<MembershipRevenueSyncPayload>;
-      const payload = customEvent.detail;
-      if (!payload) {
-        return;
-      }
-
-      void loadOverviewRef.current?.();
-    };
-
-    window.addEventListener(MEMBERSHIP_REVENUE_SYNC_EVENT, handleMembershipRevenueSync);
-    return () => {
-      window.removeEventListener(MEMBERSHIP_REVENUE_SYNC_EVENT, handleMembershipRevenueSync);
-    };
-  }, []);
 
   const retryLoad = useCallback((): void => {
     void loadOverviewRef.current?.();

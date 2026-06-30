@@ -43,26 +43,27 @@ export const MEMBERSHIP_REVENUE_SYNC_EVENT = 'membership-revenue-sync';
 export const MEMBERSHIP_REVENUE_CONFIG: Record<PaidMemberLevel, {
   planName: string;
   revenueTypeLabel: string;
-  amountFen: number;
+  /** 金额展示值（后端直接返回，前端不再分转元）。 */
+  amountDisplay: string;
 }> = {
   monthly: {
     planName: '月度会员',
     revenueTypeLabel: '月卡会员',
-    amountFen: 3800,
+    amountDisplay: '38',
   },
   quarterly: {
     planName: '季度会员',
     revenueTypeLabel: '季度会员',
-    amountFen: 9900,
+    amountDisplay: '99',
   },
   annual: {
     planName: '年度会员',
     revenueTypeLabel: '年卡会员',
-    amountFen: 36900,
+    amountDisplay: '369',
   },
   lifetime: {
     planName: '永久会员',
     revenueTypeLabel: '永久会员',
-    amountFen: 39800,
+    amountDisplay: '398',
   },
 };

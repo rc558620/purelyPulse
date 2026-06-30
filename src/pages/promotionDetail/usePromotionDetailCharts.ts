@@ -1,7 +1,6 @@
 // 推广详情图表 hooks：统一封装趋势图 option 与固定高度。
 import { useMemo } from 'react';
 import * as echarts from 'echarts';
-import { fmtAmount } from '@utils/utils';
 import type { PromotionPeriodRecord } from './promotionDetail.types';
 import { PROMOTION_DETAIL_CHART_HEIGHTS } from './promotionDetail.constants';
 
@@ -31,7 +30,7 @@ export const usePromotionTrendChart = (
         return `<div style="font-weight:700;margin-bottom:4px;color:#64748b">${ordersParam?.name ?? ''}</div>
                 <div style="display:flex;gap:16px">
                   <span>推广单：<b style="color:#84cc16">${ordersParam?.value ?? 0} 单</b></span>
-                  <span>金额：<b style="color:#10b981">¥${fmtAmount(revenueParam?.value ?? 0)}</b></span>
+                  <span>金额：<b style="color:#10b981">¥${revenueParam?.value ?? '0'}</b></span>
                 </div>`;
       },
     },
@@ -94,7 +93,7 @@ export const usePromotionTrendChart = (
         name: '推广金额',
         type: 'line',
         yAxisIndex: 1,
-        data: records.map((record) => record.revenue),
+        data: records.map((record) => record.revenueDisplay),
         smooth: true,
         symbol: 'circle',
         symbolSize: 5,

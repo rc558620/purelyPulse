@@ -1,6 +1,7 @@
 import React from 'react';
 import { Input } from '@components/form/Input/Input';
 import { IconCircleChevronUp, IconWarningTriangle } from '@pages/memberDetail/components/MemberDetailIcons/MemberDetailIcons';
+// fenToYuan 已删除：前端不做分转元转换。金额展示值由后端直接返回 xxxDisplay 字段。
 import styles from '../../SetMembershipModal.module.less';
 
 interface SelectedOption {
@@ -20,7 +21,7 @@ interface SetMembershipConfirmStepProps {
   lifetimeAmountError: string;
   onLifetimeAmountChange: (value: string) => void;
   formatMembershipExpiry: (timestamp: number) => string;
-  lifetimeMembershipAmountFen: number;
+  lifetimeMembershipAmountDisplay: string;
 }
 
 const SetMembershipConfirmStep: React.FC<SetMembershipConfirmStepProps> = ({
@@ -35,7 +36,7 @@ const SetMembershipConfirmStep: React.FC<SetMembershipConfirmStepProps> = ({
   lifetimeAmountError,
   onLifetimeAmountChange,
   formatMembershipExpiry,
-  lifetimeMembershipAmountFen,
+  lifetimeMembershipAmountDisplay,
 }) => (
   <div className={styles.sheetBody}>
     <div className={styles.confirmContent}>
@@ -140,7 +141,7 @@ const SetMembershipConfirmStep: React.FC<SetMembershipConfirmStepProps> = ({
         <div className={styles.confirmAmountField}>
           <label className={styles.fieldLabel} htmlFor="lifetime-membership-price">
             永久会员价格
-            <span className={styles.fieldLabelSub}>（单位：元，默认取后端配置 {lifetimeMembershipAmountFen / 100}）</span>
+            <span className={styles.fieldLabelSub}>（单位：元，默认取后端配置 ¥{lifetimeMembershipAmountDisplay}）</span>
           </label>
           <Input
             id="lifetime-membership-price"

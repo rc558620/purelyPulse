@@ -1,7 +1,7 @@
 // 推广详情地区视图：负责地区汇总、地区排行与地区态反馈。
 import React from 'react';
 import { InertiaSpinner } from '@components/ui/feedback';
-import { cx, fmtAmount, isNonEmptyArray, safeNum } from '@utils/utils';
+import { cx, isNonEmptyArray, safeNum } from '@utils/utils';
 import { IconPromotionDetailLocation } from '../_shared/icons/PromotionDetailIcons';
 import PromotionRegionCard from '../cards/PromotionRegionCard';
 import styles from '../../promotionDetail.module.less';
@@ -16,7 +16,7 @@ export interface PromotionDetailRegionViewProps {
   filteredRegions: PromotionRegionItem[];
   totalPartners: number;
   totalOrders: number;
-  totalRevenue: number;
+  totalRevenueDisplay: string;
   onRetry: () => void;
   onRegionClick: (regionItem: PromotionRegionItem) => void;
 }
@@ -29,7 +29,7 @@ const PromotionDetailRegionView: React.FC<PromotionDetailRegionViewProps> = ({
   filteredRegions,
   totalPartners,
   totalOrders,
-  totalRevenue,
+  totalRevenueDisplay,
   onRetry,
   onRegionClick,
 }) => {
@@ -87,7 +87,7 @@ const PromotionDetailRegionView: React.FC<PromotionDetailRegionViewProps> = ({
         </div>
         <div className={styles.statDivider} aria-hidden="true" />
         <div className={styles.statItem}>
-          <span className={cx(styles.statNum, styles.statNumRevenue)}>¥{fmtAmount(totalRevenue)}</span>
+          <span className={cx(styles.statNum, styles.statNumRevenue)}>¥{totalRevenueDisplay || '0'}</span>
           <span className={styles.statLabel}>总收益</span>
         </div>
       </div>

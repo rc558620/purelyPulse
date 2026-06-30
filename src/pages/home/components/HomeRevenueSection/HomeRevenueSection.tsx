@@ -2,7 +2,7 @@
 import { memo } from 'react';
 import AnimatedNumber from '@components/ui/data-display/AnimatedNumber/AnimatedNumber';
 import ChartRenderer from '@components/ui/data-display/ChartRenderer';
-import { cx, fmtAmount, isNonEmptyArray, safeNum } from '@utils/utils';
+import { cx, isNonEmptyArray, safeNum } from '@utils/utils';
 import type { CSSProperties } from 'react';
 import type { HomeRevenueTypeItem, RevenuePeriod, HomeRevenuePeriodData } from '../../home.types';
 import { useHomeRevenueChart } from '../../useHomeCharts';
@@ -108,14 +108,14 @@ const HomeRevenueSection = memo(({
       <div className={styles.revenueSummary}>
         <div className={styles.revenueSummaryItem}>
           <span className={styles.revenueSummaryVal}>
-            ¥<AnimatedNumber value={fmtAmount(revenueSummary.total)} triggerKey={`rev-total-${revenuePeriod}`} />
+            ¥{revenueSummary.totalDisplay || '0'}
           </span>
           <span className={styles.revenueSummaryLbl}>总充值收入</span>
         </div>
         <div className={styles.revenueSummaryDivider} aria-hidden="true" />
         <div className={styles.revenueSummaryItem}>
           <span className={styles.revenueSummaryVal}>
-            ¥<AnimatedNumber value={fmtAmount(revenueSummary.avg)} triggerKey={`rev-avg-${revenuePeriod}`} />
+            ¥{revenueSummary.avgDisplay || '0'}
           </span>
           <span className={styles.revenueSummaryLbl}>日均收入</span>
         </div>

@@ -43,7 +43,7 @@ const MemberDetail: React.FC = () => {
     memberLevel,
     memberExpiry,
     lifetimeMembershipDays,
-    lifetimeMembershipAmountFen,
+    lifetimeMembershipAmountDisplay,
     isSubmittingPoints,
     isSubmittingBeans,
     isSubmittingMembership,
@@ -268,7 +268,7 @@ const MemberDetail: React.FC = () => {
             currentLevel={memberLevel}
             currentExpiry={displayMemberExpiry}
             lifetimeMembershipDays={lifetimeMembershipDays}
-            lifetimeMembershipAmountFen={lifetimeMembershipAmountFen}
+              lifetimeMembershipAmountDisplay={lifetimeMembershipAmountDisplay}
             onClose={handleCloseModal}
             onConfirm={handleSetMembership}
           />

@@ -42,8 +42,8 @@ interface UseMemberDetailPageReturn {
   memberExpiry: number | null | undefined;
   /** 永久会员当前有效天数配置。 */
   lifetimeMembershipDays: number;
-  /** 永久会员当前价格配置，单位分。 */
-  lifetimeMembershipAmountFen: number;
+  /** 永久会员当前价格展示值（后端直接返回，前端不再分转元）。 */
+  lifetimeMembershipAmountDisplay: string;
   /** 是否正在提交积分调整。 */
   isSubmittingPoints: boolean;
   /** 是否正在提交纯利豆调整。 */
@@ -63,7 +63,7 @@ interface UseMemberDetailPageReturn {
   /** 调整纯利豆并提交。 */
   handleAdjustBeans: (delta: number, reason: string) => Promise<void>;
   /** 设置会员等级并提交。 */
-  handleSetMembership: (newLevel: MemberLevel, newExpiry: number | null, options?: { amountFen?: number }) => Promise<void>;
+  handleSetMembership: (newLevel: MemberLevel, newExpiry: number | null, options?: { amountDisplay?: string }) => Promise<void>;
   /** 封禁当前会员。 */
   handleBanMember: (reason: string) => Promise<boolean>;
   /** 解封当前会员。 */
@@ -79,7 +79,7 @@ interface UseMemberDetailPageReturn {
 type MemberSubmitAction = 'points' | 'beans' | 'membership' | 'ban' | 'subAccount' | 'cancel' | null;
 
 const DEFAULT_LIFETIME_MEMBERSHIP_DAYS = Number.parseInt(MEMBERSHIP_TIER_DEFAULT_VALUES.lifetime.lifetimeDays ?? '730', 10);
-const DEFAULT_LIFETIME_MEMBERSHIP_AMOUNT_FEN = Math.round(Number(MEMBERSHIP_TIER_DEFAULT_VALUES.lifetime.price) * 100);
+const DEFAULT_LIFETIME_MEMBERSHIP_AMOUNT_DISPLAY = MEMBERSHIP_TIER_DEFAULT_VALUES.lifetime.price || '398';
 
 const normalizeLifetimeMembershipDays = (value: string | undefined): number => {
   const parsedValue = Number.parseInt(value ?? '', 10);
@@ -90,13 +90,18 @@ const normalizeLifetimeMembershipDays = (value: string | undefined): number => {
   return parsedValue;
 };
 
-const normalizeLifetimeMembershipAmountFen = (value: string): number => {
-  const parsedValue = Number.parseFloat(value);
-  if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
-    return DEFAULT_LIFETIME_MEMBERSHIP_AMOUNT_FEN;
+const normalizeLifetimeMembershipAmountDisplay = (value: string): string => {
+  const trimmedValue = value?.trim();
+  if (!trimmedValue) {
+    return DEFAULT_LIFETIME_MEMBERSHIP_AMOUNT_DISPLAY;
   }
 
-  return Math.round(parsedValue * 100);
+  const parsedValue = Number.parseFloat(trimmedValue);
+  if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
+    return DEFAULT_LIFETIME_MEMBERSHIP_AMOUNT_DISPLAY;
+  }
+
+  return trimmedValue;
 };
 
 /** 会员详情页数据 Hook。 */
@@ -107,7 +112,7 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [submittingAction, setSubmittingAction] = useState<MemberSubmitAction>(null);
   const [lifetimeMembershipDays, setLifetimeMembershipDays] = useState<number>(DEFAULT_LIFETIME_MEMBERSHIP_DAYS);
-  const [lifetimeMembershipAmountFen, setLifetimeMembershipAmountFen] = useState<number>(DEFAULT_LIFETIME_MEMBERSHIP_AMOUNT_FEN);
+  const [lifetimeMembershipAmountDisplay, setLifetimeMembershipAmountDisplay] = useState<string>(DEFAULT_LIFETIME_MEMBERSHIP_AMOUNT_DISPLAY);
 
   // 从 member 直接派生展示态，避免 useEffect 同步 setState 产生的级联渲染
   const points = member?.availablePoints ?? 0;
@@ -193,14 +198,14 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
         }
 
         setLifetimeMembershipDays(normalizeLifetimeMembershipDays(response.lifetime.lifetimeDays));
-        setLifetimeMembershipAmountFen(normalizeLifetimeMembershipAmountFen(response.lifetime.price));
+        setLifetimeMembershipAmountDisplay(normalizeLifetimeMembershipAmountDisplay(response.lifetime.price));
       } catch {
         if (currentRequestId !== membershipSettingsRequestIdRef.current) {
           return;
         }
 
         setLifetimeMembershipDays(DEFAULT_LIFETIME_MEMBERSHIP_DAYS);
-        setLifetimeMembershipAmountFen(DEFAULT_LIFETIME_MEMBERSHIP_AMOUNT_FEN);
+        setLifetimeMembershipAmountDisplay(DEFAULT_LIFETIME_MEMBERSHIP_AMOUNT_DISPLAY);
       }
     };
 
@@ -280,7 +285,7 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
   const handleSetMembership = useCallback(async (
     newLevel: MemberLevel,
     newExpiry: number | null,
-    options?: { amountFen?: number },
+    options?: { amountDisplay?: string },
   ): Promise<void> => {
     if (!member || submittingAction) {
       return;
@@ -290,7 +295,7 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
     try {
       await submitMemberMembership(member.id, newLevel, newExpiry, {
         memberName: member.name,
-        amountFen: options?.amountFen,
+        amountDisplay: options?.amountDisplay,
       });
       showToast({ type: 'success', message: '会员等级设置成功' });
       void loadMember({ silent: true });
@@ -420,7 +425,7 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
     memberLevel,
     memberExpiry,
     lifetimeMembershipDays,
-    lifetimeMembershipAmountFen,
+    lifetimeMembershipAmountDisplay,
     isSubmittingPoints: submittingAction === 'points',
     isSubmittingBeans: submittingAction === 'beans',
     isSubmittingMembership: submittingAction === 'membership',

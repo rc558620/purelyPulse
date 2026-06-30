@@ -1,7 +1,7 @@
 // 推广详情明细列表：负责渲染推广明细表头、记录行与空状态。
 import React from 'react';
 import { EmptyState } from '@components/ui/feedback';
-import { cx, fmtAmount, isNonEmptyArray } from '@utils/utils';
+import { cx, isNonEmptyArray } from '@utils/utils';
 import { IconPromotionDetailEmpty } from '../_shared/icons/PromotionDetailIcons';
 import styles from '../../promotionDetail.module.less';
 import { formatPromotionDetailCount } from '../../promotionDetail.utils';
@@ -37,7 +37,7 @@ const PromotionDetailRecordList: React.FC<PromotionDetailRecordListProps> = ({
             <div key={`${record.label}-${index}`} className={styles.detailListItem}>
               <span className={styles.detailItemPeriod}>{record.label}</span>
               <span className={styles.detailItemOrders}>{formatPromotionDetailCount(record.orders)} 单</span>
-              <span className={cx(styles.detailItemRevenue, styles.colorEmerald)}>¥{fmtAmount(record.revenue)}</span>
+              <span className={cx(styles.detailItemRevenue, styles.colorEmerald)}>¥{record.revenueDisplay || '0'}</span>
             </div>
           )) : null}
         </div>

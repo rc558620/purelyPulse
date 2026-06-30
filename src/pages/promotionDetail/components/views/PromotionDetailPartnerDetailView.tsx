@@ -1,6 +1,6 @@
 // 推广详情明细视图：负责装配合伙人头图、时间维度与详情叶子区块。
 import React from 'react';
-import { cx, fmtAmount, safeNum } from '@utils/utils';
+import { cx, safeNum } from '@utils/utils';
 import {
   IconPromotionDetailCurrency,
   IconPromotionDetailDayTab,
@@ -110,7 +110,7 @@ const PromotionDetailPartnerDetailView: React.FC<PromotionDetailPartnerDetailVie
           <IconPromotionDetailCurrency width={16} height={16} />
         </div>
         <div className={styles.detailStatBody}>
-          <span className={cx(styles.detailStatNum, styles.colorEmerald)}>¥{fmtAmount(detailTotal.revenue)}</span>
+          <span className={cx(styles.detailStatNum, styles.colorEmerald)}>¥{detailTotal.revenueDisplay || '0'}</span>
           <span className={styles.detailStatLbl}>
             {periodTab === 'day' ? '近14日' : periodTab === 'month' ? '本年' : '历年'} 推广金额
           </span>

@@ -1,8 +1,10 @@
 import { createKeyedInFlightRequest, http, resolveEnvPath } from '@utils/http';
-import { fenToYuan, safeNum } from '@utils/utils';
+import { safeNum } from '@utils/utils';
 import type {
   PromotionDetailData,
   PromotionDetailQuery,
+  PromotionDetailSummary,
+  PromotionDetailTotal,
   PromotionPartnerItem,
   PromotionPartnerSeries,
   PromotionPeriodRecord,
@@ -70,14 +72,20 @@ const normalizeNumber = (value: unknown): number => {
   return 0;
 };
 
-const toYuanAmount = (value: unknown): number => {
-  const normalizedValue = normalizeNumber(value);
-  if (!normalizedValue) {
-    return 0;
+/** 直接从后端响应中读取展示字符串字段，前端不做转换 */
+const pickDisplayField = (value: unknown, keys: readonly string[]): string => {
+  if (!isPlainObject(value)) {
+    return '';
   }
 
-  // Pulse promotion detail amount fields are returned in fen.
-  return safeNum(fenToYuan(normalizedValue));
+  for (const key of keys) {
+    const candidate = value[key];
+    if (typeof candidate === 'string' && candidate.trim()) {
+      return candidate.trim();
+    }
+  }
+
+  return '';
 };
 
 const pickStringField = (value: unknown, keys: readonly string[]): string => {
@@ -225,9 +233,22 @@ const resolveAvatarText = (explicitAvatar: unknown, name: string): string => {
   return normalizedName.slice(0, 1).toUpperCase();
 };
 
+const createEmptySummary = (): PromotionDetailSummary => ({
+  totalPartners: 0,
+  totalOrders: 0,
+  totalRevenueDisplay: '',
+});
+
+const createEmptyDetailTotal = (): PromotionDetailTotal => ({
+  orders: 0,
+  revenueDisplay: '',
+});
+
 export const createEmptyPromotionDetail = (): PromotionDetailData => ({
   regions: [],
   partners: [],
+  summary: createEmptySummary(),
+  detailTotal: createEmptyDetailTotal(),
 });
 
 const mapPeriodRecords = (value: unknown, tab: PromotionPeriodTab): PromotionPeriodRecord[] => {
@@ -260,7 +281,7 @@ const mapPeriodRecords = (value: unknown, tab: PromotionPeriodTab): PromotionPer
       return {
         label,
         orders: pickNumberField(item, ['orders', 'orderCount', 'count', 'promotionOrders']),
-        revenue: toYuanAmount(item.revenue ?? item.amount ?? item.totalAmount ?? item.income),
+        revenueDisplay: pickDisplayField(item, ['revenueDisplay', 'amountDisplay', 'totalAmountDisplay', 'incomeDisplay']),
       };
     })
     .filter((item): item is PromotionPeriodRecord => item !== null);
@@ -322,7 +343,7 @@ const mapPartnerItem = (
     city,
     district: district || undefined,
     orders: pickNumberField(item, ['orders', 'orderCount', 'promotionOrders', 'count']),
-    revenue: toYuanAmount(item.revenue ?? item.amount ?? item.totalAmount ?? item.income),
+    revenueDisplay: pickDisplayField(item, ['revenueDisplay', 'amountDisplay', 'totalAmountDisplay', 'incomeDisplay']),
     growth: pickNumberField(item, ['growth', 'growthRate', 'increaseRate', 'compareRate']),
     avatar: resolveAvatarText(item.avatar ?? item.avatarText, name),
     avatarUrl: typeof item.avatarUrl === 'string' && item.avatarUrl.trim() ? item.avatarUrl.trim() : undefined,
@@ -403,92 +424,80 @@ const mapPartners = (response: unknown): PromotionPartnerItem[] => {
   return dedupePartners([...directPartners, ...regionPartners]);
 };
 
-const hasRevenueField = (item: Record<string, unknown>): boolean =>
-  item.totalRevenue != null || item.revenue != null || item.totalAmount != null || item.amount != null;
-
-const hasOrdersField = (item: Record<string, unknown>): boolean =>
-  item.totalOrders != null || item.orders != null || item.orderCount != null || item.promotionOrders != null;
-
-const hasPartnerCountField = (item: Record<string, unknown>): boolean =>
-  item.partnerCount != null || item.partners != null || item.count != null || item.totalPartners != null;
-
-const mapRegionItem = (item: Record<string, unknown>, partners: PromotionPartnerItem[]): PromotionRegionItem | null => {
+const mapRegionItem = (item: Record<string, unknown>): PromotionRegionItem | null => {
   const rawProvince = pickStringField(item, ['province', 'provinceName', 'region', 'regionName', 'name', 'label']);
   if (!rawProvince) {
     return null;
   }
 
   const province = normalizeProvinceName(rawProvince);
-  const scopedPartners = partners.filter((partner) => partner.province === province || partner.city === province);
 
   return {
     province,
     city: pickStringField(item, ['city', 'cityName']) || undefined,
-    partnerCount: hasPartnerCountField(item)
-      ? pickNumberField(item, ['partnerCount', 'partners', 'count', 'totalPartners'])
-      : scopedPartners.length,
-    totalOrders: hasOrdersField(item)
-      ? pickNumberField(item, ['totalOrders', 'orders', 'orderCount', 'promotionOrders'])
-      : scopedPartners.reduce((sum, partner) => sum + partner.orders, 0),
-    totalRevenue: hasRevenueField(item)
-      ? toYuanAmount(item.totalRevenue ?? item.revenue ?? item.totalAmount ?? item.amount)
-      : scopedPartners.reduce((sum, partner) => sum + partner.revenue, 0),
+    partnerCount: pickNumberField(item, ['partnerCount', 'partners', 'count', 'totalPartners']),
+    totalOrders: pickNumberField(item, ['totalOrders', 'orders', 'orderCount', 'promotionOrders']),
+    totalRevenueDisplay: pickDisplayField(item, ['totalRevenueDisplay', 'revenueDisplay', 'totalAmountDisplay', 'amountDisplay']),
     growth: pickNumberField(item, ['growth', 'growthRate', 'increaseRate', 'compareRate']),
   };
 };
 
-const deriveRegionsFromPartners = (partners: PromotionPartnerItem[]): PromotionRegionItem[] => {
-  const regionMap = new Map<string, PromotionRegionItem>();
-
-  partners.forEach((partner) => {
-    const province = partner.province || partner.city || '未知地区';
-    const currentRegion = regionMap.get(province);
-    // partner.province 已在 mapPartnerItem 中经过 normalizeProvinceName 标准化
-    if (currentRegion) {
-      currentRegion.partnerCount += 1;
-      currentRegion.totalOrders += partner.orders;
-      currentRegion.totalRevenue += partner.revenue;
-      currentRegion.growth = Math.max(currentRegion.growth, partner.growth);
-      return;
-    }
-
-    regionMap.set(province, {
-      province,
-      city: undefined,
-      partnerCount: 1,
-      totalOrders: partner.orders,
-      totalRevenue: partner.revenue,
-      growth: partner.growth,
-    });
-  });
-
-  return [...regionMap.values()];
-};
-
-const mapRegions = (response: unknown, partners: PromotionPartnerItem[]): PromotionRegionItem[] => {
+const mapRegions = (response: unknown): PromotionRegionItem[] => {
   const rawRegions = getNestedArray(response, ['regions', 'regionList', 'provinceList', 'areaStats', 'distribution']);
   const mappedRegions = rawRegions
-    .map((item) => (isPlainObject(item) ? mapRegionItem(item, partners) : null))
+    .map((item) => (isPlainObject(item) ? mapRegionItem(item) : null))
     .filter((item): item is PromotionRegionItem => item !== null);
 
-  const regions = mappedRegions.length > 0 ? mappedRegions : deriveRegionsFromPartners(partners);
-
-  return regions.sort((leftRegion, rightRegion) => {
+  return mappedRegions.sort((leftRegion, rightRegion) => {
     if (rightRegion.partnerCount !== leftRegion.partnerCount) {
       return rightRegion.partnerCount - leftRegion.partnerCount;
     }
 
-    return rightRegion.totalRevenue - leftRegion.totalRevenue;
+    // 排序仍可基于 partnerCount，金额仅做展示
+    return 0;
   });
+};
+
+const mapSummary = (response: unknown): PromotionDetailSummary => {
+  const summarySource = getNestedRecord(response, ['summary', 'overview', 'stats', 'totals'])
+    ?? (isPlainObject(response) ? response : null);
+
+  if (!summarySource) {
+    return createEmptySummary();
+  }
+
+  return {
+    totalPartners: pickNumberField(summarySource, ['totalPartners', 'partnerCount', 'partners', 'total']),
+    totalOrders: pickNumberField(summarySource, ['totalOrders', 'orders', 'orderCount', 'totalOrderCount']),
+    totalRevenueDisplay: pickDisplayField(summarySource, ['totalRevenueDisplay', 'revenueDisplay', 'totalAmountDisplay', 'incomeDisplay']),
+  };
+};
+
+const mapDetailTotal = (response: unknown): PromotionDetailTotal => {
+  const detailSource = getNestedRecord(response, ['detailSummary', 'detailTotal', 'detailStats', 'partnerSummary'])
+    ?? (isPlainObject(response) ? response : null);
+
+  if (!detailSource) {
+    return createEmptyDetailTotal();
+  }
+
+  return {
+    orders: pickNumberField(detailSource, ['orders', 'orderCount', 'totalOrders', 'count']),
+    revenueDisplay: pickDisplayField(detailSource, ['revenueDisplay', 'totalRevenueDisplay', 'amountDisplay', 'totalAmountDisplay']),
+  };
 };
 
 const mapPromotionDetail = (response: unknown): PromotionDetailData => {
   const partners = mapPartners(response);
-  const regions = mapRegions(response, partners);
+  const regions = mapRegions(response);
+  const summary = mapSummary(response);
+  const detailTotal = mapDetailTotal(response);
 
   return {
     regions,
     partners,
+    summary,
+    detailTotal,
   };
 };
 

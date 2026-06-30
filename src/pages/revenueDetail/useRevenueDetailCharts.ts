@@ -7,7 +7,7 @@ import type {
   RevenuePeriod,
   RevenueTypeItem,
 } from './revenueDetail.types';
-import { fmtAmount, isNonEmptyArray, safeNum } from '@utils/utils';
+import { isNonEmptyArray, safeNum } from '@utils/utils';
 
 interface UseRevenueDetailChartsParams {
   revenuePeriod: RevenuePeriod;
@@ -69,7 +69,7 @@ export const useRevenueDetailCharts = ({
 
   const revenueChartOption = useMemo<echarts.EChartsOption>(() => {
     const safeTrendDates = trend.dates.length > 0 ? trend.dates : ['暂无数据'];
-    const safeTrendValues = trend.values.length > 0 ? trend.values : [0];
+    const safeTrendValuesDisplay = trend.valuesDisplay.length > 0 ? trend.valuesDisplay : ['0'];
 
     return ({
     grid: { top: 20, bottom: 36, left: 56, right: 20 },
@@ -80,8 +80,8 @@ export const useRevenueDetailCharts = ({
       borderWidth: 1,
       textStyle: { color: '#f8fafc', fontSize: 12 },
       formatter: (params: unknown) => {
-        const point = (params as { axisValue: string; value: number }[])[0];
-        return `<span style="color:#94a3b8;font-size:11px">${point.axisValue}</span><br/><span style="color:#f97316;font-weight:700;font-size:14px">¥${fmtAmount(point.value)}</span>`;
+        const point = (params as { axisValue: string; value: string }[])[0];
+        return `<span style="color:#94a3b8;font-size:11px">${point.axisValue}</span><br/><span style="color:#f97316;font-weight:700;font-size:14px">¥${point.value}</span>`;
       },
     },
     xAxis: {
@@ -109,7 +109,7 @@ export const useRevenueDetailCharts = ({
     },
     series: [{
       type: 'line',
-      data: safeTrendValues,
+      data: safeTrendValuesDisplay,
       smooth: 0.4,
       symbol: 'circle',
       symbolSize: 6,
@@ -139,7 +139,7 @@ export const useRevenueDetailCharts = ({
       },
     }],
     });
-  }, [revenuePeriod, trend.dates, trend.values]);
+  }, [revenuePeriod, trend.dates, trend.valuesDisplay]);
 
   return {
     pieOption,

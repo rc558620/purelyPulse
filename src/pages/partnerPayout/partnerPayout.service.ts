@@ -26,8 +26,7 @@ const APPLIED_AT_CANDIDATES = ['appliedAt', 'applyTime', 'createdAt', 'submitTim
 const PAID_AT_CANDIDATES = ['paidAt', 'payTime', 'processedAt', 'updatedAt'] as const;
 const TXN_NO_CANDIDATES = ['txnNo', 'transactionNo', 'tradeNo', 'serialNo'] as const;
 const REJECT_REASON_CANDIDATES = ['rejectReason', 'rejectRemark', 'remark', 'reason'] as const;
-const AMOUNT_FEN_CANDIDATES = ['amountFen', 'withdrawAmountFen', 'paidAmountFen'] as const;
-const AMOUNT_YUAN_CANDIDATES = ['amount', 'withdrawAmount', 'paidAmount'] as const;
+const AMOUNT_DISPLAY_CANDIDATES = ['amountDisplay', 'withdrawAmountDisplay', 'paidAmountDisplay'] as const;
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> => (
   typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -117,28 +116,20 @@ const pickNumberField = (value: unknown, keys: readonly string[]): number => {
   return 0;
 };
 
-const pickFenAmountField = (value: unknown): number => {
+/** 直接从后端响应中读取金额展示字符串字段，前端不做转换 */
+const pickDisplayField = (value: unknown, keys: readonly string[]): string => {
   if (!isPlainObject(value)) {
-    return 0;
+    return '';
   }
 
-  for (const key of AMOUNT_FEN_CANDIDATES) {
+  for (const key of keys) {
     const candidate = value[key];
-    const normalizedValue = normalizeNumber(candidate);
-    if (normalizedValue !== 0 || candidate === 0 || candidate === '0') {
-      return Math.round(normalizedValue);
+    if (typeof candidate === 'string' && candidate.trim()) {
+      return candidate.trim();
     }
   }
 
-  for (const key of AMOUNT_YUAN_CANDIDATES) {
-    const candidate = value[key];
-    const normalizedValue = normalizeNumber(candidate);
-    if (normalizedValue !== 0 || candidate === 0 || candidate === '0') {
-      return Math.round(normalizedValue * 100);
-    }
-  }
-
-  return 0;
+  return '';
 };
 
 const formatDateTime = (value: unknown): string => {
@@ -271,7 +262,7 @@ const mapPartnerPayoutApplication = (rawValue: unknown): PartnerPayoutApplicatio
     partnerPhone: partnerPhone || '--',
     partnerCity,
     partnerAvatarUrl: (isPlainObject(rawValue) && typeof rawValue.partnerAvatarUrl === 'string' && rawValue.partnerAvatarUrl.trim()) ? rawValue.partnerAvatarUrl.trim() : undefined,
-    amount: pickFenAmountField(rawValue),
+    amountDisplay: pickDisplayField(rawValue, AMOUNT_DISPLAY_CANDIDATES),
     accountType,
     accountNo,
     accountName,
@@ -283,31 +274,47 @@ const mapPartnerPayoutApplication = (rawValue: unknown): PartnerPayoutApplicatio
   };
 };
 
-const computeStats = (applications: PartnerPayoutApplication[]): PartnerPayoutStats => ({
-  totalCount: applications.length,
-  pendingCount: applications.filter((application) => application.status === 'pending').length,
-  approvedCount: applications.filter((application) => application.status === 'approved').length,
-  paidCount: applications.filter((application) => application.status === 'paid').length,
-  rejectedCount: applications.filter((application) => application.status === 'rejected').length,
-});
+const EMPTY_STATS: PartnerPayoutStats = {
+  totalCount: 0,
+  pendingCount: 0,
+  approvedCount: 0,
+  paidCount: 0,
+  rejectedCount: 0,
+};
 
-const mapStats = (response: unknown, applications: PartnerPayoutApplication[]): PartnerPayoutStats => {
+// 后端权威计算统计数据，前端仅做字段映射，不再 reduce 回退。
+// 使用 ?? 避免后端返回 0 时被误兜底。
+const mapStats = (response: unknown): PartnerPayoutStats => {
   const statsSource = getNestedRecord(response, STATS_SOURCE_CANDIDATES)
     ?? (isPlainObject(response) ? response : null);
   if (!statsSource) {
-    return computeStats(applications);
+    return EMPTY_STATS;
   }
 
   return {
-    totalCount: pickNumberField(statsSource, ['totalCount', 'total', 'allCount']) || applications.length,
-    pendingCount: pickNumberField(statsSource, ['pendingCount', 'waitingCount', 'todoCount']) || applications.filter((application) => application.status === 'pending').length,
-    approvedCount: pickNumberField(statsSource, ['approvedCount', 'reviewingCount', 'processingCount']) || applications.filter((application) => application.status === 'approved').length,
-    paidCount: pickNumberField(statsSource, ['paidCount', 'successCount', 'doneCount']) || applications.filter((application) => application.status === 'paid').length,
-    rejectedCount: pickNumberField(statsSource, ['rejectedCount', 'failedCount']) || applications.filter((application) => application.status === 'rejected').length,
+    totalCount: pickNumberField(statsSource, ['totalCount', 'total', 'allCount']) ?? 0,
+    pendingCount: pickNumberField(statsSource, ['pendingCount', 'waitingCount', 'todoCount']) ?? 0,
+    approvedCount: pickNumberField(statsSource, ['approvedCount', 'reviewingCount', 'processingCount']) ?? 0,
+    paidCount: pickNumberField(statsSource, ['paidCount', 'successCount', 'doneCount']) ?? 0,
+    rejectedCount: pickNumberField(statsSource, ['rejectedCount', 'failedCount']) ?? 0,
   };
 };
 
-const requestPartnerPayoutList = async (): Promise<{ applications: PartnerPayoutApplication[]; stats: PartnerPayoutStats }> => {
+const mapSummaryFromResponse = (response: unknown): PartnerPayoutSummary => {
+  const statsSource = getNestedRecord(response, STATS_SOURCE_CANDIDATES)
+    ?? (isPlainObject(response) ? response : null);
+  if (!statsSource) {
+    return { pendingCount: 0, pendingAmountDisplay: '', paidAmountDisplay: '' };
+  }
+
+  return {
+    pendingCount: pickNumberField(statsSource, ['pendingCount', 'waitingCount', 'todoCount']),
+    pendingAmountDisplay: pickDisplayField(statsSource, ['pendingTotalDisplay', 'pendingAmountDisplay', 'pendingAmountDisplayText']),
+    paidAmountDisplay: pickDisplayField(statsSource, ['paidTotalDisplay', 'paidAmountDisplay', 'paidAmountDisplayText']),
+  };
+};
+
+const requestPartnerPayoutList = async (): Promise<{ applications: PartnerPayoutApplication[]; stats: PartnerPayoutStats; summary: PartnerPayoutSummary }> => {
   const response = await http.get<unknown>(PARTNER_PAYOUT_API_PATH, {
     skipGlobalErrorHandler: true,
     errorMessage: '获取合伙人打款列表失败',
@@ -320,7 +327,8 @@ const requestPartnerPayoutList = async (): Promise<{ applications: PartnerPayout
 
   return {
     applications,
-    stats: mapStats(response, applications),
+    stats: mapStats(response),
+    summary: mapSummaryFromResponse(response),
   };
 };
 
@@ -342,7 +350,7 @@ const submitPartnerPayoutAction = async (rawPath: string, id: string, action: 'a
 
 export const fetchPartnerPayoutList = createKeyedInFlightRequest(
   () => 'partner-payout-list',
-  async (): Promise<{ applications: PartnerPayoutApplication[]; stats: PartnerPayoutStats }> => requestPartnerPayoutList(),
+  async (): Promise<{ applications: PartnerPayoutApplication[]; stats: PartnerPayoutStats; summary: PartnerPayoutSummary }> => requestPartnerPayoutList(),
 );
 
 export const submitPartnerPayoutApprove = async (id: string): Promise<void> => {

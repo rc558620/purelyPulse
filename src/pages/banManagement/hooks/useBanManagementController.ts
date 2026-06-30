@@ -22,26 +22,18 @@ const SEARCH_DEBOUNCE_DELAY = 250;
 const EMPTY_STATS: MemberListStats = {
   totalCount: 0,
   activeCount: 0,
+  inactiveCount: 0,
   partnerCount: 0,
   bannedCount: 0,
 };
 
-const buildCounts = (stats: MemberListStats): BanManagementCounts => {
-  const totalCount = safeNum(stats.totalCount);
-  const activeCount = safeNum(stats.activeCount);
-  const bannedCount = safeNum(stats.bannedCount);
-  // inactiveCount = total - active - banned，但后端数据可能存在延迟或重叠（如合伙人同时计入 active），
-  // 差值可能为负。取 Math.max(0, ...) 保底，同时在 counts 上标记是否为估算值，方便 UI 展示兜底。
-  const rawInactive = totalCount - activeCount - bannedCount;
-  const inactiveCount = Math.max(0, rawInactive);
-
-  return {
-    all: totalCount,
-    active: activeCount,
-    inactive: inactiveCount,
-    banned: bannedCount,
-  };
-};
+// 后端权威计算统计数据，前端不再反推 inactiveCount
+const buildCounts = (stats: MemberListStats): BanManagementCounts => ({
+  all: safeNum(stats.totalCount),
+  active: safeNum(stats.activeCount),
+  inactive: safeNum(stats.inactiveCount),
+  banned: safeNum(stats.bannedCount),
+});
 
 export const useBanManagementController = (): UseBanManagementControllerReturn => {
   const [members, setMembers] = useState<UseBanManagementControllerReturn['members']>([]);

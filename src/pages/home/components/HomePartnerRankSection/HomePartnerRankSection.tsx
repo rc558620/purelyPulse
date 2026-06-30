@@ -2,7 +2,7 @@
 import { memo, useMemo } from 'react';
 import { EmptyState } from '@components/ui/feedback';
 import { normalizeRegionValue } from '@constants/regionData';
-import { cx, fmtAmount, isNonEmptyArray, safeNum } from '@utils/utils';
+import { cx, isNonEmptyArray, safeNum } from '@utils/utils';
 import type { CSSProperties } from 'react';
 import type { CascadeValue } from '@components/form/CascaderView/types';
 import type { HomePartnerRankItem } from '../../home.types';
@@ -80,7 +80,7 @@ const HomePartnerRankSection = memo(({
                   <div className={styles.rankBarFill} style={rankBarStyle} />
                 </div>
                 <div className={styles.rankRight}>
-                  <span className={styles.rankRevenue}>¥{fmtAmount(safeNum(partner.revenue))}</span>
+                  <span className={styles.rankRevenue}>¥{partner.revenueDisplay || '0'}</span>
                   <span className={styles.rankOrders}>{safeNum(partner.orders)} 单</span>
                 </div>
               </div>

@@ -1,7 +1,8 @@
 // 首页合伙人概览区块：负责合伙人总数、活跃率与推广收益展示。
+// 金额展示值由后端直接返回，前端不再做分转元和格式化。
 import { memo } from 'react';
 import AnimatedNumber from '@components/ui/data-display/AnimatedNumber/AnimatedNumber';
-import { cx, fmtAmount, safeNum } from '@utils/utils';
+import { cx, safeNum } from '@utils/utils';
 import type { HomePartnerStats } from '../../home.types';
 import { IconHomeActiveRateRing, IconHomeClock, IconHomeCurrency, IconHomeUsers } from '../HomeIcons/HomeIcons';
 import styles from './HomePartnerOverviewSection.module.less';
@@ -47,7 +48,7 @@ const HomePartnerOverviewSection = memo(({ partnerStats }: HomePartnerOverviewSe
         收益
       </div>
       <div className={cx(styles.bentoBigNum, styles.bentoBigNumBlue, styles.bentoBigNumRevenue)}>
-        ¥<AnimatedNumber value={fmtAmount(safeNum(partnerStats.totalRevenue))} triggerKey="partner-revenue" />
+        ¥{partnerStats.totalRevenueDisplay || '0'}
       </div>
       <div className={styles.bentoLabel}>推广总收益</div>
       <div className={cx(styles.bentoTag, styles.bentoTagBlue)}>

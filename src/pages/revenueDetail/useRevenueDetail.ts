@@ -1,8 +1,6 @@
 // 充值收入明细页状态管理：统一维护筛选条件、请求状态与分页展示。
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CascadeValue } from '@components/form/CascaderView/types';
-import { MEMBERSHIP_REVENUE_SYNC_EVENT } from '../memberList/memberList.constants';
-import type { MembershipRevenueSyncPayload } from '../memberList/memberList.service';
 import { normalizeRegionValue } from '@constants/regionData';
 import { safeNum } from '@utils/utils';
 import { createEmptyRevenueDetail, fetchRevenueDetail } from './revenueDetail.service';
@@ -173,30 +171,12 @@ export const useRevenueDetail = (): UseRevenueDetailReturn => {
   }, [loadRevenueDetail, query]);
 
   useEffect(() => {
-    // 仅在记录条数减少时（筛选条件切换导致数据重置）重置分页，
-    // 实时事件追加导致的记录增长不重置，避免用户已加载的记录缩短
+    // 仅在记录条数减少时（筛选条件切换导致数据重置）重置分页
     if (data.records.length < prevRecordsLengthRef.current) {
       setVisibleRecordCount(DEFAULT_VISIBLE_RECORD_COUNT);
     }
     prevRecordsLengthRef.current = data.records.length;
   }, [data.records.length]);
-
-  useEffect(() => {
-    const handleMembershipRevenueSync = (event: Event): void => {
-      const customEvent = event as CustomEvent<MembershipRevenueSyncPayload>;
-      const payload = customEvent.detail;
-      if (!payload) {
-        return;
-      }
-
-      void loadRevenueDetail(query);
-    };
-
-    window.addEventListener(MEMBERSHIP_REVENUE_SYNC_EVENT, handleMembershipRevenueSync);
-    return () => {
-      window.removeEventListener(MEMBERSHIP_REVENUE_SYNC_EVENT, handleMembershipRevenueSync);
-    };
-  }, [loadRevenueDetail, query]);
 
   const activeTags = useMemo(() => {
     const tags: string[] = [];

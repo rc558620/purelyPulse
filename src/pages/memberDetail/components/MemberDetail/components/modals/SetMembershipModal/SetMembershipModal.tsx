@@ -13,6 +13,7 @@ import SetMembershipActionBar from './components/SetMembershipActionBar/SetMembe
 import SetMembershipConfirmStep from './components/SetMembershipConfirmStep/SetMembershipConfirmStep';
 import SetMembershipSelectStep from './components/SetMembershipSelectStep/SetMembershipSelectStep';
 import type { MemberDetail, MemberLevel, MembershipDuration } from '@pages/memberList/memberList.types';
+// fenToYuan 已删除：前端不做分转元转换。金额展示值由后端直接返回 xxxDisplay 字段。
 import styles from './SetMembershipModal.module.less';
 
 export interface SetMembershipModalProps {
@@ -20,9 +21,9 @@ export interface SetMembershipModalProps {
   currentLevel: MemberLevel;
   currentExpiry: number | null | undefined;
   lifetimeMembershipDays: number;
-  lifetimeMembershipAmountFen: number;
+  lifetimeMembershipAmountDisplay: string;
   onClose: () => void;
-  onConfirm: (newLevel: MemberLevel, newExpiry: number | null, options?: { amountFen?: number }) => Promise<void> | void;
+  onConfirm: (newLevel: MemberLevel, newExpiry: number | null, options?: { amountDisplay?: string }) => Promise<void> | void;
 }
 
 /** 弹窗内部使用的选择类型，扩展了 free */
@@ -100,27 +101,17 @@ const MULTIPLIER_OPTIONS = [
 
 const DAY_MS = 86_400_000;
 
-const formatAmountInputFromFen = (amountFen: number): string => {
-  const amountYuan = amountFen / 100;
-  return Number.isInteger(amountYuan) ? String(amountYuan) : amountYuan.toFixed(2);
-};
+// formatAmountInputFromFen / parseAmountInputToFen 已删除：
+// 前端不做分转元/元转分转换。金额展示值由后端直接返回 xxxDisplay 字段，
+// 用户输入的价格直接作为字符串提交给后端。
 
-const parseAmountInputToFen = (value: string): number | null => {
+/** 验证用户输入的价格字符串是否合法（最多 2 位小数的正数） */
+const isValidAmountInput = (value: string): boolean => {
   const normalizedValue = value.trim();
-  if (!normalizedValue) {
-    return null;
-  }
-
-  if (!/^\d+(\.\d{0,2})?$/.test(normalizedValue)) {
-    return null;
-  }
-
-  const amountYuan = Number(normalizedValue);
-  if (!Number.isFinite(amountYuan) || amountYuan <= 0) {
-    return null;
-  }
-
-  return Math.round(amountYuan * 100);
+  if (!normalizedValue) return false;
+  if (!/^\d+(\.\d{0,2})?$/.test(normalizedValue)) return false;
+  const amount = Number(normalizedValue);
+  return Number.isFinite(amount) && amount > 0;
 };
 
 function formatMembershipExpiry(ts: number): string {
@@ -143,7 +134,7 @@ const SetMembershipModal: React.FC<SetMembershipModalProps> = ({
   currentLevel,
   currentExpiry,
   lifetimeMembershipDays,
-  lifetimeMembershipAmountFen,
+  lifetimeMembershipAmountDisplay,
   onClose,
   onConfirm,
 }) => {
@@ -161,7 +152,7 @@ const SetMembershipModal: React.FC<SetMembershipModalProps> = ({
   const [multiplier, setMultiplier] = useState(1);
   const [step, setStep] = useState<'select' | 'confirm'>('select');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [lifetimeAmountInput, setLifetimeAmountInput] = useState<string>(() => formatAmountInputFromFen(lifetimeMembershipAmountFen));
+  const [lifetimeAmountInput, setLifetimeAmountInput] = useState<string>(() => lifetimeMembershipAmountDisplay || '');
 
   const isFree = selectedDuration === 'free';
   const isLifetime = selectedDuration === 'lifetime';
@@ -201,8 +192,8 @@ const SetMembershipModal: React.FC<SetMembershipModalProps> = ({
     return false;
   }, [currentLevel, selectedDuration]);
 
-  const lifetimeAmountFen = useMemo(() => (
-    selectedDuration === 'lifetime' ? parseAmountInputToFen(lifetimeAmountInput) : null
+  const isLifetimeAmountValid = useMemo(() => (
+    selectedDuration === 'lifetime' ? isValidAmountInput(lifetimeAmountInput) : true
   ), [lifetimeAmountInput, selectedDuration]);
 
   const lifetimeAmountError = useMemo(() => {
@@ -212,15 +203,15 @@ const SetMembershipModal: React.FC<SetMembershipModalProps> = ({
     if (!lifetimeAmountInput.trim()) {
       return '请输入永久会员价格';
     }
-    if (lifetimeAmountFen === null) {
+    if (!isLifetimeAmountValid) {
       return '请输入有效价格，最多保留 2 位小数';
     }
     return '';
-  }, [lifetimeAmountFen, lifetimeAmountInput, selectedDuration]);
+  }, [isLifetimeAmountValid, lifetimeAmountInput, selectedDuration]);
 
   useEffect(() => {
-    setLifetimeAmountInput(formatAmountInputFromFen(lifetimeMembershipAmountFen));
-  }, [lifetimeMembershipAmountFen]);
+    setLifetimeAmountInput(lifetimeMembershipAmountDisplay || '');
+  }, [lifetimeMembershipAmountDisplay]);
 
   useEffect(() => {
     const handler = (event: KeyboardEvent): void => {
@@ -250,7 +241,7 @@ const SetMembershipModal: React.FC<SetMembershipModalProps> = ({
       await onConfirm(
         newLevel,
         selectedDuration === 'free' ? null : newExpiry,
-        selectedDuration === 'lifetime' && lifetimeAmountFen !== null ? { amountFen: lifetimeAmountFen } : undefined,
+        selectedDuration === 'lifetime' && isLifetimeAmountValid ? { amountDisplay: lifetimeAmountInput.trim() } : undefined,
       );
       onClose();
     } catch {
@@ -258,7 +249,7 @@ const SetMembershipModal: React.FC<SetMembershipModalProps> = ({
     } finally {
       setIsSubmitting(false);
     }
-  }, [isSubmitting, lifetimeAmountFen, newExpiry, onClose, onConfirm, selectedDuration]);
+  }, [isSubmitting, isLifetimeAmountValid, lifetimeAmountInput, newExpiry, onClose, onConfirm, selectedDuration]);
 
   const selectedOption = durationOptions.find((option) => option.value === selectedDuration)!;
 
@@ -344,7 +335,7 @@ const SetMembershipModal: React.FC<SetMembershipModalProps> = ({
             lifetimeAmountError={lifetimeAmountError}
             onLifetimeAmountChange={setLifetimeAmountInput}
             formatMembershipExpiry={formatMembershipExpiry}
-            lifetimeMembershipAmountFen={lifetimeMembershipAmountFen}
+            lifetimeMembershipAmountDisplay={lifetimeMembershipAmountDisplay}
           />
         )}
 

@@ -1,6 +1,6 @@
 // 合伙人卡片：负责渲染单个合伙人条目。
 import React from 'react';
-import { cx, fmtAmount, safeNum } from '@utils/utils';
+import { cx, safeNum } from '@utils/utils';
 import {
   IconPromotionDetailChevronRight,
   IconPromotionDetailLocation,
@@ -68,7 +68,7 @@ const PromotionPartnerCard: React.FC<PromotionPartnerCardProps> = ({
         </span>
         <span className={styles.partnerStatSep} aria-hidden="true">·</span>
         <span className={styles.partnerStatItem}>
-          <span className={cx(styles.partnerStatNum, styles.colorEmerald)}>¥{fmtAmount(partner.revenue)}</span>
+          <span className={cx(styles.partnerStatNum, styles.colorEmerald)}>¥{partner.revenueDisplay || '0'}</span>
         </span>
       </div>
     </div>

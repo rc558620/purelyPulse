@@ -27,8 +27,8 @@ interface MembershipSettingItemResponse {
   planId: TierId;
   /** 套餐名称。 */
   planName: string;
-  /** 套餐价格，单位分。 */
-  price: number;
+  /** 套餐价格展示值（后端直接返回，前端不再分转元）。 */
+  priceDisplay: string;
   /** 套餐有效天数，仅永久会员使用。 */
   validDays: number | null;
   /** 最近更新时间，单位 ms。 */
@@ -41,8 +41,8 @@ interface MembershipSettingsResponse {
 }
 
 interface UpdateMembershipPricePayload {
-  /** 套餐价格，单位分。 */
-  price: number;
+  /** 套餐价格展示值（元字符串，前端不做转换）。 */
+  priceDisplay: string;
 }
 
 interface UpdateLifetimeMembershipPayload extends UpdateMembershipPricePayload {
@@ -106,19 +106,13 @@ const normalizeLifetimeDaysText = (rawValue: string | undefined): string => {
   return String(parsedValue);
 };
 
-const fenToYuanText = (fen: number): string => {
-  const amountYuan = safeNum(fen) / 100;
-  return Number.isInteger(amountYuan) ? String(amountYuan) : amountYuan.toFixed(2);
-};
-
-const toFenAmount = (rawPrice: string): number => Math.round(safeNum(Number.parseFloat(rawPrice), 0) * 100);
+// fenToYuanText / toFenAmount 已删除：前端不做分转元/元转分转换。金额展示值由后端直接返回 priceDisplay 字段。
 
 const isMembershipSettingItemResponse = (value: unknown): value is MembershipSettingItemResponse => (
   isPlainObject(value)
   && isTierId(value.planId)
   && typeof value.planName === 'string'
-  && typeof value.price === 'number'
-  && Number.isFinite(value.price)
+  && typeof value.priceDisplay === 'string'
   && (value.validDays === null || (typeof value.validDays === 'number' && Number.isInteger(value.validDays)))
   && typeof value.updatedAt === 'number'
   && Number.isFinite(value.updatedAt)
@@ -142,13 +136,13 @@ const assertMembershipSettingsResponse = (value: unknown): MembershipSettingsRes
 const mapSettingItemToTierValue = (item: MembershipSettingItemResponse): TierValue => {
   if (item.planId === 'lifetime') {
     return {
-      price: normalizePriceText(fenToYuanText(item.price)),
+      price: normalizePriceText(item.priceDisplay),
       lifetimeDays: normalizeLifetimeDaysText(item.validDays === null ? undefined : String(item.validDays)),
     };
   }
 
   return {
-    price: normalizePriceText(fenToYuanText(item.price)),
+    price: normalizePriceText(item.priceDisplay),
   };
 };
 
@@ -191,13 +185,13 @@ const buildUpdatePayload = (
   const normalizedPrice = normalizePriceText(value.price) || '0';
   if (tierId === 'lifetime') {
     return {
-      price: toFenAmount(normalizedPrice),
+      priceDisplay: normalizedPrice,
       validDays: Number.parseInt(normalizeLifetimeDaysText(value.lifetimeDays), 10),
     };
   }
 
   return {
-    price: toFenAmount(normalizedPrice),
+    priceDisplay: normalizedPrice,
   };
 };
 

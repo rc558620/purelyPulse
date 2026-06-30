@@ -16,8 +16,6 @@ import { fetchMemberSalesStats } from '@pages/memberList/memberList.service';
 import {
   type ChartMetric,
   buildChartOption,
-  fenToYuan,
-  formatAmountFen,
   formatGrowth,
 } from './memberDetailSalesStats.utils';
 import styles from './MemberDetailSalesStatsModal.module.less';
@@ -49,8 +47,8 @@ interface SummaryCardProps {
   icon: React.ReactNode;
   /** 图标容器附加样式类名。 */
   iconClassName: string;
-  /** 金额（分）。 */
-  totalFen: number;
+  /** 金额展示值（后端直接返回，前端不再分转元）。 */
+  totalDisplay: string;
   /** 标签文案。 */
   label: string;
   /** 增幅百分比（null = 无数据）。 */
@@ -66,7 +64,7 @@ interface SummaryCardProps {
 const SummaryCard: React.FC<SummaryCardProps> = ({
   icon,
   iconClassName,
-  totalFen,
+  totalDisplay,
   label,
   growthPct,
   isActive,
@@ -85,7 +83,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
     <div className={styles.summaryCardBody}>
       <div className={styles.summaryValue}>
         <span className={styles.summaryCurrency}>¥</span>
-        {formatAmountFen(totalFen)}
+        {totalDisplay || '0'}
       </div>
       <div className={styles.summaryLabel}>
         {label}
@@ -209,9 +207,7 @@ const MemberDetailSalesStatsModal: React.FC<MemberDetailSalesStatsModalProps> = 
     }
 
     const currentSummary = stats[activePeriod];
-    const totalAmountFen = safeNum(
-      activeMetric === 'sales' ? currentSummary.totalSalesFen : currentSummary.totalProfitFen,
-    );
+    const totalDisplay = activeMetric === 'sales' ? currentSummary.totalSalesDisplay : currentSummary.totalProfitDisplay;
     const growthPct = activeMetric === 'sales'
       ? currentSummary.salesGrowthPct
       : currentSummary.profitGrowthPct;
@@ -221,7 +217,7 @@ const MemberDetailSalesStatsModal: React.FC<MemberDetailSalesStatsModalProps> = 
     const chartOption = buildChartOption(
       currentSummary.dataPoints.map(p => p.label),
       currentSummary.dataPoints.map(p =>
-        fenToYuan(activeMetric === 'sales' ? p.salesFen : p.profitFen),
+        activeMetric === 'sales' ? p.salesDisplay : p.profitDisplay,
       ),
       activeMetric,
     );
@@ -245,7 +241,7 @@ const MemberDetailSalesStatsModal: React.FC<MemberDetailSalesStatsModalProps> = 
           <SummaryCard
             icon={<IconSalesRevenue width={16} height={16} strokeWidth={2.2} />}
             iconClassName={styles.iconSales}
-            totalFen={currentSummary.totalSalesFen}
+            totalDisplay={currentSummary.totalSalesDisplay}
             label="销售额"
             growthPct={currentSummary.salesGrowthPct}
             isActive={activeMetric === 'sales'}
@@ -256,7 +252,7 @@ const MemberDetailSalesStatsModal: React.FC<MemberDetailSalesStatsModalProps> = 
           <SummaryCard
             icon={<IconProfitCoin width={16} height={16} strokeWidth={2.2} />}
             iconClassName={styles.iconProfit}
-            totalFen={currentSummary.totalProfitFen}
+            totalDisplay={currentSummary.totalProfitDisplay}
             label="利润"
             growthPct={currentSummary.profitGrowthPct}
             isActive={activeMetric === 'profit'}
@@ -281,7 +277,7 @@ const MemberDetailSalesStatsModal: React.FC<MemberDetailSalesStatsModalProps> = 
           <div className={cx(styles.chartTotalBadge, activeMetric === 'profit' && styles.chartTotalBadgeBlue)}>
             <span className={styles.chartTotalLabel}>合计</span>
             <span className={styles.chartTotalValue}>
-              ¥{formatAmountFen(totalAmountFen)}
+              ¥{totalDisplay || '0'}
             </span>
             {growthPct !== null && (
               <span className={cx(styles.chartGrowthBadge, isPositiveGrowth ? styles.growthPos : styles.growthNeg)}>

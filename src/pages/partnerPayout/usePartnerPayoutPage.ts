@@ -1,7 +1,6 @@
 // 合伙人打款页面状态编排 hook
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { showToast } from '@components/ui/feedback/Toast';
-import { safeNum } from '@utils/utils';
 import {
   fetchPartnerPayoutList,
   submitPartnerPayoutApprove,
@@ -21,27 +20,40 @@ import type {
 interface PartnerPayoutDerivedState {
   /** 当前筛选后的申请列表 */
   filteredApplications: PartnerPayoutApplication[];
-  /** 页面头部汇总数据 */
+  /** 页面头部汇总数据（后端权威计算，前端不再累加） */
   summary: PartnerPayoutSummary;
-  /** 页面统计数据（后端优先，回退前端计算） */
+  /** 页面统计数据（后端权威计算，前端仅做展示） */
   stats: PartnerPayoutStats;
 }
+
+const EMPTY_STATS: PartnerPayoutStats = {
+  totalCount: 0,
+  pendingCount: 0,
+  approvedCount: 0,
+  paidCount: 0,
+  rejectedCount: 0,
+};
+
+const EMPTY_SUMMARY: PartnerPayoutSummary = {
+  pendingCount: 0,
+  pendingAmountDisplay: '',
+  paidAmountDisplay: '',
+};
 
 const buildDerivedState = (
   applications: PartnerPayoutApplication[],
   activeTab: PartnerPayoutTabKey,
   serverStats?: PartnerPayoutStats | null,
+  serverSummary?: PartnerPayoutSummary | null,
 ): PartnerPayoutDerivedState => {
   const pendingApplications: PartnerPayoutApplication[] = [];
   const approvedApplications: PartnerPayoutApplication[] = [];
   const paidApplications: PartnerPayoutApplication[] = [];
   const rejectedApplications: PartnerPayoutApplication[] = [];
-  let pendingAmount = 0;
 
   for (const application of applications) {
     if (application.status === 'pending') {
       pendingApplications.push(application);
-      pendingAmount += safeNum(application.amount);
       continue;
     }
 
@@ -75,33 +87,13 @@ const buildDerivedState = (
     }
   };
 
-  // 基于当前页数据计算的前端 stats（作为 serverStats 缺失时的回退）
-  const computedStats: PartnerPayoutStats = {
-    totalCount: applications.length,
-    pendingCount: pendingApplications.length,
-    approvedCount: approvedApplications.length,
-    paidCount: paidApplications.length,
-    rejectedCount: rejectedApplications.length,
-  };
-
-  // 优先使用后端返回的 stats，回退到前端计算
-  const derivedStats: PartnerPayoutStats = serverStats
-    ? {
-      totalCount: serverStats.totalCount || computedStats.totalCount,
-      pendingCount: serverStats.pendingCount || computedStats.pendingCount,
-      approvedCount: serverStats.approvedCount || computedStats.approvedCount,
-      paidCount: serverStats.paidCount || computedStats.paidCount,
-      rejectedCount: serverStats.rejectedCount || computedStats.rejectedCount,
-    }
-    : computedStats;
+  // 统计与汇总均由后端权威计算，前端仅做展示，不再 reduce 回退
+  const derivedStats: PartnerPayoutStats = serverStats ?? EMPTY_STATS;
+  const derivedSummary: PartnerPayoutSummary = serverSummary ?? EMPTY_SUMMARY;
 
   return {
     filteredApplications: getFilteredApplications(),
-    summary: {
-      pendingCount: pendingApplications.length,
-      pendingAmount,
-      paidAmount: paidApplications.reduce((total, application) => total + safeNum(application.amount), 0),
-    },
+    summary: derivedSummary,
     stats: derivedStats,
   };
 };
@@ -165,6 +157,7 @@ export const usePartnerPayoutPage = (): UsePartnerPayoutPageReturn => {
   const [errorMessage, setErrorMessage] = useState('');
   const [confirmState, setConfirmState] = useState<PartnerPayoutConfirmState>(INITIAL_CONFIRM_STATE);
   const [serverStats, setServerStats] = useState<PartnerPayoutStats | null>(null);
+  const [serverSummary, setServerSummary] = useState<PartnerPayoutSummary | null>(null);
   const requestIdRef = useRef(0);
   const isSubmittingRef = useRef(false);
 
@@ -181,6 +174,7 @@ export const usePartnerPayoutPage = (): UsePartnerPayoutPageReturn => {
 
       setApplications(response.applications);
       setServerStats(response.stats);
+      setServerSummary(response.summary);
       setErrorMessage('');
     } catch (error) {
       if (currentRequestId !== requestIdRef.current) {
@@ -189,6 +183,7 @@ export const usePartnerPayoutPage = (): UsePartnerPayoutPageReturn => {
 
       setApplications([]);
       setServerStats(null);
+      setServerSummary(null);
       setErrorMessage(error instanceof Error ? error.message : '获取合伙人打款列表失败');
     } finally {
       if (currentRequestId === requestIdRef.current) {
@@ -202,8 +197,8 @@ export const usePartnerPayoutPage = (): UsePartnerPayoutPageReturn => {
   }, [loadPartnerPayoutData]);
 
   const { filteredApplications, summary, stats } = useMemo(
-    () => buildDerivedState(applications, activeTab, serverStats),
-    [activeTab, applications, serverStats],
+    () => buildDerivedState(applications, activeTab, serverStats, serverSummary),
+    [activeTab, applications, serverStats, serverSummary],
   );
 
   const handleApplicationToggle = useCallback((id: string): void => {

@@ -1,5 +1,5 @@
 // 合伙人打款页面类型定义
-// 数值字段仅做类型建模，UI 展示统一在消费层经 safeNum 处理。
+// 金额展示值由后端直接返回 xxxDisplay 字段，前端不做分转元和格式化。
 export type PartnerPayoutStatus = 'pending' | 'approved' | 'paid' | 'rejected';
 export type PartnerPayoutAccountType = 'wechat' | 'alipay' | 'bank';
 export type PartnerPayoutTabKey = 'all' | 'pending' | 'approved' | 'paid' | 'rejected';
@@ -15,8 +15,8 @@ export interface PartnerPayoutApplication {
   partnerCity: string;
   /** 合伙人头像 URL */
   partnerAvatarUrl?: string;
-  /** 申请金额，单位分 */
-  amount: number;
+  /** 申请金额展示值（后端直接返回，前端不再分转元） */
+  amountDisplay: string;
   /** 收款账户类型 */
   accountType: PartnerPayoutAccountType;
   /** 收款账号 */
@@ -38,10 +38,10 @@ export interface PartnerPayoutApplication {
 export interface PartnerPayoutSummary {
   /** 待处理申请数 */
   pendingCount: number;
-  /** 待打款金额，单位分 */
-  pendingAmount: number;
-  /** 已打款累计金额，单位分 */
-  paidAmount: number;
+  /** 待打款金额展示值（后端直接返回，前端不再分转元） */
+  pendingAmountDisplay: string;
+  /** 已打款累计金额展示值（后端直接返回，前端不再分转元） */
+  paidAmountDisplay: string;
 }
 
 export interface PartnerPayoutStats {
