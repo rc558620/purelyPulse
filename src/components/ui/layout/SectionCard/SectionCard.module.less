@@ -11,11 +11,6 @@
   padding: 1.6rem;
   .flex-col();
   gap: 1.4rem;
-  overflow: hidden;
-
-  &:hover {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
-  }
 }
 
 // 全高版本：在 flex/grid 布局中撑满父容器高度
@@ -27,6 +22,11 @@
 .cardNoPadding {
   padding: 0;
   gap: 0;
+}
+
+// 裁切溢出版本：需要时显式传入 overflowHidden prop
+.cardOverflowHidden {
+  overflow: hidden;
 }
 
 // ─── 标题行 ────────────────────────────────────────────────────

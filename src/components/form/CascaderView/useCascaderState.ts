@@ -137,9 +137,10 @@ export function useCascaderState({
   const resetLevel = useCallback(() => {
     setCurrentLevel(0);
     // 重置 draft 为当前已提交值（避免上次未完成选择的脏数据残留）
-    setInternalValue(isControlled ? value ?? [] : internalValue);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isControlled, value]);
+    // 非受控模式下使用 selectedValue（= internalValue 已提交的值），
+    // 而非 internalValue（可能包含面板中未提交的临时 draft）
+    setInternalValue(selectedValue);
+  }, [selectedValue]);
 
   // ── 派生数据 ──────────────────────────────────────────────────────────────────
 
@@ -158,7 +159,9 @@ export function useCascaderState({
     if (currentLevel === 0) return options;
     let current = options;
     for (let i = 0; i < currentLevel; i++) {
-      const found = current.find(o => o.value === internalValue[i]);
+      // 使用 findOptionAtLevel（含 valuePath fallback）而非简单的 value 匹配，
+      // 以支持折叠显示项（valuePath）场景下正确查找子选项
+      const found = findOptionAtLevel(current, internalValue, i);
       if (!found?.children) return [];
       current = found.children;
     }
@@ -199,6 +202,8 @@ export function useCascaderState({
 
   const handleMobileBack = useCallback(() => {
     if (currentLevel > 0) {
+      // 回退时同步截断 internalValue 到当前层级，避免残留更深层级的脏数据
+      setInternalValue(prev => prev.slice(0, currentLevel - 1));
       setCurrentLevel(l => l - 1);
     } else {
       onClose();
@@ -215,7 +220,9 @@ export function useCascaderState({
       const hasChildren = !!selectedOption?.children?.length;
       const selectedPath = selectedOption?.valuePath ?? newValue;
 
-      setInternalValue(selectedPath);
+      // 中间节点（有子节点）使用 newValue 以保证子级列表能正确展开；
+      // 叶节点使用 selectedPath（可能含 valuePath 折叠路径）以提交完整值
+      setInternalValue(hasChildren ? newValue : selectedPath);
 
       if (!hasChildren) {
         onChange?.(selectedPath);
@@ -232,8 +239,9 @@ export function useCascaderState({
       e.stopPropagation();
       if (!isControlled) setInternalValue([]);
       onChange?.([]);
+      onClose();
     },
-    [isControlled, onChange],
+    [isControlled, onChange, onClose],
   );
 
   return {

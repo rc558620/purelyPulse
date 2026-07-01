@@ -298,8 +298,9 @@ describe('useAvatarUpload – handleCropConfirm', () => {
         const { result } = await openCropState();
         expect(result.current.cropVisible).toBe(true);
 
-        act(() => {
+        await act(async () => {
             result.current.handleCropConfirm('blob:cropped');
+            await Promise.resolve();
         });
 
         expect(result.current.cropVisible).toBe(false);
@@ -308,8 +309,9 @@ describe('useAvatarUpload – handleCropConfirm', () => {
     it('调用后 pendingCropSrc 被清空为 ""', async () => {
         const { result } = await openCropState();
 
-        act(() => {
+        await act(async () => {
             result.current.handleCropConfirm('blob:cropped');
+            await Promise.resolve();
         });
 
         expect(result.current.pendingCropSrc).toBe('');
@@ -319,8 +321,9 @@ describe('useAvatarUpload – handleCropConfirm', () => {
         const onAvatarChange = vi.fn();
         const { result } = await openCropState(onAvatarChange);
 
-        act(() => {
+        await act(async () => {
             result.current.handleCropConfirm('blob:http://test/cropped');
+            await Promise.resolve();
         });
 
         expect(onAvatarChange).toHaveBeenCalledWith('blob:http://test/cropped');
@@ -330,8 +333,9 @@ describe('useAvatarUpload – handleCropConfirm', () => {
     it('showToast 以 type="success" 提示「头像更新成功」', async () => {
         const { result } = await openCropState();
 
-        act(() => {
+        await act(async () => {
             result.current.handleCropConfirm('blob:cropped');
+            await Promise.resolve();
         });
 
         expect(mockShowToast).toHaveBeenCalledWith(
@@ -459,8 +463,9 @@ describe('useAvatarUpload – 重复选同文件', () => {
             result.current.handleFileChange(makeChangeEvent(makeFile()));
             await Promise.resolve();
         });
-        act(() => {
+        await act(async () => {
             result.current.handleCropConfirm('blob:first');
+            await Promise.resolve();
         });
         expect(result.current.cropVisible).toBe(false);
 

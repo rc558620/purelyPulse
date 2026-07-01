@@ -53,7 +53,8 @@
   color: inherit;
 }
 
-.checkbox:hover .box {
+// Bug3 修复：disabled 时不触发 hover 效果
+.checkbox:not(.checkboxDisabled):hover .box {
   border-color: var(--checkbox-color);
   transform: translateY(-1px);
 }
@@ -63,6 +64,7 @@
   box-shadow: 0 0 0 3px fade(@primary, 18%);
 }
 
+// ── checked 选中态 ──
 .input:checked + .box {
   border-color: var(--checkbox-color);
   background-color: var(--checkbox-color);
@@ -73,6 +75,7 @@
   transform: scale(1);
 }
 
+// ── indeterminate 半选态 ──
 .checkboxIndeterminate .box {
   border-color: var(--checkbox-color);
   background-color: fade(@primary, 10%);
@@ -86,10 +89,7 @@
   background-color: var(--checkbox-color);
 }
 
-.checkboxIndeterminate .icon {
-  display: none;
-}
-
+// ── error 错误态 ──
 .checkboxError .box {
   border-color: @rose-500;
 }
@@ -99,25 +99,36 @@
   box-shadow: 0 0 0 3px fade(@rose-500, 18%);
 }
 
+// ── disabled 禁用态 ──
 .checkboxDisabled {
   cursor: not-allowed;
 }
 
-.checkboxDisabled .box,
+// Bug1 修复：disabled 未选中态
 .input:disabled + .box {
   background-color: @bg-slate-100;
   border-color: @border-color;
   box-shadow: none;
   transform: none;
+  opacity: 0.65;
 }
 
+// Bug1 修复：disabled + checked 选中态：保留主色背景与对勾，仅降低不透明度
+.input:checked:disabled + .box {
+  background-color: var(--checkbox-color);
+  border-color: var(--checkbox-color);
+  opacity: 0.5;
+}
+
+.input:checked:disabled + .box .icon {
+  opacity: 1;
+  transform: scale(1);
+}
+
+// Bug8 修复：label 降色降透明度，不使用容器级 opacity 避免双重降低
 .checkboxDisabled .label,
 .input:disabled ~ .label {
   color: @text-sub;
-}
-
-.checkboxDisabled,
-.input:disabled ~ .label {
   opacity: 0.65;
 }
 

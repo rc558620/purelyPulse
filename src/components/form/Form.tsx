@@ -2,12 +2,12 @@
 import React, { useEffect, useRef, useMemo, useCallback, type FormEvent, type ReactNode } from 'react';
 import { FormContext } from './context';
 import { useForm } from './useForm';
-import type { FormContextType, FormErrorMap, FormInstance, FormRequiredMark, FormValues } from './types';
+import type { FormContextType, FormErrorMap, FormFieldName, FormInstance, FormRequiredMark, FormValues } from './types';
 /** 表单组件属性。 */
 export interface FormProps<T extends FormValues = FormValues> {
     /** 外部传入的表单实例。 */
     form?: FormInstance<T>;
-    /** 表单校验通过后的提交回调（支持异步）。 */
+    /** 表单校验通过后的提交回调，支持异步。 */
     onFinish?: (values: T) => void | Promise<void>;
     /** 表单校验失败后的回调。 */
     onFinishFailed?: (errors: FormErrorMap<T>) => void;
@@ -17,6 +17,10 @@ export interface FormProps<T extends FormValues = FormValues> {
     className?: string;
     /** 全局必填标识策略，行为对齐 antd 5。 */
     requiredMark?: FormRequiredMark;
+    /** 表单初始值。 */
+    initialValues?: Partial<T>;
+    /** 表单 DOM id，供外部 submit 按钮的 form 属性关联。 */
+    id?: string;
 }
 
 /** 内部表单组件实现。 */
@@ -27,9 +31,22 @@ const InternalForm = <T extends FormValues = FormValues>({
     children,
     className,
     requiredMark = true,
+    initialValues,
+    id,
 }: FormProps<T>): React.JSX.Element => {
     const [internalForm] = useForm<T>();
     const formInstance = form ?? internalForm;
+
+    /** 首次渲染时将 initialValues 写入表单 store，仅执行一次。 */
+    const initialsAppliedRef = useRef(false);
+    useEffect(() => {
+        if (initialsAppliedRef.current || !initialValues) return;
+        initialsAppliedRef.current = true;
+        Object.entries(initialValues).forEach(([key, value]) => {
+            formInstance.setFieldValue(key as FormFieldName<T>, value as T[FormFieldName<T>]);
+        });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     /** 用 ref 保存最新的回调，避免 handleSubmit 闭包过期。 */
     const onFinishRef = useRef(onFinish);
@@ -48,8 +65,6 @@ const InternalForm = <T extends FormValues = FormValues>({
         }
         try {
             const values = await formInstanceRef.current.validateFields();
-            // Bug 4 修复：await 异步 onFinish，确保异常能被 catch 捕获
-            // 而不是静默吞掉导致 submitting 永远不会重置为 false
             await onFinishRef.current?.(values);
         } catch (errors) {
             onFinishFailedRef.current?.(errors as FormErrorMap<T>);
@@ -75,13 +90,13 @@ const InternalForm = <T extends FormValues = FormValues>({
             submit: stableSubmit,
             requiredMark,
         }),
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
         [formInstance, requiredMark, stableSubmit],
     );
 
     return (
         <FormContext.Provider value={contextValue}>
-            <form onSubmit={handleSubmit} className={className} noValidate>
+            <form id={id} onSubmit={handleSubmit} className={className} noValidate>
                 {children}
             </form>
         </FormContext.Provider>

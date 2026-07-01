@@ -15,8 +15,8 @@ export interface SectionToggleHeaderProps {
   title: string;
   /** 当前展开状态 */
   visible: boolean;
-  /** 切换回调 */
-  onToggle: () => void;
+  /** 切换回调，接收原生点击事件 */
+  onToggle: (e: React.MouseEvent<HTMLButtonElement>) => void;
   /** 按钮左侧自定义图标，默认使用柱状图图标 */
   toggleIcon?: ReactNode;
 }
@@ -33,7 +33,7 @@ const SectionToggleHeader: React.FC<SectionToggleHeaderProps> = React.memo(({
     <h3 className={styles.sectionTitle}>{title}</h3>
     <button
       type="button"
-      className={cx(styles.toggleBtn, visible && styles.toggleBtnActive)}
+      className={cx(styles.toggleBtn, visible ? styles.toggleBtnActive : undefined)}
       onClick={onToggle}
       aria-label={visible ? `收起${title}` : `展开${title}`}
       aria-pressed={visible}

@@ -1,6 +1,6 @@
 @import (reference) '@styles/variables.less';
 
-// ─── 「选择年月日」+「日期范围」并排按钮行 ────────────────────────
+// ─── 自定义日期模式双按钮行 ────────────────────────
 
 .customBtnRow {
   display: flex;
@@ -27,11 +27,24 @@
   transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
   -webkit-tap-highlight-color: transparent;
 
-  &:hover:not(.customModeBtnActive) {
+  &:hover:not(.customModeBtnActive):not(.customModeBtnDisabled) {
     border-color: @primary;
     color: darken(@primary, 15%);
     background-color: fade(@primary, 12%);
   }
+
+  // Bug4: 键盘焦点可见样式（WCAG 2.1 AA）
+  &:focus-visible {
+    outline: 2px solid @primary;
+    outline-offset: 2px;
+  }
+}
+
+// Bug3: 文字溢出省略
+.customModeBtnText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 // 激活态
@@ -41,4 +54,10 @@
   color: darken(@primary, 15%);
   font-weight: 600;
   box-shadow: 0 0 0 3px fade(@primary, 12%);
+}
+
+// Bug2: 互斥 disabled 态（另一种模式已激活时，本按钮视觉变淡）
+.customModeBtnDisabled {
+  opacity: 0.5;
+  cursor: default;
 }

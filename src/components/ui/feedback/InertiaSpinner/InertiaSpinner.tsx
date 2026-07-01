@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useRef } from 'react';
+import React, { memo, useEffect, useRef, useCallback } from 'react';
 import { cx } from '@utils/utils';
 import styles from './InertiaSpinner.module.less';
 
@@ -15,6 +15,18 @@ export interface InertiaSpinnerProps {
     spinningLabel?: string;
     idleLabel?: string;
 }
+
+/** 动画引擎物理参数 */
+const PHYSICS = {
+    maxVelocity: 0.92,
+    startAcceleration: 0.044,
+    stopAcceleration: 0.0021,
+    minVelocity: 0.0009,
+    relaunchVelocity: 0.52,
+    boostMinVelocity: 0.78,
+    boostVelocityCap: 1.26,
+    boostImpulse: 0.32,
+} as const;
 
 export const InertiaSpinner: React.FC<InertiaSpinnerProps> = memo(({
     spinning,
@@ -35,98 +47,88 @@ export const InertiaSpinner: React.FC<InertiaSpinnerProps> = memo(({
     const velocityRef = useRef<number>(0);
     const lastFrameTimeRef = useRef<number | null>(null);
     const animationFrameRef = useRef<number | null>(null);
-    const stepRef = useRef<((timestamp: number) => void) | null>(null);
 
-    useEffect(() => {
-        const maxVelocity = 0.92;
-        const startAcceleration = 0.044;
-        const stopAcceleration = 0.0021;
-        const minVelocity = 0.0009;
+    /** 动画步进函数 —— 定义在组件作用域，不依赖 Effect 闭包，避免 StrictMode 下 stepRef 为 null */
+    const step = useCallback((timestamp: number): void => {
+        const previousTimestamp = lastFrameTimeRef.current ?? timestamp - 16;
+        const delta = Math.min(timestamp - previousTimestamp, 32);
+        lastFrameTimeRef.current = timestamp;
 
-        const step = (timestamp: number): void => {
-            const previousTimestamp = lastFrameTimeRef.current ?? timestamp - 16;
-            const delta = Math.min(timestamp - previousTimestamp, 32);
-            lastFrameTimeRef.current = timestamp;
+        const targetVelocity = spinningRef.current ? PHYSICS.maxVelocity : 0;
+        const smoothingBase = spinningRef.current ? PHYSICS.startAcceleration : PHYSICS.stopAcceleration;
+        const smoothing = 1 - Math.exp(-smoothingBase * delta);
 
-            const targetVelocity = spinningRef.current ? maxVelocity : 0;
-            const smoothingBase = spinningRef.current ? startAcceleration : stopAcceleration;
-            const smoothing = 1 - Math.exp(-smoothingBase * delta);
-
-            velocityRef.current += (targetVelocity - velocityRef.current) * smoothing;
-            if (!spinningRef.current && Math.abs(velocityRef.current) < minVelocity) {
-                velocityRef.current = 0;
-            }
-
-            rotationRef.current = (rotationRef.current + velocityRef.current * delta) % 360;
-            if (indicatorRef.current) {
-                indicatorRef.current.style.transform = `rotate(${rotationRef.current}deg)`;
-            }
-
-            if (spinningRef.current || velocityRef.current > 0) {
-                animationFrameRef.current = window.requestAnimationFrame(step);
-            } else {
-                animationFrameRef.current = null;
-                lastFrameTimeRef.current = null;
-            }
-        };
-
-        stepRef.current = step;
-
-        if ((spinningRef.current || velocityRef.current > 0) && animationFrameRef.current === null) {
-            animationFrameRef.current = window.requestAnimationFrame(step);
+        velocityRef.current += (targetVelocity - velocityRef.current) * smoothing;
+        if (!spinningRef.current && Math.abs(velocityRef.current) < PHYSICS.minVelocity) {
+            velocityRef.current = 0;
         }
 
+        rotationRef.current = (rotationRef.current + velocityRef.current * delta) % 360;
+        if (indicatorRef.current) {
+            indicatorRef.current.style.transform = `rotate(${rotationRef.current}deg)`;
+        }
+
+        if (spinningRef.current || velocityRef.current > 0) {
+            animationFrameRef.current = window.requestAnimationFrame(step);
+        } else {
+            animationFrameRef.current = null;
+            lastFrameTimeRef.current = null;
+        }
+    }, []);
+
+    /** 确保动画帧运行（如果尚未运行则启动） */
+    const ensureRunning = useCallback((): void => {
+        if (animationFrameRef.current === null && (spinningRef.current || velocityRef.current > 0)) {
+            lastFrameTimeRef.current = null;
+            animationFrameRef.current = window.requestAnimationFrame(step);
+        }
+    }, [step]);
+
+    // ─── 清理：组件卸载时取消动画帧 ─────────────────────────────────────────────
+    useEffect(() => {
         return () => {
             if (animationFrameRef.current !== null) {
                 window.cancelAnimationFrame(animationFrameRef.current);
                 animationFrameRef.current = null;
             }
-            stepRef.current = null;
             lastFrameTimeRef.current = null;
         };
     }, []);
 
+    // ─── spinning 状态切换：驱动动画启动 / 停止 / 重启 ─────────────────────────
     useEffect(() => {
-        const relaunchVelocity = 0.52;
         const wasSpinning = wasSpinningRef.current;
 
         spinningRef.current = spinning;
         if (spinning && !wasSpinning) {
-            velocityRef.current = Math.max(velocityRef.current, relaunchVelocity);
+            velocityRef.current = Math.max(velocityRef.current, PHYSICS.relaunchVelocity);
         }
 
         wasSpinningRef.current = spinning;
 
-        if (animationFrameRef.current === null && stepRef.current && (spinning || velocityRef.current > 0)) {
-            lastFrameTimeRef.current = null;
-            animationFrameRef.current = window.requestAnimationFrame(stepRef.current);
-        }
-    }, [spinning]);
+        ensureRunning();
+    }, [spinning, ensureRunning]);
 
+    // ─── boostSignal：外部脉冲信号加速旋转 ───────────────────────────────────────
     useEffect(() => {
-        const minBoostVelocity = 0.78;
-        const boostVelocityCap = 1.26;
-        const boostImpulse = 0.32;
-
         if (!hasMountedBoostRef.current) {
             hasMountedBoostRef.current = true;
             return;
         }
 
-        if (!spinningRef.current && velocityRef.current <= 0) {
+        // 直接读取 spinning prop 而非 spinningRef.current，
+        // 避免与 spinning Effect 执行顺序不确定导致读到过时值。
+        if (!spinning && velocityRef.current <= 0) {
             return;
         }
 
         velocityRef.current = Math.min(
-            boostVelocityCap,
-            Math.max(velocityRef.current + boostImpulse, minBoostVelocity),
+            PHYSICS.boostVelocityCap,
+            Math.max(velocityRef.current + PHYSICS.boostImpulse, PHYSICS.boostMinVelocity),
         );
 
-        if (animationFrameRef.current === null && stepRef.current) {
-            lastFrameTimeRef.current = null;
-            animationFrameRef.current = window.requestAnimationFrame(stepRef.current);
-        }
-    }, [boostSignal]);
+        ensureRunning();
+    }, [boostSignal, spinning, ensureRunning]);
 
     return (
         <span
@@ -140,6 +142,7 @@ export const InertiaSpinner: React.FC<InertiaSpinnerProps> = memo(({
                 className,
             )}
             aria-label={spinning ? spinningLabel : idleLabel}
+            aria-live={spinning ? 'polite' : 'off'}
             role="status"
         >
             {hasCustomIcon ? (

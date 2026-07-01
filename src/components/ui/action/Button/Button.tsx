@@ -1,5 +1,5 @@
 // 通用主按钮组件，统一全站 CTA 按钮的视觉风格与点击效果。
-import React, { memo } from 'react';
+import React, { memo, useCallback } from 'react';
 import { cx } from '@utils/utils';
 import { IconSpinner } from '@components/ui/_shared/icons';
 import styles from './Button.module.less';
@@ -32,9 +32,37 @@ const Button = memo(function Button({
     className,
     disabled,
     type = 'button',
+    onMouseDown,
+    onTouchStart,
     ...rest
 }: ButtonProps) {
     const isDisabled = disabled || loading;
+
+    // loading 态下包装事件处理器：阻止 onMouseDown / onTouchStart 传播，
+    // 因为部分浏览器中 disabled 按钮仍可触发这些事件
+    const handleMouseDown = useCallback(
+        (e: React.MouseEvent<HTMLButtonElement>) => {
+            if (loading) {
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+            }
+            onMouseDown?.(e);
+        },
+        [loading, onMouseDown],
+    );
+
+    const handleTouchStart = useCallback(
+        (e: React.TouchEvent<HTMLButtonElement>) => {
+            if (loading) {
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+            }
+            onTouchStart?.(e);
+        },
+        [loading, onTouchStart],
+    );
 
     return (
         <button
@@ -48,6 +76,8 @@ const Button = memo(function Button({
                 loading && styles.loading,
                 className,
             )}
+            onMouseDown={handleMouseDown}
+            onTouchStart={handleTouchStart}
             {...rest}
         >
             {loading ? (

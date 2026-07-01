@@ -18,9 +18,13 @@
 // === Text Colors ===
 @text-main:      #1e293b;  // Slate-800
 @text-sub:       #64748b;  // Slate-500
+@text-muted:     #94a3b8;  // Slate-400 (placeholder / hint text)
 @text-slate-900: #0f172a;  // Darker text for stats
 @text-slate-700: #334155;  // Chart titles
 @text-slate-400: #94a3b8;  // Decimals
+
+// === Backgrounds ===
+@bg-card:        #ffffff;  // Card / surface background (alias for @bg-white)
 
 // === Borders ===
 @border-color:   #e2e8f0;  // Slate-200
@@ -31,6 +35,7 @@
 @orange-600:     #ea580c;
 @orange-500:     #f97316;
 @orange-100:     #ffedd5;
+@red-500:        #ef4444;  // Red-500
 @rose-500:       #f43f5e;
 @rose-100:       #ffe4e6;
 @emerald-500:    #10b981;
@@ -45,6 +50,8 @@
 @cyan-100:       #cffafe;
 @slate-500:      #64748b;
 @slate-100:      #f1f5f9;
+@amber-500:      #f59e0b;
+@amber-100:      #fef3c7;
 
 // === Profit Colors ===
 @profit-green:       #84cc16;
@@ -60,6 +67,17 @@
 
 // === Shadows ===
 @shadow-sm:      0 1px 2px 0 rgba(0, 0, 0, 0.05);
+
+// === Z-Index Layers ===
+// 移动端弹层遮罩 & 弹层
+@z-picker-mask:     9998;
+@z-picker-panel:    9999;
+// PC 端下拉面板
+@z-dropdown-pc:     1050;
+// Toast 通知
+@z-toast:           10000;
+// 页面悬浮操作按钮（FAB）
+@z-fab:              50;
 
 // =============================================================================
 // rem Reference (base: 1rem = 10px, html font-size: 62.5%)

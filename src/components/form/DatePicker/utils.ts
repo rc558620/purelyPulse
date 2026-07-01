@@ -40,12 +40,18 @@ export const getFirstDayOfWeek = (year: number, month: number): number =>
 
 // ─── 时间解析 ─────────────────────────────────────────────────
 
-/** 解析 "HH:mm" 为 { hour, minute }，边界 clamp */
+/** 解析 "HH:mm" 为 { hour, minute }，边界 clamp，NaN 兜底为 0 */
 export const parseTime = (time: string): { hour: number; minute: number } => {
   const parts = time.split(':');
+  const rawH = parseInt(parts[0] ?? '9',  10);
+  const rawM = parseInt(parts[1] ?? '0', 10);
+  const clamp = (v: number, min: number, max: number) => {
+    const n = Number.isNaN(v) ? 0 : v;
+    return Math.min(max, Math.max(min, n));
+  };
   return {
-    hour:   Math.min(23, Math.max(0, parseInt(parts[0] ?? '9',  10))),
-    minute: Math.min(59, Math.max(0, parseInt(parts[1] ?? '0', 10))),
+    hour:   clamp(rawH, 0, 23),
+    minute: clamp(rawM, 0, 59),
   };
 };
 

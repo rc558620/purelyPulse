@@ -4,38 +4,49 @@
  * ─ EmptyState
  *    1.  渲染 icon 节点
  *    2.  渲染 title
- *    3.  渲染 desc
- *    4.  onAction 不传时不渲染按钮
- *    5.  onAction 传入但 actionText 未传时不渲染按钮
- *    6.  onAction 与 actionText 都传入时渲染按钮
- *    7.  按钮文字与 actionText 一致
- *    8.  actionIcon 传入时渲染图标
- *    9.  点击按钮触发 onAction
- *    10. button type="button"
+ *    3.  渲染 desc（传入时）
+ *    4.  不传 desc 时不渲染描述
+ *    5.  onAction 不传时不渲染按钮
+ *    6.  onAction 传入但 actionText 未传时不渲染按钮
+ *    7.  onAction 与 actionText 都传入时渲染按钮
+ *    8.  按钮文字与 actionText 一致
+ *    9.  actionIcon 传入时渲染图标且含 aria-hidden
+ *    10. 点击按钮触发 onAction
+ *    11. button type="button"
+ *    12. disabled 传入时按钮禁用
+ *    13. className 透传
+ *    14. style 透传
+ *    15. EmptyState 是 React.memo 包裹的组件
  *
  * ─ ListEmptyState
- *    11. hasFilter=false（默认）时显示 emptyTitle
- *    12. hasFilter=false 时显示 emptyDesc
- *    13. hasFilter=true 时显示 filteredTitle（默认"没有符合条件的数据"）
- *    14. hasFilter=true 时显示 filteredDesc（默认"尝试调整搜索条件或清除筛选"）
- *    15. 自定义 filteredTitle 生效
- *    16. 自定义 filteredDesc 生效
- *    17. hasFilter=false 时渲染 emptyAction 按钮
- *    18. hasFilter=true 时渲染 filteredAction 按钮
- *    19. emptyAction.variant="primary" 时按钮含 actionBtn class
- *    20. emptyAction.variant="clear"（默认）时按钮含 clearBtn class
- *    21. 点击 emptyAction 按钮触发 onClick
- *    22. 点击 filteredAction 按钮触发 onClick
- *    23. 无对应 action 时不渲染按钮
- *    24. 渲染 icon 节点
- *    25. ListEmptyState 是 React.memo 包裹的组件
+ *    16. hasFilter=false（默认）时显示 emptyTitle
+ *    17. hasFilter=false 时显示 emptyDesc
+ *    18. hasFilter=true 时显示 filteredTitle（默认"没有符合条件的数据"）
+ *    19. hasFilter=true 时显示 filteredDesc（默认"尝试调整搜索条件或清除筛选"）
+ *    20. 自定义 filteredTitle 生效
+ *    21. 自定义 filteredDesc 生效
+ *    22. hasFilter=false 时渲染 emptyAction 按钮
+ *    23. hasFilter=true 时渲染 filteredAction 按钮
+ *    24. emptyAction.variant="primary" 时按钮含 actionBtn class
+ *    25. emptyAction.variant="clear"（默认）时按钮含 clearBtn class
+ *    26. 点击 emptyAction 按钮触发 onClick
+ *    27. 点击 filteredAction 按钮触发 onClick
+ *    28. 无对应 action 时不渲染按钮
+ *    29. 渲染 icon 节点
+ *    30. ListEmptyState 是 React.memo 包裹的组件
+ *    31. emptyTitle 默认值为"暂无数据"
+ *    32. 不传 emptyDesc 时不渲染描述 DOM 节点
+ *    33. emptyDesc 传空字符串时不渲染描述 DOM 节点
+ *    34. action.disabled=true 时按钮被禁用
+ *    35. filteredAction.disabled=true 时按钮被禁用
+ *    36. hasFilter=true 时不显示 emptyTitle（含默认值）
  */
 
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import EmptyState from '../feedback/EmptyState/EmptyState';
+import EmptyState from '../feedback/EmptyState';
 import ListEmptyState from '../feedback/ListEmptyState/ListEmptyState';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -48,7 +59,6 @@ function renderEmptyState(overrides: Partial<React.ComponentProps<typeof EmptySt
     const defaults = {
         icon: DefaultIcon,
         title: '暂无数据',
-        desc: '当前没有可显示的内容',
     };
     return render(<EmptyState {...defaults} {...overrides} />);
 }
@@ -64,9 +74,14 @@ describe('EmptyState – 基本渲染', () => {
         expect(screen.getByText('什么都没有')).toBeInTheDocument();
     });
 
-    it('渲染 desc', () => {
+    it('渲染 desc（传入时）', () => {
         renderEmptyState({ desc: '先添加一些数据吧' });
         expect(screen.getByText('先添加一些数据吧')).toBeInTheDocument();
+    });
+
+    it('不传 desc 时不渲染描述', () => {
+        const { container } = renderEmptyState();
+        expect(container.querySelector(`[class*="emptyDesc"]`)).toBeNull();
     });
 });
 
@@ -91,13 +106,14 @@ describe('EmptyState – 操作按钮', () => {
         expect(screen.getByRole('button')).toHaveTextContent('立即添加');
     });
 
-    it('actionIcon 传入时渲染图标', () => {
+    it('actionIcon 传入时渲染图标且含 aria-hidden', () => {
         renderEmptyState({
             onAction: vi.fn(),
             actionText: '添加',
             actionIcon: <svg data-testid="action-icon" />,
         });
-        expect(screen.getByTestId('action-icon')).toBeInTheDocument();
+        const iconWrapper = screen.getByTestId('action-icon').parentElement;
+        expect(iconWrapper).toHaveAttribute('aria-hidden', 'true');
     });
 
     it('点击按钮触发 onAction', async () => {
@@ -112,6 +128,29 @@ describe('EmptyState – 操作按钮', () => {
         renderEmptyState({ onAction: vi.fn(), actionText: '按钮' });
         expect(screen.getByRole('button')).toHaveAttribute('type', 'button');
     });
+
+    it('disabled 传入时按钮禁用', () => {
+        renderEmptyState({ onAction: vi.fn(), actionText: '重试', disabled: true });
+        expect(screen.getByRole('button')).toBeDisabled();
+    });
+});
+
+describe('EmptyState – 透传属性', () => {
+    it('className 透传', () => {
+        const { container } = renderEmptyState({ className: 'custom-class' });
+        expect(container.firstChild).toHaveClass('custom-class');
+    });
+
+    it('style 透传', () => {
+        const { container } = renderEmptyState({ style: { marginTop: 10 } });
+        expect(container.firstChild).toHaveStyle({ marginTop: '10px' });
+    });
+});
+
+describe('EmptyState – React.memo', () => {
+    it('EmptyState 是 React.memo 包裹的组件', () => {
+        expect((EmptyState as unknown as { $$typeof?: symbol }).$$typeof?.toString()).toContain('memo');
+    });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -123,21 +162,34 @@ const ListIcon = <svg data-testid="list-icon" />;
 function renderListEmpty(overrides: Partial<React.ComponentProps<typeof ListEmptyState>> = {}) {
     const defaults = {
         icon: ListIcon,
-        emptyTitle: '列表为空',
-        emptyDesc: '当前没有数据',
     };
     return render(<ListEmptyState {...defaults} {...overrides} />);
 }
 
 describe('ListEmptyState – 无筛选态（hasFilter=false）', () => {
-    it('显示 emptyTitle', () => {
+    it('显示 emptyTitle（自定义）', () => {
         renderListEmpty({ emptyTitle: '暂无记录' });
         expect(screen.getByText('暂无记录')).toBeInTheDocument();
+    });
+
+    it('显示 emptyTitle（默认"暂无数据"）', () => {
+        renderListEmpty();
+        expect(screen.getByText('暂无数据')).toBeInTheDocument();
     });
 
     it('显示 emptyDesc', () => {
         renderListEmpty({ emptyDesc: '先添加一条数据' });
         expect(screen.getByText('先添加一条数据')).toBeInTheDocument();
+    });
+
+    it('不传 emptyDesc 时不渲染描述 DOM 节点', () => {
+        const { container } = renderListEmpty();
+        expect(container.querySelector(`[class*="emptyDesc"]`)).toBeNull();
+    });
+
+    it('emptyDesc 传空字符串时不渲染描述 DOM 节点', () => {
+        const { container } = renderListEmpty({ emptyDesc: '' });
+        expect(container.querySelector(`[class*="emptyDesc"]`)).toBeNull();
     });
 
     it('不显示 filteredTitle', () => {
@@ -175,6 +227,11 @@ describe('ListEmptyState – 筛选态（hasFilter=true）', () => {
     it('hasFilter=true 时不显示 emptyTitle', () => {
         renderListEmpty({ hasFilter: true, emptyTitle: '列表为空' });
         expect(screen.queryByText('列表为空')).toBeNull();
+    });
+
+    it('hasFilter=true 时不显示默认 emptyTitle', () => {
+        renderListEmpty({ hasFilter: true });
+        expect(screen.queryByText('暂无数据')).toBeNull();
     });
 });
 
@@ -238,6 +295,21 @@ describe('ListEmptyState – action 按钮', () => {
     it('无对应 action 时不渲染按钮', () => {
         renderListEmpty({ emptyAction: undefined });
         expect(screen.queryByRole('button')).toBeNull();
+    });
+
+    it('emptyAction.disabled=true 时按钮被禁用', () => {
+        renderListEmpty({
+            emptyAction: { label: '添加', onClick: vi.fn(), disabled: true },
+        });
+        expect(screen.getByRole('button')).toBeDisabled();
+    });
+
+    it('filteredAction.disabled=true 时按钮被禁用', () => {
+        renderListEmpty({
+            hasFilter: true,
+            filteredAction: { label: '清除', onClick: vi.fn(), disabled: true },
+        });
+        expect(screen.getByRole('button')).toBeDisabled();
     });
 });
 

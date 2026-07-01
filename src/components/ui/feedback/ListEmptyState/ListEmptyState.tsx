@@ -14,6 +14,8 @@ export interface ListEmptyStateAction {
    * - 'primary'：实心主色，用于"立即添加"等主操作
    */
   variant?: 'clear' | 'primary';
+  /** 按钮是否禁用（如请求中防止重复点击） */
+  disabled?: boolean;
 }
 
 export interface ListEmptyStateProps {
@@ -21,12 +23,12 @@ export interface ListEmptyStateProps {
   icon: React.ReactNode;
   /** 有筛选条件时的标题，默认"没有符合条件的数据" */
   filteredTitle?: string;
-  /** 无数据时的标题 */
-  emptyTitle: string;
+  /** 无数据时的标题，默认"暂无数据" */
+  emptyTitle?: string;
   /** 有筛选条件时的描述，默认"尝试调整搜索条件或清除筛选" */
   filteredDesc?: string;
   /** 无数据时的描述 */
-  emptyDesc: string;
+  emptyDesc?: string;
   /** 是否处于筛选过滤状态 */
   hasFilter?: boolean;
   /**
@@ -40,7 +42,7 @@ export interface ListEmptyStateProps {
 const ListEmptyState: React.FC<ListEmptyStateProps> = memo(({
   icon,
   filteredTitle = '没有符合条件的数据',
-  emptyTitle,
+  emptyTitle = '暂无数据',
   filteredDesc = '尝试调整搜索条件或清除筛选',
   emptyDesc,
   hasFilter = false,
@@ -56,13 +58,14 @@ const ListEmptyState: React.FC<ListEmptyStateProps> = memo(({
       <div className={styles.emptyIcon}>{icon}</div>
 
       <p className={styles.emptyTitle}>{title}</p>
-      <p className={styles.emptyDesc}>{desc}</p>
+      {desc && <p className={styles.emptyDesc}>{desc}</p>}
 
       {action && (
         <button
           type="button"
           className={action.variant === 'primary' ? styles.actionBtn : styles.clearBtn}
           onClick={action.onClick}
+          disabled={action.disabled}
         >
           {action.label}
         </button>

@@ -4,19 +4,23 @@
 .modalOverlay {
   position: fixed;
   inset: 0;
+  // Bug 4: 统一 z-index 为 100，与 ConfirmModal / OperationModalShell 一致
+  z-index: 100;
   background-color: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
-  z-index: 200;
   .flex-center();
   padding: 2.4rem; /* 1.5rem * 1.6 = 24px */
   will-change: opacity;
 }
 
 .modalContent {
-  background-color: var(--bg-card);
+  // Bug 6: 统一使用 Less 变量替代 CSS 自定义属性
+  background-color: @bg-white;
   border-radius: 1.6rem; /* 1rem * 1.6 = 16px */
   width: 100%;
-  max-width: 520px;
+  max-width: 52rem;
+  max-height: 90dvh;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   animation: modalScaleIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -38,26 +42,33 @@
 .modalHeader {
   padding: 2.4rem 2.4rem 0.8rem;
   text-align: center;
+  flex-shrink: 0;
 }
 
 .modalTitle {
   font-size: 1.6rem; /* 16px */
   font-weight: 600;
-  color: var(--text-main);
+  color: @text-main;
   margin: 0;
 }
 
+// Bug 9: modalBody 添加滚动支持
 .modalBody {
   padding: 0 2.4rem 2.4rem;
   text-align: center;
   font-size: 1.4rem; /* 14px */
-  color: var(--text-secondary);
+  color: @text-sub;
   line-height: 1.5;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  -webkit-overflow-scrolling: touch;
 }
 
 .modalFooter {
   display: flex;
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid @border-color;
+  flex-shrink: 0;
 }
 
 .modalCancelBtn,
@@ -74,18 +85,19 @@
 }
 
 .modalCancelBtn {
-  color: var(--text-secondary);
-  border-right: 1px solid var(--border-color);
+  color: @text-sub;
+  border-right: 1px solid @border-color;
 }
 
 .modalConfirmBtn {
-  color: var(--color-primary);
+  // Bug 6: 统一使用 Less 变量 @primary
+  color: @primary;
   font-weight: 600;
 }
 
 .modalCancelBtn:hover,
 .modalConfirmBtn:hover {
-  background-color: var(--item-hover);
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 .modalCancelBtn:active,

@@ -27,7 +27,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import InlineItemActions from '../inlineEdit/InlineItemActions/InlineItemActions';
-import InlineItemLabel from '../inlineEdit/InlineItemLabel/InlineItemLabel';
+import InlineItemLabel from '../inlineEdit/InlineItemLabel';
 
 // ═══════════════════════════════════════════════════════════════
 // InlineItemActions
@@ -73,6 +73,16 @@ describe('InlineItemActions – 基本渲染', () => {
         screen.getAllByRole('button').forEach((btn) => {
             expect(btn).toHaveAttribute('type', 'button');
         });
+    });
+
+    it('name 为空时编辑按钮 aria-label 为"编辑"', () => {
+        renderActions({ name: '' });
+        expect(screen.getByRole('button', { name: '编辑' })).toBeInTheDocument();
+    });
+
+    it('name 为空时删除按钮 aria-label 为"删除"', () => {
+        renderActions({ name: '' });
+        expect(screen.getByRole('button', { name: '删除' })).toBeInTheDocument();
     });
 });
 
@@ -133,15 +143,31 @@ describe('InlineItemLabel – 基本渲染', () => {
         expect(screen.queryByText('旧名称')).toBeNull();
     });
 
-    it('name 为空字符串时渲染空', () => {
+    it('name 为空字符串时渲染占位符 —', () => {
         render(<InlineItemLabel name="" />);
-        const { container } = render(<InlineItemLabel name="" />);
-        expect(container.querySelector('[class*="name"]')?.textContent).toBe('');
+        expect(screen.getByText('—')).toBeInTheDocument();
+    });
+
+    it('渲染 aria-label 属性', () => {
+        render(<InlineItemLabel name="蔬菜区" />);
+        expect(screen.getByLabelText('蔬菜区')).toBeInTheDocument();
+    });
+
+    it('name 为空时 aria-label 为占位符 —', () => {
+        render(<InlineItemLabel name="" />);
+        expect(screen.getByLabelText('—')).toBeInTheDocument();
     });
 });
 
-describe('InlineItemLabel – React.memo', () => {
+describe('InlineItemLabel – React.memo 自定义比较', () => {
     it('InlineItemLabel 是 React.memo 包裹的组件', () => {
         expect((InlineItemLabel as unknown as { $$typeof?: symbol }).$$typeof?.toString()).toContain('memo');
+    });
+
+    it('name 从 "" 变为 undefined 时不触发重渲染（等价空值）', () => {
+        const { rerender } = render(<InlineItemLabel name="" />);
+        // rerender with same display text should not re-render content
+        rerender(<InlineItemLabel name="" />);
+        expect(screen.getByText('—')).toBeInTheDocument();
     });
 });

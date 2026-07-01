@@ -36,6 +36,8 @@ export interface RadioGroupProps<T extends string = string> {
   className?: string;
   /** name 属性（同 input[type=radio] 的 name，不填则自动生成） */
   name?: string;
+  /** 无障碍：关联标签元素 id，FormItem 会自动注入 */
+  ['aria-labelledby']?: string;
 }
 
 /** 单个 Radio 选项 — 独立 memo，parent 更新不会导致未变更项重渲染 */
@@ -83,6 +85,7 @@ function RadioGroupInner<T extends string = string>({
   disabled = false,
   className,
   name: nameProp,
+  'aria-labelledby': ariaLabelledby,
 }: RadioGroupProps<T>) {
   const hasError = error || status === 'error';
   const autoId = useId();
@@ -100,6 +103,7 @@ function RadioGroupInner<T extends string = string>({
       className={cx(styles.radioGroup, hasError && styles.radioGroupError, className)}
       style={colorStyle}
       role="group"
+      aria-labelledby={ariaLabelledby}
     >
       {options.map((opt) => (
         <RadioItem
@@ -115,6 +119,21 @@ function RadioGroupInner<T extends string = string>({
   );
 }
 
-const RadioGroup = memo(RadioGroupInner) as typeof RadioGroupInner;
+const RadioGroupMemo = memo(RadioGroupInner) as typeof RadioGroupInner;
+
+/**
+ * RadioGroup — 受控属性名为 value，onChange 直接返回值（非 ChangeEvent）。
+ * FormItem 通过 __VALUE_PROP_NAME__ 自动推断 valuePropName，
+ * 通过 __IS_DIRECT_VALUE__ 跳过 extractFieldValue 的事件提取逻辑。
+ */
+const RadioGroup = RadioGroupMemo as typeof RadioGroupMemo & {
+    /** 受控属性名，FormItem 自动推断。 */
+    __VALUE_PROP_NAME__: 'value';
+    /** onChange 直接返回值而非 ChangeEvent，FormItem 跳过 extractFieldValue。 */
+    __IS_DIRECT_VALUE__: true;
+};
+
+RadioGroup.__VALUE_PROP_NAME__ = 'value';
+RadioGroup.__IS_DIRECT_VALUE__ = true;
 
 export default RadioGroup;

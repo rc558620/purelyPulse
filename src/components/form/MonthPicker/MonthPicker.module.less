@@ -48,6 +48,18 @@
   background-color: @bg-white;
 }
 
+// BUG-8 fix: 禁用态样式
+.triggerDisabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+
+  &:hover {
+    border-color: @border-color;
+    background-color: @bg-white;
+  }
+}
+
 .calIcon {
   color: @text-sub;
   flex-shrink: 0;
@@ -252,22 +264,28 @@
   }
 }
 
+// BUG-5 fix: 确认按钮使用主色，视觉层级高于「本月」按钮
 .footerConfirm {
   font-size: 1.4rem;
   font-weight: 600;
-  color: @text-sub;
-  background-color: @bg-slate-100;
-  border: 1px solid @border-color;
+  color: #fff;
+  background-color: @primary;
+  border: 1px solid @primary;
   border-radius: @radius-md;
   padding: 0.6rem 1.6rem;
   cursor: pointer;
-  transition: background-color 0.15s, color 0.15s;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
   -webkit-tap-highlight-color: transparent;
   letter-spacing: 0.1em;
 
   &:hover {
-    background-color: @border-color;
-    color: @text-main;
+    background-color: darken(@primary, 8%);
+    border-color: darken(@primary, 8%);
+    color: #fff;
+  }
+
+  &:active {
+    background-color: darken(@primary, 12%);
   }
 }
 
@@ -276,7 +294,7 @@
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
-  z-index: 1000;
+  z-index: @z-dropdown-pc;
   background: @bg-white;
   border: 1px solid @border-color;
   border-radius: @radius-lg;
@@ -301,17 +319,27 @@
 }
 
 // ─── 移动端底部弹出 ────────────────────────────────────
+// 遮罩：常驻 DOM，默认透明不可见
 .mask {
   position: fixed;
   inset: 0;
   background: fade(#000, 40%);
-  z-index: 9998;
-  animation: maskIn 0.2s ease both;
+  z-index: @z-picker-mask;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
 }
 
-@keyframes maskIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+// 遮罩入场：visible=true 且非 isClosing
+.maskVisible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+// 遮罩退场：isClosing=true 时淡出
+.maskClosing {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .bottomSheet {
@@ -319,7 +347,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 9999;
+  z-index: @z-picker-panel;
   background: @bg-white;
   border-radius: 2rem 2rem 0 0;
   padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -330,6 +358,12 @@
 
 .bottomSheetVisible {
   transform: translateY(0);
+}
+
+// BUG-10 fix: 显式退场类，保证 GPU 层在退场动画期间不被提前回收
+.bottomSheetClosing {
+  transform: translateY(100%);
+  will-change: transform;
 }
 
 .sheetHeader {

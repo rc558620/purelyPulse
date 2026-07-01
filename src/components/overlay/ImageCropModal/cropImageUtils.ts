@@ -15,7 +15,7 @@ const createImage = (url: string): Promise<HTMLImageElement> =>
  * 将图片按像素裁剪区域绘制到 Canvas，并输出 Blob URL。
  * @param imageSrc 原始图片 URL（DataURL 或网络图片）
  * @param pixelCrop react-easy-crop 返回的像素级裁剪区域
- * @returns 裁剪后图片的 Blob Object URL（PNG 格式，保留透明通道）
+ * @returns 裁剪后图片的 Blob Object URL（JPEG 格式）
  */
 export async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<string> {
   const image = await createImage(imageSrc);
@@ -28,9 +28,6 @@ export async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<
 
   canvas.width = pixelCrop.width;
   canvas.height = pixelCrop.height;
-
-  // 清除画布，确保透明背景不被填充为黑色（PNG 支持透明通道）
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   ctx.drawImage(
     image,
@@ -51,6 +48,6 @@ export async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<
         return;
       }
       resolve(URL.createObjectURL(blob));
-    }, 'image/png');
+    }, 'image/jpeg');
   });
 }

@@ -64,14 +64,16 @@ const SelectPcDropdown: React.FC<SelectPcDropdownProps> = ({
           placeholder={searchPlaceholder}
           autoFocus
           autoComplete="off"
+          disabled={isClosing}
         />
         {searchText && (
-          <button
-            type="button"
-            className={styles['search-clear-btn']}
-            onClick={onSearchClear}
-            aria-label="清除搜索"
-          >
+            <button
+              type="button"
+              className={styles['search-clear-btn']}
+              onClick={onSearchClear}
+              aria-label="清除搜索"
+              disabled={isClosing}
+            >
             <SmallCloseIcon size={11} />
           </button>
         )}
@@ -88,7 +90,7 @@ const SelectPcDropdown: React.FC<SelectPcDropdownProps> = ({
       ) : (
         filteredOptions.map((option, idx) => (
           <PcOptionItem
-            key={String(option.value)}
+            key={option.value}
             option={option}
             index={idx}
             isSelected={isSelected(option.value)}
@@ -109,6 +111,7 @@ const SelectPcDropdown: React.FC<SelectPcDropdownProps> = ({
           type="button"
           className={styles['pc-confirm-btn']}
           onClick={onMultiConfirm}
+          disabled={isClosing}
         >
           确定
         </button>

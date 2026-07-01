@@ -3,6 +3,7 @@ import React, {
     memo,
     useCallback,
     useEffect,
+    useId,
     useRef,
     useState,
     useSyncExternalStore,
@@ -24,6 +25,8 @@ interface FormItemChildProps {
     onChange?: (event: unknown) => void;
     /** 输入状态。 */
     status?: 'error' | undefined;
+    /** BUG-4 修复：无障碍关联标签 id，RadioGroup 等非原生表单元素需要。 */
+    ['aria-labelledby']?: string;
 }
 
 /** 表单项属性。 */
@@ -79,15 +82,37 @@ ErrorMessage.displayName = 'ErrorMessage';
  *  使用 useSyncExternalStore 订阅单字段变更，实现字段级精细更新：
  *  其他字段变化时本字段不会重渲染。
  */
+/** Bug10 修复：从子组件静态属性自动推断 valuePropName，Checkbox 无需手动指定。 */
+const resolveValuePropName = (children: ReactNode, explicitPropName?: 'value' | 'checked'): 'value' | 'checked' => {
+    if (explicitPropName) return explicitPropName;
+    if (React.isValidElement(children)) {
+        const childType = children.type as unknown as { __VALUE_PROP_NAME__?: 'value' | 'checked' };
+        if (childType?.__VALUE_PROP_NAME__) return childType.__VALUE_PROP_NAME__;
+    }
+    return 'value';
+};
+
+/** 检测子组件的 onChange 是否直接返回值（而非 ChangeEvent）。 */
+const isDirectValueChild = (children: ReactNode): boolean => {
+    if (React.isValidElement(children)) {
+        const childType = children.type as unknown as { __IS_DIRECT_VALUE__?: boolean };
+        return childType?.__IS_DIRECT_VALUE__ === true;
+    }
+    return false;
+};
+
 const FormItemInner = <T extends FormValues = Record<string, unknown>>({
     name,
     label,
     required,
     rules = [],
-    valuePropName = 'value',
+    valuePropName: valuePropNameExplicit,
     children,
     className,
 }: FormItemProps<T>): React.JSX.Element => {
+    const valuePropName = resolveValuePropName(children, valuePropNameExplicit);
+    const directValue = isDirectValueChild(children);
+    const labelId = useId();
     const {
         registerField,
         unregisterField,
@@ -162,21 +187,33 @@ const FormItemInner = <T extends FormValues = Record<string, unknown>>({
     /** 稳定的 onChange 回调，避免每次渲染都产生新函数引用传给子组件。 */
     const handleChange = useCallback((event: unknown) => {
         childOriginalOnChangeRef.current?.(event);
-        setFieldValue(nameRef.current, extractFieldValue(event));
-    }, [setFieldValue]);
+        // BUG-1 修复：__IS_DIRECT_VALUE__ 标记的子组件（如 RadioGroup）onChange 直接返回值，
+        // 无需经过 extractFieldValue 提取，避免含 target 属性的对象被误判为 ChangeEvent。
+        const resolvedValue = directValue ? event : extractFieldValue(event);
+        setFieldValue(nameRef.current, resolvedValue);
+    }, [setFieldValue, directValue]);
 
-    // 默认 value 使用空字符串保持受控；checked 模式则回退到 false。
+    // BUG-5 修复：checked 模式回退到 false；value 模式下，对于 __IS_DIRECT_VALUE__ 子组件
+    // （如 RadioGroup），未设值时注入 undefined 而非空字符串，避免误匹配 value='' 的选项。
+    // 原生 input 等非 directValue 组件仍使用空字符串保持受控。
     const rawFieldValue = getFieldValue(name as string);
     const fieldValue = rawFieldValue === undefined
-        ? (valuePropName === 'checked' ? false : '')
+        ? (valuePropName === 'checked' ? false : directValue ? undefined : '')
         : rawFieldValue;
     const childStatus: 'error' | undefined = error ? 'error' : undefined;
+
+    // BUG-4 修复：为 RadioGroup 等非原生表单子组件自动注入 aria-labelledby，
+    // 使屏幕阅读器能关联 FormItem 的 label 文本。
+    const ariaProps: Partial<FormItemChildProps> = directValue && label
+        ? { 'aria-labelledby': labelId }
+        : {};
 
     const childNode = React.isValidElement<FormItemChildProps>(children)
         ? React.cloneElement(children, {
               [valuePropName]: fieldValue,
               onChange: handleChange,
               status: childStatus,
+              ...ariaProps,
           } as FormItemChildProps)
         : children;
 
@@ -187,7 +224,7 @@ const FormItemInner = <T extends FormValues = Record<string, unknown>>({
     return (
         <div className={cx(styles.formItem, className)}>
             {label && (
-                <label className={styles.itemLabel}>
+                <label id={labelId} className={styles.itemLabel}>
                     {showRequiredMark && <span className={styles.requiredMark} aria-hidden="true">*</span>}
                     <span>{label}</span>
                     {showOptionalMark && <span className={styles.optionalMark}>Optional</span>}

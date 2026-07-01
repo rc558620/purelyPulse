@@ -47,7 +47,7 @@
  */
 
 import React from 'react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import OperationModalShell from '../OperationModalShell/OperationModalShell';
@@ -502,5 +502,130 @@ describe('OperationModalShell – 完整 props 组合', () => {
       ),
     });
     expect(screen.getByTestId('svg-icon')).toBeInTheDocument();
+  });
+});
+
+// ─── 9. BUG 修复验证 ──────────────────────────────────────────────────────────
+describe('OperationModalShell – BUG 修复验证', () => {
+  // BUG-2: body scroll lock
+  it('挂载时设置 body overflow 为 hidden', () => {
+    const prevOverflow = document.body.style.overflow;
+    renderShell();
+    expect(document.body.style.overflow).toBe('hidden');
+    // 恢复
+    document.body.style.overflow = prevOverflow;
+  });
+
+  it('卸载时恢复 body overflow', () => {
+    const prevOverflow = document.body.style.overflow;
+    const { unmount } = renderShell();
+    expect(document.body.style.overflow).toBe('hidden');
+    unmount();
+    expect(document.body.style.overflow).toBe(prevOverflow);
+  });
+
+  // BUG-3: 确认按钮 disabled 时不触发 onConfirm
+  it('confirmDisabled=true 时确认按钮为 disabled 且 onClick 不执行', () => {
+    const onConfirm = vi.fn();
+    renderShell({ confirmDisabled: true, onConfirm });
+    const btn = screen.getByRole('button', { name: /^确认$/ });
+    expect(btn).toBeDisabled();
+    // disabled 按钮通过 fireEvent.click 模拟绕过 pointer-events: none
+    // 但 disabled 状态下 onClick 也不应被触发
+    fireEvent.click(btn);
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  // BUG-7: focus trap
+  it('overlay 元素有 tabIndex=-1 可接收焦点', () => {
+    renderShell();
+    const overlay = screen.getByRole('dialog');
+    expect(overlay).toHaveAttribute('tabindex', '-1');
+  });
+
+  // BUG-8: 打开时自动聚焦
+  it('挂载后焦点在弹窗内', () => {
+    renderShell();
+    const overlay = screen.getByRole('dialog');
+    // 焦点应该在 overlay 内部（某个按钮或 overlay 自身）
+    expect(overlay.contains(document.activeElement)).toBe(true);
+  });
+
+  // BUG-10: variant=center 时 desktopAlign=top 无效
+  it('variant=center 且 desktopAlign=top 时 overlay 不含 desktopTop class', () => {
+    renderShell({ variant: 'center', desktopAlign: 'top' });
+    const overlay = screen.getByRole('dialog');
+    // center 模式下 desktopAlign 应被忽略，不应出现 DesktopTop class
+    expect(overlay.className).not.toMatch(/[Dd]esktop[Tt]op/);
+  });
+
+  it('variant=sheet 且 desktopAlign=top 时 overlay 含 desktopTop class', () => {
+    renderShell({ variant: 'sheet', desktopAlign: 'top' });
+    const overlay = screen.getByRole('dialog');
+    expect(overlay.className).toMatch(/[Dd]esktop[Tt]op/);
+  });
+
+  // BUG-1: 多实例 ESC 栈式管理（基础验证）
+  it('两个实例同时存在时按 ESC 只触发最后一个的 onClose', () => {
+    const onClose1 = vi.fn();
+    const onClose2 = vi.fn();
+
+    // 先渲染第一个弹窗
+    const { rerender: rerender1 } = renderShell({ onClose: onClose1, ariaLabel: '弹窗1' });
+
+    // 再渲染第二个弹窗（在已有弹窗之上）
+    const { unmount: unmount2 } = renderShell({ onClose: onClose2, ariaLabel: '弹窗2' });
+
+    // 按 ESC：只有最顶层的弹窗2应该响应
+    act(() => {
+      fireEvent.keyDown(window, { key: 'Escape' });
+    });
+
+    expect(onClose2).toHaveBeenCalledTimes(1);
+    // 弹窗1不应该被 ESC 关闭
+    expect(onClose1).not.toHaveBeenCalled();
+
+    unmount2();
+  });
+
+  // BUG-5: onClose 引用变化后 ESC 仍调用最新回调
+  it('onClose 内联函数变化后 ESC 调用最新回调', () => {
+    const onClose1 = vi.fn();
+    const onClose2 = vi.fn();
+    const { rerender } = renderShell({ onClose: onClose1 });
+
+    rerender(
+      <OperationModalShell
+        ariaLabel="测试弹窗"
+        icon={<span>图标</span>}
+        title="弹窗标题"
+        onClose={onClose2}
+        onConfirm={vi.fn()}
+      >
+        <div>内容</div>
+      </OperationModalShell>,
+    );
+
+    act(() => {
+      fireEvent.keyDown(window, { key: 'Escape' });
+    });
+
+    expect(onClose1).not.toHaveBeenCalled();
+    expect(onClose2).toHaveBeenCalledTimes(1);
+  });
+
+  // BUG-6: SSR 兼容性（验证 typeof document 守卫不破坏正常渲染）
+  it('正常浏览器环境下弹窗正常渲染', () => {
+    expect(() => renderShell()).not.toThrow();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  // closeOnBackdropClick=false 时点击遮罩不关闭
+  it('closeOnBackdropClick=false 时点击遮罩不触发 onClose', () => {
+    const onClose = vi.fn();
+    renderShell({ closeOnBackdropClick: false, onClose });
+    const overlay = screen.getByRole('dialog');
+    fireEvent.click(overlay);
+    expect(onClose).not.toHaveBeenCalled();
   });
 });

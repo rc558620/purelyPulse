@@ -7,7 +7,7 @@
  *  - 自定义 placeholder
  *  - 点击 trigger 打开（aria-expanded）
  *  - Enter 键打开
- *  - ESC 关闭（mobile 模式）
+ *  - ESC 关闭（mobile 模式直接关闭）
  *  - status="error" trigger 含 error class
  *  - allowClear=true 有值时显示清除按钮，无值不显示
  *  - 点击清除触发 onChange([])
@@ -146,14 +146,22 @@ describe('CascaderView – 打开/关闭', () => {
         expect(trigger).toHaveAttribute('aria-expanded', 'true');
     });
 
-    it('ESC 键关闭面板（mobile 直接关闭）', () => {
+    it('ESC 键触发关闭面板（mobile 走退场动画）', () => {
         const { container } = render(<CascaderView options={OPTIONS} mode="mobile" />);
         const trigger = container.querySelector('[role="combobox"]')!;
         fireEvent.click(trigger);
         expect(trigger).toHaveAttribute('aria-expanded', 'true');
+        // ESC 触发 handleClose → setIsClosing(true)
         act(() => {
             window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
         });
+        // 移动端走退场动画，需模拟 transitionEnd
+        const dialog = document.querySelector('[role="dialog"]');
+        if (dialog) {
+            act(() => {
+                dialog.dispatchEvent(new TransitionEvent('transitionend', { propertyName: 'transform', bubbles: true }));
+            });
+        }
         expect(trigger).toHaveAttribute('aria-expanded', 'false');
     });
 });

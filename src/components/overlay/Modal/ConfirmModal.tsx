@@ -1,5 +1,5 @@
 // 确认弹窗组件 - 基于 Modal 扩展，支持图标和危险操作样式
-import React, { useCallback, useMemo, type ReactNode } from 'react';
+import React, { useEffect, useId, useMemo, type ReactNode } from 'react';
 import ReactDOM from 'react-dom';
 import { cx } from '@utils/utils';
 import styles from './ConfirmModal.module.less';
@@ -45,14 +45,27 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
     onConfirm,
     className,
 }) => {
-    const handleCancel = useCallback(() => {
-        onCancel();
-    }, [onCancel]);
+    // Bug 11: 使用 useId 替代硬编码 id，避免多实例 id 冲突
+    const reactId = useId();
+    const titleId = `confirm-modal-title-${reactId.replace(/:/g, '')}`;
 
-    const handleConfirm = useCallback(() => {
-        onConfirm();
-    }, [onConfirm]);
+    // Bug 2: ESC 键关闭支持
+    useEffect(() => {
+        if (!visible) return;
+        const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel(); };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, [visible, onCancel]);
 
+    // Bug 7: 弹窗打开时锁定背景滚动
+    useEffect(() => {
+        if (!visible) return;
+        const originalOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = originalOverflow; };
+    }, [visible]);
+
+    // Bug 8: 移除多余的 useCallback 包裹，直接使用 props 回调
     const iconClass = useMemo(() => cx(
         styles.modalIcon,
         variant === 'danger' && styles.modalIconDanger,
@@ -74,18 +87,18 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
             className={cx(styles.modalOverlay, className)}
             role="dialog"
             aria-modal="true"
-            aria-labelledby="confirm-modal-title"
+            aria-labelledby={titleId}
         >
             <div className={styles.modalCard}>
                 {icon && <div className={iconClass} aria-hidden="true">{icon}</div>}
-                <h3 id="confirm-modal-title" className={styles.modalTitle}>{title}</h3>
+                <h3 id={titleId} className={styles.modalTitle}>{title}</h3>
                 {description && <p className={styles.modalDesc}>{description}</p>}
                 {children}
                 <div className={styles.modalActions}>
-                    <button className={styles.modalCancelBtn} onClick={handleCancel} type="button">
+                    <button className={styles.modalCancelBtn} onClick={onCancel} type="button">
                         {cancelText}
                     </button>
-                    <button className={confirmBtnClass} onClick={handleConfirm} type="button">
+                    <button className={confirmBtnClass} onClick={onConfirm} type="button">
                         {confirmText}
                     </button>
                 </div>

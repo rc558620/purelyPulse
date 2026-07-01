@@ -121,12 +121,15 @@ const TimePicker: React.FC<TimePickerProps> = ({
         )}
       </div>
 
-      {/* ── 移动端：底部 BottomSheet（Portal，仅 visible 时挂载）── */}
-      {isMobile && visible && (
+      {/* ── 移动端：底部 BottomSheet（Portal，常驻 DOM，CSS 动画控制滑入/滑出）── */}
+      {isMobile && (
         <TimePickerMobilePanel
           value={currentValue}
+          visible={visible}
+          isClosing={isClosing}
           onConfirm={handleChange}
           onClose={handleClose}
+          onTransitionEnd={handleAnimationEnd}
         />
       )}
 

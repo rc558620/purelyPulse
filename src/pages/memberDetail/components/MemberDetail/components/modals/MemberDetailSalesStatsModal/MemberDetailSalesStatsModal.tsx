@@ -217,7 +217,7 @@ const MemberDetailSalesStatsModal: React.FC<MemberDetailSalesStatsModalProps> = 
     const chartOption = buildChartOption(
       currentSummary.dataPoints.map(p => p.label),
       currentSummary.dataPoints.map(p =>
-        activeMetric === 'sales' ? p.salesDisplay : p.profitDisplay,
+        safeNum(Number(activeMetric === 'sales' ? p.salesDisplay : p.profitDisplay)),
       ),
       activeMetric,
     );

@@ -16,10 +16,10 @@
  *  ─ badge
  *    9.  传入 badge 时渲染徽标文字
  *    10. 不传 badge 时不渲染徽标
- *    11. badgeVariant="success" 添加对应 badge--success class
- *    12. badgeVariant="warning" 添加对应 badge--warning class
- *    13. badgeVariant="danger"  添加对应 badge--danger class
- *    14. badgeVariant="info"    添加对应 badge--info class（默认）
+ *    11. badgeVariant="success" 添加对应 badgeSuccess class
+ *    12. badgeVariant="warning" 添加对应 badgeWarning class
+ *    13. badgeVariant="danger"  添加对应 badgeDanger class
+ *    14. badgeVariant="info"    添加对应 badgeInfo class（默认）
  *    15. 默认 badgeVariant 为 info
  *  ─ showArrow
  *    16. 默认 showArrow=true 时渲染箭头 span
@@ -35,11 +35,19 @@
  *    23. onClick 仅触发一次
  *  ─ React.memo
  *    24. MenuRow 是 React.memo 包裹的组件
+ *  ─ disabled
+ *    25. disabled=true 时不触发 onClick
+ *    26. disabled=true 时 button 有 aria-disabled="true"
+ *    27. disabled=true 时箭头不渲染
+ *  ─ aria-label
+ *    28. 无 description/badge 时 aria-label 等于 label
+ *    29. 有 description 时 aria-label 包含 description
+ *    30. 有 badge 时 aria-label 包含 badge
  */
 
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import MenuRow from '../layout/MenuRow/MenuRow';
 import type { BadgeVariant } from '../layout/MenuRow/MenuRow';
@@ -122,19 +130,25 @@ describe('MenuRow – badge', () => {
     });
 
     const badgeVariants: BadgeVariant[] = ['success', 'warning', 'danger', 'info'];
+    const variantClassMap: Record<BadgeVariant, string> = {
+        success: 'badgeSuccess',
+        warning: 'badgeWarning',
+        danger: 'badgeDanger',
+        info: 'badgeInfo',
+    };
     badgeVariants.forEach((variant) => {
-        it(`badgeVariant="${variant}" 时徽标含 badge--${variant} class`, () => {
+        it(`badgeVariant="${variant}" 时徽标含 ${variantClassMap[variant]} class`, () => {
             const { container } = renderMenuRow({ badge: '标签', badgeVariant: variant });
             const badgeEl = container.querySelector('[class*="menuBadge"]');
             expect(badgeEl).toBeInTheDocument();
-            expect(badgeEl!.className).toMatch(new RegExp(`badge--${variant}`));
+            expect(badgeEl!.className).toMatch(new RegExp(variantClassMap[variant]));
         });
     });
 
     it('默认 badgeVariant 为 info', () => {
         const { container } = renderMenuRow({ badge: '标签' });
         const badgeEl = container.querySelector('[class*="menuBadge"]');
-        expect(badgeEl!.className).toMatch(/badge--info/);
+        expect(badgeEl!.className).toMatch(/badgeInfo/);
     });
 });
 
@@ -203,5 +217,57 @@ describe('MenuRow – 点击事件', () => {
 describe('MenuRow – React.memo', () => {
     it('MenuRow 是 React.memo 包裹的组件', () => {
         expect((MenuRow as unknown as { $$typeof?: symbol }).$$typeof?.toString()).toContain('memo');
+    });
+});
+
+// ─── 10. disabled 状态 ────────────────────────────────────────────────────────
+describe('MenuRow – disabled', () => {
+    it('disabled=true 时不触发 onClick', () => {
+        const onClick = vi.fn();
+        renderMenuRow({ disabled: true, onClick });
+        const btn = screen.getByRole('button');
+        expect(btn).toBeDisabled();
+        // 使用 fireEvent 绕过 CSS pointer-events: none，验证即使强制点击 onClick 也不触发
+        fireEvent.click(btn);
+        expect(onClick).not.toHaveBeenCalled();
+    });
+
+    it('disabled=true 时 button 有 aria-disabled="true"', () => {
+        renderMenuRow({ disabled: true });
+        expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'true');
+    });
+
+    it('disabled=false 时 button 无 aria-disabled 属性', () => {
+        renderMenuRow({ disabled: false });
+        expect(screen.getByRole('button')).not.toHaveAttribute('aria-disabled');
+    });
+
+    it('disabled=true 时箭头不渲染', () => {
+        const { container } = renderMenuRow({ disabled: true });
+        const arrowEl = container.querySelector('[class*="menuArrow"]');
+        expect(arrowEl).toBeNull();
+    });
+});
+
+// ─── 11. aria-label ───────────────────────────────────────────────────────────
+describe('MenuRow – aria-label', () => {
+    it('无 description/badge 时 aria-label 等于 label', () => {
+        renderMenuRow({ label: '修改密码' });
+        expect(screen.getByRole('button')).toHaveAttribute('aria-label', '修改密码');
+    });
+
+    it('有 description 时 aria-label 包含 description', () => {
+        renderMenuRow({ label: '修改密码', description: '定期修改保护安全' });
+        expect(screen.getByRole('button')).toHaveAttribute('aria-label', '修改密码，定期修改保护安全');
+    });
+
+    it('有 badge 时 aria-label 包含 badge', () => {
+        renderMenuRow({ label: '实名认证', badge: '已认证' });
+        expect(screen.getByRole('button')).toHaveAttribute('aria-label', '实名认证，已认证');
+    });
+
+    it('label + description + badge 全部拼接', () => {
+        renderMenuRow({ label: '实名认证', description: '认证后解锁功能', badge: '未认证' });
+        expect(screen.getByRole('button')).toHaveAttribute('aria-label', '实名认证，认证后解锁功能，未认证');
     });
 });

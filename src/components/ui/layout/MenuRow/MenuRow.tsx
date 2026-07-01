@@ -6,6 +6,14 @@ import styles from './MenuRow.module.less';
 
 export type BadgeVariant = 'success' | 'warning' | 'info' | 'danger';
 
+/** badgeVariant 到 CSS Module 类名的显式映射，避免动态 key 拼接 */
+const BADGE_VARIANT_CLASS: Record<BadgeVariant, string> = {
+    success: 'badgeSuccess',
+    warning: 'badgeWarning',
+    info: 'badgeInfo',
+    danger: 'badgeDanger',
+};
+
 export interface MenuRowProps {
     /** 显示标签 */
     label: string;
@@ -17,10 +25,12 @@ export interface MenuRowProps {
     badgeVariant?: BadgeVariant;
     /** 左侧图标 */
     icon?: React.ReactNode;
-    /** 是否显示右箭头，默认 true */
+    /** 是否显示右箭头，默认 true（disabled=true 时箭头强制隐藏） */
     showArrow?: boolean;
     /** 是否危险操作（红色样式） */
     danger?: boolean;
+    /** 是否禁用（禁用后不可点击，置灰样式，箭头强制隐藏） */
+    disabled?: boolean;
     /** 点击回调 */
     onClick: () => void;
     /** 自定义类名 */
@@ -36,13 +46,17 @@ const MenuRow = memo(function MenuRow({
     icon,
     showArrow = true,
     danger = false,
+    disabled = false,
     onClick,
     className,
 }: MenuRowProps) {
     return (
         <button
-            className={cx(styles.menuRow, danger && styles.menuRowDanger, className)}
-            onClick={onClick}
+            className={cx(styles.menuRow, danger && styles.menuRowDanger, disabled && styles.menuRowDisabled, className)}
+            onClick={disabled ? undefined : onClick}
+            disabled={disabled}
+            aria-disabled={disabled || undefined}
+            aria-label={[label, description, badge].filter(Boolean).join('，')}
             type="button"
         >
             {icon && (
@@ -56,11 +70,11 @@ const MenuRow = memo(function MenuRow({
             </div>
             <div className={styles.menuRight}>
                 {badge && (
-                    <span className={cx(styles.menuBadge, styles[`badge--${badgeVariant}`])}>
+                    <span className={cx(styles.menuBadge, styles[BADGE_VARIANT_CLASS[badgeVariant]])}>
                         {badge}
                     </span>
                 )}
-                {showArrow && <span className={styles.menuArrow}><IconChevronRight /></span>}
+                {showArrow && !disabled && <span className={styles.menuArrow}><IconChevronRight /></span>}
             </div>
         </button>
     );

@@ -1,13 +1,9 @@
 // DayPickerPcDropdown — PC 端下拉面板
 //
-// 通过 createPortal 挂到 body，规避父容器 overflow:hidden 的定位干扰。
-// 坐标通过 CSS 自定义属性（--dp-top / --dp-left / --dp-min-width）注入，
-// 面板通过 var() 消费，避免内联样式直接写入 JSX。
+// 绝对定位，通过 CSS 动画控制入场（dropdownIn）/ 退场（dropdownClosing）。
 // 自身只负责 UI 渲染，状态由 useDayPickerState 注入。
 import React, { memo } from 'react';
-import { createPortal } from 'react-dom';
 import classNames from 'classnames';
-import { safeNum } from '@utils/utils';
 import MemoPickerColumn from '@components/form/_shared/PickerColumn';
 import { pad2 } from '@components/form/_shared/pickerUtils';
 import useDayPickerState from './useDayPickerState';
@@ -20,11 +16,11 @@ export interface DayPickerPcDropdownProps {
   pastYears?:     number;
   futureYears?:   number;
   isClosing:      boolean;
-  /** 触发器的位置信息，用于 fixed 定位对齐 */
-  triggerRect:    DOMRect;
   onConfirm:      (year: number, month: number, day: number) => void;
   onClose:        () => void;
   onAnimationEnd: () => void;
+  /** PC 端弹出位置：'top' | 'bottom'，默认 'bottom' */
+  popupPlacement?: 'top' | 'bottom';
 }
 
 const DayPickerPcDropdown: React.FC<DayPickerPcDropdownProps> = ({
@@ -34,10 +30,10 @@ const DayPickerPcDropdown: React.FC<DayPickerPcDropdownProps> = ({
   pastYears,
   futureYears,
   isClosing,
-  triggerRect,
   onConfirm,
   onClose,
   onAnimationEnd,
+  popupPlacement = 'bottom',
 }) => {
   const {
     selYear, selMonth, selDay,
@@ -46,18 +42,13 @@ const DayPickerPcDropdown: React.FC<DayPickerPcDropdownProps> = ({
     handleConfirm, handleToday,
   } = useDayPickerState({ year, month, day, pastYears, futureYears, onConfirm, onClose });
 
-  // 通过 CSS 自定义属性传递定位坐标，规避直接内联样式
-  // safeNum 确保坐标为有效有限数，防止 NaN/Infinity 造成定位异常
-  const cssVars = {
-    '--dp-top':       `${safeNum(triggerRect.bottom) + 6}px`,
-    '--dp-left':      `${safeNum(triggerRect.left)}px`,
-    '--dp-min-width': `${safeNum(triggerRect.width)}px`,
-  } as React.CSSProperties;
-
-  const panel = (
+  return (
     <div
-      className={classNames(styles.dropdownPortal, isClosing && styles.dropdownClosing)}
-      style={cssVars}
+      className={classNames(
+        styles.dropdown,
+        popupPlacement === 'top' ? styles.dropdownTop : styles.dropdownBottom,
+        isClosing && styles.dropdownClosing
+      )}
       onAnimationEnd={onAnimationEnd}
       role="dialog"
       aria-modal="true"
@@ -102,8 +93,6 @@ const DayPickerPcDropdown: React.FC<DayPickerPcDropdownProps> = ({
       </div>
     </div>
   );
-
-  return createPortal(panel, document.body);
 };
 
 export default memo(DayPickerPcDropdown);

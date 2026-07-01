@@ -3,14 +3,14 @@
  *
  * 统一 SummaryCard（cost）和 StatMiniCard（purchase）两种用法：
  *
- * - `mode="amount"` （默认）：显示 ¥ 前缀 + 金额展示字符串，接受 string 类型 `value`
+ * - `mode="amount"` （默认）：显示 ¥ 前缀 + fmtAmount 金额，接受 number 类型 `value`
  * - `mode="text"`          ：显示纯文字，接受 string 类型 `value`
  *
  * 颜色可通过 `variant` 枚举（'rose' | 'indigo' | 'orange'）或 `color` hex/rgb 字符串传入。
  * `color` 优先级高于 `variant`。
  */
 import React, { type ReactNode } from 'react';
-import { cx } from '@utils/utils';
+import { cx, fmtAmount } from '@utils/utils';
 import styles from './StatCard.module.less';
 
 // ─── 类型 ──────────────────────────────────────────────────────
@@ -28,8 +28,8 @@ const VARIANT_CLASS_MAP: Record<StatCardVariant, string | undefined> = {
 
 interface StatCardAmountProps {
   mode?: 'amount';
-  /** 金额展示值（后端直接返回，前端不再分转元）。 */
-  value: string;
+  /** 金额数值（元） */
+  value: number;
 }
 
 interface StatCardTextProps {
@@ -74,7 +74,7 @@ const StatCard: React.FC<StatCardProps> = React.memo(({
       {mode === 'amount' ? (
         <span className={styles.statValue}>
           <span className={styles.statPrefix}>¥</span>
-          {value as string}
+          {fmtAmount(value as number)}
         </span>
       ) : (
         <span className={styles.statValueText}>{value as string}</span>

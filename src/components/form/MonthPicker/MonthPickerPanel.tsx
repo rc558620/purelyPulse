@@ -3,7 +3,7 @@
 // 负责渲染两列滚轮（年 / 月）以及底部「本月」「确定」操作区。
 // 自身只管 UI 与内部临时选中值；最终确认由 onConfirm 回调通知外部。
 
-import React, { useState, useCallback, useMemo, memo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef, memo } from 'react';
 
 import MemoPickerColumn from '@components/form/_shared/PickerColumn';
 import { buildYears, MONTHS, pad2 } from '@components/form/_shared/pickerUtils';
@@ -16,6 +16,8 @@ export interface MonthPickerPanelProps {
   year: number;
   /** 当前选中月份（1-12，初始值） */
   month: number;
+  /** 面板是否可见（传给 PickerColumn，用于重置滚动行为） */
+  visible?: boolean;
   /** 向前追溯年数（默认 4） */
   pastYears?: number;
   /** 向后预留年数（默认 1） */
@@ -31,6 +33,7 @@ export interface MonthPickerPanelProps {
 const MonthPickerPanel: React.FC<MonthPickerPanelProps> = memo(({
   year,
   month,
+  visible,
   pastYears = 4,
   futureYears = 1,
   onConfirm,
@@ -39,10 +42,31 @@ const MonthPickerPanel: React.FC<MonthPickerPanelProps> = memo(({
   const [selYear,  setSelYear]  = useState(year);
   const [selMonth, setSelMonth] = useState(month);
 
-  // 年份列表由 props 决定，props 稳定时 useMemo 直接返回缓存
+  // BUG-1 fix: props 变化时同步内部状态，避免面板滚轮停留在旧值
+  useEffect(() => {
+    setSelYear(year);
+  }, [year]);
+
+  useEffect(() => {
+    setSelMonth(month);
+  }, [month]);
+
+  // BUG-8 fix: 面板打开时（visible false→true）强制同步内部状态为 props 值
+  // 解决 onClear 后 year/month 新值与旧值相同时 useEffect 不触发的问题
+  const prevVisibleRef = useRef(false);
+  useEffect(() => {
+    if (visible && !prevVisibleRef.current) {
+      setSelYear(year);
+      setSelMonth(month);
+    }
+    prevVisibleRef.current = !!visible;
+  }, [visible, year, month]);
+
+  // BUG-6 fix: 加入当前年份依赖，跨年时年份列表自动刷新
+  const currentYear = new Date().getFullYear();
   const years = useMemo(
     () => buildYears(pastYears, futureYears),
-    [pastYears, futureYears],
+    [pastYears, futureYears, currentYear],
   );
 
   const handleConfirm = useCallback(() => {
@@ -65,6 +89,7 @@ const MonthPickerPanel: React.FC<MonthPickerPanelProps> = memo(({
           onSelect={setSelYear}
           label="年"
           formatItem={n => String(n)}
+          visible={visible}
           styles={styles}
         />
         <MemoPickerColumn
@@ -73,6 +98,7 @@ const MonthPickerPanel: React.FC<MonthPickerPanelProps> = memo(({
           onSelect={setSelMonth}
           label="月"
           formatItem={n => pad2(n)}
+          visible={visible}
           styles={styles}
         />
       </div>

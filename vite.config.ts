@@ -2,6 +2,7 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import path from 'node:path'
+import type { Plugin } from 'vite'
 
 const resolvePath = (relativePath: string) => path.resolve(__dirname, relativePath)
 
@@ -74,12 +75,27 @@ function manualChunks(id: string) {
 // 本地开发时不设置该变量，base 默认为 /
 const base = process.env.VITE_BASE_URL ? new URL(process.env.VITE_BASE_URL).pathname : '/'
 
+const securityHeadersPlugin: Plugin = {
+  name: 'security-headers',
+  configureServer(server) {
+    server.middlewares.use((_req, res, next) => {
+      res.setHeader('X-Frame-Options', 'DENY')
+      res.setHeader(
+        'Content-Security-Policy',
+        "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' ws: wss:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+      )
+      next()
+    })
+  },
+}
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [securityHeadersPlugin, react()],
   base,
   server: {
     // 仅监听 localhost，防止公共网络暴露开发服务器
     host: 'localhost',
+
     proxy: {
       '/api': {
         target: 'http://localhost:3000',
@@ -90,11 +106,11 @@ export default defineConfig({
   resolve: {
     alias,
   },
+  esbuild: {
+    // 生产构建移除 console 和 debugger（esbuild Build API 选项，Vite 类型定义未包含）
+    drop: ['console', 'debugger'],
+  } as import('vite').ESBuildOptions & { drop: string[] },
   build: {
-    // 生产构建移除 console 和 debugger
-    esbuild: {
-      drop: ['console', 'debugger'],
-    },
     modulePreload: {
       resolveDependencies: (_filename, deps, context) => {
         if (context.hostType !== 'html') return deps

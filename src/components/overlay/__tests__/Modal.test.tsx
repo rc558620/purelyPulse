@@ -25,11 +25,27 @@
  *    16. 内容挂载到 document.body（而非当前容器）
  *  ─ memo 优化
  *    17. React.memo 包裹（组件引用稳定）
+ *  ─ 无障碍属性（Bug 3 修复）
+ *    18. overlay 具有 role="dialog"
+ *    19. overlay 具有 aria-modal="true"
+ *    20. overlay 具有 aria-labelledby 指向标题
+ *    21. 标题元素具有对应 id
+ *  ─ 按钮类型（Bug 1 修复）
+ *    22. 取消按钮具有 type="button"
+ *    23. 确定按钮具有 type="button"
+ *  ─ ESC 键关闭（Bug 2 修复）
+ *    24. 按 ESC 键触发 onCancel
+ *    25. visible=false 时 ESC 不注册监听
+ *  ─ 滚动锁定（Bug 7 修复）
+ *    26. visible=true 时 body overflow 为 hidden
+ *    27. visible 变 false 或卸载后恢复 overflow
+ *  ─ id 唯一性（Bug 11 修复）
+ *    28. 多个 Modal 实例标题 id 不重复
  */
 
 import React from 'react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Modal } from '../Modal/index';
 
@@ -238,7 +254,143 @@ describe('Modal – 卸载清理', () => {
   });
 });
 
-// ─── 8. 严格边界测试 ──────────────────────────────────────────────────────────
+// ─── 8. 无障碍属性（Bug 3 修复） ──────────────────────────────────────────────
+describe('Modal – 无障碍属性', () => {
+  it('overlay 具有 role="dialog"', () => {
+    renderModal();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('overlay 具有 aria-modal="true"', () => {
+    renderModal();
+    expect(screen.getByRole('dialog')).toHaveAttribute('aria-modal', 'true');
+  });
+
+  it('overlay 具有 aria-labelledby 指向标题 id', () => {
+    renderModal();
+    const dialog = screen.getByRole('dialog');
+    const labelledById = dialog.getAttribute('aria-labelledby');
+    expect(labelledById).not.toBeNull();
+    // 标题元素存在且 id 匹配
+    const titleEl = document.getElementById(labelledById!);
+    expect(titleEl).not.toBeNull();
+    expect(titleEl).toContainElement(screen.getByText('测试标题'));
+  });
+
+  it('标题元素具有对应 id', () => {
+    renderModal();
+    const titleEl = screen.getByText('测试标题');
+    expect(titleEl.id).toBeTruthy();
+    expect(titleEl.id).toMatch(/^modal-title-/);
+  });
+});
+
+// ─── 9. 按钮类型（Bug 1 修复） ────────────────────────────────────────────────
+describe('Modal – 按钮类型', () => {
+  it('取消按钮具有 type="button"', () => {
+    renderModal();
+    expect(screen.getByRole('button', { name: '取消' })).toHaveAttribute('type', 'button');
+  });
+
+  it('确定按钮具有 type="button"', () => {
+    renderModal();
+    expect(screen.getByRole('button', { name: '确定' })).toHaveAttribute('type', 'button');
+  });
+});
+
+// ─── 10. ESC 键关闭（Bug 2 修复） ─────────────────────────────────────────────
+describe('Modal – ESC 键关闭', () => {
+  it('按 ESC 键触发 onCancel', () => {
+    const onCancel = vi.fn();
+    renderModal({ onCancel });
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('visible=false 时 ESC 不注册监听', () => {
+    const onCancel = vi.fn();
+    const { rerender } = renderModal({ visible: false, onCancel });
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(onCancel).not.toHaveBeenCalled();
+
+    // 变为 true 后 ESC 生效
+    rerender(
+      <Modal visible={true} title="测试标题" onCancel={onCancel} onConfirm={vi.fn()}>
+        <span>弹窗内容</span>
+      </Modal>,
+    );
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ─── 11. 滚动锁定（Bug 7 修复） ──────────────────────────────────────────────
+describe('Modal – 滚动锁定', () => {
+  it('visible=true 时 body overflow 为 hidden', () => {
+    const originalOverflow = document.body.style.overflow;
+    renderModal({ visible: true });
+    expect(document.body.style.overflow).toBe('hidden');
+    // 还原
+    document.body.style.overflow = originalOverflow;
+  });
+
+  it('visible 变 false 后恢复 overflow', () => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'auto';
+    const { rerender } = renderModal({ visible: true });
+    expect(document.body.style.overflow).toBe('hidden');
+
+    rerender(
+      <Modal visible={false} title="测试标题" onCancel={vi.fn()} onConfirm={vi.fn()}>
+        <span>弹窗内容</span>
+      </Modal>,
+    );
+    expect(document.body.style.overflow).toBe('auto');
+    // 还原
+    document.body.style.overflow = originalOverflow;
+  });
+
+  it('卸载后恢复 overflow', () => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'auto';
+    const { unmount } = renderModal({ visible: true });
+    expect(document.body.style.overflow).toBe('hidden');
+    unmount();
+    expect(document.body.style.overflow).toBe('auto');
+    // 还原
+    document.body.style.overflow = originalOverflow;
+  });
+});
+
+// ─── 12. id 唯一性（Bug 11 修复） ─────────────────────────────────────────────
+describe('Modal – id 唯一性', () => {
+  it('多个 Modal 实例标题 id 不重复', () => {
+    const onCancel1 = vi.fn();
+    const onCancel2 = vi.fn();
+    const { unmount: unmount1 } = render(
+      <Modal visible={true} title="标题A" onCancel={onCancel1} onConfirm={vi.fn()}>
+        <span>内容A</span>
+      </Modal>,
+    );
+    const titleA = screen.getByText('标题A');
+    expect(titleA.id).toBeTruthy();
+
+    const id1 = titleA.id;
+    unmount1();
+
+    const { unmount: unmount2 } = render(
+      <Modal visible={true} title="标题B" onCancel={onCancel2} onConfirm={vi.fn()}>
+        <span>内容B</span>
+      </Modal>,
+    );
+    const titleB = screen.getByText('标题B');
+    expect(titleB.id).toBeTruthy();
+    expect(titleB.id).not.toBe(id1);
+    unmount2();
+  });
+});
+
+// ─── 13. 严格边界测试 ──────────────────────────────────────────────────────────
 describe('Modal – 严格边界', () => {
   it('多次点击「取消」回调被调用对应次数', async () => {
     const user = userEvent.setup();
@@ -334,5 +486,15 @@ describe('Modal – 严格边界', () => {
     const footer = document.body.querySelector('[class*="modalFooter"]') as HTMLElement;
     expect(footer).not.toBeNull();
     expect(footer.querySelectorAll('button').length).toBe(2);
+  });
+
+  it('title 为 ReactNode 时 aria-labelledby 仍能指向标题节点', () => {
+    renderModal({ title: <span data-testid="rich-title">富文本标题</span> });
+    const dialog = screen.getByRole('dialog');
+    const labelledById = dialog.getAttribute('aria-labelledby');
+    expect(labelledById).not.toBeNull();
+    const titleNode = document.getElementById(labelledById!);
+    expect(titleNode).not.toBeNull();
+    expect(titleNode).toContainElement(screen.getByTestId('rich-title'));
   });
 });

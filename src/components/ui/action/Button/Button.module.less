@@ -23,6 +23,13 @@
       box-shadow: none;
     }
   }
+
+  // loading + disabled 组合态：opacity 0.8 + cursor: wait
+  // 特异性 .btn.loading:disabled 高于 .btn:disabled，可覆盖
+  &.loading:disabled {
+    opacity: 0.8;
+    cursor: wait;
+  }
 }
 
 // ─── 宽度 ────────────────────────────────────────────────────
@@ -89,8 +96,8 @@
 
 // ─── 加载状态 ────────────────────────────────────────────────
 .loading {
-  opacity: 0.8;
-  cursor: not-allowed;
+  // opacity 和 cursor 由上方 .btn&.loading:disabled 统一控制，
+  // 避免与 :disabled 伪类的 opacity: 0.55 / cursor: not-allowed 冲突
 }
 
 .loadingRow {

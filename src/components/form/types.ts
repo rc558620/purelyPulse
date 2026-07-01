@@ -34,6 +34,8 @@ export interface ValidatorRule {
     message?: string;
     /** 正则校验模式。 */
     pattern?: RegExp;
+    /** 是否校验纯空白字符。 */
+    whitespace?: boolean;
     /** 自定义校验器，抛错或返回 rejected 即视为失败。 */
     validator?: (value: unknown) => Promise<void> | void;
 }
@@ -54,6 +56,11 @@ export interface FormInstance<T extends FormValues = FormValues> {
     validateSingleField: (name: string) => Promise<boolean>;
     /** 重置表单，清空所有字段值和错误信息。 */
     reset: () => void;
+    /**
+     * 按字段名订阅该字段的值/错误变更通知（精细化更新，避免全量重渲染）。
+     * 返回取消订阅的函数。
+     */
+    subscribeField: (name: string, listener: () => void) => () => void;
 }
 
 export type FormRequiredMark = boolean | 'optional';

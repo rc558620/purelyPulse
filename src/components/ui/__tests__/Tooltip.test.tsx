@@ -10,7 +10,8 @@
  *  ─ title 为空时
  *    5.  title 为 "" 空字符串时直接返回 children（无 tooltip 包裹层）
  *    6.  title 为 null 时直接返回 children
- *    7.  title 为 0 时不直接返回 children（0 是 falsy 但不是 null/undefined/"")
+ *    7.  title 为 undefined 时直接返回 children
+ *    8.  title 为 0 时正常渲染 tooltip（0 是 falsy 但不是 null/undefined/"")
  *  ─ 鼠标悬停
  *    8.  mouseenter 后 tooltip 添加 visible class
  *    9.  mouseleave 后（等待延迟）tooltip 移除 visible class
@@ -97,6 +98,28 @@ describe('Tooltip – title 为空时', () => {
         );
         expect(screen.getByTestId('child-null')).toBeInTheDocument();
         expect(container.querySelector('[role="tooltip"]')).toBeNull();
+    });
+
+    it('title 为 undefined 时直接返回 children', () => {
+        const { container } = render(
+            <Tooltip title={undefined}>
+                <span data-testid="child-undefined">内容</span>
+            </Tooltip>,
+        );
+        expect(screen.getByTestId('child-undefined')).toBeInTheDocument();
+        expect(container.querySelector('[role="tooltip"]')).toBeNull();
+    });
+
+    it('title 为 0 时正常渲染 tooltip（0 是 falsy 但不是 null/undefined/""）', () => {
+        const { container } = render(
+            <Tooltip title={0}>
+                <span data-testid="child-zero">内容</span>
+            </Tooltip>,
+        );
+        expect(screen.getByTestId('child-zero')).toBeInTheDocument();
+        // title=0 时应该渲染 tooltip，而不是直接返回 children
+        expect(container.querySelector('[role="tooltip"]')).not.toBeNull();
+        expect(container.querySelector('[role="tooltip"]')?.textContent).toContain('0');
     });
 });
 

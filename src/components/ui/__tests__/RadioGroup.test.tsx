@@ -45,7 +45,6 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import RadioGroup from '../../form/RadioGroup/RadioGroup';
 import type { RadioOption } from '../../form/RadioGroup/RadioGroup';
 

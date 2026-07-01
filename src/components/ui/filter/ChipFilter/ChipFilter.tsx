@@ -1,6 +1,6 @@
-// 通用横向可滚动 Chip 筛选组：支持"全部" + 动态分类单选切换。
+// 通用横向可滚动 Chip 筛选组：支持"全部" + 动态分类单选切换 + 鼠标/触摸拖拽滚动。
 // 适用于：库存盘点分类筛、商品额外分类筛、报表分类筛等场景。
-import React, { memo } from 'react';
+import React, { memo, useRef, useCallback, useState, useEffect } from 'react';
 import { cx } from '@utils/utils';
 import styles from './ChipFilter.module.less';
 
@@ -41,18 +41,114 @@ const ChipFilter: React.FC<ChipFilterProps> = memo(({
 }) => {
   const normalized = normalizeOptions(options);
 
-  const handleSelect = (optValue: string) => {
-    // 再次点击同一项 → 取消选中（回到"全部"）
-    onChange(value === optValue ? '' : optValue);
-  };
+  // ─── 拖拽滚动 ──────────────────────────────────────────────────────────
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const isDraggingRef = useRef(false);
+  const startXRef = useRef(0);
+  const scrollLeftRef = useRef(0);
+  /** 拖拽距离超过此阈值时，视为拖拽而非点击 */
+  const dragThresholdRef = useRef(0);
+
+  // ─── 拖拽重置 ────────────────────────────────────────────────────────
+  const stopDragging = useCallback((): void => {
+    isDraggingRef.current = false;
+    setIsDragging(false);
+  }, []);
+
+  // ─── 鼠标拖拽 ────────────────────────────────────────────────────────
+  const handleMouseDown = useCallback((e: React.MouseEvent): void => {
+    if (!scrollRef.current) return;
+    isDraggingRef.current = false;
+    dragThresholdRef.current = 0;
+    setIsDragging(false);
+    startXRef.current = e.pageX - scrollRef.current.offsetLeft;
+    scrollLeftRef.current = scrollRef.current.scrollLeft;
+  }, []);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent): void => {
+    if (!scrollRef.current) return;
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = x - startXRef.current;
+    // 移动超过 5px 才激活拖拽模式
+    if (!isDraggingRef.current && Math.abs(walk) > 5) {
+      isDraggingRef.current = true;
+      setIsDragging(true);
+    }
+    if (!isDraggingRef.current) return;
+    e.preventDefault();
+    dragThresholdRef.current = Math.abs(walk);
+    scrollRef.current.scrollLeft = scrollLeftRef.current - walk;
+  }, []);
+
+  // ─── 触摸拖拽 ────────────────────────────────────────────────────────
+  const handleTouchStart = useCallback((e: React.TouchEvent): void => {
+    if (!scrollRef.current) return;
+    isDraggingRef.current = false;
+    dragThresholdRef.current = 0;
+    setIsDragging(false);
+    startXRef.current = e.touches[0].pageX - scrollRef.current.offsetLeft;
+    scrollLeftRef.current = scrollRef.current.scrollLeft;
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent): void => {
+    if (!scrollRef.current) return;
+    const x = e.touches[0].pageX - scrollRef.current.offsetLeft;
+    const walk = x - startXRef.current;
+    if (!isDraggingRef.current && Math.abs(walk) > 5) {
+      isDraggingRef.current = true;
+      setIsDragging(true);
+    }
+    if (!isDraggingRef.current) return;
+    dragThresholdRef.current = Math.abs(walk);
+    scrollRef.current.scrollLeft = scrollLeftRef.current - walk;
+  }, []);
+
+  const handleTouchEnd = useCallback((): void => {
+    isDraggingRef.current = false;
+    setIsDragging(false);
+  }, []);
+
+  // ─── 全局 mouseup 监听：防止鼠标移出容器后松开导致拖拽态残留 ─────
+  useEffect(() => {
+    const onMouseUp = (): void => { stopDragging(); };
+    document.addEventListener('mouseup', onMouseUp);
+    return () => { document.removeEventListener('mouseup', onMouseUp); };
+  }, [stopDragging]);
+
+  // ─── 点击逻辑 ────────────────────────────────────────────────────────
+  // BUG-4 修复：使用 valueRef 避免闭包过期值，确保快速点击时 toggle 判断正确
+  const valueRef = useRef(value);
+  valueRef.current = value;
+
+  const handleSelect = useCallback((optValue: string) => {
+    // 拖拽超过阈值时不触发点击
+    if (dragThresholdRef.current > 5) return;
+    onChange(valueRef.current === optValue ? '' : optValue);
+  }, [onChange]);
+
+  // BUG-6 修复："全部"已选中时再次点击不触发回调，与动态 chip toggle 行为一致
+  const handleAllClick = useCallback(() => {
+    if (dragThresholdRef.current > 5) return;
+    if (!valueRef.current) return;
+    onChange('');
+  }, [onChange]);
 
   return (
-    <div className={cx(styles.filterScroll, className)}>
+    <div
+      ref={scrollRef}
+      className={cx(styles.filterScroll, isDragging && styles.filterScrollDragging, className)}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       {/* "全部"固定 chip */}
       <button
         type="button"
         className={cx(styles.chip, !value && styles.chipActive)}
-        onClick={() => onChange('')}
+        onClick={handleAllClick}
       >
         {allLabel}
       </button>

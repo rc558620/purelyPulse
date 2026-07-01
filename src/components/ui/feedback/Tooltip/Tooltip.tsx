@@ -17,7 +17,6 @@ export interface TooltipProps {
 
 const Tooltip = memo(function Tooltip({ title, color, placement = 'bottom', children, className }: TooltipProps) {
   const [visible, setVisible] = useState(false);
-  const triggerRef = useRef<HTMLDivElement>(null);
 
   // Use a delay for hiding to simulate AntD behavior
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -39,13 +38,12 @@ const Tooltip = memo(function Tooltip({ title, color, placement = 'bottom', chil
     };
   }, []);
 
-  if (!title) {
+  if (title == null || title === '') {
     return children;
   }
 
   return (
     <div
-      ref={triggerRef}
       className={cx(styles.tooltipTrigger)}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}

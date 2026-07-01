@@ -35,7 +35,7 @@
 
 import React, { act } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ConfirmDeleteBtn from '../feedback/ConfirmDeleteBtn/ConfirmDeleteBtn';
 
@@ -78,7 +78,13 @@ describe('ConfirmDeleteBtn – 基本渲染', () => {
 // ─── 2. 第一次点击（进入确认态）──────────────────────────────────────────────
 describe('ConfirmDeleteBtn – 进入确认态', () => {
     beforeEach(() => vi.useFakeTimers());
-    afterEach(() => { vi.runAllTimers(); vi.useRealTimers(); });
+    afterEach(() => {
+    cleanup();
+    act(() => {
+        vi.runAllTimers();
+    });
+    vi.useRealTimers();
+});
 
     it('点击后按钮添加 deleteBtnConfirm class', () => {
         renderBtn();
@@ -109,7 +115,13 @@ describe('ConfirmDeleteBtn – 进入确认态', () => {
 // ─── 3. 第二次点击（执行删除）────────────────────────────────────────────────
 describe('ConfirmDeleteBtn – 执行删除', () => {
     beforeEach(() => vi.useFakeTimers());
-    afterEach(() => { vi.runAllTimers(); vi.useRealTimers(); });
+    afterEach(() => {
+    cleanup();
+    act(() => {
+        vi.runAllTimers();
+    });
+    vi.useRealTimers();
+});
 
     it('确认态下点击触发 onDelete', () => {
         const onDelete = vi.fn();
@@ -138,7 +150,13 @@ describe('ConfirmDeleteBtn – 执行删除', () => {
 // ─── 4. 自动复位 ──────────────────────────────────────────────────────────────
 describe('ConfirmDeleteBtn – 自动复位', () => {
     beforeEach(() => vi.useFakeTimers());
-    afterEach(() => { vi.runAllTimers(); vi.useRealTimers(); });
+    afterEach(() => {
+    cleanup();
+    act(() => {
+        vi.runAllTimers();
+    });
+    vi.useRealTimers();
+});
 
     it('经过 3000ms 后自动退出确认态', () => {
         renderBtn();
@@ -174,7 +192,13 @@ describe('ConfirmDeleteBtn – 自动复位', () => {
 // ─── 5. 自定义文案 ─────────────────────────────────────────────────────────────
 describe('ConfirmDeleteBtn – 自定义文案', () => {
     beforeEach(() => vi.useFakeTimers());
-    afterEach(() => { vi.runAllTimers(); vi.useRealTimers(); });
+    afterEach(() => {
+    cleanup();
+    act(() => {
+        vi.runAllTimers();
+    });
+    vi.useRealTimers();
+});
 
     it('自定义 confirmText 在确认态显示', () => {
         renderBtn({ confirmText: '真的删吗' });
@@ -197,7 +221,13 @@ describe('ConfirmDeleteBtn – 自定义文案', () => {
 // ─── 6. className 透传 ────────────────────────────────────────────────────────
 describe('ConfirmDeleteBtn – className 透传', () => {
     beforeEach(() => vi.useFakeTimers());
-    afterEach(() => { vi.runAllTimers(); vi.useRealTimers(); });
+    afterEach(() => {
+    cleanup();
+    act(() => {
+        vi.runAllTimers();
+    });
+    vi.useRealTimers();
+});
 
     it('className 附加到按钮', () => {
         renderBtn({ className: 'my-delete-btn' });
@@ -219,7 +249,13 @@ describe('ConfirmDeleteBtn – className 透传', () => {
 // ─── 7. 卸载清理 ──────────────────────────────────────────────────────────────
 describe('ConfirmDeleteBtn – 卸载清理', () => {
     beforeEach(() => vi.useFakeTimers());
-    afterEach(() => { vi.runAllTimers(); vi.useRealTimers(); });
+    afterEach(() => {
+    cleanup();
+    act(() => {
+        vi.runAllTimers();
+    });
+    vi.useRealTimers();
+});
 
     it('确认态下卸载组件不抛出错误（timer 被清理）', () => {
         const { unmount } = renderBtn();
@@ -238,7 +274,85 @@ describe('ConfirmDeleteBtn – React.memo', () => {
     });
 });
 
-// ─── 9. userEvent 完整交互流 ──────────────────────────────────────────────────
+// ─── 9. disabled 状态切换（Bug1 回归） ─────────────────────────────────────────
+describe('ConfirmDeleteBtn – disabled 状态切换', () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => {
+        cleanup();
+        act(() => { vi.runAllTimers(); });
+        vi.useRealTimers();
+    });
+
+    it('disabled=true 时点击不进入确认态', () => {
+        const onDelete = vi.fn();
+        renderBtn({ onDelete, disabled: true });
+        act(() => { fireEvent.click(screen.getByRole('button')); });
+        expect(onDelete).not.toHaveBeenCalled();
+        expect(screen.getByRole('button').className).not.toMatch(/deleteBtnConfirm/);
+    });
+
+    it('确认态中 disabled 变为 true → 退出确认态 + 清除定时器', () => {
+        const onDelete = vi.fn();
+        const { rerender } = renderBtn({ onDelete, disabled: false });
+        act(() => { fireEvent.click(screen.getByRole('button')); }); // 进入确认态
+        expect(screen.getByRole('button').className).toMatch(/deleteBtnConfirm/);
+
+        // disabled 变为 true
+        rerender(<ConfirmDeleteBtn onDelete={onDelete} disabled />);
+        expect(screen.getByRole('button').className).not.toMatch(/deleteBtnConfirm/);
+        // 推进超过 timeout，不应有异常（定时器已清除）
+        act(() => { vi.advanceTimersByTime(5000); });
+    });
+
+    it('disabled 从 true 恢复为 false 后可以正常进入确认态（Bug1 回归）', () => {
+        const onDelete = vi.fn();
+        const { rerender } = renderBtn({ onDelete, disabled: true });
+
+        // 恢复 enabled
+        rerender(<ConfirmDeleteBtn onDelete={onDelete} disabled={false} />);
+
+        // 点击应能进入确认态
+        act(() => { fireEvent.click(screen.getByRole('button')); });
+        expect(screen.getByRole('button').className).toMatch(/deleteBtnConfirm/);
+        expect(onDelete).not.toHaveBeenCalled();
+
+        // 第二次点击应触发删除
+        act(() => { fireEvent.click(screen.getByRole('button')); });
+        expect(onDelete).toHaveBeenCalledTimes(1);
+    });
+
+    it('确认态 → disabled=true → disabled=false 后可以重新进入确认态（Bug1 完整链路回归）', () => {
+        const onDelete = vi.fn();
+        const { rerender } = renderBtn({ onDelete, disabled: false });
+
+        // 进入确认态
+        act(() => { fireEvent.click(screen.getByRole('button')); });
+        expect(screen.getByRole('button').className).toMatch(/deleteBtnConfirm/);
+
+        // disabled 打断确认态
+        rerender(<ConfirmDeleteBtn onDelete={onDelete} disabled />);
+        expect(screen.getByRole('button').className).not.toMatch(/deleteBtnConfirm/);
+
+        // disabled 恢复
+        rerender(<ConfirmDeleteBtn onDelete={onDelete} disabled={false} />);
+
+        // 应能重新进入确认态
+        act(() => { fireEvent.click(screen.getByRole('button')); });
+        expect(screen.getByRole('button').className).toMatch(/deleteBtnConfirm/);
+        expect(onDelete).not.toHaveBeenCalled();
+
+        // 第二次点击确认删除
+        act(() => { fireEvent.click(screen.getByRole('button')); });
+        expect(onDelete).toHaveBeenCalledTimes(1);
+    });
+
+    it('禁用态按钮视觉上为 disabled', () => {
+        renderBtn({ disabled: true });
+        expect(screen.getByRole('button')).toBeDisabled();
+    });
+});
+
+// ─── 10. userEvent 完整交互流 ─────────────────────────────────────────────────
 describe('ConfirmDeleteBtn – userEvent 交互流', () => {
     it('两次点击完成删除确认流程后恢复到初始 icon 态', async () => {
         const user = userEvent.setup();

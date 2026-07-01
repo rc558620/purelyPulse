@@ -76,7 +76,7 @@ export const ClockIcon: React.FC<IconProps> = ({ className, style, size = 16 }) 
 
 // ─── RangeIcon ────────────────────────────────────────────────────────────────
 
-export const RangeIcon: React.FC<IconProps & { style?: React.CSSProperties }> = ({
+export const RangeIcon: React.FC<IconProps> = ({
   className,
   style,
   size = 13,

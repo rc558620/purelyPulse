@@ -102,6 +102,7 @@ function SlidingTabBarInner<T extends string = string>({
       style={containerStyle}
       role="tablist"
       aria-label={ariaLabel}
+      data-pull-ignore="true"
     >
       <div
         className={indicatorCls}

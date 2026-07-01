@@ -189,21 +189,26 @@ describe('SlidingTabBar – variant 样式', () => {
 
 // ─── 5. dimmed ────────────────────────────────────────────────────────────────
 describe('SlidingTabBar – dimmed', () => {
-    it('dimmed=true 时容器含 dimmed class', () => {
+    it('dimmed=true 时所有按钮含 btnDimmed class', () => {
         renderTab({ dimmed: true });
-        expect(screen.getByRole('tablist').className).toMatch(/dimmed/);
-    });
-
-    it('dimmed=true 时所有按钮 aria-selected="false"（不管 value）', () => {
-        renderTab({ dimmed: true, value: 'day' });
         screen.getAllByRole('tab').forEach((btn) => {
-            expect(btn).toHaveAttribute('aria-selected', 'false');
+            expect(btn.className).toMatch(/btnDimmed/);
         });
     });
 
-    it('dimmed=false（默认）时容器不含 dimmed class', () => {
+    it('dimmed=true 时仍保留当前 value 的 aria-selected', () => {
+        renderTab({ dimmed: true, value: 'day' });
+        expect(screen.getByRole('tab', { name: '日' })).toHaveAttribute('aria-selected', 'true');
+        ['周', '月'].forEach((label) => {
+            expect(screen.getByRole('tab', { name: label })).toHaveAttribute('aria-selected', 'false');
+        });
+    });
+
+    it('dimmed=false（默认）时按钮不含 btnDimmed class', () => {
         renderTab({ dimmed: false });
-        expect(screen.getByRole('tablist').className).not.toMatch(/dimmed/);
+        screen.getAllByRole('tab').forEach((btn) => {
+            expect(btn.className).not.toMatch(/btnDimmed/);
+        });
     });
 });
 

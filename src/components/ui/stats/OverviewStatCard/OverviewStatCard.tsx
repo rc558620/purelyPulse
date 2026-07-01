@@ -17,12 +17,15 @@ export interface OverviewStatCardProps {
    * - 'success'：绿色（库存正常）
    * - 'warning'：橙色（预警）
    * - 'danger'：红色（缺货/危险）
+   * - 'info'：蓝色（金额/信息）
    */
-  variant?: 'default' | 'success' | 'warning' | 'danger';
+  variant?: 'default' | 'success' | 'warning' | 'danger' | 'info';
   /** 是否处于激活（筛选选中）态 */
   active?: boolean;
   /** 点击回调（用于切换筛选） */
   onClick?: () => void;
+  /** 数值前缀，如 "¥" 用于金额展示 */
+  valuePrefix?: string;
 }
 
 const OverviewStatCard: React.FC<OverviewStatCardProps> = memo(({
@@ -32,6 +35,7 @@ const OverviewStatCard: React.FC<OverviewStatCardProps> = memo(({
   variant = 'default',
   active,
   onClick,
+  valuePrefix,
 }) => (
   <button
     type="button"
@@ -41,13 +45,14 @@ const OverviewStatCard: React.FC<OverviewStatCardProps> = memo(({
       variant === 'warning' && styles.statCardWarning,
       variant === 'danger'  && styles.statCardDanger,
       variant === 'success' && styles.statCardSuccess,
+      variant === 'info'   && styles.statCardInfo,
       active && styles.statCardActive,
     )}
     onClick={onClick}
     aria-pressed={active}
   >
     <div className={styles.statIcon}>{icon}</div>
-    <span className={styles.statValue}>{safeNum(value)}</span>
+    <span className={styles.statValue}>{valuePrefix}{safeNum(value)}</span>
     <span className={styles.statLabel}>{label}</span>
   </button>
 ));

@@ -2,11 +2,8 @@
 @import (reference) '../../../../styles/breakpoints.less';
 @import (reference) '../../../../styles/mixins.less';
 
-// ─── 吸顶（默认）────────────────────────────────────────────────────────────
-.header {
-    position: sticky;
-    top: 0;
-    z-index: 30;
+// ─── 公共样式 mixin（所有 variant 共用）────────────────────────────────────────
+.header-base() {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -19,21 +16,20 @@
     }
 }
 
+// ─── 吸顶（默认）────────────────────────────────────────────────────────────
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    .header-base();
+}
+
 // ─── sticky 透明变体（背景装饰页专用，如 Profile）──────────────────────────
 .headerTransparent {
     position: sticky;
     top: 0;
     z-index: 30;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1.2rem 1.6rem;
-    background-color: transparent;
-    border-bottom: none;
-
-    @media (min-width: @bp-mobile) {
-        padding: 1.6rem 2.4rem;
-    }
+    .header-base();
 }
 
 // ─── absolute 定位变体（全屏居中布局专用）───────────────────────────────────
@@ -43,32 +39,14 @@
     left: 0;
     right: 0;
     z-index: 30;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1.2rem 1.6rem;
-    background-color: transparent;
-    border-bottom: none;
-
-    @media (min-width: @bp-mobile) {
-        padding: 1.6rem 2.4rem;
-    }
+    .header-base();
 }
 
 // ─── relative 定位变体────────────────────────────────────────────────────────
 .headerRelative {
     position: relative;
-    z-index: 10;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1.2rem 1.6rem;
-    background-color: transparent;
-    border-bottom: none;
-
-    @media (min-width: @bp-mobile) {
-        padding: 1.6rem 2.4rem;
-    }
+    z-index: 30;
+    .header-base();
 }
 
 // ─── 标题 ────────────────────────────────────────────────────────────────────
@@ -81,6 +59,9 @@
     left: 50%;
     transform: translateX(-50%);
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 60%;
     font-family: 'Inter', 'Noto Sans SC', sans-serif;
     letter-spacing: 0.025em;
 }
@@ -102,28 +83,6 @@
 
     @media (min-width: @bp-mobile) {
         min-width: 4rem;
-    }
-}
-
-// ─── 右侧文字按钮 ────────────────────────────────────────────────────────────
-.rightTextBtn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 1.4rem;
-    font-weight: 500;
-    color: @primary;
-    padding: 0.4rem 0.2rem;
-    white-space: nowrap;
-    -webkit-tap-highlight-color: transparent;
-    transition: opacity 0.2s;
-
-    &:hover {
-        opacity: 0.75;
-    }
-
-    &:active {
-        opacity: 0.5;
     }
 }
 

@@ -55,12 +55,14 @@ interface MockImageInstance extends EventTarget {
 }
 
 /** 收集创建的 MockImage 实例，供测试手动触发事件 */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let lastMockImageInstance: MockImageInstance | null = null;
 
 /** 是否触发 error（而非 load） */
 let triggerError = false;
 
 function createMockImageClass() {
+  // eslint-disable-next-line @typescript-eslint/no-this-alias
   function MockImage(this: MockImageInstance) {
     // 用 EventTarget 作为 prototype base 使得 addEventListener/dispatchEvent 可用
     this._loadCallbacks = [];
@@ -134,6 +136,7 @@ beforeEach(() => {
 
   // ── mock canvas toBlob
   vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation(
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     function (this: HTMLCanvasElement, callback: BlobCallback, type?: string) {
       lastCanvas = this;
       void type;

@@ -73,7 +73,7 @@ describe('PullRefreshLoadMore', () => {
     const onLoadMore = vi.fn().mockResolvedValue(undefined);
     render(
       <PullRefreshLoadMore onLoadMore={onLoadMore} hasMore loadMoreThreshold={40}>
-        <div style={{ height: '1200px' }}>内容</div>
+        <div>内容</div>
       </PullRefreshLoadMore>,
     );
 
@@ -91,15 +91,16 @@ describe('PullRefreshLoadMore', () => {
     });
   });
 
-  it('鼠标拖拽下拉到阈值后会触发刷新', async () => {
+  it('鼠标拖拽下拉到阈值后会触发刷新并在完成后回弹', async () => {
     const onRefresh = vi.fn().mockResolvedValue(undefined);
     render(
       <PullRefreshLoadMore onRefresh={onRefresh} refreshThreshold={60} successDuration={20}>
-        <div style={{ height: '300px' }}>内容</div>
+        <div>内容</div>
       </PullRefreshLoadMore>,
     );
 
     const scrollArea = screen.getByTestId('pull-refresh-scroll');
+    const content = scrollArea.firstElementChild as HTMLElement;
     setScrollMetrics(scrollArea, {
       scrollTop: 0,
       scrollHeight: 600,
@@ -128,10 +129,119 @@ describe('PullRefreshLoadMore', () => {
     });
 
     expect(screen.getByText('刷新完成')).toBeInTheDocument();
+    expect(content.style.getPropertyValue('--pull-refresh-offset')).not.toBe('0px');
 
     await waitFor(() => {
       expect(screen.queryByText('刷新完成')).not.toBeInTheDocument();
+      expect(content.style.getPropertyValue('--pull-refresh-offset')).toBe('0px');
+      expect(content.style.getPropertyValue('--pull-refresh-transition-duration')).toBe('220ms');
     });
+  });
+
+  it('鼠标从按钮卡片开始拖拽时也能触发刷新', async () => {
+    const onRefresh = vi.fn().mockResolvedValue(undefined);
+    render(
+      <PullRefreshLoadMore onRefresh={onRefresh} refreshThreshold={60} successDuration={20}>
+        <button type="button">会员卡片</button>
+      </PullRefreshLoadMore>,
+    );
+
+    const scrollArea = screen.getByTestId('pull-refresh-scroll');
+    const cardButton = screen.getByRole('button', { name: '会员卡片' });
+    setScrollMetrics(scrollArea, {
+      scrollTop: 0,
+      scrollHeight: 600,
+      clientHeight: 400,
+    });
+
+    fireEvent.pointerDown(cardButton, {
+      pointerId: 11,
+      pointerType: 'mouse',
+      button: 0,
+      clientY: 0,
+    });
+    fireEvent.pointerMove(scrollArea, {
+      pointerId: 11,
+      pointerType: 'mouse',
+      clientY: 120,
+    });
+    fireEvent.pointerUp(scrollArea, {
+      pointerId: 11,
+      pointerType: 'mouse',
+      clientY: 120,
+    });
+
+    await waitFor(() => {
+      expect(onRefresh).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('鼠标单击按钮卡片但不拖拽时不会切换滚动容器样式', () => {
+    render(
+      <PullRefreshLoadMore onRefresh={vi.fn()} refreshThreshold={60}>
+        <button type="button">充值记录卡片</button>
+      </PullRefreshLoadMore>,
+    );
+
+    const scrollArea = screen.getByTestId('pull-refresh-scroll');
+    const cardButton = screen.getByRole('button', { name: '充值记录卡片' });
+    setScrollMetrics(scrollArea, {
+      scrollTop: 0,
+      scrollHeight: 600,
+      clientHeight: 400,
+    });
+
+    fireEvent.pointerDown(cardButton, {
+      pointerId: 21,
+      pointerType: 'mouse',
+      button: 0,
+      clientY: 12,
+    });
+
+    expect(scrollArea.style.overflowY).toBe('');
+    expect(scrollArea.style.overscrollBehaviorY).toBe('');
+
+    fireEvent.pointerUp(scrollArea, {
+      pointerId: 21,
+      pointerType: 'mouse',
+      clientY: 12,
+    });
+
+    expect(scrollArea.style.overflowY).toBe('');
+    expect(scrollArea.style.overscrollBehaviorY).toBe('');
+  });
+
+  it('鼠标单击按钮卡片但不拖拽时仍会触发 click', () => {
+    const onClick = vi.fn();
+    render(
+      <PullRefreshLoadMore onRefresh={vi.fn()} refreshThreshold={60}>
+        <button type="button" onClick={onClick}>会员详情卡片</button>
+      </PullRefreshLoadMore>,
+    );
+
+    const scrollArea = screen.getByTestId('pull-refresh-scroll');
+    const cardButton = screen.getByRole('button', { name: '会员详情卡片' });
+    setScrollMetrics(scrollArea, {
+      scrollTop: 0,
+      scrollHeight: 600,
+      clientHeight: 400,
+    });
+
+    fireEvent.pointerDown(cardButton, {
+      pointerId: 22,
+      pointerType: 'mouse',
+      button: 0,
+      clientY: 18,
+    });
+    fireEvent.pointerUp(cardButton, {
+      pointerId: 22,
+      pointerType: 'mouse',
+      button: 0,
+      clientY: 18,
+    });
+    fireEvent.click(cardButton);
+
+    expect(onClick).toHaveBeenCalledTimes(1);
   });
 
   it('刷新失败时显示重试按钮并支持再次触发', async () => {
@@ -140,8 +250,8 @@ describe('PullRefreshLoadMore', () => {
       .mockResolvedValueOnce(undefined);
 
     render(
-      <PullRefreshLoadMore onRefresh={onRefresh} refreshThreshold={60} errorDuration={20}>
-        <div style={{ height: '300px' }}>内容</div>
+      <PullRefreshLoadMore onRefresh={onRefresh} refreshThreshold={60} errorDuration={500}>
+        <div>内容</div>
       </PullRefreshLoadMore>,
     );
 
@@ -184,7 +294,7 @@ describe('PullRefreshLoadMore', () => {
   it('滚动超过阈值时显示回到顶部按钮', async () => {
     render(
       <PullRefreshLoadMore onLoadMore={vi.fn()} hasMore backToTopThreshold={120}>
-        <div style={{ height: '1000px' }}>长内容</div>
+        <div>长内容</div>
       </PullRefreshLoadMore>,
     );
 

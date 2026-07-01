@@ -34,11 +34,13 @@ export interface SectionCardProps {
   fullHeight?: boolean;
   /** 去除卡片内边距（用于 MenuRow 列表等自带 padding 的内容） */
   noPadding?: boolean;
+  /** 裁切子元素溢出内容（默认 false，不裁切） */
+  overflowHidden?: boolean;
   className?: string;
 }
 
-const SectionCard = memo<SectionCardProps>(({ children, fullHeight = false, noPadding = false, className }) => (
-  <div className={cx(styles.card, fullHeight && styles.cardFull, noPadding && styles.cardNoPadding, className)}>
+const SectionCard = memo<SectionCardProps>(({ children, fullHeight = false, noPadding = false, overflowHidden = false, className }) => (
+  <div className={cx(styles.card, fullHeight && styles.cardFull, noPadding && styles.cardNoPadding, overflowHidden && styles.cardOverflowHidden, className)}>
     {children}
   </div>
 ));
@@ -70,7 +72,7 @@ const SectionCardHeader = memo<SectionCardHeaderProps>(({ icon, title, extra, cl
         )}
         {title}
       </h3>
-      {extra && extra}
+      {extra ?? null}
     </div>
   );
 });
@@ -95,7 +97,7 @@ export interface SectionCardDividedListProps<T> {
   dividerClassName?: string;
 }
 
-function SectionCardDividedList<T>({
+const _SectionCardDividedListInner = memo(function SectionCardDividedList<T>({
   items,
   renderItem,
   keyExtractor,
@@ -119,9 +121,13 @@ function SectionCardDividedList<T>({
       })}
     </div>
   );
-}
+});
 
-SectionCardDividedList.displayName = 'SectionCard.DividedList';
+_SectionCardDividedListInner.displayName = 'SectionCard.DividedList';
+
+const SectionCardDividedList = _SectionCardDividedListInner as <T>(
+  props: SectionCardDividedListProps<T>,
+) => React.JSX.Element;
 
 // ─── 挂载子组件 ───────────────────────────────────────────────
 

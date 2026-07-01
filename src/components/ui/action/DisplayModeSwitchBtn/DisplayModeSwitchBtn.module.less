@@ -84,6 +84,28 @@
   opacity: 0;
 }
 
+/* Compact Default 风格：显式确保 bar 填充色跟随父级 currentColor（黑色），
+   防止未来 fill 改为硬编码色值时 break 行为。
+   同时继承 Compact 形变动画（线条聚拢、底线隐藏） */
+.iconWrapperCompactDefault .barTop {
+  transform: translateY(3px);
+}
+
+.iconWrapperCompactDefault .barMiddle {
+  transform: translateY(3px);
+}
+
+.iconWrapperCompactDefault .barBottom {
+  transform: translateY(-6px) scaleX(0) scaleY(0);
+  opacity: 0;
+}
+
+.iconWrapperCompactDefault .barTop,
+.iconWrapperCompactDefault .barMiddle,
+.iconWrapperCompactDefault .barBottom {
+  fill: currentColor;
+}
+
 /* Minimal Mode State (极简——1条线：隐藏顶线和底线) */
 .iconWrapperMinimal .barTop {
   transform: translateY(6px) scaleX(0) scaleY(0);
@@ -118,6 +140,20 @@
 }
 
 .iconWrapperCompact:hover .barBottom {
+  transform: translateY(-6px) scaleX(0) scaleY(0);
+  opacity: 0;
+}
+
+/* Compact Default hover: 与 primary 风格一致 */
+.iconWrapperCompactDefault:hover .barTop {
+  transform: translateY(2px);
+}
+
+.iconWrapperCompactDefault:hover .barMiddle {
+  transform: translateY(4px);
+}
+
+.iconWrapperCompactDefault:hover .barBottom {
   transform: translateY(-6px) scaleX(0) scaleY(0);
   opacity: 0;
 }

@@ -81,10 +81,12 @@ const EchartsComponent: React.FC<EchartsProps> = ({ option, style, className, on
 
     eventHandlersRef.current = onEvents;
 
+    // 依赖 onEvents 的 key 集合而非引用，避免回调函数引用变化时重新绑定事件
     const eventNamesKey = useMemo(() => {
         if (!onEvents) return '';
         return Object.keys(onEvents).sort().join('|');
-    }, [onEvents]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [onEvents ? Object.keys(onEvents).sort().join('|') : '']);
 
     // Init once on mount, cleanup on unmount
     useEffect(() => {
@@ -92,11 +94,13 @@ const EchartsComponent: React.FC<EchartsProps> = ({ option, style, className, on
 
         const eventProxyMap = eventProxyMapRef.current;
 
-        // Patch addEventListener to force passive:true for scroll/touch events
-        // This suppresses browser Violation warnings caused by ECharts internals
+        // 仅 patch 图表容器元素的 addEventListener，强制 passive:true
+        // 避免 ECharts 内部的 touch/wheel 事件触发浏览器 Violation 警告
+        // 限定在单个元素而非全局 EventTarget.prototype，避免影响其他组件
         const PASSIVE_EVENTS = ['touchstart', 'touchmove', 'wheel', 'mousewheel'];
-        const origAddEventListener = EventTarget.prototype.addEventListener;
-        EventTarget.prototype.addEventListener = function (
+        const container = chartRef.current;
+        const origAddEventListener = container.addEventListener.bind(container);
+        container.addEventListener = function (
             type: string,
             listener: EventListenerOrEventListenerObject,
             options?: boolean | AddEventListenerOptions,
@@ -106,15 +110,15 @@ const EchartsComponent: React.FC<EchartsProps> = ({ option, style, className, on
                     typeof options === 'object'
                         ? { ...options, passive: true }
                         : { passive: true, capture: Boolean(options) };
-                return origAddEventListener.call(this, type, listener, patched);
+                return origAddEventListener(type, listener, patched);
             }
-            return origAddEventListener.call(this, type, listener, options);
+            return origAddEventListener(type, listener, options);
         };
 
-        chartInstance.current = init(chartRef.current);
+        chartInstance.current = init(container);
 
-        // Restore original immediately after init
-        EventTarget.prototype.addEventListener = origAddEventListener;
+        // init 完成后立即恢复原始 addEventListener
+        container.addEventListener = origAddEventListener;
 
         // 用 ResizeObserver + rAF 节流观察容器尺寸变化，每帧最多 resize 一次
         // 避免拖拽窗口时高频触发导致 canvas 闪烁
@@ -155,7 +159,7 @@ const EchartsComponent: React.FC<EchartsProps> = ({ option, style, className, on
             chartInstance.current.setOption(option, { notMerge: false, lazyUpdate: false });
             return;
         }
-        chartInstance.current.setOption(option, { notMerge: false, lazyUpdate: true });
+        chartInstance.current.setOption(option, { notMerge: true, lazyUpdate: true });
     }, [option]);
 
     // 通过稳定代理函数绑定事件，handler 变化时仅更新 ref，不重复 off/on。
@@ -187,6 +191,8 @@ const EchartsComponent: React.FC<EchartsProps> = ({ option, style, className, on
             ref={chartRef}
             className={cx(styles.echartsContainer, className)}
             style={style}
+            role="img"
+            aria-label="数据图表"
         />
     );
 };

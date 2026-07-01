@@ -15,7 +15,8 @@
  *  ─ option 更新
  *    9.  option prop 变更后再次调用 setOption
  *    10. setOption 的参数为新的 option 对象
- *    11. option 未变更时 setOption 不重复调用（memo 阻止重渲染）
+ *    11. option 更新时使用 notMerge=true 全量替换配置
+ *    12. option 未变更时 setOption 不重复调用（memo 阻止重渲染）
  *  ─ ResizeObserver
  *    12. 挂载后 ResizeObserver 对容器进行 observe
  *    13. 触发 resize 时 chartInstance.resize() 被调用
@@ -205,6 +206,17 @@ describe('Echarts – option 更新', () => {
 
         const lastCall = mockSetOption.mock.calls[mockSetOption.mock.calls.length - 1];
         expect(lastCall[0]).toEqual(option2);
+    });
+
+    it('option 更新时第二次 setOption 使用 notMerge=true', () => {
+        const option1 = { title: { text: '图表一' } };
+        const option2 = { title: { text: '图表二' } };
+
+        const { rerender } = render(<Echarts option={option1} />);
+        rerender(<Echarts option={option2} />);
+
+        const lastCall = mockSetOption.mock.calls[mockSetOption.mock.calls.length - 1];
+        expect(lastCall[1]).toEqual(expect.objectContaining({ notMerge: true, lazyUpdate: true }));
     });
 
     it('同一 option 引用 rerender 时 setOption 不额外调用', () => {

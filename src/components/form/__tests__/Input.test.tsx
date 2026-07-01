@@ -6,27 +6,31 @@
  *  - prefix 渲染 / 无 prefix
  *  - suffix 渲染 / 无 suffix
  *  - status="error" 添加 error class / 无 status 不添加
+ *  - status="warning" 添加 warning class / warning 与 error 互斥
  *  - type 默认为 'text'
- *  - autoComplete 默认 'off' / password 类型默认 'current-password'
+ *  - autoComplete 默认 'off'（所有类型统一）
  *  - autoComplete 自定义值优先
  *  - wrapperClassName 被应用到外层 div
  *  - className 被应用到 <input>
  *  - 标准 HTML input 属性透传（placeholder / disabled / maxLength）
- *  - type=number 时绑定 wheel 事件阻止默认行为
- *  - type=text 时不绑定 wheel 事件
+ *  - type=number 时渲染为 type=text + inputMode=decimal
+ *  - type=number 时自定义 inputMode 优先
  *  - displayName 属性
+ *  - ref 转发到 <input>
  *
  * 覆盖范围（Textarea）：
  *  - 基本渲染
  *  - status="error" 添加 error class
+ *  - status="warning" 添加 warning class
  *  - wrapperClassName 被应用到外层 div
  *  - className 被应用到 <textarea>
  *  - 标准 HTML textarea 属性透传
  *  - displayName 属性
+ *  - ref 转发到 <textarea>
  */
 
 import React from 'react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { Input, Textarea } from '../Input/Input';
 
@@ -92,16 +96,29 @@ describe('Input – status', () => {
         expect(wrapper.className).toMatch(/statusError/i);
     });
 
-    it('无 status 时 wrapper 不含 statusError class', () => {
+    it('无 status 时 wrapper 不含 statusError 或 statusWarning class', () => {
         const { container } = render(<Input />);
+        const wrapper = container.querySelector('div')!;
+        expect(wrapper.className).not.toMatch(/statusError/i);
+        expect(wrapper.className).not.toMatch(/statusWarning/i);
+    });
+
+    it('status="warning" 时 wrapper 含 statusWarning class', () => {
+        const { container } = render(<Input status="warning" />);
+        const wrapper = container.querySelector('div')!;
+        expect(wrapper.className).toMatch(/statusWarning/i);
+    });
+
+    it('status="warning" 时 wrapper 不含 statusError class', () => {
+        const { container } = render(<Input status="warning" />);
         const wrapper = container.querySelector('div')!;
         expect(wrapper.className).not.toMatch(/statusError/i);
     });
 
-    it('status="warning" 时不添加 statusError class（仅 error 触发）', () => {
-        const { container } = render(<Input status="warning" />);
+    it('status="error" 时 wrapper 不含 statusWarning class', () => {
+        const { container } = render(<Input status="error" />);
         const wrapper = container.querySelector('div')!;
-        expect(wrapper.className).not.toMatch(/statusError/i);
+        expect(wrapper.className).not.toMatch(/statusWarning/i);
     });
 });
 
@@ -123,9 +140,9 @@ describe('Input – autoComplete', () => {
         expect(screen.getByRole('textbox')).toHaveAttribute('autocomplete', 'off');
     });
 
-    it('type=password 时 autoComplete 默认为 current-password', () => {
+    it('type=password 时 autoComplete 默认为 off（避免新密码字段被自动填充旧密码）', () => {
         const { container } = render(<Input type="password" />);
-        expect(container.querySelector('input')).toHaveAttribute('autocomplete', 'current-password');
+        expect(container.querySelector('input')).toHaveAttribute('autocomplete', 'off');
     });
 
     it('显式传入 autoComplete 时优先使用传入值', () => {
@@ -161,58 +178,55 @@ describe('Input – HTML 属性透传', () => {
         expect(screen.getByRole('textbox')).toHaveValue('hello');
     });
 
-    it('透传 type=number', () => {
+    it('type=number 渲染为 type=text + inputMode=decimal', () => {
         const { container } = render(<Input type="number" />);
-        expect(container.querySelector('input')).toHaveAttribute('type', 'number');
+        expect(container.querySelector('input')).toHaveAttribute('type', 'text');
+        expect(container.querySelector('input')).toHaveAttribute('inputmode', 'decimal');
     });
 });
 
-describe('Input – wheel 事件（type=number）', () => {
-    it('type=number 时 wheel 事件被 preventDefault', () => {
+describe('Input – type=number 转换规则', () => {
+    it('type=number 时渲染为 type=text', () => {
         const { container } = render(<Input type="number" />);
-        const input = container.querySelector('input')!;
-
-        // 模拟 wheel 事件
-        const wheelEvent = new WheelEvent('wheel', { bubbles: true, cancelable: true });
-        const preventDefaultSpy = vi.spyOn(wheelEvent, 'preventDefault');
-        input.dispatchEvent(wheelEvent);
-
-        expect(preventDefaultSpy).toHaveBeenCalledTimes(1);
+        expect(container.querySelector('input')).toHaveAttribute('type', 'text');
     });
 
-    it('type=text 时 wheel 事件不被 preventDefault', () => {
+    it('type=number 时默认 inputMode 为 decimal', () => {
+        const { container } = render(<Input type="number" />);
+        expect(container.querySelector('input')).toHaveAttribute('inputmode', 'decimal');
+    });
+
+    it('type=number + inputMode=numeric 时使用自定义 inputMode', () => {
+        const { container } = render(<Input type="number" inputMode="numeric" />);
+        expect(container.querySelector('input')).toHaveAttribute('inputmode', 'numeric');
+    });
+
+    it('type=text 时无 inputMode', () => {
         const { container } = render(<Input type="text" />);
-        const input = container.querySelector('input')!;
-
-        const wheelEvent = new WheelEvent('wheel', { bubbles: true, cancelable: true });
-        const preventDefaultSpy = vi.spyOn(wheelEvent, 'preventDefault');
-        input.dispatchEvent(wheelEvent);
-
-        expect(preventDefaultSpy).not.toHaveBeenCalled();
+        expect(container.querySelector('input')).not.toHaveAttribute('inputmode');
     });
 
-    it('type=number 组件卸载后不再阻止 wheel 事件', () => {
-        const { container, unmount } = render(<Input type="number" />);
-        const input = container.querySelector('input')!;
-        unmount();
+    it('type=text + 自定义 inputMode 时保留', () => {
+        const { container } = render(<Input type="text" inputMode="email" />);
+        expect(container.querySelector('input')).toHaveAttribute('inputmode', 'email');
+    });
+});
 
-        const wheelEvent = new WheelEvent('wheel', { bubbles: true, cancelable: true });
-        const preventDefaultSpy = vi.spyOn(wheelEvent, 'preventDefault');
-        // 卸载后 listener 应该被移除，不再阻止
-        input.dispatchEvent(wheelEvent);
-        expect(preventDefaultSpy).not.toHaveBeenCalled();
+describe('Input – ref 转发', () => {
+    it('ref 可获取 input DOM 节点', () => {
+        const ref = React.createRef<HTMLInputElement>();
+        render(<Input ref={ref} />);
+        expect(ref.current).toBeInstanceOf(HTMLInputElement);
     });
 
-    it('type 从 number 切换到 text 后不再阻止 wheel 事件', () => {
-        const { container, rerender } = render(<Input type="number" />);
-        rerender(<Input type="text" />);
-        const input = container.querySelector('input')!;
-
-        const wheelEvent = new WheelEvent('wheel', { bubbles: true, cancelable: true });
-        const preventDefaultSpy = vi.spyOn(wheelEvent, 'preventDefault');
-        input.dispatchEvent(wheelEvent);
-
-        expect(preventDefaultSpy).not.toHaveBeenCalled();
+    it('ref 可调用 focus / blur', () => {
+        const ref = React.createRef<HTMLInputElement>();
+        render(<Input ref={ref} />);
+        expect(ref.current).not.toBeNull();
+        ref.current!.focus();
+        expect(ref.current).toHaveFocus();
+        ref.current!.blur();
+        expect(ref.current).not.toHaveFocus();
     });
 });
 
@@ -236,8 +250,21 @@ describe('Textarea – status', () => {
         expect(wrapper.className).toMatch(/statusError/i);
     });
 
-    it('无 status 时 wrapper 不含 statusError class', () => {
+    it('无 status 时 wrapper 不含 statusError 或 statusWarning class', () => {
         const { container } = render(<Textarea />);
+        const wrapper = container.querySelector('div')!;
+        expect(wrapper.className).not.toMatch(/statusError/i);
+        expect(wrapper.className).not.toMatch(/statusWarning/i);
+    });
+
+    it('status="warning" 时 wrapper 含 statusWarning class', () => {
+        const { container } = render(<Textarea status="warning" />);
+        const wrapper = container.querySelector('div')!;
+        expect(wrapper.className).toMatch(/statusWarning/i);
+    });
+
+    it('status="warning" 时 wrapper 不含 statusError class', () => {
+        const { container } = render(<Textarea status="warning" />);
         const wrapper = container.querySelector('div')!;
         expect(wrapper.className).not.toMatch(/statusError/i);
     });
@@ -274,5 +301,23 @@ describe('Textarea – HTML 属性透传', () => {
     it('透传 value（受控）', () => {
         const { container } = render(<Textarea value="hello textarea" onChange={() => undefined} />);
         expect(container.querySelector('textarea')).toHaveValue('hello textarea');
+    });
+});
+
+describe('Textarea – ref 转发', () => {
+    it('ref 可获取 textarea DOM 节点', () => {
+        const ref = React.createRef<HTMLTextAreaElement>();
+        render(<Textarea ref={ref} />);
+        expect(ref.current).toBeInstanceOf(HTMLTextAreaElement);
+    });
+
+    it('ref 可调用 focus / blur', () => {
+        const ref = React.createRef<HTMLTextAreaElement>();
+        render(<Textarea ref={ref} />);
+        expect(ref.current).not.toBeNull();
+        ref.current!.focus();
+        expect(ref.current).toHaveFocus();
+        ref.current!.blur();
+        expect(ref.current).not.toHaveFocus();
     });
 });

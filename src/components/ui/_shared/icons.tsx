@@ -12,7 +12,7 @@ import React, { memo } from 'react';
 // ─── action ─────────────────────────────────────────────────────────────────
 
 /** 加载 Spinner（Button loading 态使用） */
-export const IconSpinner: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+export const IconSpinner = memo<React.SVGProps<SVGSVGElement>>((props) => (
     <svg
         width="18"
         height="18"
@@ -26,7 +26,7 @@ export const IconSpinner: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     >
         <path d="M21 12a9 9 0 1 1-6.219-8.56" />
     </svg>
-);
+));
 
 /** 三条横线形变图标，barTop/barMiddle/barBottom 供 CSS 动画驱动（DisplayModeSwitchBtn 使用） */
 export const IconBars: React.FC<
@@ -106,8 +106,6 @@ export const IconProductBag: React.FC<React.SVGProps<SVGSVGElement>> = (props) =
 /** 预警角标：三角形警告（ProductAvatar 使用） */
 export const IconBadgeAlert: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg
-        width="8"
-        height="8"
         viewBox="0 0 24 24"
         fill="currentColor"
         aria-hidden="true"
@@ -158,10 +156,12 @@ export const IconToastInfo = memo(function IconToastInfo({ className }: { classN
 });
 
 /** 垃圾桶图标（ConfirmDeleteBtn、InlineItemActions 使用） */
-export const IconTrash: React.FC<{ size?: string }> = ({ size = '14' }) => (
+export const IconTrash: React.FC<React.SVGProps<SVGSVGElement> & { size?: string }> = ({
+    size,
+    ...rest
+}) => (
     <svg
-        width={size}
-        height={size}
+        {...(size ? { width: size, height: size } : {})}
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -169,6 +169,7 @@ export const IconTrash: React.FC<{ size?: string }> = ({ size = '14' }) => (
         strokeLinecap="round"
         strokeLinejoin="round"
         aria-hidden="true"
+        {...rest}
     >
         <polyline points="3 6 5 6 21 6" />
         <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />

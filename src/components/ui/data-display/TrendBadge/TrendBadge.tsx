@@ -4,6 +4,7 @@
  * 支持两种场景语义：
  *  - 利润类：涨 = 绿色（好），跌 = 红色（坏）  → invertColor={false}（默认）
  *  - 成本类：涨 = 红色（坏），跌 = 绿色（好）  → invertColor={true}
+ *  - 持平（value=0）：灰色，无箭头
  *
  * 用法：
  * ```tsx
@@ -13,6 +14,9 @@
  *
  * // 成本涨跌（正=坏，颜色反转）
  * <TrendBadge value={8.3} suffix="较上月" invertColor />
+ *
+ * // 持平：灰色胶囊 + 0.0%
+ * <TrendBadge value={0} />
  *
  * // null 时不渲染
  * <TrendBadge value={null} />
@@ -46,6 +50,9 @@ export interface TrendBadgeProps {
   className?: string;
 }
 
+/** 三态趋势：上涨 / 持平 / 下跌 */
+type TrendDirection = 'up' | 'neutral' | 'down';
+
 const TrendBadge = memo<TrendBadgeProps>(({
   value,
   compareLastMonth,
@@ -62,25 +69,36 @@ const TrendBadge = memo<TrendBadgeProps>(({
 
   if (rawValue === null || rawValue === undefined) return null;
 
-  const v    = safeNum(rawValue);
-  const isUp = v > 0;
+  const v = safeNum(rawValue);
+
+  // Bug4 防御：NaN 经过 safeNum 回退为 0，但语义上应视为无数据
+  if (typeof rawValue === 'number' && isNaN(rawValue)) return null;
+
+  // 三态分支：涨 / 持平 / 跌
+  const direction: TrendDirection = v > 0 ? 'up' : v < 0 ? 'down' : 'neutral';
+  const isUp = direction === 'up';
   const abs  = Math.abs(v).toFixed(1);
 
-  // invertColor=true 时颜色反转（成本场景：涨=红/跌=绿）
-  const isGood = invertColor ? !isUp : isUp;
+  // 样式 class：三态互斥，不会叠加
+  const directionClass = (() => {
+    if (direction === 'neutral') return styles.neutral;
+    // invertColor=true 时颜色反转（成本场景：涨=红/跌=绿）
+    const isGood = invertColor ? !isUp : isUp;
+    return isGood ? styles.up : styles.down;
+  })();
 
   return (
     <span
       className={cx(
         styles.badge,
-        isGood ? styles.up : styles.down,
-        v === 0 && styles.neutral,
+        directionClass,
         className,
       )}
     >
-      {isUp ? <IconTrendUp /> : <IconTrendDown />}
+      {direction === 'up'   && <IconTrendUp />}
+      {direction === 'down' && <IconTrendDown />}
       {isUp ? '+' : ''}{abs}%
-      {suffix && <span style={{ marginLeft: '0.2rem' }}>{suffix}</span>}
+      {suffix && <span className={styles.suffix}>{suffix}</span>}
     </span>
   );
 });

@@ -1,14 +1,4 @@
-/**
- * ConfirmDeleteBtn —— 二步确认删除按钮（全局公共组件）
- *
- * 交互：
- *   - 第一次点击：进入"确认态"（按钮变色 + 显示确认文字）
- *   - 第二次点击（确认态内）：触发 onDelete
- *   - 3 秒无操作自动复位（可通过 timeout 定制）
- *
- * 布局定制：通过 className / confirmClassName 传入额外样式。
- * 例：ShiftItem 需要固定宽度 + 左边框 → 传 styles.deleteBtn（父组件 less 定义）
- */
+// 二步确认删除按钮（全局公共组件）
 import React, { useState, useCallback, useEffect, useRef, memo } from 'react';
 import { cx } from '@utils/utils';
 import { IconTrash } from '@components/ui/_shared/icons';
@@ -21,7 +11,7 @@ export interface ConfirmDeleteBtnProps {
   ariaLabel?: string;
   /** 确认态 aria-label，默认 "确认删除" */
   confirmAriaLabel?: string;
-  /** 确认态显示的文字，默认 "确认" */
+  /** 确认态显示的文字，默认 "确认删除" */
   confirmText?: string;
   /** 自动复位超时（ms），默认 3000 */
   timeout?: number;
@@ -48,51 +38,71 @@ const ConfirmDeleteBtn: React.FC<ConfirmDeleteBtnProps> = ({
 }) => {
   const [confirming, setConfirming] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const disabledResetRef = useRef(false);
-  const isConfirming = confirming && !disabled && !disabledResetRef.current;
+  /** 用 ref 追踪 confirming 最新值，避免 useCallback 闭包陈旧 */
+  const confirmingRef = useRef(false);
+  /** 组件是否已卸载，防止异步回调操作已卸载组件的状态 */
+  const mountedRef = useRef(true);
 
-  useEffect(() => () => {
-    if (timerRef.current !== null) {
-      clearTimeout(timerRef.current);
-    }
+  /** 安全地更新 confirming 状态并同步 ref */
+  const updateConfirming = useCallback((value: boolean) => {
+    if (!mountedRef.current) return;
+    confirmingRef.current = value;
+    setConfirming(value);
   }, []);
 
-  useEffect(() => {
-    if (!disabled) {
-      return;
-    }
-
-    disabledResetRef.current = true;
+  /** 清除定时器并置空引用 */
+  const clearTimer = useCallback(() => {
     if (timerRef.current !== null) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
     }
-  }, [disabled]);
+  }, []);
 
-  const handleClick = useCallback(() => {
-    if (disabled) {
-      return;
-    }
+  /** 启动自动复位定时器 */
+  const startResetTimer = useCallback(() => {
+    clearTimer();
+    timerRef.current = setTimeout(() => {
+      updateConfirming(false);
+      timerRef.current = null;
+    }, timeout);
+  }, [clearTimer, timeout, updateConfirming]);
 
-    if (isConfirming) {
+  // 组件卸载时：清理定时器 + 标记已卸载
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
       if (timerRef.current !== null) {
         clearTimeout(timerRef.current);
         timerRef.current = null;
       }
-      disabledResetRef.current = false;
-      setConfirming(false);
+    };
+  }, []);
+
+  // disabled 变为 true 时：清除定时器 + 复位确认态
+  useEffect(() => {
+    if (!disabled) return;
+    clearTimer();
+    updateConfirming(false);
+  }, [disabled, clearTimer, updateConfirming]);
+
+  const handleClick = useCallback(() => {
+    if (disabled) return;
+
+    // 确认态 → 触发删除
+    if (confirmingRef.current) {
+      clearTimer();
+      updateConfirming(false);
       onDelete();
       return;
     }
 
-    disabledResetRef.current = false;
-    setConfirming(true);
-    timerRef.current = setTimeout(() => {
-      disabledResetRef.current = false;
-      setConfirming(false);
-      timerRef.current = null;
-    }, timeout);
-  }, [disabled, isConfirming, onDelete, timeout]);
+    // 初始态 → 进入确认态
+    updateConfirming(true);
+    startResetTimer();
+  }, [disabled, clearTimer, updateConfirming, startResetTimer, onDelete]);
+
+  const isConfirming = confirming && !disabled;
 
   return (
     <button

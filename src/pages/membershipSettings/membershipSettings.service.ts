@@ -1,6 +1,5 @@
 // 会员设置服务层：负责套餐配置接口请求、字段映射与保存载荷组装。
 import { createKeyedInFlightRequest, http, resolveEnvPath } from '@utils/http';
-import { safeNum } from '@utils/utils';
 import { MEMBERSHIP_TIER_DEFAULT_VALUES } from './membershipSettings.constants';
 import type {
   MembershipTierValuesMap,
@@ -74,23 +73,8 @@ const isTierId = (value: unknown): value is TierId => (
   typeof value === 'string' && MEMBERSHIP_SETTING_PLAN_IDS.includes(value as TierId)
 );
 
-// BUG-12 修复：收敛为唯一的价格文本格式化函数，供 service 层和 shared 层共用
-export const normalizePriceText = (rawPrice: string): string => {
-  const normalizedPrice = rawPrice.trim();
-
-  // BUG-07 修复：空字符串保持空串，不做默认值替换（校验由 validateTierValue 负责）
-  if (!normalizedPrice) {
-    return '';
-  }
-
-  const priceValue = safeNum(Number.parseFloat(normalizedPrice), 0);
-  const decimalLength = normalizedPrice.split('.')[1]?.length ?? 0;
-  if (decimalLength === 0) {
-    return String(priceValue);
-  }
-
-  return priceValue.toFixed(Math.min(decimalLength, 2));
-};
+// normalizePriceText 已删除：前端不做任何金额文本处理。
+// 后端返回的 priceDisplay 已是规范化字符串，前端直读直传，校验与格式化由后端负责。
 
 const normalizeLifetimeDaysText = (rawValue: string | undefined): string => {
   const normalizedValue = rawValue?.trim() ?? '';
@@ -136,13 +120,13 @@ const assertMembershipSettingsResponse = (value: unknown): MembershipSettingsRes
 const mapSettingItemToTierValue = (item: MembershipSettingItemResponse): TierValue => {
   if (item.planId === 'lifetime') {
     return {
-      price: normalizePriceText(item.priceDisplay),
+      price: item.priceDisplay,
       lifetimeDays: normalizeLifetimeDaysText(item.validDays === null ? undefined : String(item.validDays)),
     };
   }
 
   return {
-    price: normalizePriceText(item.priceDisplay),
+    price: item.priceDisplay,
   };
 };
 
@@ -181,17 +165,16 @@ const buildUpdatePayload = (
   tierId: TierId,
   value: TierValue,
 ): UpdateMembershipPricePayload | UpdateLifetimeMembershipPayload => {
-  // 防御：空价格不应走到此函数（由 validateTierValue 拦截），但兜底为 '0'
-  const normalizedPrice = normalizePriceText(value.price) || '0';
+  // 前端直传用户输入，后端负责校验与格式化
   if (tierId === 'lifetime') {
     return {
-      priceDisplay: normalizedPrice,
+      priceDisplay: value.price,
       validDays: Number.parseInt(normalizeLifetimeDaysText(value.lifetimeDays), 10),
     };
   }
 
   return {
-    priceDisplay: normalizedPrice,
+    priceDisplay: value.price,
   };
 };
 
@@ -228,16 +211,15 @@ export const updateMembershipTierSetting = async (
     return mapSettingItemToTierValue(response);
   }
 
-  // 兜底：后端返回部分字段时，基于提交值做价格回写
-  const normalizedPrice = normalizePriceText(value.price);
+  // 兜底：后端返回部分字段时，直接用提交值回写
   if (tierId === 'lifetime') {
     return {
-      price: normalizedPrice,
+      price: value.price,
       lifetimeDays: normalizeLifetimeDaysText(value.lifetimeDays),
     };
   }
 
   return {
-    price: normalizedPrice,
+    price: value.price,
   };
 };

@@ -89,6 +89,7 @@ const DirectValueInput = ({
     onChange?: (val: string) => void;
     status?: 'error' | undefined;
 }) => {
+    // eslint-disable-next-line react-hooks/globals
     lastDirectValue = value;
     return (
         <button
@@ -405,7 +406,8 @@ describe('FormItem – 错误退出动画（fake timers）', () => {
 
     it('错误消失后 300ms 内文字仍保留（退出动画），300ms 后清除', async () => {
         // 使用 mock context 直接控制 getFieldError 返回值，无需 userEvent
-        let currentError: string | undefined = '必填';
+        const _currentError: string | undefined = '必填';
+        void _currentError;
 
         // 需要能触发 FormItem 重渲染：使用真实 Form+FormItem，通过 validateFields 写错误
         // 再通过外部按钮手动切换（不用 userEvent delay）
@@ -413,6 +415,7 @@ describe('FormItem – 错误退出动画（fake timers）', () => {
 
         const Wrapper = () => {
             const [form] = useForm();
+            // eslint-disable-next-line react-hooks/globals
             capturedForm = form;
             return (
                 <Form form={form}>

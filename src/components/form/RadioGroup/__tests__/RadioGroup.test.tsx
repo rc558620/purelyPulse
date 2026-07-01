@@ -282,7 +282,7 @@ describe('RadioGroup – 与 FormItem 联动', () => {
 describe('RadioGroup – 选项互斥', () => {
     it('受控模式：点击 label 触发 onChange 并携带正确 value', () => {
         const onChange = vi.fn();
-        const { rerender } = render(
+        render(
             <RadioGroup options={BASE_OPTIONS} value="a" onChange={onChange} />,
         );
         // 初始 A 选中

@@ -59,6 +59,9 @@ const DisplayModeSwitchBtn: React.FC<DisplayModeSwitchBtnProps> = memo(
         return {
           ...base,
           btnClass: styles.modeSwitchCompactDefault,
+          // 显式添加 iconWrapperCompactDefault，使 bar 填充色显式跟随 currentColor（黑色），
+          // 不再依赖隐式 CSS 继承链，提高健壮性
+          iconClass: styles.iconWrapperCompactDefault,
         };
       }
       return base;

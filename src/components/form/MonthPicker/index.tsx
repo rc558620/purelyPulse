@@ -30,6 +30,8 @@ export interface MonthPickerProps {
   pastYears?: number;
   /** 向后预留年数（默认 1） */
   futureYears?: number;
+  /** 是否禁用交互 */
+  disabled?: boolean;
   className?: string;
 }
 
@@ -43,6 +45,7 @@ const MonthPicker: React.FC<MonthPickerProps> = ({
   displayMode,
   pastYears,
   futureYears,
+  disabled = false,
   className,
 }) => {
   const isMobile = useDeviceType(displayMode);
@@ -59,6 +62,17 @@ const MonthPicker: React.FC<MonthPickerProps> = ({
 
   const displayText = `${year}/${pad2(month)}`;
 
+  // BUG-8 fix: 禁用时不允许打开面板
+  const handleTriggerClick = useCallback(() => {
+    if (disabled) return;
+    handleOpen();
+  }, [disabled, handleOpen]);
+
+  const handleTriggerKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (disabled) return;
+    handleKeyDown(e);
+  }, [disabled, handleKeyDown]);
+
   const handleClearClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     onClear?.();
@@ -68,14 +82,19 @@ const MonthPicker: React.FC<MonthPickerProps> = ({
     <div ref={wrapperRef} className={classNames(styles.wrapper, className)}>
       {/* ── Trigger ──────────────────────────────────────────────── */}
       <div
-        className={classNames(styles.trigger, visible && styles.triggerOpen)}
-        onClick={handleOpen}
+        className={classNames(
+          styles.trigger,
+          visible && styles.triggerOpen,
+          disabled && styles.triggerDisabled,
+        )}
+        onClick={handleTriggerClick}
         role="button"
-        tabIndex={0}
-        onKeyDown={handleKeyDown}
+        tabIndex={disabled ? -1 : 0}
+        onKeyDown={handleTriggerKeyDown}
         aria-label={displayText}
         aria-expanded={visible}
         aria-haspopup="dialog"
+        aria-disabled={disabled || undefined}
       >
         <CalendarIcon className={styles.calIcon} />
         <span className={styles.triggerText}>{displayText}</span>
@@ -98,12 +117,14 @@ const MonthPicker: React.FC<MonthPickerProps> = ({
       {isMobile && (
         <MonthPickerMobileSheet
           visible={visible}
+          isClosing={isClosing}
           year={year}
           month={month}
           pastYears={pastYears}
           futureYears={futureYears}
           onConfirm={onChange}
           onClose={handleClose}
+          onTransitionEnd={handleAnimationEnd}
         />
       )}
 

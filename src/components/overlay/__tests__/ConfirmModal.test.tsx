@@ -31,7 +31,7 @@
  *  ─ 无障碍属性
  *    23. overlay 具有 role="dialog"
  *    24. overlay 具有 aria-modal="true"
- *    25. overlay 具有 aria-labelledby="confirm-modal-title"
+ *    25. overlay 具有 aria-labelledby 指向标题 id
  *    26. icon 容器具有 aria-hidden="true"
  *  ─ Portal 挂载
  *    27. 渲染容器为空，内容在 body
@@ -42,6 +42,12 @@
  *    30. 组件为 memo 包裹
  *  ─ 卸载清理
  *    31. unmount 后 body 内容移除
+ *  ─ ESC 键关闭（Bug 2 修复）
+ *    32. 按 ESC 键触发 onCancel
+ *  ─ 滚动锁定（Bug 7 修复）
+ *    33. visible=true 时 body overflow 为 hidden
+ *  ─ id 唯一性（Bug 11 修复）
+ *    34. 多个 ConfirmModal 实例标题 id 不重复
  */
 
 import React from 'react';
@@ -274,15 +280,22 @@ describe('ConfirmModal – 无障碍属性', () => {
     expect(screen.getByRole('dialog')).toHaveAttribute('aria-modal', 'true');
   });
 
-  it('overlay 具有 aria-labelledby="confirm-modal-title"', () => {
+  it('overlay 具有 aria-labelledby 指向标题 id', () => {
     renderConfirm();
-    expect(screen.getByRole('dialog')).toHaveAttribute('aria-labelledby', 'confirm-modal-title');
+    const dialog = screen.getByRole('dialog');
+    const labelledById = dialog.getAttribute('aria-labelledby');
+    expect(labelledById).not.toBeNull();
+    expect(labelledById).toMatch(/^confirm-modal-title-/);
+    const titleEl = document.getElementById(labelledById!);
+    expect(titleEl).not.toBeNull();
+    expect(titleEl).toContainElement(screen.getByText('确认操作'));
   });
 
-  it('标题元素 id 为 confirm-modal-title', () => {
+  it('标题元素具有对应 id', () => {
     renderConfirm({ title: '可读标题' });
     const title = screen.getByText('可读标题');
-    expect(title).toHaveAttribute('id', 'confirm-modal-title');
+    expect(title.id).toBeTruthy();
+    expect(title.id).toMatch(/^confirm-modal-title-/);
   });
 
   it('icon 容器具有 aria-hidden="true"', () => {
@@ -351,7 +364,73 @@ describe('ConfirmModal – 卸载清理', () => {
   });
 });
 
-// ─── 10. 严格边界测试 ─────────────────────────────────────────────────────────
+// ─── 10. ESC 键关闭（Bug 2 修复） ────────────────────────────────────────────
+describe('ConfirmModal – ESC 键关闭', () => {
+  it('按 ESC 键触发 onCancel', () => {
+    const onCancel = vi.fn();
+    renderConfirm({ onCancel });
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('visible=false 时 ESC 不注册监听', () => {
+    const onCancel = vi.fn();
+    const { rerender } = renderConfirm({ visible: false, onCancel });
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(onCancel).not.toHaveBeenCalled();
+
+    rerender(
+      <ConfirmModal visible={true} title="确认操作" onCancel={onCancel} onConfirm={vi.fn()} />,
+    );
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ─── 11. 滚动锁定（Bug 7 修复） ──────────────────────────────────────────────
+describe('ConfirmModal – 滚动锁定', () => {
+  it('visible=true 时 body overflow 为 hidden', () => {
+    const originalOverflow = document.body.style.overflow;
+    renderConfirm({ visible: true });
+    expect(document.body.style.overflow).toBe('hidden');
+    document.body.style.overflow = originalOverflow;
+  });
+
+  it('卸载后恢复 overflow', () => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'auto';
+    const { unmount } = renderConfirm({ visible: true });
+    expect(document.body.style.overflow).toBe('hidden');
+    unmount();
+    expect(document.body.style.overflow).toBe('auto');
+    document.body.style.overflow = originalOverflow;
+  });
+});
+
+// ─── 12. id 唯一性（Bug 11 修复） ────────────────────────────────────────────
+describe('ConfirmModal – id 唯一性', () => {
+  it('多个 ConfirmModal 实例标题 id 不重复', () => {
+    const onCancel1 = vi.fn();
+    const onCancel2 = vi.fn();
+    const { unmount: unmount1 } = render(
+      <ConfirmModal visible={true} title="标题A" onCancel={onCancel1} onConfirm={vi.fn()} />,
+    );
+    const titleA = screen.getByText('标题A');
+    expect(titleA.id).toBeTruthy();
+    const id1 = titleA.id;
+    unmount1();
+
+    const { unmount: unmount2 } = render(
+      <ConfirmModal visible={true} title="标题B" onCancel={onCancel2} onConfirm={vi.fn()} />,
+    );
+    const titleB = screen.getByText('标题B');
+    expect(titleB.id).toBeTruthy();
+    expect(titleB.id).not.toBe(id1);
+    unmount2();
+  });
+});
+
+// ─── 13. 严格边界测试 ─────────────────────────────────────────────────────────
 describe('ConfirmModal – 严格边界', () => {
   it('children 与 description 同时存在时均正常渲染', () => {
     renderConfirm({
@@ -366,8 +445,8 @@ describe('ConfirmModal – 严格边界', () => {
     renderConfirm({ title: <span data-testid="rich-title-span">富文本标题</span> });
     const dialog = screen.getByRole('dialog');
     const labelledById = dialog.getAttribute('aria-labelledby');
-    expect(labelledById).toBe('confirm-modal-title');
-    const titleNode = document.getElementById('confirm-modal-title');
+    expect(labelledById).toMatch(/^confirm-modal-title-/);
+    const titleNode = document.getElementById(labelledById!);
     expect(titleNode).not.toBeNull();
     expect(titleNode).toContainElement(screen.getByTestId('rich-title-span'));
   });
@@ -448,7 +527,7 @@ describe('ConfirmModal – 严格边界', () => {
 
   it('description 为 ReactNode 时与 children 共存顺序正确（描述在前）', () => {
     const { container } = renderConfirm({
-      description: <p data-testid="desc-p">描述段落</p>,
+      description: <span data-testid="desc-p">描述段落</span>,
       children: <div data-testid="children-div">子内容</div>,
     });
     const card = container.ownerDocument.body.querySelector('[class*="modalCard"]') as HTMLElement;

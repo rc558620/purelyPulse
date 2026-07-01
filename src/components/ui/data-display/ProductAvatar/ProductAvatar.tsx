@@ -1,9 +1,32 @@
 // 通用商品头像组件：有图显示图片，无图显示渐变占位 + 图标；支持预警角标。
 // 适用于：库存商品列表行、库存调整弹窗标题区等场景。
-import React, { memo } from 'react';
+import React, { memo, useState, useCallback } from 'react';
 import { cx, safeStr } from '@utils/utils';
 import { IconProductBag, IconBadgeAlert } from '@components/ui/_shared/icons';
 import styles from './ProductAvatar.module.less';
+
+// ─── 辅助函数 ────────────────────────────────────────────────────
+
+/**
+ * 将 CSS size 值（如 '4.8rem'、'48px'）转换为像素数（基于 1rem = 10px）。
+ * 无法解析时返回 fallback。
+ */
+function sizeToPx(size: string, fallback: number): number {
+  const m = size.match(/^([\d.]+)(rem|px)$/);
+  if (!m) return fallback;
+  const val = parseFloat(m[1]);
+  return m[2] === 'rem' ? val * 10 : val;
+}
+
+/** 根据容器像素尺寸计算角标容器尺寸（约 33%，最小 14px，最大 22px） */
+function badgeSize(containerPx: number): number {
+  return Math.max(14, Math.min(22, Math.round(containerPx * 0.33)));
+}
+
+/** 角标内 SVG 图标尺寸（角标容器尺寸 × 0.5，向下取整） */
+function badgeIconSize(badgePx: number): number {
+  return Math.floor(badgePx * 0.5);
+}
 
 // ─── 类型定义 ────────────────────────────────────────────────────
 
@@ -36,33 +59,57 @@ const ProductAvatar: React.FC<ProductAvatarProps> = memo(({
   size = '4.8rem',
   iconSize = '20',
   className,
-}) => (
-  <div
-    className={cx(styles.wrapper, className)}
-    style={{ width: size, height: size }}
-  >
-    {image ? (
-      <img src={image} alt={safeStr(name)} className={styles.img} />
-    ) : (
-      <div className={cx(
-        styles.placeholder,
-        alertLevel === 'warning' && styles.placeholderWarning,
-        alertLevel === 'danger'  && styles.placeholderDanger,
-      )}>
-        <IconProductBag width={iconSize} height={iconSize} />
-      </div>
-    )}
+}) => {
+  // BUG-1 fix: 图片加载失败时回退到占位模式
+  const [imgFailed, setImgFailed] = useState(false);
+  const handleImgError = useCallback(() => setImgFailed(true), []);
 
-    {alertLevel !== 'normal' && (
-      <div className={cx(
-        styles.badge,
-        alertLevel === 'danger' ? styles.badgeDanger : styles.badgeWarning,
-      )}>
-        <IconBadgeAlert />
-      </div>
-    )}
-  </div>
-));
+  // 是否显示占位（无图片 URL 或图片加载失败）
+  const showPlaceholder = !image || imgFailed;
+
+  // BUG-4 fix: 根据 size 动态计算角标尺寸
+  const containerPx = sizeToPx(size, 48);
+  const badgePx = badgeSize(containerPx);
+  const badgeIconPx = badgeIconSize(badgePx);
+
+  return (
+    <div
+      className={cx(styles.wrapper, className)}
+      style={{ width: size, height: size }}
+    >
+      {showPlaceholder ? (
+        <div className={cx(
+          styles.placeholder,
+          alertLevel === 'warning' && styles.placeholderWarning,
+          alertLevel === 'danger'  && styles.placeholderDanger,
+        )}>
+          <IconProductBag width={iconSize} height={iconSize} />
+        </div>
+      ) : (
+        // BUG-3 fix: 禁止图片拖拽；BUG-1 fix: onError 回退到占位
+        <img
+          src={image}
+          alt={safeStr(name)}
+          className={styles.img}
+          draggable={false}
+          onError={handleImgError}
+        />
+      )}
+
+      {alertLevel !== 'normal' && (
+        <div
+          className={cx(
+            styles.badge,
+            alertLevel === 'danger' ? styles.badgeDanger : styles.badgeWarning,
+          )}
+          style={{ width: badgePx, height: badgePx }}
+        >
+          <IconBadgeAlert width={String(badgeIconPx)} height={String(badgeIconPx)} />
+        </div>
+      )}
+    </div>
+  );
+});
 
 ProductAvatar.displayName = 'ProductAvatar';
 

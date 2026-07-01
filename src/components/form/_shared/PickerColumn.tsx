@@ -24,6 +24,8 @@ export interface PickerColumnProps<T extends number> {
   onSelect:   (val: T) => void;
   label:      string;
   formatItem?: (n: T) => string;
+  /** 面板是否可见；visible 从 false→true 时重置滚动行为为 instant，避免重新打开时出现平滑滚动定位 */
+  visible?: boolean;
   /** CSS Modules 样式映射，由父组件注入（column / columnLabel / columnListWrap /
    *  columnHighlight / columnList / columnPad / columnItem / columnItemSelected） */
   styles: Record<string, string>;
@@ -35,9 +37,30 @@ function PickerColumn<T extends number>({
   onSelect,
   label,
   formatItem,
+  visible,
   styles,
 }: PickerColumnProps<T>) {
   const listRef = useRef<HTMLUListElement>(null);
+
+  // ── 一次性标记：首次挂载 / 面板重新打开用 'instant'，后续用 'smooth' ──
+  const isFirstMount = useRef(true);
+
+  // BUG-6 fix: visible 从 false→true 时重置 isFirstMount，确保再次打开面板用 instant 定位
+  const prevVisibleRef = useRef(visible);
+  useEffect(() => {
+    if (visible && !prevVisibleRef.current) {
+      isFirstMount.current = true;
+    }
+    prevVisibleRef.current = visible;
+  }, [visible]);
+
+  // ── items 内容签名，避免引用变化但内容不变时触发无意义的滚动 ──
+  const prevItemsKeyRef = useRef('');
+  const itemsKey = items.join(',');
+
+  // BUG-7 fix: 用 ref 追踪最新 items，防止防抖闭包中 items 过期
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
 
   const scrollTo = useCallback((idx: number, behavior: ScrollBehavior = 'smooth') => {
     const el = listRef.current;
@@ -45,41 +68,51 @@ function PickerColumn<T extends number>({
     el.scrollTo({ top: idx * PICKER_ITEM_H, behavior });
   }, []);
 
-  // 首次挂载：瞬间跳到当前选中项（无动画，避免初始闪烁）
-  useEffect(() => {
-    const idx = items.indexOf(selected);
-    if (idx >= 0) scrollTo(idx, 'instant' as ScrollBehavior);
-    // 仅在 mount 时执行一次
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // selected 或 items 变化时平滑滚动
-  // items 变化（如 DayPicker 月份切换导致天数减少）时取最后一项作 fallback
+  // ── 统一处理滚动定位 ──
+  // 首次挂载：instant（无动画），selected / items 内容变化时：smooth
   useEffect(() => {
     const idx      = items.indexOf(selected);
     const fallback = items.length - 1;
-    scrollTo(idx >= 0 ? idx : fallback, 'smooth');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, items]);
+    const targetIdx = idx >= 0 ? idx : fallback;
+
+    const behavior: ScrollBehavior = isFirstMount.current ? 'instant' : 'smooth';
+    scrollTo(targetIdx, behavior as ScrollBehavior);
+
+    isFirstMount.current = false;
+    prevItemsKeyRef.current = itemsKey;
+    // 仅在 selected 或 items 内容真正变化时触发
+  }, [selected, itemsKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 滚动停止后（防抖 120ms）对齐并回调
+  // BUG-7 fix: 使用 itemsRef 读取最新 items，避免 setTimeout 闭包中 items 过期
   const scrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handleScroll = useCallback(() => {
     if (scrollTimer.current) clearTimeout(scrollTimer.current);
     scrollTimer.current = setTimeout(() => {
       const el = listRef.current;
       if (!el) return;
+      const currentItems = itemsRef.current;
       const idx     = Math.round(el.scrollTop / PICKER_ITEM_H);
-      const clamped = Math.max(0, Math.min(idx, items.length - 1));
-      onSelect(items[clamped] as T);
+      const clamped = Math.max(0, Math.min(idx, currentItems.length - 1));
+      onSelect(currentItems[clamped] as T);
       scrollTo(clamped, 'smooth');
     }, 120);
-  }, [items, onSelect, scrollTo]);
+  }, [onSelect, scrollTo]);
 
   // 卸载时清除防抖计时器
   useEffect(() => () => {
     if (scrollTimer.current) clearTimeout(scrollTimer.current);
   }, []);
+
+  // ── 点击选项：清除防抖计时器 + 仅调用 onSelect，由 useEffect 统一滚动 ──
+  const handleClickItem = useCallback((n: T) => {
+    // 清除防抖计时器，防止 120ms 后重复回调 onSelect
+    if (scrollTimer.current) {
+      clearTimeout(scrollTimer.current);
+      scrollTimer.current = null;
+    }
+    onSelect(n);
+  }, [onSelect]);
 
   return (
     <div className={styles.column}>
@@ -103,11 +136,7 @@ function PickerColumn<T extends number>({
                 styles.columnItem,
                 n === selected && styles.columnItemSelected,
               )}
-              onClick={() => {
-                const idx = items.indexOf(n);
-                onSelect(n as T);
-                scrollTo(idx, 'smooth');
-              }}
+              onClick={() => handleClickItem(n)}
             >
               {formatItem ? formatItem(n) : pad2(n)}
             </li>

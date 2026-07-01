@@ -196,10 +196,8 @@ describe('DatePicker/utils – parseTime', () => {
         expect(result.minute).toBeGreaterThanOrEqual(0);
     });
 
-    it('格式异常 "abc" → parseInt("abc") = NaN，clamp 后为 0', () => {
-        // parseInt('abc', 10) = NaN, Math.max(0, NaN) = NaN, Math.min(23, NaN) = NaN
-        // 实际实现没有特殊处理，返回 NaN；此处只做不抛错验证
-        expect(() => parseTime('abc')).not.toThrow();
+    it('格式异常 "abc" → parseInt("abc") = NaN，兜底为 0:0', () => {
+        expect(parseTime('abc')).toEqual({ hour: 0, minute: 0 });
     });
 });
 

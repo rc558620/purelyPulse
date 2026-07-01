@@ -47,7 +47,7 @@
   border: 2px solid @border-color;
   background-color: @bg-white;
   flex-shrink: 0;
-  transition: border-color 0.15s, background-color 0.15s;
+  transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
   position: relative;
 
   // 内部圆点（未选中时不可见）
@@ -79,6 +79,25 @@
   }
 }
 
+// ─── BUG-2 修复：键盘焦点样式（:focus-visible） ──────────────
+.radioInput:focus-visible + .radioLabel {
+  .radioIndicator {
+    box-shadow: 0 0 0 3px fade(@primary, 30%);
+  }
+}
+
+// ─── BUG-3 修复：禁用 + 选中态 ───────────────────────────────
+.radioInput:checked:disabled + .radioLabel {
+  opacity: 0.45;
+  cursor: not-allowed;
+
+  .radioIndicator {
+    border-color: var(--radio-color, @primary);
+    background-color: var(--radio-color, @primary);
+    opacity: 0.55;
+  }
+}
+
 // ─── 错误态 ───────────────────────────────────────────────────
 .radioGroupError {
   .radioIndicator {
@@ -91,5 +110,3 @@
   opacity: 0.45;
   cursor: not-allowed;
 }
-
-

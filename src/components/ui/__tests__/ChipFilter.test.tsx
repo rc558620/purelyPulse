@@ -17,7 +17,8 @@
  *    10. 点击"全部"调用 onChange("")
  *    11. 点击某 chip 调用 onChange(optValue)
  *    12. 再次点击已选中的 chip 调用 onChange("")（取消选中）
- *    13. 点击"全部"时 onChange 只触发一次
+ *    13. "全部"已选中时点击"全部"不触发 onChange
+ *    14. 选中其他项时点击"全部"触发 onChange("")
  *  ─ options 归一化
  *    14. string[] 转为 { label, value } 后 label 正确显示
  *    15. ChipFilterOption[] 直接使用 label/value
@@ -146,12 +147,21 @@ describe('ChipFilter – 切换逻辑', () => {
         expect(onChange).toHaveBeenCalledWith('');
     });
 
-    it('点击"全部"时 onChange 只触发一次', async () => {
+    it('"全部"已选中时点击"全部"不触发 onChange', async () => {
         const user = userEvent.setup();
         const onChange = vi.fn();
-        renderChip({ onChange });
+        renderChip({ onChange, value: '' });
+        await user.click(screen.getByRole('button', { name: '全部' }));
+        expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('选中其他项时点击"全部"触发 onChange("")', async () => {
+        const user = userEvent.setup();
+        const onChange = vi.fn();
+        renderChip({ onChange, value: '乳制品' });
         await user.click(screen.getByRole('button', { name: '全部' }));
         expect(onChange).toHaveBeenCalledTimes(1);
+        expect(onChange).toHaveBeenCalledWith('');
     });
 
     it('ChipFilterOption[] 点击某项 onChange 传 value 字段', async () => {

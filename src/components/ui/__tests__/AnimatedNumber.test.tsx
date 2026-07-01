@@ -38,6 +38,16 @@ function renderAnimated(props: React.ComponentProps<typeof AnimatedNumber>) {
     return render(<AnimatedNumber {...props} />);
 }
 
+async function rerenderAnimated(
+    rerender: ReturnType<typeof render>['rerender'],
+    props: React.ComponentProps<typeof AnimatedNumber>,
+) {
+    await act(async () => {
+        rerender(<AnimatedNumber {...props} />);
+        await Promise.resolve();
+    });
+}
+
 // ─── 1. 基本渲染 ──────────────────────────────────────────────────────────────
 describe('AnimatedNumber – 基本渲染', () => {
     it('渲染外层 span 容器', () => {
@@ -86,65 +96,65 @@ describe('AnimatedNumber – className 透传', () => {
 // ─── 3. triggerKey 变化（动画触发） ──────────────────────────────────────────
 describe('AnimatedNumber – triggerKey 变化', () => {
     beforeEach(() => vi.useFakeTimers());
-    afterEach(() => { vi.runAllTimers(); vi.useRealTimers(); });
-
-    it('triggerKey 变化后出现两个 numberItem span', () => {
-        const { container, rerender } = renderAnimated({ value: '100', triggerKey: 'k1' });
-        act(() => {
-            rerender(<AnimatedNumber value="200" triggerKey="k2" />);
+    afterEach(async () => {
+        await act(async () => {
+            vi.runAllTimers();
+            await Promise.resolve();
         });
+        vi.useRealTimers();
+    });
+
+    it('triggerKey 变化后出现两个 numberItem span', async () => {
+        const { container, rerender } = renderAnimated({ value: '100', triggerKey: 'k1' });
+        await rerenderAnimated(rerender, { value: '200', triggerKey: 'k2' });
         const outerSpan = container.querySelector('span')!;
         const items = Array.from(outerSpan.children).filter((el) => el.tagName === 'SPAN');
         expect(items).toHaveLength(2);
     });
 
-    it('triggerKey 变化后新值内容正确渲染', () => {
+    it('triggerKey 变化后新值内容正确渲染', async () => {
         const { rerender } = renderAnimated({ value: '100', triggerKey: 'k1' });
-        act(() => {
-            rerender(<AnimatedNumber value="999" triggerKey="k2" />);
-        });
+        await rerenderAnimated(rerender, { value: '999', triggerKey: 'k2' });
         expect(screen.getByText('999')).toBeInTheDocument();
     });
 
-    it('triggerKey 变化后旧 item 具有 aria-hidden="true"', () => {
+    it('triggerKey 变化后旧 item 具有 aria-hidden="true"', async () => {
         const { container, rerender } = renderAnimated({ value: '100', triggerKey: 'k1' });
-        act(() => {
-            rerender(<AnimatedNumber value="200" triggerKey="k2" />);
-        });
+        await rerenderAnimated(rerender, { value: '200', triggerKey: 'k2' });
         const outerSpan = container.querySelector('span')!;
         const spans = Array.from(outerSpan.children).filter((el) => el.tagName === 'SPAN') as HTMLElement[];
         // 第一个 span 是旧值
         expect(spans[0].getAttribute('aria-hidden')).toBe('true');
     });
 
-    it('triggerKey 变化后新 item aria-hidden="false"', () => {
+    it('triggerKey 变化后新 item aria-hidden="false"', async () => {
         const { container, rerender } = renderAnimated({ value: '100', triggerKey: 'k1' });
-        act(() => {
-            rerender(<AnimatedNumber value="200" triggerKey="k2" />);
-        });
+        await rerenderAnimated(rerender, { value: '200', triggerKey: 'k2' });
         const outerSpan = container.querySelector('span')!;
         const spans = Array.from(outerSpan.children).filter((el) => el.tagName === 'SPAN') as HTMLElement[];
         // 第二个 span 是新值
         expect(spans[1].getAttribute('aria-hidden')).toBe('false');
     });
 
-    it('500ms 后旧 item 被清理（只剩一个 numberItem）', () => {
+    it('500ms 后旧 item 被清理（只剩一个 numberItem）', async () => {
         const { container, rerender } = renderAnimated({ value: '100', triggerKey: 'k1' });
-        act(() => {
-            rerender(<AnimatedNumber value="200" triggerKey="k2" />);
+        await rerenderAnimated(rerender, { value: '200', triggerKey: 'k2' });
+        await act(async () => {
+            vi.advanceTimersByTime(600);
+            await Promise.resolve();
         });
-        act(() => { vi.advanceTimersByTime(600); });
         const outerSpan = container.querySelector('span')!;
         const items = Array.from(outerSpan.children).filter((el) => el.tagName === 'SPAN');
         expect(items).toHaveLength(1);
     });
 
-    it('500ms 后显示新值', () => {
+    it('500ms 后显示新值', async () => {
         const { rerender } = renderAnimated({ value: '100', triggerKey: 'k1' });
-        act(() => {
-            rerender(<AnimatedNumber value="200" triggerKey="k2" />);
+        await rerenderAnimated(rerender, { value: '200', triggerKey: 'k2' });
+        await act(async () => {
+            vi.advanceTimersByTime(600);
+            await Promise.resolve();
         });
-        act(() => { vi.advanceTimersByTime(600); });
         expect(screen.getByText('200')).toBeInTheDocument();
         expect(screen.queryByText('100')).toBeNull();
     });
@@ -153,23 +163,25 @@ describe('AnimatedNumber – triggerKey 变化', () => {
 // ─── 4. 同一 triggerKey 下 value 变化 ────────────────────────────────────────
 describe('AnimatedNumber – 同一 triggerKey 下 value 变化', () => {
     beforeEach(() => vi.useFakeTimers());
-    afterEach(() => { vi.runAllTimers(); vi.useRealTimers(); });
-
-    it('相同 triggerKey 仅改 value 时，保持单个 numberItem（无动画）', () => {
-        const { container, rerender } = renderAnimated({ value: 'A', triggerKey: 'same' });
-        act(() => {
-            rerender(<AnimatedNumber value="B" triggerKey="same" />);
+    afterEach(async () => {
+        await act(async () => {
+            vi.runAllTimers();
+            await Promise.resolve();
         });
+        vi.useRealTimers();
+    });
+
+    it('相同 triggerKey 仅改 value 时，保持单个 numberItem（无动画）', async () => {
+        const { container, rerender } = renderAnimated({ value: 'A', triggerKey: 'same' });
+        await rerenderAnimated(rerender, { value: 'B', triggerKey: 'same' });
         const outerSpan = container.querySelector('span')!;
         const items = Array.from(outerSpan.children).filter((el) => el.tagName === 'SPAN');
         expect(items).toHaveLength(1);
     });
 
-    it('相同 triggerKey 改 value 时显示新 value', () => {
+    it('相同 triggerKey 改 value 时显示新 value', async () => {
         const { rerender } = renderAnimated({ value: 'OldVal', triggerKey: 'same' });
-        act(() => {
-            rerender(<AnimatedNumber value="NewVal" triggerKey="same" />);
-        });
+        await rerenderAnimated(rerender, { value: 'NewVal', triggerKey: 'same' });
         expect(screen.getByText('NewVal')).toBeInTheDocument();
         expect(screen.queryByText('OldVal')).toBeNull();
     });
@@ -178,12 +190,18 @@ describe('AnimatedNumber – 同一 triggerKey 下 value 变化', () => {
 // ─── 5. 多次 triggerKey 变化 ─────────────────────────────────────────────────
 describe('AnimatedNumber – 多次 triggerKey 变化', () => {
     beforeEach(() => vi.useFakeTimers());
-    afterEach(() => { vi.runAllTimers(); vi.useRealTimers(); });
+    afterEach(async () => {
+        await act(async () => {
+            vi.runAllTimers();
+            await Promise.resolve();
+        });
+        vi.useRealTimers();
+    });
 
-    it('多次变化时最多同时存在 2 个 item', () => {
+    it('多次变化时最多同时存在 2 个 item', async () => {
         const { container, rerender } = renderAnimated({ value: '1', triggerKey: 'k1' });
-        act(() => { rerender(<AnimatedNumber value="2" triggerKey="k2" />); });
-        act(() => { rerender(<AnimatedNumber value="3" triggerKey="k3" />); });
+        await rerenderAnimated(rerender, { value: '2', triggerKey: 'k2' });
+        await rerenderAnimated(rerender, { value: '3', triggerKey: 'k3' });
 
         const outerSpan = container.querySelector('span')!;
         const items = Array.from(outerSpan.children).filter((el) => el.tagName === 'SPAN');

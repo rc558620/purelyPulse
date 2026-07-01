@@ -3,7 +3,7 @@
 // 绝对定位，入场/退场由 CSS animation 控制（dropdownIn / dropdownOut）。
 // 自身只负责 UI 渲染，状态由父组件（MonthPicker）通过 props 注入。
 
-import React, { memo } from 'react';
+import React, { useCallback, memo } from 'react';
 import classNames from 'classnames';
 
 import MonthPickerPanel from './MonthPickerPanel';
@@ -41,24 +41,34 @@ const MonthPickerPcDropdown: React.FC<MonthPickerPcDropdownProps> = ({
   onConfirm,
   onClose,
   onAnimationEnd,
-}) => (
-  <div
-    className={classNames(styles.dropdown, isClosing && styles.dropdownClosing)}
-    onAnimationEnd={onAnimationEnd}
-    role="dialog"
-    aria-modal="true"
-    aria-label="选择年月"
-  >
-    <MonthPickerPanel
-      year={year}
-      month={month}
-      pastYears={pastYears}
-      futureYears={futureYears}
-      onConfirm={onConfirm}
-      onClose={onClose}
-    />
-  </div>
-);
+}) => {
+  // BUG-4 fix: 只处理容器自身的动画结束事件，校验 animationName 防止子元素冒泡误触
+  const handleAnimationEnd = useCallback((e: React.AnimationEvent) => {
+    if (e.target !== e.currentTarget) return;
+    if (e.animationName !== 'dropdownIn' && e.animationName !== 'dropdownOut') return;
+    onAnimationEnd();
+  }, [onAnimationEnd]);
+
+  return (
+    <div
+      className={classNames(styles.dropdown, isClosing && styles.dropdownClosing)}
+      onAnimationEnd={handleAnimationEnd}
+      role="dialog"
+      aria-modal="true"
+      aria-label="选择年月"
+    >
+      <MonthPickerPanel
+        year={year}
+        month={month}
+        visible={!isClosing}
+        pastYears={pastYears}
+        futureYears={futureYears}
+        onConfirm={onConfirm}
+        onClose={onClose}
+      />
+    </div>
+  );
+};
 
 MonthPickerPcDropdown.displayName = 'MonthPickerPcDropdown';
 

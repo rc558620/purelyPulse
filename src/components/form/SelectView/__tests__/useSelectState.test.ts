@@ -105,9 +105,19 @@ describe('useSelectState – 初始状态', () => {
         expect(result.current.searchText).toBe('');
     });
 
-    it('draftValues 初始为 []', () => {
+    it('draftValues 初始为 []（无 value/defaultValue）', () => {
         const { result } = setup({ mode: 'multiple' });
         expect(result.current.draftValues).toEqual([]);
+    });
+
+    it('draftValues 初始从 defaultValue 同步', () => {
+        const { result } = setup({ mode: 'multiple', defaultValue: ['a'] });
+        expect(result.current.draftValues).toEqual(['a']);
+    });
+
+    it('draftValues 初始从受控 value 同步', () => {
+        const { result } = setup({ mode: 'multiple', value: ['b', 'c'] });
+        expect(result.current.draftValues).toEqual(['b', 'c']);
     });
 });
 
@@ -119,8 +129,23 @@ describe('useSelectState – 受控模式', () => {
         expect(result.current.selectedValues).toEqual(['b']);
     });
 
-    it('受控 value=undefined 时回退到内部状态', () => {
-        const { result } = setup({ value: undefined });
+    it('受控 value=undefined 时保持受控空态', () => {
+        const { result } = setup({ value: undefined, isControlled: true });
+        expect(result.current.selectedValues).toEqual([]);
+    });
+
+    it('受控 value 从有值变为 undefined 时不会回退旧值', () => {
+        const { result, rerender } = setup({ value: 'a', isControlled: true });
+        expect(result.current.selectedValues).toEqual(['a']);
+
+        rerender({
+            options: OPTIONS,
+            mode: 'single',
+            onClose: vi.fn(),
+            onChange: vi.fn(),
+            value: undefined,
+            isControlled: true,
+        });
         expect(result.current.selectedValues).toEqual([]);
     });
 
@@ -234,11 +259,11 @@ describe('useSelectState – handleMultiConfirm', () => {
 // ─── 7. handleClear ──────────────────────────────────────────────────────────
 
 describe('useSelectState – handleClear', () => {
-    it('单选 handleClear：onChange 收到空字符串', () => {
+    it('单选 handleClear：onChange 收到 undefined', () => {
         const { result, onChange } = setup({ value: 'a' });
         const mockEvent = { stopPropagation: vi.fn() } as unknown as React.MouseEvent;
         act(() => { result.current.handleClear(mockEvent); });
-        expect(onChange).toHaveBeenCalledWith('');
+        expect(onChange).toHaveBeenCalledWith(undefined);
     });
 
     it('多选 handleClear：onChange 收到 []', () => {
@@ -287,17 +312,6 @@ describe('useSelectState – 搜索', () => {
         expect(result.current.searchText).toBe('');
     });
 
-    it('resetSearch 清空 searchText', () => {
-        const { result } = setup();
-        act(() => {
-            result.current.handleSearchChange(
-                { target: { value: 'C' } } as React.ChangeEvent<HTMLInputElement>,
-            );
-        });
-        act(() => { result.current.resetSearch(); });
-        expect(result.current.searchText).toBe('');
-    });
-
     it('filteredOptions：无搜索词时返回全量选项', () => {
         const { result } = setup();
         expect(result.current.filteredOptions).toEqual(OPTIONS);
@@ -337,5 +351,139 @@ describe('useSelectState – syncDraftToSelected', () => {
         });
         act(() => { result.current.syncDraftToSelected(); }); // 同步（空 selectedValues）
         expect(result.current.draftValues).toEqual([]);
+    });
+});
+
+// ─── 11. resetDraft ────────────────────────────────────────────────────────────
+
+describe('useSelectState – resetDraft', () => {
+    it('resetDraft 将草稿重置为当前 selectedValues', () => {
+        const { result } = setup({ value: ['a', 'c'], mode: 'multiple' });
+        act(() => { result.current.handleMultiToggle('b'); }); // 草稿变为 ['a', 'c', 'b']
+        act(() => { result.current.resetDraft(); }); // 重置为 selectedValues ['a', 'c']
+        expect(result.current.draftValues).toEqual(['a', 'c']);
+    });
+
+    it('resetDraft 空选中时草稿变为 []', () => {
+        const { result } = setup({ mode: 'multiple' });
+        act(() => { result.current.handleMultiToggle('a'); }); // 草稿变为 ['a']
+        act(() => { result.current.resetDraft(); }); // 重置为空 selectedValues
+        expect(result.current.draftValues).toEqual([]);
+    });
+});
+
+// ─── 12. BUG 修复验证 ─────────────────────────────────────────────────────────
+
+const OPTIONS_WITH_DISABLED = [
+    { value: 'a', label: '选项 A' },
+    { value: 'b', label: '禁用项 B', disabled: true },
+    { value: 'c', label: '选项 C' },
+    { value: 'd', label: '禁用项 D', disabled: true },
+    { value: 'e', label: '选项 E' },
+];
+
+describe('BUG 修复验证', () => {
+    // BUG-1: handleMultiConfirm 闭包陷阱
+    it('BUG-1: handleMultiConfirm 使用 ref 读取最新 draftValues', () => {
+        const { result } = setup({ mode: 'multiple' });
+        act(() => {
+            result.current.handleMultiToggle('a');
+            result.current.handleMultiToggle('b');
+        });
+        // 确认提交时提交的是最新草稿
+        act(() => { result.current.handleMultiConfirm(); });
+        expect(result.current.selectedValues).toEqual(['a', 'b']);
+    });
+
+    // BUG-5: disabled 选项搜索过滤
+    it('BUG-5: 搜索时排除 disabled 选项', () => {
+        const { result } = renderHook(
+            (props: UseSelectStateOptions) => useSelectState(props),
+            {
+                initialProps: {
+                    options: OPTIONS_WITH_DISABLED,
+                    mode: 'single',
+                    onClose: vi.fn(),
+                    onChange: vi.fn(),
+                } as UseSelectStateOptions,
+            },
+        );
+        // 无搜索词时返回全量（包含 disabled）
+        expect(result.current.filteredOptions).toHaveLength(5);
+
+        // 搜索 "禁用" 时不应返回 disabled 项
+        act(() => {
+            result.current.handleSearchChange(
+                { target: { value: '禁用' } } as React.ChangeEvent<HTMLInputElement>,
+            );
+        });
+        expect(result.current.filteredOptions).toEqual([]);
+
+        // 搜索 "项" 时应返回非 disabled 的匹配项
+        act(() => {
+            result.current.handleSearchChange(
+                { target: { value: '选项' } } as React.ChangeEvent<HTMLInputElement>,
+            );
+        });
+        expect(result.current.filteredOptions).toHaveLength(3);
+        expect(result.current.filteredOptions.every(o => !o.disabled)).toBe(true);
+    });
+
+    // BUG-7: 多选 displayText 截断
+    it('BUG-7: 多选超过 3 项时 displayText 显示摘要格式', () => {
+        const { result } = setup({ mode: 'multiple', value: ['a', 'b', 'c'] });
+        // 3 项 = 不截断
+        expect(result.current.displayText).toBe('选项 A、选项 B、选项 C');
+
+        // 重新 setup 4 项
+        const { result: result2 } = renderHook(
+            (props: UseSelectStateOptions) => useSelectState(props),
+            {
+                initialProps: {
+                    options: OPTIONS,
+                    mode: 'multiple',
+                    value: ['a', 'b', 'c'],
+                    onClose: vi.fn(),
+                    onChange: vi.fn(),
+                } as UseSelectStateOptions,
+            },
+        );
+        // 3 项仍不截断
+        expect(result2.current.displayText).toBe('选项 A、选项 B、选项 C');
+    });
+
+    it('BUG-7: 多选 4 项时 displayText 显示 "X 等 4 项"', () => {
+        const MORE_OPTIONS = [
+            { value: 'a', label: '选项 A' },
+            { value: 'b', label: '选项 B' },
+            { value: 'c', label: '选项 C' },
+            { value: 'd', label: '选项 D' },
+        ];
+        const { result } = renderHook(
+            (props: UseSelectStateOptions) => useSelectState(props),
+            {
+                initialProps: {
+                    options: MORE_OPTIONS,
+                    mode: 'multiple',
+                    value: ['a', 'b', 'c', 'd'],
+                    onClose: vi.fn(),
+                    onChange: vi.fn(),
+                } as UseSelectStateOptions,
+            },
+        );
+        expect(result.current.displayText).toBe('选项 A 等 4 项');
+    });
+
+    // BUG-8: 单选重复选择不触发 onChange
+    it('BUG-8: 单选重复选择同一项不触发 onChange', () => {
+        const { result, onChange } = setup({ value: 'a' });
+        // 选择当前已选中的项
+        act(() => { result.current.handleSingleSelect('a'); });
+        expect(onChange).not.toHaveBeenCalled();
+
+        // 选择不同的项
+        act(() => { result.current.handleSingleSelect('b'); });
+        expect(onChange).toHaveBeenCalledTimes(1);
+        expect(onChange).toHaveBeenCalledWith('b');
     });
 });

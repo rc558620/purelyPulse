@@ -108,6 +108,7 @@ interface PulseServerMemberListItemLike {
   availablePoints: number;
   beanBalance: number;
   isPartner: boolean;
+  totalRecharged: number;
   totalRechargedDisplay: string;
   registeredAt: number;
   lastActiveAt: number;
@@ -171,6 +172,7 @@ const isServerMemberListItemLike = (value: unknown): value is PulseServerMemberL
   && isFiniteNumber(value.availablePoints)
   && isFiniteNumber(value.beanBalance)
   && typeof value.isPartner === 'boolean'
+  && isFiniteNumber(value.totalRecharged)
   && typeof value.totalRechargedDisplay === 'string'
   && isFiniteNumber(value.registeredAt)
   && isFiniteNumber(value.lastActiveAt)
@@ -276,10 +278,10 @@ const mapSubAccountCapability = (value: unknown): SubAccountCapability | undefin
   };
 };
 
-const mapServerRechargeRecord = (value: PulseServerRechargeRecordLike): RechargeRecord => ({
+const mapServerRechargeRecord = (value: PulseServerRechargeRecordLike & { amountDisplay?: string }): RechargeRecord => ({
   id: value.id,
   planName: value.planName,
-  amount: safeNum(value.amount),
+  amountDisplay: value.amountDisplay ?? '',
   pointsAwarded: safeNum(value.pointsAwarded),
   channel: normalizeRechargeChannel(value.channel),
   createdAt: value.createdAt,

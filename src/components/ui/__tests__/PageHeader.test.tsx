@@ -11,22 +11,26 @@
  *    5.  传入 title 时渲染 h1 标题
  *    6.  title 文本内容正确
  *    7.  不传 title 时不渲染 h1
- *    8.  不传 title 时不渲染右侧占位区域
+ *    8.  不传 title 时右侧 div 占位仍然渲染
  *    9.  传入 title 时渲染右侧 div 占位
  *  ─ rightExtra
  *    10. 传入 rightExtra 时在右侧渲染内容
  *    11. 不传 rightExtra 时右侧区域为空（div 存在但无内容）
+ *    12. 不传 title 但传入 rightExtra 时右侧内容仍可渲染
+ *  ─ hideBack
+ *    13. hideBack=true 时不渲染返回按钮
+ *    14. hideBack=false（默认）时渲染返回按钮
  *  ─ variant 样式
- *    12. 默认 variant 为 sticky（含 header class）
- *    13. variant="transparent" 含 headerTransparent class
- *    14. variant="absolute" 含 headerAbsolute class
- *    15. variant="relative" 含 headerRelative class
+ *    15. 默认 variant 为 sticky（含 header class）
+ *    16. variant="transparent" 含 headerTransparent class
+ *    17. variant="absolute" 含 headerAbsolute class
+ *    18. variant="relative" 含 headerRelative class
  *  ─ 返回逻辑
- *    16. 传入 onBack 时点击返回按钮触发 onBack
- *    17. 传入 onBack 时不调用 navigate(-1)
- *    18. 不传 onBack 时点击返回按钮调用 navigate(-1)
+ *    19. 传入 onBack 时点击返回按钮触发 onBack
+ *    20. 传入 onBack 时不调用 navigate(-1)
+ *    21. 不传 onBack 时点击返回按钮调用 navigate(-1)
  *  ─ React.memo
- *    19. PageHeader 是 React.memo 包裹的组件
+ *    22. PageHeader 是 React.memo 包裹的组件
  */
 
 import React from 'react';
@@ -81,7 +85,7 @@ describe('PageHeader – 基本渲染', () => {
     });
 
     it('返回按钮内含 svg 图标', () => {
-        const { container } = renderHeader();
+        renderHeader();
         const backBtn = screen.getByRole('button', { name: '返回' });
         expect(backBtn.querySelector('svg')).toBeInTheDocument();
     });
@@ -104,20 +108,21 @@ describe('PageHeader – title', () => {
         expect(screen.queryByRole('heading')).toBeNull();
     });
 
-    it('不传 title 时不渲染右侧占位区域', () => {
-        const { container } = renderHeader();
+    it('不传 title 时右侧 div 占位仍然渲染', () => {
+        renderHeader();
         const header = screen.getByRole('banner');
-        // header 中只有返回按钮，没有右侧 div
-        const children = Array.from(header.children);
-        expect(children).toHaveLength(1); // 只有 backBtn
+        // header 中有 left div + right div（rightExtra 独立于 title 渲染）
+        const divChildren = Array.from(header.children).filter((el) => el.tagName === 'DIV');
+        expect(divChildren).toHaveLength(2); // left div + right div
     });
 
     it('传入 title 时渲染右侧 div 占位', () => {
-        const { container } = renderHeader({ title: '测试' });
+        renderHeader({ title: '测试' });
         const header = screen.getByRole('banner');
-        const children = Array.from(header.children);
-        // backBtn + h1 + right div = 3个子节点
-        expect(children).toHaveLength(3);
+        const divChildren = Array.from(header.children).filter((el) => el.tagName === 'DIV');
+        // left div + h1 + right div
+        expect(divChildren).toHaveLength(2);
+        expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
     });
 });
 
@@ -134,18 +139,35 @@ describe('PageHeader – rightExtra', () => {
     it('不传 rightExtra 时右侧区域为空（div 存在但无子节点）', () => {
         renderHeader({ title: '测试' });
         const header = screen.getByRole('banner');
-        // The right div is the LAST div child (after left div and h1 title)
         const divChildren = Array.from(header.children).filter((el) => el.tagName === 'DIV');
-        // There should be 2 divs: left and right
         expect(divChildren).toHaveLength(2);
-        // The right (last) div should have no children when no rightExtra is passed
         const rightDiv = divChildren[divChildren.length - 1] as HTMLElement;
         expect(rightDiv).toBeTruthy();
         expect(rightDiv.children).toHaveLength(0);
     });
+
+    it('不传 title 但传入 rightExtra 时右侧内容仍可渲染', () => {
+        renderHeader({
+            rightExtra: <button type="button" aria-label="操作">操作</button>,
+        });
+        expect(screen.getByRole('button', { name: '操作' })).toBeInTheDocument();
+    });
 });
 
-// ─── 4. variant 样式 ──────────────────────────────────────────────────────────
+// ─── 4. hideBack ─────────────────────────────────────────────────────────────
+describe('PageHeader – hideBack', () => {
+    it('hideBack=true 时不渲染返回按钮', () => {
+        renderHeader({ hideBack: true });
+        expect(screen.queryByRole('button', { name: '返回' })).toBeNull();
+    });
+
+    it('hideBack=false（默认）时渲染返回按钮', () => {
+        renderHeader({ hideBack: false });
+        expect(screen.getByRole('button', { name: '返回' })).toBeInTheDocument();
+    });
+});
+
+// ─── 5. variant 样式 ──────────────────────────────────────────────────────────
 describe('PageHeader – variant 样式', () => {
     it('默认 variant 为 sticky（含 header class 而非 headerTransparent/headerAbsolute/headerRelative）', () => {
         renderHeader();
@@ -174,7 +196,7 @@ describe('PageHeader – variant 样式', () => {
     });
 });
 
-// ─── 5. 返回逻辑 ─────────────────────────────────────────────────────────────
+// ─── 6. 返回逻辑 ─────────────────────────────────────────────────────────────
 describe('PageHeader – 返回逻辑', () => {
     it('传入 onBack 时点击返回按钮触发 onBack', async () => {
         const user = userEvent.setup();
@@ -207,7 +229,7 @@ describe('PageHeader – 返回逻辑', () => {
     });
 });
 
-// ─── 6. React.memo ────────────────────────────────────────────────────────────
+// ─── 7. React.memo ────────────────────────────────────────────────────────────
 describe('PageHeader – React.memo', () => {
     it('PageHeader 是 React.memo 包裹的组件', () => {
         expect((PageHeader as unknown as { $$typeof?: symbol }).$$typeof?.toString()).toContain('memo');

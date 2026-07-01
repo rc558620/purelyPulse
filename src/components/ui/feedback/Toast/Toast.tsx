@@ -69,21 +69,45 @@ export const ToastContainer = memo(function ToastContainer(): React.JSX.Element 
     const [toasts, setToasts] = useState<ToastItem[]>([]);
     // 用 ref 缓存 timer id，避免闭包过期问题。
     const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+    // 追踪组件挂载状态，避免卸载后 setState
+    const mountedRef = useRef(true);
+
+    /**
+     * 清除指定 Toast 的自动消失定时器，防止点击关闭后定时器残留。
+     * @param id - Toast 唯一标识。
+     */
+    const clearAutoTimer = useCallback((id: string): void => {
+        const autoTimer = timersRef.current.get(id);
+        if (autoTimer !== undefined) {
+            clearTimeout(autoTimer);
+            timersRef.current.delete(id);
+        }
+    }, []);
 
     /**
      * 触发指定 Toast 离场动画，动画结束后从列表移除。
      * @param id - 需要移除的 Toast id。
      */
     const dismissToast = useCallback((id: string): void => {
+        // Bug #1 修复：先清除自动消失定时器，避免点击关闭后定时器重复触发
+        clearAutoTimer(id);
+
         setToasts(prev => prev.map(t => (t.id === id ? { ...t, leaving: true } : t)));
+        const removeKey = `${id}-remove`;
         const removeTimer = setTimeout(() => {
-            setToasts(prev => prev.filter(t => t.id !== id));
-            timersRef.current.delete(id);
+            if (mountedRef.current) {
+                setToasts(prev => prev.filter(t => t.id !== id));
+            }
+            // Bug #4 修复：删除正确的 key（${id}-remove），而非 id
+            timersRef.current.delete(removeKey);
         }, LEAVE_DURATION);
-        timersRef.current.set(`${id}-remove`, removeTimer);
-    }, []);
+        timersRef.current.set(removeKey, removeTimer);
+    }, [clearAutoTimer]);
 
     useEffect(() => {
+        // 每次 effect 运行（含 StrictMode 二次挂载）时重置为 true
+        mountedRef.current = true;
+
         /**
          * 监听全局 toast 事件，生成新的 ToastItem 并加入列表。
          * @param event - 携带 ShowToastOptions 的 CustomEvent。
@@ -92,9 +116,15 @@ export const ToastContainer = memo(function ToastContainer(): React.JSX.Element 
             const { message, type = 'default', duration = DEFAULT_DURATION, icon } = (event as CustomEvent<ShowToastOptions>).detail;
             const id = fallbackKey('toast');
 
-            setToasts(prev => [...prev, { id, message, type, icon, leaving: false }]);
+            if (mountedRef.current) {
+                setToasts(prev => [...prev, { id, message, type, icon, leaving: false }]);
+            }
 
-            const autoTimer = setTimeout(() => dismissToast(id), duration);
+            const autoTimer = setTimeout(() => {
+                if (mountedRef.current) {
+                    dismissToast(id);
+                }
+            }, duration);
             timersRef.current.set(id, autoTimer);
         };
 
@@ -102,7 +132,8 @@ export const ToastContainer = memo(function ToastContainer(): React.JSX.Element 
         const currentTimers = timersRef.current;
         return () => {
             window.removeEventListener(TOAST_EVENT, handleToastEvent);
-            // 页面卸载时清理所有计时器。
+            // Bug #2 修复：卸载时标记 mountedRef，并清理所有计时器
+            mountedRef.current = false;
             currentTimers.forEach(timer => clearTimeout(timer));
             currentTimers.clear();
         };

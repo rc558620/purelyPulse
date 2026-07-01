@@ -10,9 +10,12 @@
  *  - 点击清除不触发面板打开
  *  - displayMode="pc" / "mobile" 强制模式
  *  - className 应用
- *  - pastYears / futureYears prop 透传
  *  - aria 属性（role、tabIndex、aria-expanded、aria-haspopup）
  *  - 补零格式（月/日 < 10 时补零）
+ *  - 移动端面板常驻 DOM（Bug #1/#2 fix）
+ *  - 移动端面板通过 visible 控制 bottomSheetVisible class（Bug #1/#2 fix）
+ *  - 外部 props 变化同步到面板内部 state（Bug #3 fix）
+ *  - 月份切换后日期自动 clamp（Bug #5 fix）
  */
 
 import React from 'react';
@@ -92,14 +95,22 @@ describe('DayPicker – 打开/关闭', () => {
         expect(trigger).toHaveAttribute('aria-expanded', 'true');
     });
 
-    it('ESC 键关闭面板（mobile 模式直接关闭）', () => {
+    it('ESC 键触发关闭面板（mobile 走退场动画）', () => {
         const { container } = render(<DayPicker {...DEFAULT_PROPS} displayMode="mobile" />);
         const trigger = container.querySelector('[role="button"]')!;
         fireEvent.click(trigger);
         expect(trigger).toHaveAttribute('aria-expanded', 'true');
+        // ESC 触发 handleClose → setIsClosing(true)
         act(() => {
             window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
         });
+        // 移动端走退场动画，需模拟 transitionEnd
+        const dialog = document.querySelector('[role="dialog"]');
+        if (dialog) {
+            act(() => {
+                dialog.dispatchEvent(new TransitionEvent('transitionend', { propertyName: 'transform', bubbles: true }));
+            });
+        }
         expect(trigger).toHaveAttribute('aria-expanded', 'false');
     });
 });
@@ -163,5 +174,82 @@ describe('DayPicker – className', () => {
             <DayPicker {...DEFAULT_PROPS} className="my-day-picker" displayMode="pc" />,
         );
         expect(container.firstChild).toHaveClass('my-day-picker');
+    });
+});
+
+// ─── 7. 移动端面板常驻 DOM + visible 控制（Bug #1/#2 fix）─────────────────────
+
+describe('DayPicker – 移动端面板常驻 DOM', () => {
+    it('mobile 模式下面板始终存在于 DOM（portal to body）', () => {
+        render(<DayPicker {...DEFAULT_PROPS} displayMode="mobile" />);
+        // 移动端面板通过 portal 挂到 body，搜索 body 内的 dialog
+        const dialogs = document.body.querySelectorAll('[role="dialog"]');
+        expect(dialogs.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('初始状态下 bottomSheet 没有 bottomSheetVisible class', () => {
+        render(<DayPicker {...DEFAULT_PROPS} displayMode="mobile" />);
+        const dialog = document.body.querySelector('[role="dialog"]')!;
+        // bottomSheet 默认状态为 translateY(100%)，没有 bottomSheetVisible
+        expect(dialog.className).not.toContain('bottomSheetVisible');
+    });
+
+    it('打开面板后 bottomSheet 添加 bottomSheetVisible class', () => {
+        const { container } = render(<DayPicker {...DEFAULT_PROPS} displayMode="mobile" />);
+        fireEvent.click(container.querySelector('[role="button"]')!);
+        const dialog = document.body.querySelector('[role="dialog"]')!;
+        expect(dialog.className).toContain('bottomSheetVisible');
+    });
+
+    it('关闭面板后 bottomSheet 移除 bottomSheetVisible class（退场动画结束后）', () => {
+        const { container } = render(<DayPicker {...DEFAULT_PROPS} displayMode="mobile" />);
+        const trigger = container.querySelector('[role="button"]')!;
+        // 打开
+        fireEvent.click(trigger);
+        const dialog = document.body.querySelector('[role="dialog"]')!;
+        expect(dialog.className).toContain('bottomSheetVisible');
+        // ESC 关闭
+        act(() => {
+            window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+        });
+        // 移动端直接关闭，bottomSheetVisible 立即移除
+        const dialogAfterClose = document.body.querySelector('[role="dialog"]');
+        expect(dialogAfterClose).not.toBeNull();
+        expect(dialogAfterClose!.className).not.toContain('bottomSheetVisible');
+    });
+});
+
+// ─── 8. 外部 props 同步到面板内部 state（Bug #3 fix）───────────────────────
+
+describe('DayPicker – 外部 props 同步', () => {
+    it('外部 year/month/day 变化时，trigger 展示文本同步更新', () => {
+        const { rerender } = render(
+            <DayPicker year={2024} month={6} day={15} onChange={vi.fn()} displayMode="pc" />,
+        );
+        expect(screen.getByText('2024/06/15')).toBeInTheDocument();
+
+        // 更新外部 props
+        rerender(
+            <DayPicker year={2025} month={3} day={8} onChange={vi.fn()} displayMode="pc" />,
+        );
+        expect(screen.getByText('2025/03/08')).toBeInTheDocument();
+    });
+
+    it('外部 props 变化时，移动端面板内部状态同步', () => {
+        const onChange = vi.fn();
+        const { container, rerender } = render(
+            <DayPicker year={2024} month={6} day={15} onChange={onChange} displayMode="mobile" />,
+        );
+
+        // 打开面板
+        fireEvent.click(container.querySelector('[role="button"]')!);
+
+        // 更新外部 props
+        rerender(
+            <DayPicker year={2025} month={3} day={8} onChange={onChange} displayMode="mobile" />,
+        );
+
+        // trigger 文本应该更新
+        expect(screen.getByText('2025/03/08')).toBeInTheDocument();
     });
 });

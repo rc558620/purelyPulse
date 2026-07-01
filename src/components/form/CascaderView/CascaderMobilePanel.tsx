@@ -3,12 +3,13 @@
 // 通过 createPortal 挂到 body，规避父容器 overflow:hidden 裁剪。
 // 自身只负责 UI 渲染，状态由父组件（CascaderView）通过 props 注入。
 
-import React, { memo } from 'react';
+import React, { useCallback, memo } from 'react';
 import { createPortal } from 'react-dom';
 import type { CascadeOption, CascadeValue } from './types';
 import styles from './CascaderView.module.less';
 import { cx } from '@utils/utils';
 import { ChevronRightIcon } from '@components/form/_shared/icons';
+import { isOptionSelected } from './useCascaderState';
 
 // ─── 移动端单个选项条目 ───────────────────────────────────────────────────────
 
@@ -39,39 +40,63 @@ MobileCascaderItem.displayName = 'MobileCascaderItem';
 
 export interface CascaderMobilePanelProps {
   visible: boolean;
+  /** 是否正在退场动画 */
+  isClosing: boolean;
   currentLevel: number;
   currentLevelOptions: CascadeOption[];
   selectedValue: CascadeValue[];
   onSelect: (val: CascadeValue) => void;
   onBack: () => void;
   onMaskClick: () => void;
+  /** 退场动画结束时回调 */
+  onTransitionEnd: () => void;
 }
 
 const CascaderMobilePanel: React.FC<CascaderMobilePanelProps> = ({
   visible,
+  isClosing,
   currentLevel,
   currentLevelOptions,
   selectedValue,
   onSelect,
   onBack,
   onMaskClick,
-}) => (
-  <>
-    {/* 遮罩：仅在 visible 时渲染 */}
-    {visible &&
-      createPortal(
-        <div className={styles['cascader-mask']} onClick={onMaskClick} />,
+  onTransitionEnd,
+}) => {
+  const handleSheetTransitionEnd = useCallback((e: React.TransitionEvent) => {
+    if (e.target !== e.currentTarget) return;
+    if (e.propertyName !== 'transform') return;
+    if (isClosing) onTransitionEnd();
+  }, [isClosing, onTransitionEnd]);
+
+  return (
+    <>
+      {/* 遮罩：常驻 DOM，通过类名控制入场/退场动画 */}
+      {createPortal(
+        <div
+          className={cx(
+            styles['cascader-mask'],
+            visible && !isClosing && styles['maskVisible'],
+            isClosing && styles['maskClosing'],
+          )}
+          onClick={onMaskClick}
+          aria-hidden="true"
+        />,
         document.body,
       )}
 
-    {/* 弹层：常驻 DOM，通过 transform 控制显隐（保证动画流畅） */}
-    {createPortal(
-      <div
-        className={cx(
-          styles['cascade-picker-view'],
-          visible && styles['visible'],
-        )}
-      >
+      {/* 弹层：常驻 DOM，通过 transform 控制显隐（保证动画流畅） */}
+      {createPortal(
+        <div
+          className={cx(
+            styles['cascade-picker-view'],
+            visible && !isClosing && styles['visible'],
+          )}
+          onTransitionEnd={handleSheetTransitionEnd}
+          role="dialog"
+          aria-modal="true"
+          aria-label="级联选择"
+        >
         <div className={styles['picker-header']}>
           <button
             type="button"
@@ -92,7 +117,7 @@ const CascaderMobilePanel: React.FC<CascaderMobilePanelProps> = ({
               <MobileCascaderItem
                 key={String(option.value)}
                 option={option}
-                isSelected={selectedValue[currentLevel] === option.value}
+                isSelected={isOptionSelected(option, selectedValue, currentLevel)}
                 onSelect={onSelect}
               />
             ))}
@@ -101,7 +126,8 @@ const CascaderMobilePanel: React.FC<CascaderMobilePanelProps> = ({
       </div>,
       document.body,
     )}
-  </>
-);
+    </>
+  );
+};
 
 export default memo(CascaderMobilePanel);

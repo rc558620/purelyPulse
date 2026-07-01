@@ -5,7 +5,7 @@
  *  - 初始状态：visible=false, isClosing=false
  *  - handleOpen：visible=false 时打开
  *  - handleOpen：visible=true 时再次调用触发 handleClose
- *  - handleClose（移动端）：直接 setVisible(false)
+ *  - handleClose（移动端 & PC 端）：统一走 isClosing 退场动画
  *  - handleClose（PC 端）：先 setIsClosing=true，不立即关闭
  *  - handleAnimationEnd：isClosing=true 时 → visible=false, isClosing=false
  *  - handleKeyDown：Enter 键触发 handleOpen
@@ -17,8 +17,8 @@
  *  - wrapperRef 被正确返回（RefObject）
  */
 
-import React, { useRef } from 'react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import React from 'react';
+import { describe, it, expect, vi } from 'vitest';
 import { renderHook, act, render, screen, fireEvent } from '@testing-library/react';
 import usePickerPopup from '../usePickerPopup';
 
@@ -61,11 +61,12 @@ describe('usePickerPopup – handleOpen', () => {
         expect(result.current.isClosing).toBe(true);
     });
 
-    it('visible=true 时再次调用 handleOpen（移动端）直接关闭', () => {
+    it('visible=true 时再次调用 handleOpen（移动端）不做 toggle，保持打开', () => {
         const { result } = renderHook(() => usePickerPopup({ isMobile: true }));
         act(() => { result.current.handleOpen(); });
         act(() => { result.current.handleOpen(); });
-        expect(result.current.visible).toBe(false);
+        // 移动端 Trigger 只做打开，不做 toggle
+        expect(result.current.visible).toBe(true);
         expect(result.current.isClosing).toBe(false);
     });
 });
@@ -73,11 +74,17 @@ describe('usePickerPopup – handleOpen', () => {
 // ─── 3. handleClose ──────────────────────────────────────────────────────────
 
 describe('usePickerPopup – handleClose', () => {
-    it('移动端 handleClose → visible 立即变为 false', () => {
+    it('移动端 handleClose → 走退场动画（isClosing=true），动画结束后 visible=false', () => {
         const { result } = renderHook(() => usePickerPopup({ isMobile: true }));
         act(() => { result.current.handleOpen(); });
         act(() => { result.current.handleClose(); });
+        // 移动端也走退场动画，不直接关闭
+        expect(result.current.isClosing).toBe(true);
+        expect(result.current.visible).toBe(true);
+        // 模拟动画结束
+        act(() => { result.current.handleAnimationEnd(); });
         expect(result.current.visible).toBe(false);
+        expect(result.current.isClosing).toBe(false);
     });
 
     it('PC 端 handleClose（visible=true）→ isClosing=true，visible 仍为 true', () => {
@@ -88,7 +95,7 @@ describe('usePickerPopup – handleClose', () => {
         expect(result.current.visible).toBe(true);
     });
 
-    it('PC 端 handleClose（visible=false）→ 直接 setVisible(false)（无动画）', () => {
+    it('PC 端 handleClose（visible=false）→ 无操作', () => {
         const { result } = renderHook(() => usePickerPopup({ isMobile: false }));
         // visible 本来就是 false
         act(() => { result.current.handleClose(); });
@@ -157,12 +164,18 @@ describe('usePickerPopup – ESC 键', () => {
         expect(result.current.visible).toBe(false);
     });
 
-    it('visible=true 时按 ESC（移动端）直接关闭', () => {
+    it('visible=true 时按 ESC（移动端）走退场动画', () => {
         const { result } = renderHook(() => usePickerPopup({ isMobile: true }));
         act(() => { result.current.handleOpen(); });
+        expect(result.current.visible).toBe(true);
+        // ESC 触发 handleClose → isClosing=true
         act(() => {
             window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
         });
+        expect(result.current.isClosing).toBe(true);
+        expect(result.current.visible).toBe(true);
+        // 动画结束后才关闭
+        act(() => { result.current.handleAnimationEnd(); });
         expect(result.current.visible).toBe(false);
         expect(result.current.isClosing).toBe(false);
     });
@@ -176,11 +189,15 @@ describe('usePickerPopup – 点击外部关闭', () => {
             const popup = usePickerPopup({ isMobile: false });
             return (
                 <div>
+            // eslint-disable-next-line react-hooks/refs
                     <div ref={popup.wrapperRef} data-testid="wrapper">
+                        {/* eslint-disable-next-line react-hooks/refs */}
                         <button onClick={popup.handleOpen}>打开</button>
                     </div>
                     <div data-testid="outside">外部区域</div>
+                    {/* eslint-disable-next-line react-hooks/refs */}
                     <span data-testid="visible">{String(popup.visible)}</span>
+                    {/* eslint-disable-next-line react-hooks/refs */}
                     <span data-testid="closing">{String(popup.isClosing)}</span>
                 </div>
             );
@@ -206,10 +223,13 @@ describe('usePickerPopup – 点击外部关闭', () => {
             const popup = usePickerPopup({ isMobile: false });
             return (
                 <div>
+            // eslint-disable-next-line react-hooks/refs
                     <div ref={popup.wrapperRef} data-testid="wrapper">
+                        {/* eslint-disable-next-line react-hooks/refs */}
                         <button onClick={popup.handleOpen} data-testid="open-btn">打开</button>
                         <span data-testid="inside">内部</span>
                     </div>
+                    {/* eslint-disable-next-line react-hooks/refs */}
                     <span data-testid="closing">{String(popup.isClosing)}</span>
                 </div>
             );

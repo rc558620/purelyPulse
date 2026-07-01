@@ -11,7 +11,7 @@
  *  - 强制 mobile 时不受窗口宽度影响
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import useDeviceType from '../useDeviceType';
 

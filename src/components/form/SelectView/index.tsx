@@ -19,7 +19,6 @@ import type {
 import useSelectState from './useSelectState';
 
 interface UseSelectPanelPropsOptions {
-  visible: boolean;
   isMultiple: boolean;
   searchable: boolean;
   searchPlaceholder: string;
@@ -28,26 +27,22 @@ interface UseSelectPanelPropsOptions {
   isStale: boolean;
   filteredOptions: SelectPanelSharedProps['filteredOptions'];
   isSelected: (val: SelectValue) => boolean;
-  resetSearch: () => void;
+  handleSearchClear: () => void;
   syncDraftToSelected: () => void;
   handleOpen: () => void;
-  handleClose: () => void;
   handleSingleSelect: (val: SelectValue) => void;
   handleMultiToggle: (val: SelectValue) => void;
   handleMultiConfirm: () => void;
   handleSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleSearchClear: () => void;
   optionRender?: SelectOptionRender;
 }
 
 interface UseSelectPanelPropsReturn {
   panelSharedProps: SelectPanelSharedProps;
   handleTriggerOpen: () => void;
-  handleCloseWithReset: () => void;
 }
 
 const useSelectPanelProps = ({
-  visible,
   isMultiple,
   searchable,
   searchPlaceholder,
@@ -56,33 +51,20 @@ const useSelectPanelProps = ({
   isStale,
   filteredOptions,
   isSelected,
-  resetSearch,
+  handleSearchClear,
   syncDraftToSelected,
   handleOpen,
-  handleClose,
   handleSingleSelect,
   handleMultiToggle,
   handleMultiConfirm,
   handleSearchChange,
-  handleSearchClear,
   optionRender,
 }: UseSelectPanelPropsOptions): UseSelectPanelPropsReturn => {
   const handleTriggerOpen = useCallback(() => {
-    resetSearch();
+    handleSearchClear();
     syncDraftToSelected();
     handleOpen();
-  }, [handleOpen, resetSearch, syncDraftToSelected]);
-
-  const handleCloseWithReset = useCallback(() => {
-    resetSearch();
-    handleClose();
-  }, [handleClose, resetSearch]);
-
-  useEffect(() => {
-    if (!visible) {
-      resetSearch();
-    }
-  }, [resetSearch, visible]);
+  }, [handleOpen, handleSearchClear, syncDraftToSelected]);
 
   const panelSharedProps = useMemo<SelectPanelSharedProps>(() => ({
     isMultiple,
@@ -119,32 +101,34 @@ const useSelectPanelProps = ({
   return {
     panelSharedProps,
     handleTriggerOpen,
-    handleCloseWithReset,
   };
 };
 
 export function SelectView(props: SingleSelectViewProps): React.JSX.Element;
 export function SelectView(props: MultipleSelectViewProps): React.JSX.Element;
-export function SelectView({
-  options,
-  value,
-  defaultValue,
-  onChange,
-  placeholder = '请选择',
-  mode = 'single',
-  searchable = true,
-  searchPlaceholder = '搜索',
-  displayMode,
-  prefix,
-  status,
-  allowClear = false,
-  className,
-  triggerClassName,
-  optionRender,
-}: SelectViewProps): React.JSX.Element {
+export function SelectView(props: SelectViewProps): React.JSX.Element {
+  const {
+    options,
+    value,
+    defaultValue,
+    onChange,
+    placeholder = '请选择',
+    mode = 'single',
+    searchable = true,
+    searchPlaceholder = '搜索',
+    displayMode,
+    prefix,
+    status,
+    allowClear = false,
+    className,
+    triggerClassName,
+    optionRender,
+  } = props;
   const isMultiple = mode === 'multiple';
   const isMobile = useDeviceType(displayMode);
+  const isControlled = Object.prototype.hasOwnProperty.call(props, 'value');
 
+  // 先调用 usePickerPopup 获取 handleClose（不传 onBeforeClose）
   const {
     visible,
     isClosing,
@@ -161,8 +145,9 @@ export function SelectView({
     defaultValue,
     onChange: onChange as UseSelectStateOptions<SelectMode>['onChange'],
     mode,
+    isControlled,
     onClose: handleClose,
-  }), [defaultValue, handleClose, mode, onChange, options, value]);
+  }), [defaultValue, handleClose, isControlled, mode, onChange, options, value]);
 
   const {
     displayText,
@@ -173,8 +158,8 @@ export function SelectView({
     filteredOptions,
     handleSearchChange,
     handleSearchClear,
-    resetSearch,
     syncDraftToSelected,
+    resetDraft,
     isSelected,
     handleSingleSelect,
     handleMultiToggle,
@@ -182,8 +167,7 @@ export function SelectView({
     handleClear,
   } = useSelectState<SelectMode>(stateOptions);
 
-  const { panelSharedProps, handleTriggerOpen, handleCloseWithReset } = useSelectPanelProps({
-    visible,
+  const { panelSharedProps, handleTriggerOpen } = useSelectPanelProps({
     isMultiple,
     searchable,
     searchPlaceholder,
@@ -192,17 +176,24 @@ export function SelectView({
     isStale,
     filteredOptions,
     isSelected,
-    resetSearch,
+    handleSearchClear,
     syncDraftToSelected,
     handleOpen,
-    handleClose,
     handleSingleSelect,
     handleMultiToggle,
     handleMultiConfirm,
     handleSearchChange,
-    handleSearchClear,
     optionRender,
   });
+
+  // BUG-2 & BUG-3 fix: 面板关闭后（visible 变为 false）统一清理搜索和草稿
+  // 无论关闭路径（遮罩/ESC/点击外部/取消按钮），visible 最终都会变为 false
+  useEffect(() => {
+    if (!visible) {
+      handleSearchClear();
+      resetDraft();
+    }
+  }, [visible, handleSearchClear, resetDraft]);
 
   const arrowOpen = !isMobile && (visible || isClosing);
 
@@ -234,7 +225,8 @@ export function SelectView({
           {displayText || placeholder}
         </span>
 
-        {allowClear && selectedValues.length > 0 && (
+        {/* BUG-4 fix: 面板打开时隐藏清除按钮，防止点击穿透到 trigger */}
+        {allowClear && !visible && selectedValues.length > 0 && (
           <button
             type="button"
             className={styles['clear-btn']}
@@ -256,7 +248,9 @@ export function SelectView({
       {isMobile ? (
         <SelectMobilePanel
           visible={visible}
-          onClose={handleCloseWithReset}
+          isClosing={isClosing}
+          onClose={handleClose}
+          onTransitionEnd={handleAnimationEnd}
           {...panelSharedProps}
         />
       ) : (

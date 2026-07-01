@@ -22,6 +22,7 @@
  *  - Form + FormItem 集成
  */
 
+import React from 'react';
 import { describe, it, expect, expectTypeOf, vi, beforeAll, afterAll } from 'vitest';
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -192,13 +193,22 @@ describe('SelectView – 打开/关闭', () => {
         expect(trigger).toHaveAttribute('aria-expanded', 'true');
     });
 
-    it('ESC 键关闭（mobile 直接关闭）', () => {
+    it('ESC 键触发关闭（mobile 走退场动画）', () => {
         const { container } = render(<SelectView options={OPTIONS} displayMode="mobile" />);
         const trigger = container.querySelector('[role="combobox"]')!;
         fireEvent.click(trigger);
+        expect(trigger).toHaveAttribute('aria-expanded', 'true');
+        // ESC 触发 handleClose → setIsClosing(true)
         act(() => {
             window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
         });
+        // 移动端走退场动画，需模拟 transitionEnd 后 visible 才变 false
+        const picker = container.querySelector('[role="dialog"]') ?? document.querySelector('[role="dialog"]');
+        if (picker) {
+            act(() => {
+                picker.dispatchEvent(new TransitionEvent('transitionend', { propertyName: 'transform', bubbles: true }));
+            });
+        }
         expect(trigger).toHaveAttribute('aria-expanded', 'false');
     });
 });
@@ -293,7 +303,7 @@ describe('SelectView – allowClear', () => {
         expect(screen.queryByRole('button', { name: '清除选择' })).toBeNull();
     });
 
-    it('点击清除（单选）触发 onChange("")', async () => {
+    it('点击清除（单选）触发 onChange(undefined)', async () => {
         const user = userEvent.setup();
         const onChange = vi.fn();
         render(
@@ -306,7 +316,43 @@ describe('SelectView – allowClear', () => {
             />,
         );
         await user.click(screen.getByRole('button', { name: '清除选择' }));
-        expect(onChange).toHaveBeenCalledWith('');
+        expect(onChange).toHaveBeenCalledWith(undefined);
+    });
+
+    it('受控场景点击一次清除后立即展示空态', async () => {
+        const user = userEvent.setup();
+
+        const ControlledWrapper = (): React.JSX.Element => {
+            const [value, setValue] = React.useState<SelectValue | undefined>('a');
+            return (
+                <SelectView
+                    options={OPTIONS}
+                    value={value}
+                    allowClear
+                    onChange={setValue}
+                    displayMode="pc"
+                />
+            );
+        };
+
+        render(<ControlledWrapper />);
+        await user.click(screen.getByRole('button', { name: '清除选择' }));
+
+        expect(screen.getByText('请选择')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: '清除选择' })).toBeNull();
+    });
+
+    // BUG-4: 面板打开时清除按钮应隐藏
+    it('BUG-4: 面板打开时清除按钮隐藏', () => {
+        const { container } = render(
+            <SelectView options={OPTIONS} value="a" allowClear displayMode="pc" />,
+        );
+        // 初始状态：清除按钮可见
+        expect(screen.getByRole('button', { name: '清除选择' })).toBeInTheDocument();
+        // 打开面板
+        fireEvent.click(container.querySelector('[role="combobox"]')!);
+        // 清除按钮应消失
+        expect(screen.queryByRole('button', { name: '清除选择' })).toBeNull();
     });
 });
 

@@ -20,7 +20,7 @@ const InlineItemActions: React.FC<InlineItemActionsProps> = ({ name, onEdit, onD
       type="button"
       className={styles.editBtn}
       onClick={onEdit}
-      aria-label={`编辑「${name}」`}
+      aria-label={name ? `编辑「${name}」` : '编辑'}
     >
       <IconEdit />
     </button>
@@ -28,7 +28,7 @@ const InlineItemActions: React.FC<InlineItemActionsProps> = ({ name, onEdit, onD
       type="button"
       className={styles.deleteBtn}
       onClick={onDelete}
-      aria-label={`删除「${name}」`}
+      aria-label={name ? `删除「${name}」` : '删除'}
     >
       <IconTrash />
     </button>

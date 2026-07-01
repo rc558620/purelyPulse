@@ -7,33 +7,37 @@
  *    2.  value=undefined 时返回 null
  *    3.  compareLastMonth=null 时返回 null
  *    4.  三个 prop 均为 undefined 时返回 null
+ *    5.  value=NaN 时返回 null（防御性处理）
  *  ─ 值优先级
- *    5.  value 优先于 compareLastMonth
- *    6.  compareLastMonth 优先于 compareLastPeriod
- *    7.  value=undefined 时回退到 compareLastMonth
- *    8.  value/compareLastMonth 均 undefined 时回退到 compareLastPeriod
+ *    6.  value 优先于 compareLastMonth
+ *    7.  compareLastMonth 优先于 compareLastPeriod
+ *    8.  value=undefined 时回退到 compareLastMonth
+ *    9.  value/compareLastMonth 均 undefined 时回退到 compareLastPeriod
  *  ─ 涨跌显示（默认 invertColor=false）
- *    9.  value > 0 时渲染 + 号前缀
- *    10. value < 0 时不渲染 + 号前缀
- *    11. value > 0 时含 up（绿色）class
- *    12. value < 0 时含 down（红色）class
- *    13. value = 0 时含 neutral class
+ *    10. value > 0 时渲染 + 号前缀
+ *    11. value < 0 时不渲染 + 号前缀
+ *    12. value > 0 时含 up（绿色）class
+ *    13. value < 0 时含 down（红色）class
+ *    14. value = 0 时含 neutral class，不含 up/down class
+ *    15. value = 0 时不渲染箭头图标
+ *    16. value = 0 时不渲染 + 号前缀
  *  ─ invertColor=true（成本场景）
- *    14. invertColor=true，value>0 时含 down class（涨价为坏=红）
- *    15. invertColor=true，value<0 时含 up class（降价为好=绿）
- *    16. invertColor=true，value=0 时仍含 neutral class
+ *    17. invertColor=true，value>0 时含 down class（涨价为坏=红）
+ *    18. invertColor=true，value<0 时含 up class（降价为好=绿）
+ *    19. invertColor=true，value=0 时含 neutral class，不含 up/down class
  *  ─ 数值格式化
- *    17. 正数保留 1 位小数，如 12.5 → "12.5"
- *    18. 负数取绝对值后保留 1 位小数，如 -3.2 → "3.2"
- *    19. 整数添加 ".0"，如 5 → "5.0"
+ *    20. 正数保留 1 位小数，如 12.5 → "12.5"
+ *    21. 负数取绝对值后保留 1 位小数，如 -3.2 → "3.2"
+ *    22. 整数添加 ".0"，如 5 → "5.0"
+ *    23. value=0 时显示 "0.0%"
  *  ─ suffix
- *    20. 默认 suffix 为"较上期"
- *    21. 自定义 suffix 渲染正确
- *    22. suffix="" 时不渲染 suffix span
+ *    24. 默认 suffix 为"较上期"
+ *    25. 自定义 suffix 渲染正确
+ *    26. suffix="" 时不渲染 suffix span
  *  ─ className 透传
- *    23. className 附加到 span 容器
+ *    27. className 附加到 span 容器
  *  ─ React.memo
- *    24. TrendBadge 是 React.memo 包裹的组件
+ *    28. TrendBadge 是 React.memo 包裹的组件
  */
 
 import React from 'react';
@@ -46,6 +50,11 @@ import TrendBadge from '../data-display/TrendBadge/TrendBadge';
 // ─────────────────────────────────────────────────────────────────────────────
 function renderBadge(overrides: Partial<React.ComponentProps<typeof TrendBadge>> = {}) {
     return render(<TrendBadge {...overrides} />);
+}
+
+function getBadgeClassName(overrides: Partial<React.ComponentProps<typeof TrendBadge>> = {}): string {
+    const { container } = renderBadge(overrides);
+    return (container.firstChild as HTMLElement).className;
 }
 
 // ─── 1. 空值处理 ──────────────────────────────────────────────────────────────
@@ -67,6 +76,11 @@ describe('TrendBadge – 空值处理', () => {
 
     it('三个 prop 均为 undefined 时不渲染', () => {
         const { container } = renderBadge({});
+        expect(container.firstChild).toBeNull();
+    });
+
+    it('value=NaN 时不渲染（防御性处理）', () => {
+        const { container } = renderBadge({ value: NaN as unknown as number });
         expect(container.firstChild).toBeNull();
     });
 });
@@ -109,36 +123,59 @@ describe('TrendBadge – 涨跌样式（invertColor=false）', () => {
     });
 
     it('value > 0 时含 up class（绿色方向）', () => {
-        const { container } = renderBadge({ value: 10 });
-        expect((container.firstChild as HTMLElement).className).toMatch(/up/);
+        const cls = getBadgeClassName({ value: 10 });
+        expect(cls).toMatch(/up/);
+        expect(cls).not.toMatch(/down/);
+        expect(cls).not.toMatch(/neutral/);
     });
 
     it('value < 0 时含 down class（红色方向）', () => {
-        const { container } = renderBadge({ value: -10 });
-        expect((container.firstChild as HTMLElement).className).toMatch(/down/);
+        const cls = getBadgeClassName({ value: -10 });
+        expect(cls).toMatch(/down/);
+        expect(cls).not.toMatch(/up/);
+        expect(cls).not.toMatch(/neutral/);
     });
 
-    it('value = 0 时含 neutral class', () => {
+    it('value = 0 时含 neutral class，不含 up 或 down', () => {
+        const cls = getBadgeClassName({ value: 0 });
+        expect(cls).toMatch(/neutral/);
+        expect(cls).not.toMatch(/up/);
+        expect(cls).not.toMatch(/down/);
+    });
+
+    it('value = 0 时不渲染箭头图标', () => {
         const { container } = renderBadge({ value: 0 });
-        expect((container.firstChild as HTMLElement).className).toMatch(/neutral/);
+        const svgElements = container.querySelectorAll('svg');
+        expect(svgElements.length).toBe(0);
+    });
+
+    it('value = 0 时不渲染 + 号前缀', () => {
+        const { container } = renderBadge({ value: 0 });
+        expect(container.textContent).not.toContain('+');
     });
 });
 
 // ─── 4. invertColor=true ─────────────────────────────────────────────────────
 describe('TrendBadge – invertColor=true（成本场景）', () => {
     it('invertColor=true，value>0 时含 down class（涨价为坏=红）', () => {
-        const { container } = renderBadge({ value: 10, invertColor: true });
-        expect((container.firstChild as HTMLElement).className).toMatch(/down/);
+        const cls = getBadgeClassName({ value: 10, invertColor: true });
+        expect(cls).toMatch(/down/);
+        expect(cls).not.toMatch(/up/);
+        expect(cls).not.toMatch(/neutral/);
     });
 
     it('invertColor=true，value<0 时含 up class（降价为好=绿）', () => {
-        const { container } = renderBadge({ value: -10, invertColor: true });
-        expect((container.firstChild as HTMLElement).className).toMatch(/up/);
+        const cls = getBadgeClassName({ value: -10, invertColor: true });
+        expect(cls).toMatch(/up/);
+        expect(cls).not.toMatch(/down/);
+        expect(cls).not.toMatch(/neutral/);
     });
 
-    it('invertColor=true，value=0 时仍含 neutral class', () => {
-        const { container } = renderBadge({ value: 0, invertColor: true });
-        expect((container.firstChild as HTMLElement).className).toMatch(/neutral/);
+    it('invertColor=true，value=0 时含 neutral class，不含 up/down', () => {
+        const cls = getBadgeClassName({ value: 0, invertColor: true });
+        expect(cls).toMatch(/neutral/);
+        expect(cls).not.toMatch(/up/);
+        expect(cls).not.toMatch(/down/);
     });
 });
 
@@ -158,6 +195,11 @@ describe('TrendBadge – 数值格式化', () => {
     it('整数 5 显示为 "+5.0%"', () => {
         const { container } = renderBadge({ value: 5 });
         expect(container.textContent).toContain('5.0');
+    });
+
+    it('value=0 时显示 "0.0%"', () => {
+        const { container } = renderBadge({ value: 0 });
+        expect(container.textContent).toContain('0.0%');
     });
 });
 

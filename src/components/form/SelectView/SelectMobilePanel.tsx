@@ -4,7 +4,7 @@
 // 自身只负责 UI 渲染，状态由父组件（SelectView）通过 props 注入。
 // 支持 optionRender 自定义每行选项内容（类似 Ant Design）。
 
-import React, { memo } from 'react';
+import React, { useCallback, memo } from 'react';
 import { CheckIcon, SearchIcon, SmallCheckIcon, SmallCloseIcon } from '@components/form/_shared/icons';
 import { cx } from '@utils/utils';
 import { createPortal } from 'react-dom';
@@ -83,7 +83,8 @@ export const SelectOptionRowFactory = memo(({
       )}
       onClick={handleClick}
       role="option"
-      aria-selected={isSelected}
+      aria-selected={option.disabled ? false : isSelected}
+      aria-disabled={option.disabled || undefined}
     >
       {optionRender ? (
         <div className={customContentClassName}>
@@ -125,6 +126,7 @@ MobileOptionItem.displayName = 'MobileOptionItem';
 
 const SelectMobilePanel: React.FC<SelectMobilePanelProps> = ({
   visible,
+  isClosing,
   isMultiple,
   filteredOptions,
   searchText,
@@ -137,101 +139,126 @@ const SelectMobilePanel: React.FC<SelectMobilePanelProps> = ({
   onMultiToggle,
   onMultiConfirm,
   onClose,
+  onTransitionEnd,
   onSearchChange,
   onSearchClear,
   optionRender,
-}) => (
-  <>
-    {/* 遮罩：仅 visible 时渲染 */}
-    {visible &&
-      createPortal(
-        <div className={styles['select-mask']} onClick={onClose} />,
+}) => {
+  const handleSheetTransitionEnd = useCallback((e: React.TransitionEvent) => {
+    if (e.target !== e.currentTarget) return;
+    if (e.propertyName !== 'transform') return;
+    if (isClosing) onTransitionEnd();
+  }, [isClosing, onTransitionEnd]);
+
+  return (
+    <>
+      {/* 遮罩：常驻 DOM，通过类名控制入场/退场动画 */}
+      {createPortal(
+        <div
+          className={cx(
+            styles['select-mask'],
+            visible && !isClosing && styles['maskVisible'],
+            isClosing && styles['maskClosing'],
+          )}
+          onClick={onClose}
+          aria-hidden="true"
+        />,
         document.body,
       )}
 
-    {/* 弹层：常驻 DOM，通过 CSS transform 控制显隐（保证入场动画流畅） */}
-    {createPortal(
-      <div className={cx(styles['select-picker'], visible && styles.visible)}>
-        {/* 头部 */}
-        <div className={styles['picker-header']}>
-          <button
-            type="button"
-            className={styles['picker-cancel-btn']}
-            onClick={onClose}
-          >
-            取消
-          </button>
-
-          {/* 搜索框 / 标题 */}
-          {searchable ? (
-            <div className={styles['picker-search-box']}>
-              <SearchIcon className={styles['search-icon']} size={14} />
-              <input
-                className={styles['picker-search-input']}
-                type="text"
-                value={searchText}
-                onChange={onSearchChange}
-                placeholder={searchPlaceholder}
-                autoComplete="off"
-              />
-              {searchText && (
-                <button
-                  type="button"
-                  className={styles['search-clear-btn']}
-                  onClick={onSearchClear}
-                  aria-label="清除搜索"
-                >
-                  <SmallCloseIcon />
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className={styles['picker-title']}>请选择</div>
+      {/* 弹层：常驻 DOM，通过 CSS transform 控制显隐（保证入场动画流畅） */}
+      {createPortal(
+        <div
+          className={cx(
+            styles['select-picker'],
+            visible && !isClosing && styles.visible,
           )}
-
-          {/* 多选确定 / 占位 */}
-          {isMultiple ? (
+          onTransitionEnd={handleSheetTransitionEnd}
+          role="dialog"
+          aria-modal="true"
+          aria-label="选择选项"
+        >
+          {/* 头部 */}
+          <div className={styles['picker-header']}>
             <button
               type="button"
-              className={styles['picker-confirm-btn']}
-              onClick={onMultiConfirm}
+              className={styles['picker-cancel-btn']}
+              onClick={onClose}
             >
-              确定
+              取消
             </button>
-          ) : (
-            <div className={styles['picker-header-right']} />
-          )}
-        </div>
 
-        {/* 选项列表 */}
-        <div className={styles['picker-container']}>
-          {filteredOptions.length === 0 ? (
-            <div className={styles['picker-empty']}>暂无匹配结果</div>
-          ) : (
-            <div
-              className={styles['select-items']}
-              style={{ opacity: isStale ? 0.5 : 1, transition: 'opacity 0.15s' }}
-            >
-              {filteredOptions.map((option, idx) => (
-                <MobileOptionItem
-                  key={String(option.value)}
-                  option={option}
-                  index={idx}
-                  isSelected={isSelected(option.value)}
-                  isMultiple={isMultiple}
-                  keyword={deferredSearch}
-                  onSingleSelect={onSingleSelect}
-                  onMultiToggle={onMultiToggle}
-                  optionRender={optionRender}
+            {/* 搜索框 / 标题 */}
+            {searchable ? (
+              <div className={styles['picker-search-box']}>
+                <SearchIcon className={styles['search-icon']} size={14} />
+                <input
+                  className={styles['picker-search-input']}
+                  type="text"
+                  value={searchText}
+                  onChange={onSearchChange}
+                  placeholder={searchPlaceholder}
+                  autoComplete="off"
                 />
-              ))}
-            </div>
-          )}
-        </div>
-      </div>,
-      document.body,
-    )}
-  </>
-);
+                {searchText && (
+                  <button
+                    type="button"
+                    className={styles['search-clear-btn']}
+                    onClick={onSearchClear}
+                    aria-label="清除搜索"
+                  >
+                    <SmallCloseIcon />
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className={styles['picker-title']}>请选择</div>
+            )}
+
+            {/* 多选确定 / 占位 */}
+            {isMultiple ? (
+              <button
+                type="button"
+                className={styles['picker-confirm-btn']}
+                onClick={onMultiConfirm}
+              >
+                确定
+              </button>
+            ) : (
+              <div className={styles['picker-header-right']} />
+            )}
+          </div>
+
+          {/* 选项列表 */}
+          <div className={styles['picker-container']}>
+            {filteredOptions.length === 0 ? (
+              <div className={styles['picker-empty']}>暂无匹配结果</div>
+            ) : (
+              <div
+                className={styles['select-items']}
+                style={{ opacity: isStale ? 0.5 : 1, transition: 'opacity 0.15s' }}
+              >
+                {filteredOptions.map((option, idx) => (
+                  <MobileOptionItem
+                    key={option.value}
+                    option={option}
+                    index={idx}
+                    isSelected={isSelected(option.value)}
+                    isMultiple={isMultiple}
+                    keyword={deferredSearch}
+                    onSingleSelect={onSingleSelect}
+                    onMultiToggle={onMultiToggle}
+                    optionRender={optionRender}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>,
+        document.body,
+      )}
+    </>
+  );
+};
 
 export default memo(SelectMobilePanel);

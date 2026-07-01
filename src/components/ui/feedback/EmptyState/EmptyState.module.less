@@ -36,6 +36,8 @@
   text-align: center;
   line-height: 1.6;
   max-width: 26rem;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .actionBtn {
@@ -53,11 +55,15 @@
   cursor: pointer;
   box-shadow: 0 4px 12px fade(@primary, 30%);
   -webkit-tap-highlight-color: transparent;
-  transition: background-color 0.2s, transform 0.15s, box-shadow 0.15s;
+  transition: background-color 0.2s, transform 0.15s, box-shadow 0.15s, opacity 0.2s;
 
   &:hover:not(:disabled) {
     background-color: darken(@primary, 6%);
     box-shadow: 0 6px 16px fade(@primary, 40%);
   }
-  &:active { transform: scale(0.97); }
+  &:active:not(:disabled) { transform: scale(0.97); }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }

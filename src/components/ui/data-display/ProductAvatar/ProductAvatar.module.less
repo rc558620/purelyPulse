@@ -46,11 +46,10 @@
   position: absolute;
   top: -4px;
   right: -4px;
-  width: 16px;
-  height: 16px;
   border-radius: 9999px;
   .flex-center();
   border: 1.5px solid @bg-white;
+  z-index: 2; // BUG-5 fix: 确保角标不被同级元素遮挡
 }
 
 .badgeWarning { background-color: @orange-500; color: #fff; }

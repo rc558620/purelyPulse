@@ -1,9 +1,13 @@
 // TimePickerMobilePanel — 移动端底部 BottomSheet
 //
 // 通过 createPortal 挂到 body，规避父容器 overflow:hidden 裁剪。
-// 仅在 visible（父层已 guard）时才挂载，入场即为展开状态。
+// 常驻 DOM，通过 visible + isClosing props + CSS transform 控制滑入/滑出，保证动画流畅。
 // 自身只负责 UI 渲染，状态由 useTimePickerState 注入。
-import React, { memo } from 'react';
+//
+// Bug #1/#5 fix: 接收 isClosing / onTransitionEnd，支持退场动画
+// 关闭时 isClosing=true → 移除 bottomSheetVisible → CSS transition 滑出
+// → onTransitionEnd 通知父组件卸载
+import React, { useCallback, memo } from 'react';
 import { createPortal } from 'react-dom';
 import classNames from 'classnames';
 import MemoPickerColumn from '@components/form/_shared/PickerColumn';
@@ -12,27 +16,56 @@ import useTimePickerState from './useTimePickerState';
 import styles from './TimePicker.module.less';
 
 export interface TimePickerMobilePanelProps {
-  value:   string | null;
-  onConfirm: (val: string) => void;
-  onClose: () => void;
+  value:        string | null;
+  /** 面板是否可见 */
+  visible:      boolean;
+  isClosing:    boolean;
+  onConfirm:    (val: string) => void;
+  onClose:      () => void;
+  onTransitionEnd: () => void;
 }
 
 const TimePickerMobilePanel: React.FC<TimePickerMobilePanelProps> = ({
   value,
+  visible,
+  isClosing,
   onConfirm,
   onClose,
+  onTransitionEnd,
 }) => {
   const { selH, selM, setSelH, setSelM, handleConfirm, handleNow } =
     useTimePickerState({ value, onConfirm, onClose });
 
+  // Bug #1/#5 fix: 只在 isClosing 时响应 bottomSheet 自身的 transform 过渡
+  const handleTransitionEnd = useCallback((e: React.TransitionEvent) => {
+    // 只响应 bottomSheet 自身的 transform 过渡，忽略子元素冒泡
+    if (e.target !== e.currentTarget) return;
+    if (e.propertyName !== 'transform') return;
+    if (isClosing) {
+      onTransitionEnd();
+    }
+  }, [isClosing, onTransitionEnd]);
+
   return createPortal(
     <>
-      {/* 遮罩 */}
-      <div className={styles.mask} onClick={onClose} aria-hidden="true" />
-
-      {/* 底部弹层 */}
+      {/* 遮罩：通过类名控制入场/退场动画，关闭时不再瞬间消失 */}
       <div
-        className={classNames(styles.bottomSheet, styles.bottomSheetVisible)}
+        className={classNames(
+          styles.mask,
+          visible && !isClosing && styles.maskVisible,
+          isClosing && styles.maskClosing,
+        )}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      {/* 底部弹层：关闭时移除 bottomSheetVisible 触发 CSS transition 滑出 */}
+      <div
+        className={classNames(
+          styles.bottomSheet,
+          visible && !isClosing && styles.bottomSheetVisible,
+        )}
+        onTransitionEnd={handleTransitionEnd}
         role="dialog"
         aria-modal="true"
         aria-label="选择时间"

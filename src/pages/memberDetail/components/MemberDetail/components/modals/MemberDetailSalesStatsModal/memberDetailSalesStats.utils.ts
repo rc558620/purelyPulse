@@ -37,7 +37,7 @@ const getBarGradient = (metric: ChartMetric): object => {
 /** 根据标签数组、数值数组与指标类型生成完整 ECharts 柱状图配置。 */
 export const buildChartOption = (
   labels: string[],
-  values: string[],
+  values: number[],
   metric: ChartMetric,
 ): object => ({
   animation: true,
@@ -52,7 +52,7 @@ export const buildChartOption = (
     padding: [8, 14],
     textStyle: { color: '#fff', fontSize: 12 },
     formatter: (params: unknown): string => {
-      const items = params as Array<{ name: string; value: string }>;
+      const items = params as Array<{ name: string; value: number }>;
       if (!items[0]) return '';
       const metricLabel = metric === 'sales' ? '销售额' : '利润';
       return `<span style="font-size:11px;opacity:0.65">${items[0].name}</span><br/>
@@ -72,8 +72,7 @@ export const buildChartOption = (
     },
   },
   yAxis: {
-    type: 'category',
-    data: values,
+    type: 'value',
     axisLine: { show: false },
     axisTick: { show: false },
     splitLine: { lineStyle: { color: '#f1f5f9', type: 'dashed' } },

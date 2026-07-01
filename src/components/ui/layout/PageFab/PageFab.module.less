@@ -6,7 +6,7 @@
   position: fixed;
   bottom: 2.4rem;
   right: 2rem;
-  z-index: 50;
+  z-index: @z-fab;
   display: inline-flex;
   align-items: center;
   gap: 0.7rem;
@@ -21,28 +21,68 @@
   box-shadow:
     0 6px 24px fade(@primary, 35%),
     0 2px 8px fade(@primary, 20%);
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
   -webkit-tap-highlight-color: transparent;
 
-  &:hover {
+  &:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow:
       0 10px 32px fade(@primary, 45%),
       0 4px 12px fade(@primary, 30%);
   }
 
-  &:active {
+  &:active:not(:disabled) {
     transform: scale(0.96);
     box-shadow: 0 4px 16px fade(@primary, 30%);
   }
 
-  // iPad：贴紧 page-width-wide 容器右内边缘（max-width: 80rem，半宽 40rem）
-  @media (min-width: @bp-mobile) {
-    right: calc(50% - 40rem + 2rem);
+  // 键盘焦点指示（无障碍）
+  &:focus-visible {
+    outline: 3px solid fade(@primary, 60%);
+    outline-offset: 3px;
+    box-shadow:
+      0 6px 24px fade(@primary, 35%),
+      0 0 0 6px fade(@primary, 25%);
   }
 
-  // PC：贴紧 page-width-wide 容器右内边缘（max-width: 120rem，半宽 60rem）
+  // 禁用态
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    box-shadow: 0 2px 8px fade(@primary, 15%);
+  }
+
+  // loading + disabled 组合态：cursor: wait 区分于普通 disabled
+  &.loading:disabled {
+    opacity: 0.8;
+    cursor: wait;
+  }
+
+  // iPad：贴紧 page-width-wide 容器右内边缘（@page-wide-tablet / 2）
+  @media (min-width: @bp-mobile) {
+    right: calc(50% - (@page-wide-tablet / 2) + 2rem);
+  }
+
+  // PC：贴紧 page-width-wide 容器右内边缘（@page-wide-desktop / 2）
   @media (min-width: @bp-desktop) {
-    right: calc(50% - 60rem + 2rem);
+    right: calc(50% - (@page-wide-desktop / 2) + 2rem);
+  }
+}
+
+// ─── Loading Spinner ─────────────────────────────────────────────
+.spinner {
+  display: inline-block;
+  width: 1.8rem;
+  height: 1.8rem;
+  border: 2.5px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: fab-spin 0.6s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes fab-spin {
+  to {
+    transform: rotate(360deg);
   }
 }

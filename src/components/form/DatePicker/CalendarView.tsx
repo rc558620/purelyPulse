@@ -6,6 +6,7 @@ import React, {
   useMemo,
   useState,
   useCallback,
+  useEffect,
 } from 'react';
 import TimePickerPanel from './TimePickerPanel';
 import YearMonthPicker from './YearMonthPicker';
@@ -88,6 +89,22 @@ const CalendarView: React.FC<CalendarViewProps> = memo(({
   const [viewYear,   setViewYear]   = useState(initYear);
   const [viewMonth,  setViewMonth]  = useState(initMonth);
   const [pickerMode, setPickerMode] = useState<'day' | 'yearMonth'>('day');
+
+  // ── 外部 selected 变更时同步视图年月 ──
+  useEffect(() => {
+    if (selected) {
+      const d = toLocalDate(selected);
+      setViewYear(d.getFullYear());
+      setViewMonth(d.getMonth());
+    }
+  }, [selected]);
+
+  // ── 外部 defaultPending/selected 变更时同步 pendingDate ──
+  useEffect(() => {
+    if (showConfirm && !isDatetime) {
+      setPendingDate(defaultPending ?? selected ?? null);
+    }
+  }, [defaultPending, selected, showConfirm, isDatetime]);
 
   // ── 月份导航 ──
   const handlePrevMonth = useCallback(() => {

@@ -311,17 +311,27 @@
 }
 
 // ─── 移动端底部弹出 ────────────────────────────────────
+// Bug #2 fix: 遮罩常驻 DOM，默认透明不可见，通过类名控制入场/退场动画
 .mask {
   position: fixed;
   inset: 0;
   background: fade(#000, 40%);
-  z-index: 9998;
-  animation: maskIn 0.2s ease both;
+  z-index: @z-picker-mask;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
 }
 
-@keyframes maskIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+// 遮罩入场：visible=true 且非 isClosing
+.maskVisible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+// 遮罩退场：isClosing=true 时淡出
+.maskClosing {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .bottomSheet {
@@ -329,7 +339,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 9999;
+  z-index: @z-picker-panel;
   background: @bg-white;
   border-radius: 2rem 2rem 0 0;
   padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -341,6 +351,9 @@
 .bottomSheetVisible {
   transform: translateY(0);
 }
+
+// Bug #2 fix: BottomSheet 关闭时不再硬卸载，而是移除 bottomSheetVisible
+// 让 CSS transition 自然滑出，onTransitionEnd 后父组件才卸载
 
 .sheetHeader {
   padding-top: 1.2rem;

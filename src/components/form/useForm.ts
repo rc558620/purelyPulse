@@ -1,7 +1,6 @@
 // 表单 Hook，负责字段状态、规则注册与提交流程。
 import { useCallback, useRef, type FormEvent } from 'react';
 import type {
-    FormContextType,
     FormFieldName,
     FormInstance,
     FormValues,
@@ -74,6 +73,9 @@ export const useForm = <T extends FormValues = FormValues>(): [FormInstance<T>] 
             }
             if (rule.pattern && typeof value === 'string' && !rule.pattern.test(value)) {
                 return rule.message || '字段格式不正确';
+            }
+            if (rule.whitespace && typeof value === 'string' && value.trim().length === 0) {
+                return rule.message || '不能为纯空格';
             }
             if (rule.validator) {
                 try {
@@ -197,7 +199,7 @@ export const useForm = <T extends FormValues = FormValues>(): [FormInstance<T>] 
         }
         clearFieldError(name);
         return true;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
     }, [clearFieldError, notifyField]);
 
     /** 提交方法：优先调用 Form 组件注入的真实 submit（含 onFinish），否则仅执行校验。 */
@@ -239,10 +241,13 @@ export const useForm = <T extends FormValues = FormValues>(): [FormInstance<T>] 
     }, [notifyField]);
 
     /** 用 ref 保持 formInstance 对象引用稳定，避免每次渲染都创建新对象
-     *  导致依赖 form 的 useEffect / useMemo 被误触发。 */
-    const formInstanceRef2 = useRef<FormInstance<T> & FormContextType & {
+     *  导致依赖 form 的 useEffect / useMemo 被误触发。
+     *  注意：formInstance 不包含 requiredMark，该属性由 Form 组件层提供。 */
+    const formInstanceRef2 = useRef<FormInstance<T> & {
         __setSubmit: (fn: (e?: FormEvent) => Promise<void>) => void;
         subscribeField: (name: string, listener: FieldListener) => () => void;
+        registerField: (name: string, rules: ValidatorRule[]) => void;
+        unregisterField: (name: string) => void;
     } | null>(null);
 
     if (!formInstanceRef2.current) {
@@ -256,12 +261,11 @@ export const useForm = <T extends FormValues = FormValues>(): [FormInstance<T>] 
             reset,
             registerField,
             unregisterField,
-            requiredMark: true,
             __setSubmit,
             subscribeField,
         };
     }
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    return [formInstanceRef2.current!];
+     
+    return [formInstanceRef2.current];
 };

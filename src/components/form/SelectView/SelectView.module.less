@@ -158,7 +158,20 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
-  z-index: 9998;
+  z-index: @z-picker-mask;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+
+  &.maskVisible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  &.maskClosing {
+    opacity: 0;
+    pointer-events: none;
+  }
 }
 
 /* 选择器弹层 */
@@ -171,7 +184,7 @@
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
   border-top-left-radius: @radius-lg;
   border-top-right-radius: @radius-lg;
-  z-index: 9999;
+  z-index: @z-picker-panel;
   transition: transform 0.3s ease-in-out;
   transform: translateY(100%);
   min-height: 40vh;
@@ -376,7 +389,7 @@
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  z-index: 1050;
+  z-index: @z-dropdown-pc;
   background: @bg-white;
   border: 1px solid @border-color;
   border-radius: @radius-md;

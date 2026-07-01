@@ -11,7 +11,7 @@
   }
   left: 50%;
   transform: translateX(-50%);
-  z-index: 9999;
+  z-index: @z-toast;
   .flex-col();
   align-items: center;
   pointer-events: none;
@@ -42,13 +42,14 @@
   font-size: 1.4rem;
   font-weight: 500;
   color: @text-main;
-  white-space: nowrap;
+  // Bug #5 修复：允许长文本换行，限制最大宽度防溢出
+  white-space: normal;
+  word-break: break-word;
+  max-width: min(90vw, 40rem);
   pointer-events: auto;
 
   // 玻璃拟态背景与边框
   background-color: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.6);
 
   // 现代柔和多层阴影
@@ -57,7 +58,7 @@
     0 10px 15px -3px rgba(0, 0, 0, 0.05),
     0 0 0 1px rgba(0, 0, 0, 0.02);
 
-  will-change: transform, opacity;
+  will-change: transform;
 
   // 入场：translateY 滑入 + opacity，对应 Ant Design 5 content 视觉动画
   animation: toastIn 0.3s cubic-bezier(0.78, 0.14, 0.15, 0.86) both;
@@ -108,18 +109,17 @@
   }
 }
 
+// Bug #6 修复：移除 wrapperOut 中的 opacity，避免与 toastOut 双重淡出冲突
 @keyframes wrapperOut {
   0% {
     max-height: 12rem;
     padding-block: 2rem;
     margin-block: -1.4rem;
-    opacity: 1;
   }
   100% {
     max-height: 0;
     padding-block: 0;
     margin-block: 0;
-    opacity: 0;
   }
 }
 

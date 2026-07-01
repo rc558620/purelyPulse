@@ -1,4 +1,4 @@
-import { useState, useCallback, useDeferredValue, useMemo } from 'react';
+import { useState, useCallback, useDeferredValue, useMemo, useRef } from 'react';
 import type {
   SelectChangeValue,
   SelectMode,
@@ -25,7 +25,7 @@ const toChangeValue = <M extends SelectMode>(
 ): SelectChangeValue<M> => (
   mode === 'multiple'
     ? nextValues
-    : (nextValues[0] ?? '')
+    : nextValues[0]
 ) as SelectChangeValue<M>;
 
 const useSelectState = <M extends SelectMode>({
@@ -34,15 +34,18 @@ const useSelectState = <M extends SelectMode>({
   defaultValue,
   onChange,
   mode,
+  isControlled: controlled,
   onClose,
 }: UseSelectStateOptions<M>): UseSelectStateReturn => {
   const isMultiple = mode === 'multiple';
-  const isControlled = value !== undefined;
+  const isControlled = controlled ?? value !== undefined;
 
   const [internalValues, setInternalValues] = useState<SelectValue[]>(
     () => normalizeValue(defaultValue),
   );
-  const [draftValues, setDraftValues] = useState<SelectValue[]>([]);
+  const [draftValues, setDraftValues] = useState<SelectValue[]>(() =>
+    normalizeValue(isControlled ? value : defaultValue),
+  );
   const [searchText, setSearchText] = useState('');
 
   const selectedValues = useMemo(
@@ -50,20 +53,36 @@ const useSelectState = <M extends SelectMode>({
     [internalValues, isControlled, value],
   );
 
+  // Bug #2 fix: 用 ref 跟踪最新 selectedValues，确保 syncDraftToSelected 不依赖闭包中的旧值
+  const selectedValuesRef = useRef(selectedValues);
+  selectedValuesRef.current = selectedValues;
+
+  // BUG-1 fix: 用 ref 跟踪最新 draftValues，确保 handleMultiConfirm 不依赖闭包中的旧值
+  const draftValuesRef = useRef(draftValues);
+  draftValuesRef.current = draftValues;
+
+  // BUG-7 fix: 多选超过 3 项时显示摘要格式，避免文本溢出
   const displayText = useMemo((): string => {
     if (selectedValues.length === 0) return '';
+    if (isMultiple && selectedValues.length > 3) {
+      const firstLabel = options.find(o => o.value === selectedValues[0])?.label ?? String(selectedValues[0]);
+      return `${firstLabel} 等 ${selectedValues.length} 项`;
+    }
     return selectedValues
       .map(currentValue => options.find(option => option.value === currentValue)?.label ?? String(currentValue))
       .join('、');
-  }, [options, selectedValues]);
+  }, [isMultiple, options, selectedValues]);
 
   const deferredSearch = useDeferredValue(searchText);
   const isStale = searchText !== deferredSearch;
 
+  // BUG-5 fix: 搜索时排除 disabled 选项
   const filteredOptions = useMemo((): SelectOption[] => {
     const keyword = deferredSearch.trim().toLowerCase();
-    if (!keyword) return options;
-    return options.filter(option => option.label.toLowerCase().includes(keyword));
+    const source = keyword
+      ? options.filter(option => !option.disabled && option.label.toLowerCase().includes(keyword))
+      : options;
+    return source;
   }, [deferredSearch, options]);
 
   const isSelected = useCallback(
@@ -78,12 +97,16 @@ const useSelectState = <M extends SelectMode>({
     [],
   );
 
-  const handleSearchClear = useCallback(() => setSearchText(''), []);
-  const resetSearch = useCallback(() => setSearchText(''), []);
+  const clearSearch = useCallback(() => setSearchText(''), []);
 
   const syncDraftToSelected = useCallback(() => {
-    setDraftValues([...selectedValues]);
-  }, [selectedValues]);
+    setDraftValues([...selectedValuesRef.current]);
+  }, []);
+
+  // Bug #3 fix: 关闭面板时重置草稿为当前 selectedValues，防止残留未确认的选择
+  const resetDraft = useCallback(() => {
+    setDraftValues([...selectedValuesRef.current]);
+  }, []);
 
   const commitValue = useCallback((nextValues: SelectValue[], closeAfterCommit = false) => {
     if (!isControlled) {
@@ -95,7 +118,9 @@ const useSelectState = <M extends SelectMode>({
     }
   }, [isControlled, mode, onChange, onClose]);
 
+  // BUG-8 fix: 单选重复选择同一项时跳过，避免冗余 onChange
   const handleSingleSelect = useCallback((nextValue: SelectValue) => {
+    if (nextValue === selectedValuesRef.current[0]) return;
     commitValue([nextValue], true);
   }, [commitValue]);
 
@@ -108,8 +133,8 @@ const useSelectState = <M extends SelectMode>({
   }, []);
 
   const handleMultiConfirm = useCallback(() => {
-    commitValue(draftValues, true);
-  }, [commitValue, draftValues]);
+    commitValue(draftValuesRef.current, true);
+  }, [commitValue]);
 
   const handleClear = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -124,10 +149,10 @@ const useSelectState = <M extends SelectMode>({
     isStale,
     filteredOptions,
     handleSearchChange,
-    handleSearchClear,
-    resetSearch,
+    handleSearchClear: clearSearch,
     draftValues,
     syncDraftToSelected,
+    resetDraft,
     isSelected,
     handleSingleSelect,
     handleMultiToggle,

@@ -7,10 +7,16 @@
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   padding-bottom: 0.2rem;
+  cursor: grab;
 
   // 隐藏横向滚动条（保留功能）
   scrollbar-width: none;
   &::-webkit-scrollbar { display: none; }
+}
+
+.filterScrollDragging {
+  cursor: grabbing;
+  user-select: none;
 }
 
 // ─── 分类 chip ───────────────────────────────────────────────────

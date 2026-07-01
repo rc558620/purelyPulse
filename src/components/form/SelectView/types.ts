@@ -5,7 +5,7 @@ export type SelectMode = 'single' | 'multiple';
 export type SelectDisplayMode = 'mobile' | 'pc';
 export type SelectChangeValue<M extends SelectMode = SelectMode> = M extends 'multiple'
   ? SelectValue[]
-  : SelectValue;
+  : SelectValue | undefined;
 
 export type SelectOption = {
   label: string;
@@ -43,7 +43,7 @@ export interface SingleSelectViewProps extends SelectViewSharedProps {
   value?: SelectChangeValue<'single'>;
   defaultValue?: SelectChangeValue<'single'>;
   onChange?: (value: SelectChangeValue<'single'>) => void;
-}
+} // onChange 参数类型: SelectValue | undefined — 选中时为 SelectValue，清空时为 undefined
 
 export interface MultipleSelectViewProps extends SelectViewSharedProps {
   mode: 'multiple';
@@ -54,12 +54,14 @@ export interface MultipleSelectViewProps extends SelectViewSharedProps {
 
 export type SelectViewProps = SingleSelectViewProps | MultipleSelectViewProps;
 
+// 注意：涉及数字展示的 UI 仍需通过 safeNum 做安全格式化，本文件仅负责类型定义。
 export interface UseSelectStateOptions<M extends SelectMode = SelectMode> {
   options: SelectOption[];
   value?: SelectChangeValue<M>;
   defaultValue?: SelectChangeValue<M>;
   onChange?: (value: SelectChangeValue<M>) => void;
   mode: M;
+  isControlled?: boolean;
   onClose: () => void;
 }
 
@@ -72,9 +74,9 @@ export interface UseSelectStateReturn {
   filteredOptions: SelectOption[];
   handleSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleSearchClear: () => void;
-  resetSearch: () => void;
   draftValues: SelectValue[];
   syncDraftToSelected: () => void;
+  resetDraft: () => void;
   isSelected: (val: SelectValue) => boolean;
   handleSingleSelect: (val: SelectValue) => void;
   handleMultiToggle: (val: SelectValue) => void;
@@ -112,7 +114,9 @@ export interface SelectOptionRowProps {
 
 export interface SelectMobilePanelProps extends SelectPanelSharedProps {
   visible: boolean;
+  isClosing: boolean;
   onClose: () => void;
+  onTransitionEnd: () => void;
 }
 
 export interface SelectPcDropdownProps extends SelectPanelSharedProps {

@@ -8,8 +8,6 @@
   inset: 0;
   z-index: 100;
   background-color: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -59,7 +57,7 @@
 // 居中模式卡片（圆角四角均等）
 .cardCenter {
   border-radius: 20px;
-  max-height: unset;
+  max-height: 90dvh;
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.18), 0 8px 24px rgba(0, 0, 0, 0.1);
   animation: cardUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -137,7 +135,7 @@
 
 // body 最大高度限制（center variant）
 .bodyCenter {
-  max-height: 60vh;
+  max-height: 60dvh;
 }
 
 // ─── 底部按钮区 ───────────────────────────────────────────────

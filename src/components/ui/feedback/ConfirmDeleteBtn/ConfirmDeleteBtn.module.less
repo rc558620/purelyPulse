@@ -28,6 +28,12 @@
   &:active {
     background-color: fade(@rose-500, 14%);
   }
+
+  &:disabled {
+    color: fade(@text-slate-400, 40%);
+    cursor: not-allowed;
+    background: transparent;
+  }
 }
 
 .deleteBtnConfirm {

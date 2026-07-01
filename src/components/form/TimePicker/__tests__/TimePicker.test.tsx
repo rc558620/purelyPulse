@@ -92,13 +92,22 @@ describe('TimePicker – 打开/关闭', () => {
         expect(trigger).toHaveAttribute('aria-expanded', 'true');
     });
 
-    it('ESC 键关闭（mobile 直接关闭）', () => {
+    it('ESC 键触发关闭（mobile 走退场动画）', () => {
         const { container } = render(<TimePicker displayMode="mobile" />);
         const trigger = container.querySelector('[role="button"]')!;
         fireEvent.click(trigger);
+        expect(trigger).toHaveAttribute('aria-expanded', 'true');
+        // ESC 触发 handleClose → setIsClosing(true)
         act(() => {
             window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
         });
+        // 移动端走退场动画，需模拟 transitionEnd
+        const dialog = document.querySelector('[role="dialog"]');
+        if (dialog) {
+            act(() => {
+                dialog.dispatchEvent(new TransitionEvent('transitionend', { propertyName: 'transform', bubbles: true }));
+            });
+        }
         expect(trigger).toHaveAttribute('aria-expanded', 'false');
     });
 });

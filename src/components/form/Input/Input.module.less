@@ -23,21 +23,42 @@
     box-shadow: 0 0 0 1px @primary;
     background-color: @bg-white;
   }
+
+  // disabled 状态（fieldset[disabled] 会把内部 input 置为 disabled）
+  &:has(input:disabled),
+  &:has(textarea:disabled) {
+    background-color: @bg-slate-100;
+    border-color: @border-color;
+    cursor: not-allowed;
+    opacity: 0.65;
+
+    &:hover {
+      border-color: @border-color;
+      background-color: @bg-slate-100;
+    }
+
+    &:focus-within {
+      border-color: @border-color;
+      box-shadow: none;
+    }
+  }
   
   // Icon coloring on interaction
+  // img 用 filter 变绿；svg 通过 currentColor 响应 color 变化
   &:focus-within .prefixWrapper img,
   &:hover .prefixWrapper img,
   &:focus-within .suffixWrapper img,
   &:hover .suffixWrapper img,
   &:focus-within .suffixWrapper button img,
-  &:hover .suffixWrapper button img,
-  &:focus-within .prefixWrapper svg,
-  &:hover .prefixWrapper svg,
-  &:focus-within .suffixWrapper svg,
-  &:hover .suffixWrapper svg {
+  &:hover .suffixWrapper button img {
     // Lime-500 (#84cc16)
-    // Force to black first, then apply filter
     filter: brightness(0) saturate(100%) invert(72%) sepia(69%) saturate(464%) hue-rotate(36deg) brightness(93%) contrast(88%);
+  }
+
+  // prefixWrapper 内的 SVG（使用 currentColor 的场景）在 focus/hover 时变主色
+  &:focus-within .prefixWrapper svg,
+  &:hover .prefixWrapper svg {
+    color: @primary;
   }
 
   &.statusError {
@@ -45,6 +66,14 @@
     
     &:focus-within {
       box-shadow: 0 0 0 1px @rose-500;
+    }
+  }
+
+  &.statusWarning {
+    border-color: @amber-500;
+
+    &:focus-within {
+      box-shadow: 0 0 0 1px @amber-500;
     }
   }
 }
@@ -57,13 +86,16 @@
   color: @text-main;
   font-size: 1.6rem;
   padding: 0 1.6rem;
-  // padding-left handled by structure (if prefix exists)
-  // but Login had specific padding.
   outline: none;
   transition: none;
 
   &::placeholder {
     color: @text-slate-400;
+  }
+
+  &:disabled {
+    color: @text-slate-400;
+    cursor: not-allowed;
   }
 }
 
@@ -72,26 +104,26 @@
   align-items: center;
   padding-left: 1.6rem;
   flex-shrink: 0;
-  // Reduce gap to input since input has padding
   margin-right: -0.8rem; 
   z-index: 10;
-  pointer-events: none; // Assuming icons are decorative usually
+  // 不设置 pointer-events: none，prefix 中的可交互元素（如按钮）需要正常响应点击。
+  // prefix 中仅放装饰性图标时，图标自身不具备交互，无需阻止事件。
 
-  img, svg {
-     // Default text-sub gray
-     // Force to black first
+  img {
+     // img 仍使用 filter 灰化
      filter: brightness(0) saturate(100%) invert(48%) sepia(8%) saturate(996%) hue-rotate(179deg) brightness(93%) contrast(87%);
      transition: filter 0.3s;
+  }
+
+  svg {
+     // SVG 通过 currentColor 响应颜色；同时保留 opacity 过渡
+     transition: color 0.3s, opacity 0.3s;
   }
 }
 
 // Override input control flex grow when inside wrapper
 .inputWrapper .inputControl {
   flex: 1;
-  // Reset padding if prefix exists? 
-  // Let's rely on standard padding of input, 
-  // but if prefix exists, maybe reduce left padding of input?
-  // Simpler: prefix has padding-left, input has padding-left: 0.8rem
 }
 
 .suffixWrapper {
@@ -100,11 +132,15 @@
   padding-right: 1.6rem;
   flex-shrink: 0;
 
-  img, button img, svg {
-     // Default gray
-     // Force to black first
+  img, button img {
+     // img 仍使用 filter 灰化
      filter: brightness(0) saturate(100%) invert(48%) sepia(8%) saturate(996%) hue-rotate(179deg) brightness(93%) contrast(87%);
      transition: filter 0.15s;
+  }
+
+  svg {
+     // SVG 保持自身 stroke/fill 颜色
+     transition: opacity 0.15s;
   }
 }
 
@@ -137,6 +173,32 @@
       box-shadow: 0 0 0 1px @rose-500;
     }
   }
+
+  &.statusWarning {
+    border-color: @amber-500;
+
+    &:focus-within {
+      box-shadow: 0 0 0 1px @amber-500;
+    }
+  }
+
+  // disabled 状态
+  &:has(textarea:disabled) {
+    background-color: @bg-slate-100;
+    border-color: @border-color;
+    cursor: not-allowed;
+    opacity: 0.65;
+
+    &:hover {
+      border-color: @border-color;
+      background-color: @bg-slate-100;
+    }
+
+    &:focus-within {
+      border-color: @border-color;
+      box-shadow: none;
+    }
+  }
 }
 
 .textareaControl {
@@ -155,5 +217,10 @@
 
   &::placeholder {
     color: @text-slate-400;
+  }
+
+  &:disabled {
+    color: @text-slate-400;
+    cursor: not-allowed;
   }
 }

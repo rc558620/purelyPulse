@@ -2,7 +2,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { showToast } from '@components/ui/feedback/Toast';
 import { validateImageFile, readFileAsDataURL } from '@utils/imageValidation';
-import { ApiError } from '@utils/http';
 
 interface UseAvatarUploadOptions {
     /** 裁剪完成后的回调，参数为裁剪后的 blob URL。 */
@@ -64,15 +63,8 @@ const useAvatarUpload = ({ onAvatarChange }: UseAvatarUploadOptions): UseAvatarU
                 setPendingCropSrc('');
                 showToast({ message: '头像更新成功', type: 'success' });
             })
-            .catch((error: unknown) => {
-                // 优先展示后端返回的具体错误信息，降级显示通用提示
-                const message = error instanceof ApiError && error.message
-                    ? error.message
-                    : error instanceof Error && error.message
-                        ? error.message
-                        : '头像更新失败，请重试';
+            .catch(() => {
                 // 接口失败时保留裁剪弹窗，方便用户继续重试。
-                showToast({ message, type: 'error' });
             });
     }, [onAvatarChange]);
 

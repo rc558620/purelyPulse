@@ -1,5 +1,4 @@
-// 会员套餐卡片共享逻辑：统一维护 tone 样式映射与价格展示格式化。
-import { normalizePriceText } from '../../membershipSettings.service';
+// 会员套餐卡片共享逻辑：统一维护 tone 样式映射。
 import type { ToneName } from '../../membershipSettings.types';
 
 export interface MembershipSettingsTierToneClasses {
@@ -34,8 +33,5 @@ export const TONE_CLASS_NAMES: Record<ToneName, MembershipSettingsTierToneClasse
   },
 };
 
-// BUG-12 修复：收敛为调用 service 层的 normalizePriceText，消除重复逻辑
-export const formatMembershipTierPriceDisplay = (rawPrice: string): string => {
-  const formatted = normalizePriceText(rawPrice);
-  return formatted || '0';
-};
+// 前端直读后端返回的 priceDisplay，不做任何处理，后端负责校验与格式化
+export const formatMembershipTierPriceDisplay = (rawPrice: string): string => rawPrice || '0';
