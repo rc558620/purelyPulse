@@ -21,11 +21,11 @@ const PARTNER_PAYOUT_ACCOUNT_LABEL_MAP: Record<PartnerPayoutAccountType, string>
   bank: '银行卡',
 };
 
-const PARTNER_PAYOUT_STATUS_CONFIG: Record<PartnerPayoutStatus, { label: string; className: string }> = {
-  pending: { label: '待处理', className: 'statusPending' },
-  approved: { label: '审核中', className: 'statusApproved' },
-  paid: { label: '已打款', className: 'statusPaid' },
-  rejected: { label: '已拒绝', className: 'statusRejected' },
+const PARTNER_PAYOUT_STATUS_CONFIG: Record<PartnerPayoutStatus, { label: string; className: string; amountClass: string }> = {
+  pending: { label: '待处理', className: 'statusPending', amountClass: 'cardAmountPending' },
+  approved: { label: '审核中', className: 'statusApproved', amountClass: 'cardAmountApproved' },
+  paid: { label: '已打款', className: 'statusPaid', amountClass: 'cardAmountPaid' },
+  rejected: { label: '已拒绝', className: 'statusRejected', amountClass: 'cardAmountRejected' },
 };
 
 interface PartnerPayoutApplicationCardProps {
@@ -91,7 +91,7 @@ const PartnerPayoutApplicationCard: React.FC<PartnerPayoutApplicationCardProps> 
         </div>
 
         <div className={styles.cardRight}>
-          <div className={styles.cardAmount}>¥{application.amountDisplay || '0'}</div>
+          <div className={cx(styles.cardAmount, styles[statusConfig.amountClass])}>¥{application.amountDisplay || '0'}</div>
           <div className={styles[statusConfig.className]}>{statusConfig.label}</div>
           <IconPartnerPayoutExpandArrow className={cx(styles.expandArrow, expanded && styles.expandArrowOpen)} />
         </div>
@@ -116,7 +116,7 @@ const PartnerPayoutApplicationCard: React.FC<PartnerPayoutApplicationCardProps> 
             </div>
             <div className={styles.detailItem}>
               <span className={styles.detailLabel}>申请金额</span>
-              <span className={cx(styles.detailVal, styles.detailValAmount)}>
+              <span className={cx(styles.detailVal, styles.detailValAmount, styles[statusConfig.amountClass])}>
                 ¥{application.amountDisplay || '0'}
               </span>
             </div>

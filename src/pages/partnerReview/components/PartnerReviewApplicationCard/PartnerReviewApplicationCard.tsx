@@ -96,6 +96,7 @@ const PartnerReviewApplicationCard: React.FC<PartnerReviewApplicationCardProps> 
         <div className={styles.cardInfo}>
           <div className={styles.cardNameRow}>
             <span className={styles.cardName}>{safeStr(application.name, '--')}</span>
+            <span className={styles.cardPhone}>{safeStr(application.phone, '--')}</span>
             <span className={styles.cardCity}>
               <IconPartnerReviewLocation className={styles.cityIcon} />
               {safeStr(application.city, '--')}
@@ -107,9 +108,15 @@ const PartnerReviewApplicationCard: React.FC<PartnerReviewApplicationCardProps> 
             )}
           </div>
           <div className={styles.cardMeta}>
-            <span>{safeStr(application.phone, '--')}</span>
-            <span className={styles.metaDot} aria-hidden="true" />
-            <span>{safeStr(application.appliedAt, '--')}</span>
+            <span className={styles.metaField}>
+              <span className={styles.metaLabel}>身份证</span>
+              <span className={styles.metaValue}>{safeStr(application.idCard, '--')}</span>
+            </span>
+            <span className={styles.metaDivider} aria-hidden="true" />
+            <span className={styles.metaField}>
+              <span className={styles.metaLabel}>审核时间</span>
+              <span className={styles.metaValue}>{safeStr(application.appliedAt, '--')}</span>
+            </span>
           </div>
         </div>
 

@@ -63,7 +63,7 @@ const Home = (): React.JSX.Element => {
 
   const isInitialLoading = isLoading && !hasLoaded;
   const showInitialError = !isLoading && !hasLoaded && Boolean(errorMessage);
-  const emptyRevenuePeriodData = useMemo<HomeRevenuePeriodData>(() => ({ dates: [], values: [], total: 0, avg: 0, growth: 0 }), []);
+  const emptyRevenuePeriodData = useMemo<HomeRevenuePeriodData>(() => ({ dates: [], values: [], totalDisplay: '', avgDisplay: '', growth: 0 }), []);
   const revenueSummary = overview.revenueByPeriod[revenuePeriod] ?? emptyRevenuePeriodData;
 
   return (

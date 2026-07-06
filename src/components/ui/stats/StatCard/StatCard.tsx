@@ -10,7 +10,7 @@
  * `color` 优先级高于 `variant`。
  */
 import React, { type ReactNode } from 'react';
-import { cx, fmtAmount } from '@utils/utils';
+import { cx, formatNumber } from '@utils/utils';
 import styles from './StatCard.module.less';
 
 // ─── 类型 ──────────────────────────────────────────────────────
@@ -74,7 +74,7 @@ const StatCard: React.FC<StatCardProps> = React.memo(({
       {mode === 'amount' ? (
         <span className={styles.statValue}>
           <span className={styles.statPrefix}>¥</span>
-          {fmtAmount(value as number)}
+          {formatNumber(value as number)}
         </span>
       ) : (
         <span className={styles.statValueText}>{value as string}</span>

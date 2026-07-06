@@ -1,5 +1,5 @@
 // 营业详情弹窗：展示该商家今日/本周/本月/今年/去年的销售额与利润 ECharts 柱状图。
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { cx, safeNum } from '@utils/utils';
 import SlidingTabBar from '@components/ui/filter/SlidingTabBar';

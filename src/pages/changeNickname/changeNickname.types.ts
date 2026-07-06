@@ -61,7 +61,7 @@ export const normalizeChangeNicknamePayload = (
  * @returns 各字段对应的 ValidatorRule 数组映射。
  */
 export const buildChangeNicknameRules = (
-    form: FormInstance<ChangeNicknameFormDTO>,
+    _form: FormInstance<ChangeNicknameFormDTO>,
     currentNickname: string,
 ): ChangeNicknameFormRules => ({
     nickname: [

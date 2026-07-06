@@ -18,6 +18,7 @@ const TAB_BADGE_KEY_MAP: Record<MemberFilterStatus, keyof BanManagementCounts> =
   active: 'active',
   inactive: 'inactive',
   banned: 'banned',
+  cancelled: 'all',
 };
 
 const getTabBadgeValue = (counts: BanManagementCounts, status: MemberFilterStatus): number => {

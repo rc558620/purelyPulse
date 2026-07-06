@@ -72,8 +72,6 @@ const normalizeNumber = (value: unknown): number => {
   return 0;
 };
 
-const isFieldPresent = (value: unknown): boolean => value !== undefined && value !== null;
-
 /** 直接从后端响应中读取金额展示字符串字段，前端不做转换 */
 const pickDisplayField = (value: unknown, keys: readonly string[]): string => {
   if (!isPlainObject(value)) {
@@ -130,12 +128,6 @@ const pickStringArray = (value: unknown, keys: readonly string[]): string[] => {
     .filter((item): item is string => typeof item === 'string')
     .map((item) => item.trim())
     .filter(Boolean);
-};
-
-const pickNumberArray = (value: unknown, keys: readonly string[]): number[] => {
-  return getNestedArray(value, keys)
-    .map((item) => normalizeNumber(item))
-    .filter((item) => Number.isFinite(item));
 };
 
 const formatDateLabel = (value: unknown): string => {

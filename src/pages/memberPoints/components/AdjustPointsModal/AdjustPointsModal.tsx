@@ -51,7 +51,7 @@ const AdjustPointsModal: React.FC<AdjustPointsModalProps> = ({
       return;
     }
 
-    onConfirm(user.id, delta, reason.trim()).catch(() => {
+    Promise.resolve(onConfirm(user.id, delta, reason.trim())).catch(() => {
       // 错误已由 hook 层 showToast 处理，此处仅阻止 Unhandled Promise Rejection
     });
   }, [delta, isSubmitting, isValid, onConfirm, reason, user.id]);

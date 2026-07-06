@@ -148,6 +148,16 @@ const normalizeSubAccountStatus = (value: unknown): SubAccountStatusValue => {
 interface PulseServerMembersResponseLike {
   items: PulseServerMemberListItemLike[];
   total: number;
+  stats?: Record<string, unknown>;
+  summary?: Record<string, unknown>;
+  totalCount?: number;
+  activeCount?: number;
+  normalCount?: number;
+  inactiveCount?: number;
+  dormantCount?: number;
+  partnerCount?: number;
+  bannedCount?: number;
+  disabledCount?: number;
 }
 
 const isServerRechargeRecordLike = (value: unknown): value is PulseServerRechargeRecordLike => (
@@ -306,7 +316,7 @@ const mapServerMemberListItem = (value: PulseServerMemberListItemLike): MemberLi
   invitedCount: normalizeOptionalCount(value.invitedCount),
   rechargeCount: normalizeOptionalCount(value.rechargeCount),
   remark: normalizeOptionalString(value.remark),
-  membershipExpiry: resolveMembershipExpiry(value),
+  membershipExpiry: resolveMembershipExpiry(value as unknown as Record<string, unknown>),
 });
 
 const mapServerMemberDetail = (value: PulseServerMemberDetailLike): MemberDetail => ({
@@ -315,7 +325,7 @@ const mapServerMemberDetail = (value: PulseServerMemberDetailLike): MemberDetail
   rechargeCount: normalizeOptionalCount(value.rechargeCount) ?? value.rechargeHistory.length,
   invitedCount: normalizeOptionalCount(value.invitedCount) ?? 0,
   rechargeHistory: value.rechargeHistory.map((record) => mapServerRechargeRecord(record)),
-  membershipExpiry: resolveMembershipExpiry(value),
+  membershipExpiry: resolveMembershipExpiry(value as unknown as Record<string, unknown>),
   subAccountCapability: mapSubAccountCapability(value),
 });
 
@@ -327,11 +337,11 @@ const getServerMemberListStats = (
   const stats = payload.stats ?? payload.summary;
   if (isPlainObject(stats)) {
     return {
-      totalCount: safeNum((stats as Record<string, unknown>).totalCount ?? (stats as Record<string, unknown>).total ?? 0),
-      activeCount: safeNum((stats as Record<string, unknown>).activeCount ?? (stats as Record<string, unknown>).normalCount ?? 0),
-      inactiveCount: safeNum((stats as Record<string, unknown>).inactiveCount ?? (stats as Record<string, unknown>).dormantCount ?? 0),
-      partnerCount: safeNum((stats as Record<string, unknown>).partnerCount ?? 0),
-      bannedCount: safeNum((stats as Record<string, unknown>).bannedCount ?? (stats as Record<string, unknown>).disabledCount ?? 0),
+      totalCount: safeNum(Number((stats as Record<string, unknown>).totalCount ?? (stats as Record<string, unknown>).total ?? 0)),
+      activeCount: safeNum(Number((stats as Record<string, unknown>).activeCount ?? (stats as Record<string, unknown>).normalCount ?? 0)),
+      inactiveCount: safeNum(Number((stats as Record<string, unknown>).inactiveCount ?? (stats as Record<string, unknown>).dormantCount ?? 0)),
+      partnerCount: safeNum(Number((stats as Record<string, unknown>).partnerCount ?? 0)),
+      bannedCount: safeNum(Number((stats as Record<string, unknown>).bannedCount ?? (stats as Record<string, unknown>).disabledCount ?? 0)),
     };
   }
 
@@ -1016,7 +1026,7 @@ const readCachedPointsPageData = (): { records: MemberPointsRecord[]; users: Mem
     return {
       records: parsedValue.records,
       users: Array.isArray(parsedValue.users) ? parsedValue.users : [],
-      stats: isPlainObject(parsedValue.stats) ? parsedValue.stats : { totalRecords: 0, adminAdjustCount: 0, todayChangeCount: 0 },
+      stats: isPlainObject(parsedValue.stats) ? parsedValue.stats as unknown as MemberPointsStats : { totalRecords: 0, adminAdjustCount: 0, todayChangeCount: 0 },
     };
   } catch {
     return null;
@@ -1361,15 +1371,8 @@ const EMPTY_CLUB_STATS: ClubMemberStats = {
   levelBreakdown: { free: 0, gold: 0, platinum: 0, diamond: 0 },
 };
 
-const CLUB_STATS_PENDING_BALANCE_CANDIDATES = ['pendingBalanceFen', 'pendingBalance', 'inTransitBalance', 'customerBalance'] as const;
-const CLUB_STATS_TOTAL_RECHARGE_CANDIDATES = ['totalRechargeFen', 'totalRecharge', 'totalAmount', 'rechargeTotal'] as const;
 const CLUB_STATS_TOTAL_MEMBER_CANDIDATES = ['totalMemberCount', 'memberCount', 'total', 'totalMembers'] as const;
 const CLUB_STATS_RECHARGE_COUNT_CANDIDATES = ['rechargeCount', 'rechargeTimes', 'payCount', 'orderCount'] as const;
-const CLUB_STATS_TODAY_RECHARGE_CANDIDATES = ['todayRechargeFen', 'todayRecharge', 'todayAmount'] as const;
-const CLUB_STATS_MONTH_RECHARGE_CANDIDATES = ['monthRechargeFen', 'monthRecharge', 'monthAmount'] as const;
-const CLUB_STATS_QUARTER_RECHARGE_CANDIDATES = ['quarterRechargeFen', 'quarterRecharge', 'quarterAmount', 'seasonRechargeFen', 'seasonRecharge'] as const;
-const CLUB_STATS_YEAR_RECHARGE_CANDIDATES = ['yearRechargeFen', 'yearRecharge', 'yearAmount'] as const;
-const CLUB_STATS_LAST_YEAR_RECHARGE_CANDIDATES = ['lastYearRechargeFen', 'lastYearRecharge', 'lastYearAmount', 'prevYearRechargeFen', 'prevYearRecharge'] as const;
 const CLUB_STATS_LEVEL_BREAKDOWN_CANDIDATES = ['levelBreakdown', 'breakdown', 'levelStats', 'memberLevels'] as const;
 
 const normalizeClubMemberLevelBreakdown = (value: unknown): ClubMemberStats['levelBreakdown'] => {
@@ -1433,10 +1436,6 @@ const SALES_PERIOD_KEYS = ['today', 'week', 'month', 'year', 'lastYear'] as cons
 /** 增幅字段候选名（后端可能使用的字段名）。 */
 const SALES_GROWTH_PCT_CANDIDATES = ['salesGrowthPct', 'salesGrowth', 'salesGrowthRate', 'salesChange'] as const;
 const PROFIT_GROWTH_PCT_CANDIDATES = ['profitGrowthPct', 'profitGrowth', 'profitGrowthRate', 'profitChange'] as const;
-
-/** 金额字段候选名。 */
-const TOTAL_SALES_FEN_CANDIDATES = ['totalSalesFen', 'totalSales', 'salesTotal', 'totalRevenueFen'] as const;
-const TOTAL_PROFIT_FEN_CANDIDATES = ['totalProfitFen', 'totalProfit', 'profitTotal', 'grossProfitFen'] as const;
 
 /** 安全归一化增幅值：仅接受 number 或 null，过滤 NaN / Infinity / 字符串。 */
 const normalizeGrowthPct = (value: unknown): number | null => {

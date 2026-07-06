@@ -99,6 +99,14 @@
   white-space: nowrap;
 }
 
+.cardPhone {
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: @text-sub;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
 .cardCity {
   display: inline-flex;
   align-items: center;
@@ -115,17 +123,35 @@
 .cardMeta {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 1.2rem;
-  color: @text-slate-400;
+  gap: 1rem;
   flex-wrap: wrap;
 }
 
-.metaDot {
-  width: 3px;
-  height: 3px;
-  border-radius: 9999px;
-  background: @text-slate-400;
+.metaField {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+}
+
+.metaLabel {
+  font-size: 1.2rem;
+  font-weight: 400;
+  color: @text-muted;
+  white-space: nowrap;
+}
+
+.metaValue {
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: @text-sub;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.metaDivider {
+  width: 1px;
+  height: 12px;
+  background: fade(@border-color, 80%);
   flex-shrink: 0;
 }
 

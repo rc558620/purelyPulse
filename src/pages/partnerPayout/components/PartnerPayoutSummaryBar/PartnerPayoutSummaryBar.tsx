@@ -27,12 +27,16 @@ const PartnerPayoutSummaryBar: React.FC<PartnerPayoutSummaryBarProps> = ({
     </div>
     <div className={styles.summaryDivider} aria-hidden="true" />
     <div className={styles.summaryItem}>
-      <div className={styles.summaryVal}>¥{pendingAmountDisplay || '0'}</div>
+      <div className={cx(styles.summaryVal, styles.summaryValPending)}>
+        ¥{pendingAmountDisplay || '0'}
+      </div>
       <div className={styles.summaryLabel}>待打款金额</div>
     </div>
     <div className={styles.summaryDivider} aria-hidden="true" />
     <div className={styles.summaryItem}>
-      <div className={styles.summaryVal}>¥{paidAmountDisplay || '0'}</div>
+      <div className={cx(styles.summaryVal, styles.summaryValPaid)}>
+        ¥{paidAmountDisplay || '0'}
+      </div>
       <div className={styles.summaryLabel}>已打款累计</div>
     </div>
   </div>

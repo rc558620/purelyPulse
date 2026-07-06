@@ -18,8 +18,10 @@ export interface PartnerApplication {
   id: string;
   /** 申请人姓名 */
   name: string;
-  /** 申请人手机号（已脱敏） */
+  /** 申请人手机号 */
   phone: string;
+  /** 申请人身份证号（脱敏后） */
+  idCard: string;
   /** 申请人所在城市 */
   city: string;
   /** 申请提交时间 */

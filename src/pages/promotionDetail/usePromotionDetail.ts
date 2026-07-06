@@ -53,7 +53,7 @@ interface UsePromotionDetailPageReturn {
   periodRecords: PromotionPeriodRecord[];
   detailTotal: {
     orders: number;
-    revenue: number;
+    revenueDisplay: string;
   };
   pageTitle: string;
   retryLoad: () => void;

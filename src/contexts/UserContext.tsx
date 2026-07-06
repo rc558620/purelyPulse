@@ -4,7 +4,7 @@ import { ApiError } from '@utils/http';
 import { fetchAuthProfile } from '@pages/login/shared/auth.service';
 import { clearAuthSession, getPersistedAccessToken, syncAuthProfileToSession } from '@pages/login/shared/authSession';
 import { useUserStore } from '@stores';
-import { UserContext } from './userContextDef';
+import { UserContext, type UserContextType } from './userContextDef';
 
 interface UserProviderProps {
   children: ReactNode;

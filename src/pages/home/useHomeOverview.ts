@@ -17,7 +17,7 @@ export const useHomeOverview = (query: HomeOverviewQuery): UseHomeOverviewReturn
   const [hasLoaded, setHasLoaded] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const requestIdRef = useRef(0);
-  const loadOverviewRef = useRef<() => Promise<void>>();
+  const loadOverviewRef = useRef<(() => Promise<void>) | undefined>(undefined);
 
   const loadOverview = useCallback(async (): Promise<void> => {
     requestIdRef.current += 1;

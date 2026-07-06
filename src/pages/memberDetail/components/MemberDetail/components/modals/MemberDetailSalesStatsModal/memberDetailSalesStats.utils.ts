@@ -1,5 +1,6 @@
 // 营业详情弹窗工具函数：ECharts 配置生成。
 // 前端禁止金额转换。formatAmountFen/fenToYuan 已删除，金额展示值由后端直接返回 xxxDisplay 字段。
+import type { EChartsOption } from 'echarts';
 import { safeNum } from '@utils/utils';
 
 /** 图表数据视角类型（销售额 or 利润）。 */
@@ -39,7 +40,7 @@ export const buildChartOption = (
   labels: string[],
   values: number[],
   metric: ChartMetric,
-): object => ({
+): EChartsOption => ({
   animation: true,
   animationDuration: 420,
   animationEasing: 'cubicOut',

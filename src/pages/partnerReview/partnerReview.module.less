@@ -5,12 +5,14 @@
 .pageContainer {
   position: relative;
   width: 100%;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
   .flex-col();
   background-color: @bg-light;
   color: @text-main;
   overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   font-family: 'Inter', 'Noto Sans SC', sans-serif;
 
   &::before {

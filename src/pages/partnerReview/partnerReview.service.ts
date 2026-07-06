@@ -17,6 +17,7 @@ const STATS_SOURCE_CANDIDATES = ['stats', 'summary', 'overview'] as const;
 const ID_CANDIDATES = ['id', 'applicationId', 'reviewId', 'partnerApplyId'] as const;
 const NAME_CANDIDATES = ['name', 'partnerName', 'userName', 'nickname'] as const;
 const PHONE_CANDIDATES = ['phone', 'mobile', 'phoneNumber'] as const;
+const ID_CARD_CANDIDATES = ['idCard', 'idNumber', 'identityCard'] as const;
 const CITY_CANDIDATES = ['city', 'regionName', 'storeCity', 'addressCity'] as const;
 const APPLIED_AT_CANDIDATES = ['appliedAt', 'applyTime', 'createdAt', 'submitTime'] as const;
 const REASON_CANDIDATES = ['reason', 'applyReason', 'remark', 'description'] as const;
@@ -246,6 +247,7 @@ const mapApplication = (rawValue: unknown): PartnerApplication | null => {
 
   const name = pickStringField(rawValue, NAME_CANDIDATES) || '未命名申请人';
   const phone = pickStringField(rawValue, PHONE_CANDIDATES) || '--';
+  const idCard = pickStringField(rawValue, ID_CARD_CANDIDATES) || '--';
   const city = pickStringField(rawValue, CITY_CANDIDATES) || '--';
   const reason = pickStringField(rawValue, REASON_CANDIDATES) || '暂无申请理由';
   const status = normalizeStatus(pickStringField(rawValue, STATUS_CANDIDATES));
@@ -255,6 +257,7 @@ const mapApplication = (rawValue: unknown): PartnerApplication | null => {
     id,
     name,
     phone,
+    idCard,
     city,
     appliedAt: pickFormattedDateTime(rawValue, APPLIED_AT_CANDIDATES),
     reason,

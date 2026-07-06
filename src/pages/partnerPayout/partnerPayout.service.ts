@@ -6,6 +6,7 @@ import type {
   PartnerPayoutApplication,
   PartnerPayoutStats,
   PartnerPayoutStatus,
+  PartnerPayoutSummary,
 } from './partnerPayout.types';
 
 const PARTNER_PAYOUT_API_PATH = resolveEnvPath(import.meta.env.VITE_PARTNER_PAYOUT_API_PATH, '/pulse/growth/admin/payouts');
@@ -335,7 +336,7 @@ const requestPartnerPayoutList = async (): Promise<{ applications: PartnerPayout
 const submitPartnerPayoutAction = async (rawPath: string, id: string, action: 'approve' | 'reject', options?: { rejectReason?: string }): Promise<void> => {
   const requestTarget = resolveActionPath(rawPath, id);
   const payload = action === 'approve'
-    ? { txnNo: '' }
+    ? {}
     : { rejectReason: options?.rejectReason ?? '打款申请已拒绝' };
   await http.patch<unknown, Record<string, unknown>>(
     requestTarget.url,

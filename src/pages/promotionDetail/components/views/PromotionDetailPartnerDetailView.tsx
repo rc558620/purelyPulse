@@ -32,7 +32,7 @@ export interface PromotionDetailPartnerDetailViewProps {
   periodRecords: PromotionPeriodRecord[];
   detailTotal: {
     orders: number;
-    revenue: number;
+    revenueDisplay: string;
   };
   showEmptyState: boolean;
   onPeriodTabChange: (tab: PromotionPeriodTab) => void;
