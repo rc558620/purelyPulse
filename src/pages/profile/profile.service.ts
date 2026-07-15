@@ -5,15 +5,22 @@ import { fetchAuthProfile } from '@pages/login/shared/auth.service';
 import { syncAuthProfileToSession } from '@pages/login/shared/authSession';
 
 const DEFAULT_PROFILE_AVATAR_UPLOAD_API_PATH = '/auth/profile/avatar';
+const DEFAULT_IMAGE_UPLOAD_API_PATH = '/upload/image';
 
 /** 头像更新请求 DTO。 */
 export interface UpdateProfileAvatarRequestDTO {
-    /** 头像地址或 base64 数据。 */
+    /** 头像 URL 地址。 */
     avatar: string;
 }
 
 /** 头像更新响应：返回最新 profile，由 mapAuthProfile 映射为 UserInfo。 */
 type UpdateProfileAvatarResponseDTO = unknown;
+
+/** 图片上传响应。 */
+interface UploadImageResponse {
+    url: string;
+    key: string;
+}
 
 /**
  * 解析头像更新接口路径。
@@ -25,32 +32,41 @@ export const resolveProfileAvatarUploadApiPath = (): string =>
         DEFAULT_PROFILE_AVATAR_UPLOAD_API_PATH,
     );
 
-const readBlobAsDataUrl = (blob: Blob): Promise<string> => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-        if (typeof reader.result === 'string') {
-            resolve(reader.result);
-            return;
-        }
-        reject(new Error('头像文件读取失败，请重新选择'));
-    };
-    reader.onerror = () => reject(reader.error ?? new Error('头像文件读取失败，请重新选择'));
-    reader.readAsDataURL(blob);
-});
+/**
+ * 解析图片上传接口路径。
+ * @returns purelyprofit-server `POST /upload/image` 的接口路径。
+ */
+export const resolveImageUploadApiPath = (): string =>
+    resolveEnvPath(
+        import.meta.env.VITE_IMAGE_UPLOAD_API_PATH,
+        DEFAULT_IMAGE_UPLOAD_API_PATH,
+    );
 
 /**
- * 将裁剪后的本地 blob URL 转成后端需要的 base64 数据。
- * @param imageUrl - 裁剪弹窗返回的本地图片地址。
- * @returns 可直接提交给 purelyprofit-server `PATCH /auth/profile/avatar` 的请求体。
+ * 将裁剪后的图片 blob 上传到 COS 对象存储。
+ * @param imageUrl - 裁剪弹窗返回的本地 blob URL。
+ * @returns COS 返回的文件访问 URL。
  */
-export const createProfileAvatarPayload = async (imageUrl: string): Promise<UpdateProfileAvatarRequestDTO> => {
+export const uploadImageToCos = async (imageUrl: string): Promise<string> => {
     const response = await fetch(imageUrl);
     if (!response.ok) {
         throw new Error('头像文件读取失败，请重新选择');
     }
 
-    const avatar = await readBlobAsDataUrl(await response.blob());
-    return { avatar };
+    const blob = await response.blob();
+    const formData = new FormData();
+    formData.append('file', blob, 'avatar.jpg');
+
+    const uploadResult = await http.post<UploadImageResponse>(
+        resolveImageUploadApiPath(),
+        formData,
+        {
+            headers: { 'Content-Type': 'multipart/form-data' },
+            errorMessage: '头像上传失败，请稍后重试',
+        },
+    );
+
+    return uploadResult.url;
 };
 
 /**
@@ -65,7 +81,7 @@ export const uploadProfileAvatar = async (
         resolveProfileAvatarUploadApiPath(),
         payload,
         {
-            errorMessage: '头像上传失败，请稍后重试',
+            errorMessage: '头像更新失败，请稍后重试',
         },
     );
 
@@ -74,7 +90,7 @@ export const uploadProfileAvatar = async (
 };
 
 /**
- * 头像上传完整流程：blob URL → base64 payload → 上传 → 刷新 profile → 同步会话。
+ * 头像上传完整流程：blob URL → COS 上传 → 获取 URL → 更新头像 → 刷新 profile → 同步会话。
  * @param croppedImageUrl - 裁剪弹窗返回的 blob URL。
  * @param updateUserInfo - Zustand 更新回调。
  * @returns 更新后的最新用户信息。
@@ -84,8 +100,10 @@ export const handleAvatarUpload = async (
     updateUserInfo: (partial: Partial<UserInfo>) => void,
 ): Promise<UserInfo> => {
     try {
-        const payload = await createProfileAvatarPayload(croppedImageUrl);
-        const latestProfile = await uploadProfileAvatar(payload);
+        // 1. 上传图片到 COS，获取 URL
+        const avatarUrl = await uploadImageToCos(croppedImageUrl);
+        // 2. 用 URL 更新头像
+        const latestProfile = await uploadProfileAvatar({ avatar: avatarUrl });
         syncAuthProfileToSession(latestProfile);
         updateUserInfo(latestProfile);
         return latestProfile;
