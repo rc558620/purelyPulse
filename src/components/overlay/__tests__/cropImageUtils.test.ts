@@ -196,7 +196,9 @@ describe('getCroppedImg – 正常流程', () => {
   it('使用 image/jpeg 格式调用 toBlob', async () => {
     const toBlobSpy = vi.spyOn(HTMLCanvasElement.prototype, 'toBlob');
     await getCroppedImg(IMAGE_SRC, PIXEL_CROP);
-    expect(toBlobSpy).toHaveBeenCalledWith(expect.any(Function), 'image/jpeg');
+    const toBlobCallArgs = toBlobSpy.mock.calls[0];
+    expect(typeof toBlobCallArgs[0]).toBe('function');
+    expect(toBlobCallArgs[1]).toBe('image/jpeg');
   });
 
   it('drawImage 第一个参数是 Image 对象（具有 src / crossOrigin 属性）', async () => {

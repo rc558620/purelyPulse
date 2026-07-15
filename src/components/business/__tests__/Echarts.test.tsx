@@ -47,8 +47,8 @@ const { mockSetOption, mockResize, mockDispose, mockIsDisposed, mockOn, mockOff,
         on: mockOn,
         off: mockOff,
     };
-    const mockInit = vi.fn(() => mockChartInstance);
-    const mockUse = vi.fn();
+    const mockInit = vi.fn((_el: unknown) => mockChartInstance);
+    const mockUse = vi.fn((..._args: unknown[]): void => {});
 
     return {
         mockSetOption,
@@ -63,10 +63,8 @@ const { mockSetOption, mockResize, mockDispose, mockIsDisposed, mockOn, mockOff,
 });
 
 vi.mock('echarts/core', () => ({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    init: (el: unknown) => (mockInit as (a: unknown) => any)(el),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    use: (...args: any[]) => (mockUse as (...a: any[]) => void)(...args),
+    init: (el: unknown) => mockInit(el),
+    use: (...args: unknown[]) => mockUse(...args),
 }));
 
 import Echarts from '../Echarts/Echarts';
@@ -327,7 +325,7 @@ describe('Echarts – 复杂 option 场景', () => {
         expect(() => {
             render(<Echarts option={option} />);
         }).not.toThrow();
-        expect(mockSetOption).toHaveBeenCalledWith(option, expect.any(Object));
+        expect(mockSetOption).toHaveBeenCalledWith(option, { notMerge: false, lazyUpdate: false });
     });
 
     it('含 tooltip 的 option 正常 setOption', () => {
@@ -336,7 +334,7 @@ describe('Echarts – 复杂 option 场景', () => {
             legend: { data: ['销售额'] },
         };
         render(<Echarts option={option} />);
-        expect(mockSetOption).toHaveBeenCalledWith(option, expect.any(Object));
+        expect(mockSetOption).toHaveBeenCalledWith(option, { notMerge: false, lazyUpdate: false });
     });
 });
 
@@ -345,8 +343,13 @@ describe('Echarts – onEvents 事件绑定', () => {
     it('传入 onEvents 后 instance.on 被调用（每个事件名各一次）', () => {
         const handler = vi.fn();
         render(<Echarts option={{}} onEvents={{ click: handler, mousemove: handler }} />);
-        expect(mockOn).toHaveBeenCalledWith('click', expect.any(Function));
-        expect(mockOn).toHaveBeenCalledWith('mousemove', expect.any(Function));
+        const onCalls = mockOn.mock.calls as unknown as [string, unknown][];
+        const clickCall = onCalls.find(([name]) => name === 'click');
+        const mousemoveCall = onCalls.find(([name]) => name === 'mousemove');
+        expect(clickCall).toBeDefined();
+        expect(mousemoveCall).toBeDefined();
+        expect(typeof clickCall?.[1]).toBe('function');
+        expect(typeof mousemoveCall?.[1]).toBe('function');
     });
 
     it('不传 onEvents 时 instance.on 不被调用', () => {
@@ -406,7 +409,10 @@ describe('Echarts – onEvents 事件解绑', () => {
 
         // 移除 dblclick
         rerender(<Echarts option={{}} onEvents={{ click: handler }} />);
-        expect(mockOff).toHaveBeenCalledWith('dblclick', expect.any(Function));
+        const offCalls = mockOff.mock.calls as unknown as [string, unknown][];
+        const dblclickOffCall = offCalls.find(([name]) => name === 'dblclick');
+        expect(dblclickOffCall).toBeDefined();
+        expect(typeof dblclickOffCall?.[1]).toBe('function');
     });
 
     it('onEvents 从有到 undefined（移除所有事件），instance.off 对所有已绑定事件调用', () => {
@@ -417,7 +423,10 @@ describe('Echarts – onEvents 事件解绑', () => {
         mockOff.mockClear();
 
         rerender(<Echarts option={{}} />);
-        expect(mockOff).toHaveBeenCalledWith('click', expect.any(Function));
+        const offCalls = mockOff.mock.calls as unknown as [string, unknown][];
+        const clickOffCall = offCalls.find(([name]) => name === 'click');
+        expect(clickOffCall).toBeDefined();
+        expect(typeof clickOffCall?.[1]).toBe('function');
     });
 
     it('onEvents 完全不变时（同引用 rerender），instance.on/off 不重复调用', () => {
@@ -527,6 +536,6 @@ describe('Echarts – disposed 后 resize 安全', () => {
 
         // 新实例应正常初始化并调用 setOption
         expect(mockInit).toHaveBeenCalledTimes(1);
-        expect(mockSetOption).toHaveBeenCalledWith(option2, expect.any(Object));
+        expect(mockSetOption).toHaveBeenCalledWith(option2, { notMerge: false, lazyUpdate: false });
     });
 });

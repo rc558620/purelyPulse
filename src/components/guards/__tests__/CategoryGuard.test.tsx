@@ -48,10 +48,12 @@ describe('CategoryGuard', () => {
   it('默认按共享分类字典消费 useGoodsCategories', () => {
     renderCategoryGuard();
 
-    expect(mocks.useGoodsCategories).toHaveBeenCalledWith({
-      resolveErrorMessage: expect.any(Function),
-      suppressRefreshErrorWhenHasData: true,
-    });
+    expect(mocks.useGoodsCategories).toHaveBeenCalledTimes(1);
+    const [callArg] = mocks.useGoodsCategories.mock.calls[0] as unknown as [
+      { resolveErrorMessage: unknown; suppressRefreshErrorWhenHasData: boolean },
+    ];
+    expect(callArg.suppressRefreshErrorWhenHasData).toBe(true);
+    expect(typeof callArg.resolveErrorMessage).toBe('function');
   });
 
   it('有分类时直接放行', async () => {

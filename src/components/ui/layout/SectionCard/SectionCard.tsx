@@ -88,7 +88,7 @@ export interface SectionCardDividedListProps<T> {
   renderItem: (item: T, index: number) => React.ReactNode;
   /**
    * 获取每条 item 的唯一 key。
-   * 默认取 `(item as any).id`，若数据结构不含 id 字段则需传入此函数。
+   * 默认取 `(item as Record<string, unknown>).id`，若数据结构不含 id 字段则需传入此函数。
    */
   keyExtractor?: (item: T, index: number) => string | number;
   /** 列表容器额外 className。 */
