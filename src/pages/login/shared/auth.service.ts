@@ -3,7 +3,7 @@ import { ApiError, createSingletonInFlightRequest, http, resolveEnvPath } from '
 import type { UserInfo } from '@contexts';
 import { rsaEncrypt } from '@utils/rsaEncrypt';
 
-const LOGIN_API_PATH = resolveEnvPath(import.meta.env.VITE_LOGIN_API_PATH, '/auth/login');
+const LOGIN_API_PATH = resolveEnvPath(import.meta.env.VITE_LOGIN_API_PATH, '/pulse/auth/login');
 const AUTH_PROFILE_API_PATH = resolveEnvPath(import.meta.env.VITE_AUTH_PROFILE_API_PATH, '/auth/me');
 
 const TOKEN_FIELD_CANDIDATES = [
