@@ -33,7 +33,7 @@ const MemberListContent: React.FC<MemberListContentProps> = ({
   const showList = !isLoading && !errorMessage && isNonEmptyArray(members);
   const renderedMemberCards = useMemo(() => members.map((member) => (
     <MemberListCard
-      key={member.id}
+      key={`${member.id}-${member.avatarUrl ?? ''}`}
       member={member}
       onClick={onCardClick}
     />

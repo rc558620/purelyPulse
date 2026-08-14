@@ -1,5 +1,5 @@
 // 会员列表卡片：单条会员信息的展示单元。
-import React, { memo, useMemo } from 'react';
+import React, { memo, useCallback, useMemo, useState } from 'react';
 import { cx, safeNum, safeStr } from '@utils/utils';
 import {
   IconBeanCoin,
@@ -19,6 +19,10 @@ interface MemberListCardProps {
 }
 
 const MemberListCard: React.FC<MemberListCardProps> = ({ member, onClick }) => {
+  const [avatarError, setAvatarError] = useState(false);
+  const handleAvatarError = useCallback(() => setAvatarError(true), []);
+  const showAvatarImg = member.avatarUrl && !avatarError;
+
   const avatarColorClassName = useMemo(() => styles[`avatarColor_${member.avatarColorIdx % 6}`], [member.avatarColorIdx]);
   const memberName = useMemo(() => safeStr(member.name, '未命名会员'), [member.name]);
   const memberPhone = useMemo(() => safeStr(member.phone, '--'), [member.phone]);
@@ -39,11 +43,11 @@ const MemberListCard: React.FC<MemberListCardProps> = ({ member, onClick }) => {
     >
       {/* 头像 */}
       <div
-        className={cx(styles.memberAvatar, avatarColorClassName, member.avatarUrl && styles.memberAvatarWithImage)}
+        className={cx(styles.memberAvatar, avatarColorClassName, showAvatarImg && styles.memberAvatarWithImage)}
         aria-hidden="true"
       >
-        {member.avatarUrl ? (
-          <img className={styles.memberAvatarImg} src={member.avatarUrl} alt="" />
+        {showAvatarImg ? (
+          <img className={styles.memberAvatarImg} src={member.avatarUrl!} alt="" onError={handleAvatarError} />
         ) : (
           avatarChar
         )}
