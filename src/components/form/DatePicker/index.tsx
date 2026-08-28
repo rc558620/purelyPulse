@@ -120,11 +120,16 @@ const DatePicker: React.FC<DatePickerProps> = ({
   // displayMode 强制覆盖
   const effectiveIsMobile = displayMode === 'pc' ? false : displayMode === 'mobile' ? true : isMobile;
   const wrapperRef  = useRef<HTMLDivElement>(null);
+  // Portal 面板 ref，用于 onClickOutside 排除面板内部的点击（如“此刻”按钮）
+  const panelRef    = useRef<HTMLDivElement>(null);
 
   // Bug13 修复：移动端 BottomSheet 下滑关闭手势（ref 在此声明，回调在 handleClose 之后定义）
   const sheetRef     = useRef<HTMLDivElement>(null);
   const touchStartY  = useRef(0);
   const touchDeltaY  = useRef(0);
+
+  // PC端下拉位置状态（Portal + fixed 定位，避免被父容器 overflow 裁切）
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number } | null>(null);
 
   // ── 受控/非受控状态 ──
   const [internalValue, setInternalValue] = useState<string | null>(defaultValue ?? null);
@@ -234,14 +239,18 @@ const DatePicker: React.FC<DatePickerProps> = ({
   useEffect(() => {
     if (effectiveIsMobile || !visible || isClosing) return;
     const onClickOutside = (e: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      // 排除 wrapper（触发器）和 panel（Portal 面板）内部的点击
+      const insideWrapper = wrapperRef.current?.contains(target);
+      const insidePanel   = panelRef.current?.contains(target);
+      if (!insideWrapper && !insidePanel) {
         if (isDatetimeMode) handleDatetimeConfirm();
         else                handleClose();
       }
     };
     document.addEventListener('mousedown', onClickOutside);
     return () => document.removeEventListener('mousedown', onClickOutside);
-  }, [isMobile, visible, isClosing, isDatetimeMode, handleDatetimeConfirm, handleClose]);
+  }, [effectiveIsMobile, visible, isClosing, isDatetimeMode, handleDatetimeConfirm, handleClose]);
 
   // ── ESC 关闭 ──
   // Bug6 修复：datetime 模式下 ESC 也走确认提交，与点击外部行为一致
@@ -256,6 +265,20 @@ const DatePicker: React.FC<DatePickerProps> = ({
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [visible, isDatetimeMode, handleDatetimeConfirm, handleClose]);
+
+  // ── PC端下拉位置计算（Portal + fixed 定位，避免被父容器 overflow 裁切）──
+  useEffect(() => {
+    if (effectiveIsMobile || !visible || isClosing) return;
+    const el = wrapperRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    setDropdownPos({
+      top: popupPlacement === 'top'
+        ? rect.top - 6
+        : rect.bottom + 6,
+      left: rect.left,
+    });
+  }, [effectiveIsMobile, visible, isClosing, popupPlacement]);
 
   // ── 显示文本格式化 ──
   const displayText = useMemo(() => {
@@ -295,13 +318,27 @@ const DatePicker: React.FC<DatePickerProps> = ({
     return toDateString(d);
   }, [visible]); // visible 变化时重新计算
 
+  // ── datetime 模式：点击日期格子时立即提交值（与时间列滚动行为保持一致）──
+  // 修复：datetime 模式下点击日期仅调用 setTempDate 不会更新输入框，
+  // 用户期望点日期后输入框跟着变（和点时分框一样的即时反馈）。
+  const handleDatetimeDateSelect = useCallback((dateStr: string) => {
+    setTempDate(dateStr);
+    handleChange(buildDatetimeValue(dateStr, tempTime));
+  }, [handleChange, tempTime]);
+
+  // ── datetime 模式：时间列滚动时立即提交值（与日期点击行为保持一致）──
+  const handleDatetimeTimeChange = useCallback((t: string) => {
+    setTempTime(t);
+    handleChange(buildDatetimeValue(tempDate, t));
+  }, [handleChange, tempDate]);
+
   // ── 公用 CalendarView props ──
   const calViewProps = {
     maxDate,
     minDate,
     isDatetime:   isDatetimeMode,
     time:         tempTime,
-    onTimeChange: setTempTime,
+    onTimeChange: isDatetimeMode ? handleDatetimeTimeChange : setTempTime,
     onNow:        isDatetimeMode ? handleNow             : undefined,
     onConfirm:    isDatetimeMode ? handleDatetimeConfirm : undefined,
     hideToday,
@@ -326,7 +363,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
       <CalendarView
         {...calViewProps}
         selected={isDatetimeMode ? tempDate || null : currentValue}
-        onSelect={isDatetimeMode ? setTempDate : handleChange}
+        onSelect={isDatetimeMode ? handleDatetimeDateSelect : handleChange}
         onClose={isDatetimeMode ? () => {} : extraClose}
       />
     );
@@ -379,7 +416,10 @@ const DatePicker: React.FC<DatePickerProps> = ({
             aria-hidden="true"
           />
           <div
-            ref={sheetRef}
+            ref={(el) => {
+              sheetRef.current = el;
+              panelRef.current = el;
+            }}
             className={`${styles.bottomSheet} ${styles.bottomSheetVisible}${isDatetimeMode ? ` ${styles.bottomSheetDatetime}` : ''}`}
             role="dialog"
             aria-modal="true"
@@ -407,16 +447,23 @@ const DatePicker: React.FC<DatePickerProps> = ({
         document.body,
       )}
 
-      {/* ── PC 端：下拉 Dropdown ── */}
-      {!effectiveIsMobile && visible && (
+      {/* ── PC 端：下拉 Dropdown（Portal + fixed 定位，避免被父容器 overflow 裁切）── */}
+      {!effectiveIsMobile && visible && ReactDOM.createPortal(
         <div
+          ref={panelRef}
           className={`${styles.dropdown}${isDatetimeMode ? ` ${styles.dropdownDatetime}` : ''}${popupPlacement === 'top' ? ` ${styles.dropdownTop}` : ` ${styles.dropdownBottom}`}${isClosing ? ` ${styles.dropdownClosing}` : ''}`}
+          style={{
+            position: 'fixed',
+            top: dropdownPos?.top ?? 0,
+            left: dropdownPos?.left ?? 0,
+          }}
           onAnimationEnd={handleAnimationEnd}
           role="dialog"
           aria-modal="true"
         >
           {renderCalPanel(handleCalendarClose)}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );

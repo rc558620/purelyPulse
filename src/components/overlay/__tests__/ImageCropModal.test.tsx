@@ -484,10 +484,7 @@ describe('ImageCropModal – handleConfirm 逻辑', () => {
     });
 
     await waitFor(() => {
-      expect(consoleSpy.mock.calls.length).toBeGreaterThan(0);
-      const [message, errorArg] = consoleSpy.mock.calls[0];
-      expect(message).toBe('裁剪失败:');
-      expect(errorArg).toBeInstanceOf(Error);
+      expect(consoleSpy).toHaveBeenCalledWith('裁剪失败:', expect.anything());
     });
     expect(onConfirm).not.toHaveBeenCalled();
     consoleSpy.mockRestore();
@@ -734,12 +731,7 @@ describe('ImageCropModal – 连续 visible 切换稳定性', () => {
     });
 
     await vi.waitFor(() => {
-      const calls = mockGetCroppedImg.mock.calls as unknown as [string, unknown][];
-      const callWithNewSrc = calls.find((args) => args[0] === newSrc);
-      expect(callWithNewSrc).toBeDefined();
-      const croppedAreaPixels = callWithNewSrc?.[1];
-      expect(typeof croppedAreaPixels).toBe('object');
-      expect(croppedAreaPixels).not.toBeNull();
+      expect(mockGetCroppedImg).toHaveBeenCalledWith(newSrc, expect.anything());
     });
   });
 

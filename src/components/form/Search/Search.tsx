@@ -9,6 +9,8 @@ interface SearchProps {
     onClear: () => void;
     placeholder?: string;
     className?: string;
+    /** trigger 额外类名（用于从外部覆盖高度、圆角等） */
+    triggerClassName?: string;
     /** 无障碍标签，默认 "搜索" */
     ariaLabel?: string;
 }
@@ -19,6 +21,7 @@ export const Search: React.FC<SearchProps> = memo(({
     onClear,
     placeholder = '搜索...',
     className,
+    triggerClassName,
     ariaLabel = '搜索',
 }) => {
     const isComposingRef = useRef(false);
@@ -57,7 +60,7 @@ export const Search: React.FC<SearchProps> = memo(({
     const isPending = deferredValue !== value;
 
     return (
-        <div className={cx(styles.searchBar, isPending && styles.searchBarPending, className)}>
+        <div className={cx(styles.searchBar, isPending && styles.searchBarPending, className, triggerClassName)}>
             <div className={styles.searchIcon}>
                 <SearchIcon />
             </div>

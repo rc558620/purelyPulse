@@ -4,6 +4,7 @@ export * from './useForm';
 export * from './context';
 export * from './types';
 export * from './FormItem';
+export { Input } from './Input/Input';
 export { default as Checkbox } from './Checkbox';
 export { default as DatePicker } from './DatePicker';
 export { default as RadioGroup } from './RadioGroup';

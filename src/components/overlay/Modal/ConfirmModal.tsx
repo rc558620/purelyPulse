@@ -1,5 +1,5 @@
 // 确认弹窗组件 - 基于 Modal 扩展，支持图标和危险操作样式
-import React, { useEffect, useId, useMemo, type ReactNode } from 'react';
+import React, { useCallback, useEffect, useId, useMemo, type ReactNode } from 'react';
 import ReactDOM from 'react-dom';
 import { cx } from '@utils/utils';
 import styles from './ConfirmModal.module.less';
@@ -29,6 +29,8 @@ export interface ConfirmModalProps {
     onConfirm: () => void;
     /** 自定义类名 */
     className?: string;
+    /** 是否允许点击遮罩关闭弹窗，默认 false（点击遮罩不关闭） */
+    maskClosable?: boolean;
 }
 
 /** 确认弹窗组件 */
@@ -44,6 +46,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
     onCancel,
     onConfirm,
     className,
+    maskClosable = false,
 }) => {
     // Bug 11: 使用 useId 替代硬编码 id，避免多实例 id 冲突
     const reactId = useId();
@@ -65,6 +68,15 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
         return () => { document.body.style.overflow = originalOverflow; };
     }, [visible]);
 
+    // 点击遮罩关闭（与 Modal 行为一致）；点击卡片内部不关闭
+    const handleOverlayClick = useCallback(() => {
+        if (maskClosable) onCancel();
+    }, [maskClosable, onCancel]);
+
+    const handleCardClick = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
+    }, []);
+
     // Bug 8: 移除多余的 useCallback 包裹，直接使用 props 回调
     const iconClass = useMemo(() => cx(
         styles.modalIcon,
@@ -85,11 +97,12 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
     return ReactDOM.createPortal(
         <div
             className={cx(styles.modalOverlay, className)}
+            onClick={handleOverlayClick}
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
         >
-            <div className={styles.modalCard}>
+            <div className={styles.modalCard} onClick={handleCardClick}>
                 {icon && <div className={iconClass} aria-hidden="true">{icon}</div>}
                 <h3 id={titleId} className={styles.modalTitle}>{title}</h3>
                 {description && <p className={styles.modalDesc}>{description}</p>}

@@ -16,7 +16,7 @@
  *  ─ 按钮交互
  *    10. 点击「取消」按钮触发 onCancel
  *    11. 点击「确定」按钮触发 onConfirm
- *    12. 点击遮罩层触发 onCancel
+ *    12. maskClosable=true 时点击遮罩层触发 onCancel
  *    13. 点击弹窗内容区域 **不** 触发 onCancel（stopPropagation 生效）
  *  ─ visible 切换
  *    14. visible 从 true 变 false 后内容从 DOM 移除
@@ -159,11 +159,20 @@ describe('Modal – 按钮交互', () => {
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
 
-  it('点击遮罩层触发 onCancel', () => {
+  it('默认点击遮罩层不触发 onCancel', () => {
     const onCancel = vi.fn();
     renderModal({ onCancel });
     // 获取 overlay（含 modalOverlay class 的容器）
     // Portal 渲染到 body，直接从 body 获取
+    const overlay = document.body.querySelector('[class*="modalOverlay"]') as HTMLElement;
+    expect(overlay).not.toBeNull();
+    fireEvent.click(overlay);
+    expect(onCancel).not.toHaveBeenCalled();
+  });
+
+  it('maskClosable=true 时点击遮罩层触发 onCancel', () => {
+    const onCancel = vi.fn();
+    renderModal({ onCancel, maskClosable: true });
     const overlay = document.body.querySelector('[class*="modalOverlay"]') as HTMLElement;
     expect(overlay).not.toBeNull();
     fireEvent.click(overlay);
@@ -411,9 +420,18 @@ describe('Modal – 严格边界', () => {
     expect(onConfirm).toHaveBeenCalledTimes(2);
   });
 
-  it('多次点击遮罩 onCancel 被调用对应次数', () => {
+  it('多次点击遮罩默认不触发 onCancel', () => {
     const onCancel = vi.fn();
     renderModal({ onCancel });
+    const overlay = document.body.querySelector('[class*="modalOverlay"]') as HTMLElement;
+    fireEvent.click(overlay);
+    fireEvent.click(overlay);
+    expect(onCancel).not.toHaveBeenCalled();
+  });
+
+  it('maskClosable=true 时多次点击遮罩 onCancel 被调用对应次数', () => {
+    const onCancel = vi.fn();
+    renderModal({ onCancel, maskClosable: true });
     const overlay = document.body.querySelector('[class*="modalOverlay"]') as HTMLElement;
     fireEvent.click(overlay);
     fireEvent.click(overlay);

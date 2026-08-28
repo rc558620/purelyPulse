@@ -2,6 +2,9 @@
 import { safeNum } from '@utils/utils';
 import type { PullRefreshGestureController } from './pullRefreshGestureController.helper';
 
+/** 鼠标按下多久后显示 grab 光标（毫秒） */
+const GRAB_CURSOR_DELAY_MS = 400;
+
 interface BindPullRefreshGestureEventsOptions {
   containerNode: HTMLDivElement;
   enableMouseDrag: boolean;
@@ -22,6 +25,17 @@ export const bindPullRefreshGestureEvents = ({
   const { beginGesture, updateGesture, endGesture, resetGesture } = gestureController;
   const touchStartOptions: AddEventListenerOptions = { passive: true, capture: true };
   const touchMoveOptions: AddEventListenerOptions = { passive: false, capture: true };
+
+  // grab 光标延时控制器
+  let grabCursorTimer: number | null = null;
+
+  const clearGrabCursor = (): void => {
+    if (grabCursorTimer !== null) {
+      window.clearTimeout(grabCursorTimer);
+      grabCursorTimer = null;
+    }
+    containerNode.style.cursor = '';
+  };
 
   const handleTouchStart = (event: TouchEvent): void => {
     const touch = event.touches[0];
@@ -51,12 +65,25 @@ export const bindPullRefreshGestureEvents = ({
     }
 
     setActiveMousePointerId(event.pointerId);
+
+    // 按住鼠标一段时间后才显示 grab 光标，避免点击时出现手掌
+    grabCursorTimer = window.setTimeout(() => {
+      containerNode.style.cursor = 'grab';
+      grabCursorTimer = null;
+    }, GRAB_CURSOR_DELAY_MS);
   };
 
   const handlePointerMove = (event: PointerEvent): void => {
     if (!enableMouseDrag || event.pointerType !== 'mouse' || !matchesActiveMousePointer(event.pointerId)) {
       return;
     }
+
+    // 已经开始拖拽，清除 grab 延时及 inline style，让 CSS class 的 grabbing 生效
+    if (grabCursorTimer !== null) {
+      window.clearTimeout(grabCursorTimer);
+      grabCursorTimer = null;
+    }
+    containerNode.style.cursor = '';
 
     updateGesture(event.clientY, event);
   };
@@ -66,6 +93,7 @@ export const bindPullRefreshGestureEvents = ({
       return;
     }
 
+    clearGrabCursor();
     endGesture();
     clearActiveMousePointer();
   };
@@ -75,6 +103,7 @@ export const bindPullRefreshGestureEvents = ({
       return;
     }
 
+    clearGrabCursor();
     resetGesture();
     clearActiveMousePointer();
   };
@@ -89,6 +118,7 @@ export const bindPullRefreshGestureEvents = ({
   containerNode.addEventListener('pointercancel', handlePointerCancel);
 
   return () => {
+    clearGrabCursor();
     containerNode.removeEventListener('touchstart', handleTouchStart, true);
     containerNode.removeEventListener('touchmove', handleTouchMove, true);
     containerNode.removeEventListener('touchend', endGesture, true);

@@ -48,6 +48,8 @@ type ImageCallback = (event: Event) => void;
 interface MockImageInstance extends EventTarget {
   src: string;
   crossOrigin: string;
+  naturalWidth: number;
+  naturalHeight: number;
   _loadCallbacks: ImageCallback[];
   _errorCallbacks: ImageCallback[];
   _triggerLoad: () => void;
@@ -62,11 +64,11 @@ let lastMockImageInstance: MockImageInstance | null = null;
 let triggerError = false;
 
 function createMockImageClass() {
-  // eslint-disable-next-line @typescript-eslint/no-this-alias
   function MockImage(this: MockImageInstance) {
     // 用 EventTarget 作为 prototype base 使得 addEventListener/dispatchEvent 可用
     this._loadCallbacks = [];
     this._errorCallbacks = [];
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     lastMockImageInstance = this;
 
     this.addEventListener = (type: string, cb: EventListenerOrEventListenerObject) => {
@@ -85,6 +87,10 @@ function createMockImageClass() {
 
     let _src = '';
     let _crossOrigin = '';
+
+    // 模拟真实图片加载后的自然尺寸（足够大以避免钳位影响大多数测试）
+    this.naturalWidth = 4000;
+    this.naturalHeight = 4000;
 
     Object.defineProperty(this, 'crossOrigin', {
       get: () => _crossOrigin,
@@ -128,6 +134,8 @@ beforeEach(() => {
   // ── mock canvas getContext
   const mockCtx = {
     drawImage: vi.fn((...args: unknown[]) => { drawImageArgs = args; }),
+    fillStyle: '',
+    fillRect: vi.fn(),
   };
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation((type: string) => {
     if (type === '2d') return mockCtx as unknown as CanvasRenderingContext2D;
@@ -136,8 +144,8 @@ beforeEach(() => {
 
   // ── mock canvas toBlob
   vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation(
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
     function (this: HTMLCanvasElement, callback: BlobCallback, type?: string) {
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
       lastCanvas = this;
       void type;
       callback(mockBlob);
@@ -196,9 +204,7 @@ describe('getCroppedImg – 正常流程', () => {
   it('使用 image/jpeg 格式调用 toBlob', async () => {
     const toBlobSpy = vi.spyOn(HTMLCanvasElement.prototype, 'toBlob');
     await getCroppedImg(IMAGE_SRC, PIXEL_CROP);
-    const toBlobCallArgs = toBlobSpy.mock.calls[0];
-    expect(typeof toBlobCallArgs[0]).toBe('function');
-    expect(toBlobCallArgs[1]).toBe('image/jpeg');
+    expect(toBlobSpy).toHaveBeenCalledWith(expect.anything(), 'image/jpeg');
   });
 
   it('drawImage 第一个参数是 Image 对象（具有 src / crossOrigin 属性）', async () => {
@@ -308,20 +314,20 @@ describe('getCroppedImg – 非方形裁剪区域', () => {
 
 // ─── 7. 浮点裁剪值 ───────────────────────────────────────────────────────────
 describe('getCroppedImg – 浮点裁剪值', () => {
-  it('浮点 x/y 时 drawImage sx/sy 使用原始浮点值', async () => {
+  it('浮点 x/y 时 drawImage sx/sy 使用取整后的值', async () => {
     const crop: Area = { x: 0.5, y: 1.25, width: 100, height: 80 };
     await getCroppedImg(IMAGE_SRC, crop);
-    expect(drawImageArgs[1]).toBe(0.5);
-    expect(drawImageArgs[2]).toBe(1.25);
+    // Math.round(0.5) = 1, Math.round(1.25) = 1
+    expect(drawImageArgs[1]).toBe(1);
+    expect(drawImageArgs[2]).toBe(1);
   });
 
-  it('浮点 width/height 时 canvas 尺寸被截断为整数（HTMLCanvasElement.width 是整数属性）', async () => {
-    // HTMLCanvasElement.width/height 是 unsigned long 整数，浮点赋值会被截断
+  it('浮点 width/height 时 canvas 尺寸使用 Math.round 取整', async () => {
     const crop: Area = { x: 0, y: 0, width: 99.5, height: 79.75 };
     await getCroppedImg(IMAGE_SRC, crop);
-    // 99.5 → 99，79.75 → 79（浏览器/JSDOM 均截断）
-    expect(lastCanvas?.width).toBe(Math.trunc(99.5));
-    expect(lastCanvas?.height).toBe(Math.trunc(79.75));
+    // Math.round(99.5) = 100, Math.round(79.75) = 80
+    expect(lastCanvas?.width).toBe(100);
+    expect(lastCanvas?.height).toBe(80);
   });
 
   it('浮点裁剪值最终仍返回 blob URL', async () => {

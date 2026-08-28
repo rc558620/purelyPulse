@@ -181,6 +181,19 @@ export const useForm = <T extends FormValues = FormValues>(): [FormInstance<T>] 
     const getFieldError = useCallback((name: string): string | undefined => errorsRef.current[name], []);
 
     /**
+     * 外部注入字段级错误信息。
+     * 用于将后端业务错误（如“当前密码错误”）映射到具体字段，
+     * 触发 UI 红框 + 错误文案显示。
+     */
+    const setFieldError = useCallback((name: string, message: string): void => {
+        dirtyFields.current.add(name);
+        if (errorsRef.current[name] !== message) {
+            errorsRef.current = { ...errorsRef.current, [name]: message };
+            notifyField(name);
+        }
+    }, [notifyField]);
+
+    /**
      * 单字段校验，校验完成后写回错误状态以触发 UI 反馈。
      * @param name - 字段名。
      * @returns 校验通过返回 true，失败返回 false。
@@ -256,6 +269,7 @@ export const useForm = <T extends FormValues = FormValues>(): [FormInstance<T>] 
             setFieldValue,
             validateFields,
             validateSingleField,
+            setFieldError,
             submit,
             getFieldError,
             reset,

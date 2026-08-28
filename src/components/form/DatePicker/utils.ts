@@ -75,11 +75,14 @@ export const buildDatetimeValue = (date: string, time: string): string => {
 
 /**
  * 判断某日期字符串是否被禁用
- * 使用字符串比较（"YYYY-MM-DD" 词典序等价于时间序）
+ * 统一截取前 10 位 "YYYY-MM-DD" 做词典序比较。
+ * 调用方可能传入带时间尾缀的 minDate/maxDate（如 "YYYY-MM-DD HH:mm"），
+ * 不截取则 "2026-07-10" < "2026-07-10 09:02" 为 true → 今天的格子被 disabled。
  */
 export const isDateDisabled = (dateStr: string, maxDate?: string, minDate?: string): boolean => {
-  if (maxDate && dateStr > maxDate) return true;
-  if (minDate && dateStr < minDate) return true;
+  const d = dateStr.slice(0, 10);
+  if (maxDate && d > maxDate.slice(0, 10)) return true;
+  if (minDate && d < minDate.slice(0, 10)) return true;
   return false;
 };
 

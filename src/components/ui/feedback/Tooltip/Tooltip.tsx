@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { cx } from '@utils/utils';
 import styles from './Tooltip.module.less';
 
-export type TooltipColor = 'orange' | 'cyan' | 'green' | 'lime' | 'blue' | 'volcano' | 'magenta' | 'purple' | 'red';
+export type TooltipColor = 'amber' | 'orange' | 'cyan' | 'green' | 'lime' | 'blue' | 'volcano' | 'magenta' | 'purple' | 'red';
 
 export type TooltipPlacement = 'top' | 'bottom';
 

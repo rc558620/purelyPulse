@@ -120,8 +120,10 @@ export function SelectView(props: SelectViewProps): React.JSX.Element {
     prefix,
     status,
     allowClear = false,
+    disabled = false,
     className,
     triggerClassName,
+    textClassName,
     optionRender,
   } = props;
   const isMultiple = mode === 'multiple';
@@ -197,6 +199,12 @@ export function SelectView(props: SelectViewProps): React.JSX.Element {
 
   const arrowOpen = !isMobile && (visible || isClosing);
 
+  /** disabled 时屏蔽触发：阻止打开面板、阻止清除按钮可见。 */
+  const handleTriggerOpenGuarded = useCallback((): void => {
+    if (disabled) return;
+    handleTriggerOpen();
+  }, [disabled, handleTriggerOpen]);
+
   return (
     <div ref={wrapperRef} className={cx(styles['select-wrapper'], className)}>
       <div
@@ -204,29 +212,32 @@ export function SelectView(props: SelectViewProps): React.JSX.Element {
           styles['select-input'],
           status === 'error' && styles['select-input-error'],
           visible && styles['open-state'],
+          disabled && styles['select-input-disabled'],
           triggerClassName,
         )}
-        onClick={handleTriggerOpen}
+        onClick={handleTriggerOpenGuarded}
         onKeyDown={handleKeyDown}
         role="combobox"
-        tabIndex={0}
+        tabIndex={disabled ? -1 : 0}
         aria-expanded={visible}
         aria-haspopup="listbox"
+        aria-disabled={disabled || undefined}
       >
         {prefix && <div className={styles['select-input-prefix']}>{prefix}</div>}
 
         <span
-          className={
+          className={cx(
             displayText
               ? styles['select-input-text']
-              : styles['select-input-placeholder']
-          }
+              : styles['select-input-placeholder'],
+            textClassName,
+          )}
         >
           {displayText || placeholder}
         </span>
 
-        {/* BUG-4 fix: 面板打开时隐藏清除按钮，防止点击穿透到 trigger */}
-        {allowClear && !visible && selectedValues.length > 0 && (
+        {/* BUG-4 fix: 面板打开时隐藏清除按钮，防止点击穿透到 trigger；disabled 时一并隐藏 */}
+        {!disabled && allowClear && !visible && selectedValues.length > 0 && (
           <button
             type="button"
             className={styles['clear-btn']}

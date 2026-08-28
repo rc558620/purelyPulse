@@ -3,11 +3,12 @@
 import React, { memo, useMemo } from 'react';
 import { cx } from '@utils/utils';
 import type { DisplayMode } from '@hooks/useDisplayMode';
+import type { TooltipColor } from '@components/ui/feedback/Tooltip/Tooltip';
 import Tooltip from '@components/ui/feedback/Tooltip/Tooltip';
 import { IconBars } from '@components/ui/_shared/icons';
 import styles from './DisplayModeSwitchBtn.module.less';
 
-type ModeEntry = { tooltip: string; aria: string; iconClass: string; btnClass: string; tooltipColor: 'cyan' | 'lime' | 'orange' };
+type ModeEntry = { tooltip: string; aria: string; iconClass: string; btnClass: string; tooltipColor?: TooltipColor };
 
 /** 简约模式 icon/按钮配色：primary=绿色（默认）| default=黑色（初始即简约场景） */
 export type CompactColorStyle = 'primary' | 'default';
@@ -18,7 +19,7 @@ const BASE_CONFIG: Record<DisplayMode, ModeEntry> = {
     aria:         '切换简约模式',
     iconClass:    '',
     btnClass:     '',
-    tooltipColor: 'cyan',
+    tooltipColor: undefined,
   },
   compact: {
     tooltip:      '简约模式',

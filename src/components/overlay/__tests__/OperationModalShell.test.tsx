@@ -19,7 +19,7 @@
  *    13. 点击关闭按钮触发 onClose
  *    14. 点击取消按钮触发 onClose
  *    15. 点击确认按钮触发 onConfirm
- *    16. 点击 backdrop 触发 onClose
+ *    16. closeOnBackdropClick=true 时点击 backdrop 触发 onClose
  *    17. 点击卡片内部不触发 onClose（stopPropagation）
  *    18. 点击 children 内容不触发 backdrop 关闭
  *  ─ 键盘事件
@@ -180,9 +180,17 @@ describe('OperationModalShell – 按钮交互', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('点击 backdrop（overlay 根节点）触发 onClose', () => {
+  it('默认点击 backdrop（overlay 根节点）不触发 onClose', () => {
     const onClose = vi.fn();
     renderShell({ onClose });
+    const overlay = screen.getByRole('dialog');
+    fireEvent.click(overlay);
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('closeOnBackdropClick=true 时点击 backdrop 触发 onClose', () => {
+    const onClose = vi.fn();
+    renderShell({ closeOnBackdropClick: true, onClose });
     const overlay = screen.getByRole('dialog');
     fireEvent.click(overlay);
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -571,7 +579,7 @@ describe('OperationModalShell – BUG 修复验证', () => {
     const onClose2 = vi.fn();
 
     // 先渲染第一个弹窗
-    const { rerender: rerender1 } = renderShell({ onClose: onClose1, ariaLabel: '弹窗1' });
+    renderShell({ onClose: onClose1, ariaLabel: '弹窗1' });
 
     // 再渲染第二个弹窗（在已有弹窗之上）
     const { unmount: unmount2 } = renderShell({ onClose: onClose2, ariaLabel: '弹窗2' });

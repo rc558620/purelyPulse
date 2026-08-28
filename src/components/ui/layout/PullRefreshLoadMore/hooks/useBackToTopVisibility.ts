@@ -16,6 +16,14 @@ interface UseBackToTopVisibilityResult {
   scrollToTop: (behavior?: ScrollBehavior) => void;
 }
 
+/** easeInOutCubic 缓动，跨平台一致的平滑滚动体验 */
+const easeInOutCubic = (t: number): number =>
+  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+/** 根据滚动距离动态计算动画时长，上限 600ms */
+const computeDuration = (distance: number): number =>
+  Math.min(600, Math.max(200, Math.sqrt(distance) * 12));
+
 export const useBackToTopVisibility = ({
   containerRef,
   threshold,
@@ -23,6 +31,45 @@ export const useBackToTopVisibility = ({
   const [backToTopVisible, setBackToTopVisible] = useState(false);
   const backToTopVisibleRef = useRef(false);
   const visibilityFrameRef = useRef<number | null>(null);
+  const scrollAnimFrameRef = useRef<number | null>(null);
+
+  const cancelScrollAnimation = useCallback((): void => {
+    if (scrollAnimFrameRef.current !== null) {
+      cancelAnimationFrame(scrollAnimFrameRef.current);
+      scrollAnimFrameRef.current = null;
+    }
+  }, []);
+
+  /**
+   * 基于 requestAnimationFrame 的跨平台平滑滚动。
+   * 替代原生 scrollTo({ behavior: 'smooth' })——
+   * 后者在 Windows 浏览器的 overflow:auto div 容器上可能静默失效。
+   */
+  const animateScrollToTop = useCallback((node: HTMLElement): void => {
+    cancelScrollAnimation();
+
+    const startY = node.scrollTop;
+    if (startY === 0) return;
+
+    const duration = computeDuration(startY);
+    const startTime = performance.now();
+
+    const step = (now: number): void => {
+      const elapsed = now - startTime;
+      // clamp 到 [0,1]：防御 rAF 时间戳与 performance.now() 时钟基准不一致（如 jsdom）导致 progress 为负
+      const progress = Math.min(Math.max(elapsed / duration, 0), 1);
+      node.scrollTop = startY * (1 - easeInOutCubic(progress));
+
+      if (progress < 1) {
+        scrollAnimFrameRef.current = requestAnimationFrame(step);
+      } else {
+        node.scrollTop = 0;
+        scrollAnimFrameRef.current = null;
+      }
+    };
+
+    scrollAnimFrameRef.current = requestAnimationFrame(step);
+  }, [cancelScrollAnimation]);
 
   const setBackToTopVisibleSafely = useCallback((nextVisible: boolean): void => {
     backToTopVisibleRef.current = nextVisible;
@@ -60,9 +107,17 @@ export const useBackToTopVisibility = ({
       return;
     }
 
-    node.scrollTo({ top: 0, behavior });
-    setBackToTopVisibleSafely(false);
-  }, [containerRef, setBackToTopVisibleSafely]);
+    if (behavior === 'auto') {
+      cancelScrollAnimation();
+      node.scrollTop = 0;
+      setBackToTopVisibleSafely(false);
+      return;
+    }
+
+    // smooth：使用 rAF 动画，确保 Windows / Mac / Linux 行为一致
+    // 动画过程中 scroll 事件自然驱动按钮可见性，无需提前隐藏
+    animateScrollToTop(node);
+  }, [containerRef, setBackToTopVisibleSafely, cancelScrollAnimation, animateScrollToTop]);
 
   useEffect(() => {
     const node = containerRef.current;
@@ -83,8 +138,9 @@ export const useBackToTopVisibility = ({
         window.cancelAnimationFrame(visibilityFrameRef.current);
         visibilityFrameRef.current = null;
       }
+      cancelScrollAnimation();
     };
-  }, [containerRef, scheduleVisibilityUpdate, updateVisibility]);
+  }, [containerRef, scheduleVisibilityUpdate, updateVisibility, cancelScrollAnimation]);
 
   return {
     backToTopVisible,

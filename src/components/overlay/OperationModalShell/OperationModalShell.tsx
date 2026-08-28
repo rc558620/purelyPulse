@@ -53,6 +53,10 @@ export interface OperationModalShellProps {
   onClose: () => void;
   /** 确认回调 */
   onConfirm: () => void;
+  /** 是否显示标题栏关闭按钮，默认 true */
+  showCloseButton?: boolean;
+  /** 标题行附加内容（渲染在关闭按钮左侧、标题右侧），用于在弹窗标题区插入自定义操作如打印按钮 */
+  headerExtra?: ReactNode;
   /** 确认按钮禁用（灰显不可点），默认 false */
   confirmDisabled?: boolean;
   /**
@@ -65,7 +69,7 @@ export interface OperationModalShellProps {
   maxWidth?: string;
   /** 桌面端纵向对齐方式，默认 center；需要避免高度变化抖动时可用 top；variant=center 时此 prop 无效 */
   desktopAlign?: 'center' | 'top';
-  /** 点击遮罩是否允许关闭，默认 true */
+  /** 点击遮罩是否允许关闭，默认 false（点击遮罩不关闭） */
   closeOnBackdropClick?: boolean;
 }
 
@@ -85,11 +89,13 @@ const OperationModalShell: React.FC<OperationModalShellProps> = ({
   children,
   onClose,
   onConfirm,
+  showCloseButton = true,
+  headerExtra,
   confirmDisabled = false,
   variant      = 'sheet',
   maxWidth,
   desktopAlign = 'center',
-  closeOnBackdropClick = true,
+  closeOnBackdropClick = false,
 }) => {
   const isCenter = variant === 'center';
   // BUG-10: variant=center 时 desktopAlign 无效，始终居中
@@ -100,7 +106,12 @@ const OperationModalShell: React.FC<OperationModalShellProps> = ({
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   // BUG-5: 用 ref 缓存最新回调，避免 onClose 引用变化导致监听器反复注册
   const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+  // 不能在 render 阶段写 ref（违反 React 渲染规则），改在 effect 中同步最新回调；
+  // 无依赖数组的 effect 每次提交后都会执行，保证 ref 始终指向最新 onClose，
+  // 同时 ESC 监听器仍只注册一次，不随 onClose 引用变化而反复注册。
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
 
   // ─── BUG-2: body scroll lock ─────────────────────────────────
   useEffect(() => {
@@ -227,14 +238,17 @@ const OperationModalShell: React.FC<OperationModalShellProps> = ({
         <div className={styles.header}>
           <div className={styles.headerIcon}>{icon}</div>
           <h2 className={styles.headerTitle}>{title}</h2>
-          <button
-            type="button"
-            className={styles.closeBtn}
-            onClick={onClose}
-            aria-label="关闭"
-          >
-            <IconClose />
-          </button>
+          {headerExtra}
+          {showCloseButton ? (
+            <button
+              type="button"
+              className={styles.closeBtn}
+              onClick={onClose}
+              aria-label="关闭"
+            >
+              <IconClose />
+            </button>
+          ) : null}
         </div>
 
         {/* ── 可滚动 body 插槽 ── */}
@@ -244,9 +258,11 @@ const OperationModalShell: React.FC<OperationModalShellProps> = ({
 
         {/* ── 底部操作区 ── */}
         <div className={styles.actions}>
-          <button type="button" className={styles.cancelBtn} onClick={onClose}>
-            {cancelText}
-          </button>
+          {cancelText ? (
+            <button type="button" className={styles.cancelBtn} onClick={onClose}>
+              {cancelText}
+            </button>
+          ) : null}
           {/* BUG-3: 移除冗余的 onClick 条件判断，disabled 属性已阻止 click */}
           <button
             type="button"

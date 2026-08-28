@@ -41,6 +41,7 @@ describe('PullRefreshLoadMore', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it('渲染 children 与加载更多按钮', () => {
@@ -291,7 +292,21 @@ describe('PullRefreshLoadMore', () => {
     });
   });
 
-  it('滚动超过阈值时显示回到顶部按钮', async () => {
+  it('滚动超过阈值时显示回到顶部按钮并启动 rAF 滚动动画', async () => {
+    // stub rAF 与 performance.now，使用同源模拟时钟，保证动画帧时间确定可控
+    // （jsdom 中 rAF 回调时间戳与 performance.now() 时钟基准可能不一致）
+    let mockNow = 0;
+    vi.spyOn(performance, 'now').mockImplementation(() => mockNow);
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback): number => {
+      return window.setTimeout(() => {
+        mockNow += 16;
+        cb(mockNow);
+      }, 0) as unknown as number;
+    });
+    vi.stubGlobal('cancelAnimationFrame', (id: number): void => {
+      window.clearTimeout(id);
+    });
+
     render(
       <PullRefreshLoadMore onLoadMore={vi.fn()} hasMore backToTopThreshold={120}>
         <div>长内容</div>
@@ -299,15 +314,16 @@ describe('PullRefreshLoadMore', () => {
     );
 
     const scrollArea = screen.getByTestId('pull-refresh-scroll');
-    const scrollToMock = vi.fn();
-    Object.defineProperty(scrollArea, 'scrollTo', {
-      configurable: true,
-      value: scrollToMock,
-    });
     setScrollMetrics(scrollArea, {
-      scrollTop: 180,
       scrollHeight: 1200,
       clientHeight: 400,
+    });
+    // 必须在 setScrollMetrics 之后定义 getter/setter，避免被覆盖
+    let scrollTopValue = 180;
+    Object.defineProperty(scrollArea, 'scrollTop', {
+      configurable: true,
+      get: () => scrollTopValue,
+      set: (v: number) => { scrollTopValue = v; },
     });
 
     fireEvent.scroll(scrollArea);
@@ -315,6 +331,9 @@ describe('PullRefreshLoadMore', () => {
     const topBtn = await screen.findByRole('button', { name: '回到顶部' });
     fireEvent.click(topBtn);
 
-    expect(scrollToMock).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
+    // rAF 动画第一帧会将 scrollTop 设置为比起始值更小的数
+    await waitFor(() => {
+      expect(scrollTopValue).toBeLessThan(180);
+    });
   });
 });

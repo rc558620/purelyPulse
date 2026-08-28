@@ -38,6 +38,9 @@ export interface TimePickerProps {
   displayMode?: 'mobile' | 'pc';
   /** 额外类名 */
   className?: string;
+  /** trigger 额外类名（用于从外部覆盖高度、圆角等） */
+  triggerClassName?: string;
+  textClassName?: string;
 }
 
 // ─── TimePicker 主组件 ────────────────────────────────────────
@@ -51,6 +54,8 @@ const TimePicker: React.FC<TimePickerProps> = ({
   allowClear = true,
   displayMode,
   className,
+  triggerClassName,
+  textClassName,
 }) => {
   // ── 设备类型（复用 _shared，displayMode prop 可强制覆盖） ──
   const isMobile = useDeviceType(displayMode);
@@ -91,6 +96,7 @@ const TimePicker: React.FC<TimePickerProps> = ({
           styles.trigger,
           status === 'error' && styles.triggerError,
           visible && styles.triggerOpen,
+          triggerClassName,
         )}
         onClick={handleOpen}
         role="button"
@@ -104,6 +110,7 @@ const TimePicker: React.FC<TimePickerProps> = ({
         <span className={classNames(
           styles.triggerText,
           !currentValue && styles.triggerPlaceholder,
+          textClassName,
         )}>
           {currentValue || placeholder}
         </span>

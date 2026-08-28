@@ -86,16 +86,20 @@ const shouldIgnoreTarget = (target: EventTarget | null): boolean =>
 
 export const createIdleGestureSnapshot = (): GestureSnapshot => ({ active: false, startY: 0 });
 
+/** 进入拖拽态的最小实际位移阈值（px），过滤点击时的微小抖动 */
+const DRAG_START_THRESHOLD = 8;
+
 const applyResistance = (delta: number, maxPullDistance: number): number => {
   if (delta <= 0) {
     return 0;
   }
 
+  // 将阻力系数从 0.72 降低到 0.5，进一步降低拖动灵敏度
   if (delta <= maxPullDistance) {
-    return delta * 0.72;
+    return delta * 0.5;
   }
 
-  return maxPullDistance * 0.72 + (delta - maxPullDistance) * 0.18;
+  return maxPullDistance * 0.5 + (delta - maxPullDistance) * 0.18;
 };
 
 export const resetPullRefreshGesture = ({
@@ -176,7 +180,8 @@ export const updatePullRefreshGesture = ({
   }
 
   const nextDistance = applyResistance(clientY - gestureRef.current.startY, maxPullDistance);
-  if (nextDistance <= 0) {
+  // 未达到拖拽启动阈值（如点击时的微小抖动）时保持 idle，不显示任何拖拽反馈
+  if (nextDistance < DRAG_START_THRESHOLD) {
     unlockScrollForGesture();
     syncGestureUi({
       pullDistance: 0,

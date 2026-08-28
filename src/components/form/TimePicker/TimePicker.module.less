@@ -80,6 +80,10 @@
 .triggerPlaceholder {
   color: @text-slate-400;
   font-size: 1.6rem;
+
+  @media (max-width: @bp-mobile) {
+    font-size: 1.6rem;
+  }
 }
 
 .clearBtn {
@@ -105,6 +109,10 @@
   width: 2rem;
   height: 2rem;
   flex-shrink: 0;
+
+  @media (max-width: @bp-mobile) {
+    display: none;
+  }
 }
 
 // ─── 时间面板（列区域 + 底部按钮）─────────────────────────
@@ -154,7 +162,7 @@
 }
 
 .columnLabel {
-  font-size: 1.2rem;
+  font-size: 1.6rem;
   font-weight: 600;
   color: @text-sub;
   letter-spacing: 0.04em;

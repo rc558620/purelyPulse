@@ -48,7 +48,11 @@ const SelectPcDropdown: React.FC<SelectPcDropdownProps> = ({
   optionRender,
 }) => (
   <div
-    className={cx(styles['select-dropdown-pc'], isClosing && styles.closing)}
+    className={cx(
+      styles['select-dropdown-pc'],
+      searchable && styles['with-search'],
+      isClosing && styles.closing,
+    )}
     onAnimationEnd={onAnimationEnd}
     role="listbox"
   >

@@ -45,6 +45,9 @@ const ChipFilter: React.FC<ChipFilterProps> = memo(({
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const isDraggingRef = useRef(false);
+  // BUG 修复：单独跟踪"鼠标/手指是否处于按下状态"，
+  // mouseup / touchend 后必须清零，否则后续 mousemove 仅凭"旧 startX + 新位置"会再次激活拖拽。
+  const isPressedRef = useRef(false);
   const startXRef = useRef(0);
   const scrollLeftRef = useRef(0);
   /** 拖拽距离超过此阈值时，视为拖拽而非点击 */
@@ -52,13 +55,16 @@ const ChipFilter: React.FC<ChipFilterProps> = memo(({
 
   // ─── 拖拽重置 ────────────────────────────────────────────────────────
   const stopDragging = useCallback((): void => {
+    isPressedRef.current = false;
     isDraggingRef.current = false;
     setIsDragging(false);
+    dragThresholdRef.current = 0;
   }, []);
 
   // ─── 鼠标拖拽 ────────────────────────────────────────────────────────
   const handleMouseDown = useCallback((e: React.MouseEvent): void => {
     if (!scrollRef.current) return;
+    isPressedRef.current = true;
     isDraggingRef.current = false;
     dragThresholdRef.current = 0;
     setIsDragging(false);
@@ -68,6 +74,8 @@ const ChipFilter: React.FC<ChipFilterProps> = memo(({
 
   const handleMouseMove = useCallback((e: React.MouseEvent): void => {
     if (!scrollRef.current) return;
+    // 仅在鼠标按下状态才处理，避免 mouseup 后单纯 mousemove 误激活拖拽
+    if (!isPressedRef.current) return;
     const x = e.pageX - scrollRef.current.offsetLeft;
     const walk = x - startXRef.current;
     // 移动超过 5px 才激活拖拽模式
@@ -84,6 +92,7 @@ const ChipFilter: React.FC<ChipFilterProps> = memo(({
   // ─── 触摸拖拽 ────────────────────────────────────────────────────────
   const handleTouchStart = useCallback((e: React.TouchEvent): void => {
     if (!scrollRef.current) return;
+    isPressedRef.current = true;
     isDraggingRef.current = false;
     dragThresholdRef.current = 0;
     setIsDragging(false);
@@ -93,6 +102,7 @@ const ChipFilter: React.FC<ChipFilterProps> = memo(({
 
   const handleTouchMove = useCallback((e: React.TouchEvent): void => {
     if (!scrollRef.current) return;
+    if (!isPressedRef.current) return;
     const x = e.touches[0].pageX - scrollRef.current.offsetLeft;
     const walk = x - startXRef.current;
     if (!isDraggingRef.current && Math.abs(walk) > 5) {
@@ -105,8 +115,10 @@ const ChipFilter: React.FC<ChipFilterProps> = memo(({
   }, []);
 
   const handleTouchEnd = useCallback((): void => {
+    isPressedRef.current = false;
     isDraggingRef.current = false;
     setIsDragging(false);
+    dragThresholdRef.current = 0;
   }, []);
 
   // ─── 全局 mouseup 监听：防止鼠标移出容器后松开导致拖拽态残留 ─────

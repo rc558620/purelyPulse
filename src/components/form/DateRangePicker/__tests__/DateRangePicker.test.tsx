@@ -162,7 +162,7 @@ describe('DateRangePicker – 日期范围校验（Bug1 fix）', () => {
 
         // 直接调用 DayPicker 的 onConfirm 回调
         // 由于 DayPicker 渲染后 trigger 文本包含日期，可以据此定位
-        const startTrigger = screen.getByText('2024/03/01');
+        expect(screen.getByText('2024/03/01')).toBeInTheDocument();
         // 注意：实际选择日期需要打开面板并点击确认，在单元测试中较难模拟
         // 这里通过 props 重新渲染来间接测试逻辑
     });

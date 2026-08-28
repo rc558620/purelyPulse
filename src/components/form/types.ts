@@ -52,6 +52,8 @@ export interface FormInstance<T extends FormValues = FormValues> {
     submit: (e?: FormEvent) => Promise<void>;
     /** 读取字段错误信息。 */
     getFieldError: (name: string) => string | undefined;
+    /** 外部注入字段级错误信息（用于后端业务错误映射到具体字段）。 */
+    setFieldError: (name: string, message: string) => void;
     /** 单字段校验，校验通过返回 true，失败返回 false 并设置错误信息。 */
     validateSingleField: (name: string) => Promise<boolean>;
     /** 重置表单，清空所有字段值和错误信息。 */

@@ -12,6 +12,8 @@ export interface ModalProps {
   cancelText?: string;
   confirmText?: string;
   className?: string;
+  /** 是否允许点击遮罩关闭弹窗，默认 false（点击遮罩不关闭） */
+  maskClosable?: boolean;
 }
 
 const Modal: React.FC<ModalProps> = ({
@@ -23,6 +25,7 @@ const Modal: React.FC<ModalProps> = ({
   cancelText = '取消',
   confirmText = '确定',
   className,
+  maskClosable = false,
 }) => {
   // Bug 11: 使用 useId 生成唯一 id，避免多实例冲突（与 ConfirmModal 统一方案）
   const reactId = useId();
@@ -45,8 +48,8 @@ const Modal: React.FC<ModalProps> = ({
   }, [visible]);
 
   const handleOverlayClick = useCallback(() => {
-    onCancel();
-  }, [onCancel]);
+    if (maskClosable) onCancel();
+  }, [maskClosable, onCancel]);
 
   const handleContentClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();

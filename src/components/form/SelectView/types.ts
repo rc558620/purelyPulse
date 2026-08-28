@@ -33,8 +33,11 @@ interface SelectViewSharedProps {
   prefix?: React.ReactNode;
   status?: 'error' | undefined;
   allowClear?: boolean;
+  /** 是否禁用整个选择器（不可打开面板、不可清除、视觉态变灰）。 */
+  disabled?: boolean;
   className?: string;
   triggerClassName?: string;
+  textClassName?: string;
   optionRender?: SelectOptionRender;
 }
 

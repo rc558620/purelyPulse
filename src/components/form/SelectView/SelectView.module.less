@@ -41,6 +41,27 @@
     }
   }
 
+  // 整体禁用：不可点击、不可打开面板、视觉变灰
+  &.select-input-disabled {
+    background-color: @bg-slate-50;
+    border-color: @border-color;
+    cursor: not-allowed;
+
+    &:hover {
+      background-color: @bg-slate-50;
+      border-color: @border-color;
+
+      .select-input-prefix img,
+      .select-input-prefix svg {
+        filter: brightness(0) saturate(100%) invert(48%) sepia(8%) saturate(996%) hue-rotate(179deg) brightness(93%) contrast(87%);
+      }
+    }
+
+    &:active {
+      background-color: @bg-slate-50;
+    }
+  }
+
   &-prefix {
     display: flex;
     align-items: center;
@@ -397,6 +418,8 @@
   display: flex;
   flex-direction: column;
   max-height: 32rem;
+  // 圆角裁切：防止顶部搜索框分隔线、选项 hover 背景、底部按钮区域在圆角处溢出露出方角
+  overflow: hidden;
   
   // Ant Design 5 slide-up 动画：从顶部原点缩放展开，配合 ease-out-quint 缓动
   // fill-mode: both 确保动画前保持 0% 帧、动画结束后保持 100% 帧，消除闪烁
@@ -465,7 +488,7 @@
 .pc-options {
   flex: 1;
   overflow-y: auto;
-  padding: 4px 0;
+  padding: 4px;
 
   &::-webkit-scrollbar {
     width: 4px;
@@ -489,6 +512,40 @@
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease;
   gap: 8px;
+
+  // ── 选项项圆角 ─────────────────────────────────────────────────
+  // 规则：圆角跟随"是否紧贴父容器圆角边缘"。
+  // - 不带搜索时，首项紧贴面板左上/右上；末项紧贴面板左下/右下。
+  // - 带搜索时，首项紧贴搜索框分隔线（直角），不必圆角；末项紧贴面板左下/右下。
+  // - 只有一个选项时按"带不带搜索"分：不带则四周圆角；带则只需左下/右下圆角（左上/右上贴着搜索框保持直角）。
+
+  // 不带搜索：首项顶部两角 = 父圆角
+  &:first-child:not(:last-child) {
+    border-top-left-radius: @radius-md;
+    border-top-right-radius: @radius-md;
+  }
+
+  // 不带搜索：末项底部两角 = 父圆角
+  &:last-child:not(:first-child) {
+    border-bottom-left-radius: @radius-md;
+    border-bottom-right-radius: @radius-md;
+  }
+
+  // 不带搜索 + 只有一个选项：四周都是父圆角
+  &:only-child {
+    border-radius: @radius-md;
+  }
+
+  // 带搜索：覆盖首项顶部圆角（贴着搜索框，不需要圆角）
+  .with-search &:first-child:not(:last-child) {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+
+  // 带搜索 + 只有一个选项：左上/右上贴着搜索框保持直角，只需左下/右下圆角
+  .with-search &:only-child {
+    border-radius: 0 0 @radius-md @radius-md;
+  }
 
   span {
     flex: 1;

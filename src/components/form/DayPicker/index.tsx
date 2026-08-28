@@ -9,7 +9,8 @@
 //   useDayPickerState.ts     ← 面板内选中状态（selYear / selMonth / selDay / 确定 / 今天）
 //   DayPickerMobilePanel     ← 移动端底部 BottomSheet
 //   DayPickerPcDropdown      ← PC 端下拉面板
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import ReactDOM from 'react-dom';
 import classNames from 'classnames';
 
 import useDeviceType  from '@components/form/_shared/useDeviceType';
@@ -67,6 +68,22 @@ const DayPicker: React.FC<DayPickerProps> = ({
     handleKeyDown,
   } = usePickerPopup({ isMobile });
 
+  // PC端下拉位置状态（Portal + fixed 定位，避免被父容器 overflow 裁切）
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number } | null>(null);
+
+  useEffect(() => {
+    if (isMobile || !visible || isClosing) return;
+    const el = wrapperRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    setDropdownPos({
+      top: popupPlacement === 'top'
+        ? rect.top - 6
+        : rect.bottom + 6,
+      left: rect.left,
+    });
+  }, [isMobile, visible, isClosing, popupPlacement]);
+
   const displayText = `${year}/${pad2(month)}/${pad2(day)}`;
 
   const handleClearClick = useCallback((e: React.MouseEvent) => {
@@ -122,20 +139,23 @@ const DayPicker: React.FC<DayPickerProps> = ({
         />
       )}
 
-      {/* ── PC 端：下拉 Dropdown（仅 visible 时挂载） ── */}
-      {!isMobile && visible && (
-        <DayPickerPcDropdown
-          year={year}
-          month={month}
-          day={day}
-          pastYears={pastYears}
-          futureYears={futureYears}
-          isClosing={isClosing}
-          onConfirm={onChange}
-          onClose={handleClose}
-          onAnimationEnd={handleAnimationEnd}
-          popupPlacement={popupPlacement}
-        />
+      {/* ── PC 端：下拉 Dropdown（Portal + fixed 定位，避免被父容器 overflow 裁切）── */}
+      {!isMobile && visible && ReactDOM.createPortal(
+        <div style={{ position: 'fixed', top: dropdownPos?.top ?? 0, left: dropdownPos?.left ?? 0 }}>
+          <DayPickerPcDropdown
+            year={year}
+            month={month}
+            day={day}
+            pastYears={pastYears}
+            futureYears={futureYears}
+            isClosing={isClosing}
+            onConfirm={onChange}
+            onClose={handleClose}
+            onAnimationEnd={handleAnimationEnd}
+            popupPlacement={popupPlacement}
+          />
+        </div>,
+        document.body,
       )}
     </div>
   );

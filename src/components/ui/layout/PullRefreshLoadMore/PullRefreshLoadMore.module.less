@@ -49,6 +49,7 @@
     0 3px 10px fade(@primary, 16%);
   font-size: 1.3rem;
   font-weight: 600;
+  user-select: none;
 
   &[data-status='armed'] {
     color: darken(@primary, 18%);
@@ -77,10 +78,9 @@
   height: 100%;
   min-height: 0;
   overflow-y: auto;
-  cursor: grab;
   overflow-x: hidden;
   overscroll-behavior-y: contain;
-  -webkit-overflow-scrolling: touch;
+  overflow-anchor: none;
   // 这里不能写 touch-action: pan-y。
   // PullRefreshLoadMore 需要在 touchmove 里通过 preventDefault 接管下拉手势；
   // 一旦显式声明 pan-y，浏览器会在手势开始阶段优先走原生竖向滚动，

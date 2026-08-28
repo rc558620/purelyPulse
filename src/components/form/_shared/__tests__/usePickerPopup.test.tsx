@@ -18,7 +18,7 @@
  */
 
 import React from 'react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { renderHook, act, render, screen, fireEvent } from '@testing-library/react';
 import usePickerPopup from '../usePickerPopup';
 
@@ -189,7 +189,7 @@ describe('usePickerPopup – 点击外部关闭', () => {
             const popup = usePickerPopup({ isMobile: false });
             return (
                 <div>
-            // eslint-disable-next-line react-hooks/refs
+                    {/* eslint-disable-next-line react-hooks/refs */}
                     <div ref={popup.wrapperRef} data-testid="wrapper">
                         {/* eslint-disable-next-line react-hooks/refs */}
                         <button onClick={popup.handleOpen}>打开</button>
@@ -223,7 +223,7 @@ describe('usePickerPopup – 点击外部关闭', () => {
             const popup = usePickerPopup({ isMobile: false });
             return (
                 <div>
-            // eslint-disable-next-line react-hooks/refs
+                    {/* eslint-disable-next-line react-hooks/refs */}
                     <div ref={popup.wrapperRef} data-testid="wrapper">
                         {/* eslint-disable-next-line react-hooks/refs */}
                         <button onClick={popup.handleOpen} data-testid="open-btn">打开</button>

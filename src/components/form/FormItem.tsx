@@ -124,8 +124,13 @@ const FormItemInner = <T extends FormValues = Record<string, unknown>>({
     } = useFormContext();
 
     useEffect(() => {
-        registerField(name, rules);
-    }, [name, registerField, rules]);
+        // required 属性自动推导为校验规则，无需业务层重复声明
+        const hasRequiredRule = rules.some((rule) => rule.required);
+        const resolvedRules = required && !hasRequiredRule
+            ? [{ required: true, message: `${label || '该字段'}为必填项` }, ...rules]
+            : rules;
+        registerField(name, resolvedRules);
+    }, [name, registerField, rules, required, label]);
 
     useEffect(() => {
         return () => unregisterField(name);

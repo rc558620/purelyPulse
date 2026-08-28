@@ -28,6 +28,22 @@ export const IconSpinner = memo<React.SVGProps<SVGSVGElement>>((props) => (
     </svg>
 ));
 
+/** 加号图标（创建 / 新增类操作按钮使用） */
+export const IconPlus: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        aria-hidden="true"
+        {...props}
+    >
+        <path d="M12 5v14" />
+        <path d="M5 12h14" />
+    </svg>
+);
+
 /** 三条横线形变图标，barTop/barMiddle/barBottom 供 CSS 动画驱动（DisplayModeSwitchBtn 使用） */
 export const IconBars: React.FC<
     React.SVGProps<SVGSVGElement> & {

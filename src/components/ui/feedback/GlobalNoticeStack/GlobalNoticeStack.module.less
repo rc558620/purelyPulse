@@ -1,0 +1,18 @@
+// 全局通知堆栈容器样式（固定右上角，移动端优先）
+.stack {
+  position: fixed;
+  z-index: 1200;
+  top: 1.6rem;
+  right: 1.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: min(42rem, calc(100vw - 3.2rem));
+  pointer-events: none;
+
+  @media (max-width: 768px) {
+    top: 1.2rem;
+    right: 1rem;
+    width: calc(100vw - 2rem);
+  }
+}
