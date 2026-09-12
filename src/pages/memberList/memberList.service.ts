@@ -1263,6 +1263,8 @@ export const submitMemberMembership = async (
 
   if (isNonExpiringLevel) {
     payload.membershipExpiry = null;
+    // 弹窗已提供两步显式确认，降级为免费会员需向后端传确认标记，否则后端返回 400
+    payload.confirmDowngradeToFree = true;
   } else {
     payload.membershipExpiry = membershipExpiry;
   }
