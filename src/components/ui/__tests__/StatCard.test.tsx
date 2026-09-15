@@ -20,7 +20,7 @@
  *
  * ─ StatCard
  *    16. mode="amount"（默认）渲染 ¥ 前缀
- *    17. mode="amount" 渲染 fmtAmount(value) 数值
+ *    17. mode="amount" 渲染 formatNumber(value) 数值
  *    18. mode="text" 渲染纯文本 value
  *    19. mode="text" 不渲染 ¥ 前缀
  *    20. 渲染 icon 节点
@@ -161,8 +161,8 @@ describe('StatCard – mode="amount"（默认）', () => {
         expect(screen.getByText('¥')).toBeInTheDocument();
     });
 
-    it('渲染格式化数值（fmtAmount）', () => {
-        // fmtAmount(1234) → "1,234"
+    it('渲染格式化数值（formatNumber）', () => {
+        // formatNumber(1234) → "1,234"
         render(
             <StatCard icon={<svg />} label="营业额" value={1234} />,
         );

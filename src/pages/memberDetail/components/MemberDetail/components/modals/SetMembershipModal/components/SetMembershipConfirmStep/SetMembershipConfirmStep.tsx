@@ -17,11 +17,15 @@ interface SetMembershipConfirmStepProps {
   multiplier: number;
   addedDays: number;
   newExpiry: number | null;
-  lifetimeAmountInput: string;
-  lifetimeAmountError: string;
-  onLifetimeAmountChange: (value: string) => void;
+  /** 是否需要填写自定义价格（年度会员 / 永久会员）。 */
+  requiresAmountInput: boolean;
+  amountFieldLabel: string;
+  amountFieldPlaceholder: string;
+  amountDefaultDisplay: string;
+  amountInput: string;
+  amountError: string;
+  onAmountChange: (value: string) => void;
   formatMembershipExpiry: (timestamp: number) => string;
-  lifetimeMembershipAmountDisplay: string;
 }
 
 const SetMembershipConfirmStep: React.FC<SetMembershipConfirmStepProps> = ({
@@ -32,11 +36,14 @@ const SetMembershipConfirmStep: React.FC<SetMembershipConfirmStepProps> = ({
   multiplier,
   addedDays,
   newExpiry,
-  lifetimeAmountInput,
-  lifetimeAmountError,
-  onLifetimeAmountChange,
+  requiresAmountInput,
+  amountFieldLabel,
+  amountFieldPlaceholder,
+  amountDefaultDisplay,
+  amountInput,
+  amountError,
+  onAmountChange,
   formatMembershipExpiry,
-  lifetimeMembershipAmountDisplay,
 }) => (
   <div className={styles.sheetBody}>
     <div className={styles.confirmContent}>
@@ -137,25 +144,25 @@ const SetMembershipConfirmStep: React.FC<SetMembershipConfirmStepProps> = ({
         )}
       </div>
 
-      {isLifetime ? (
+      {requiresAmountInput ? (
         <div className={styles.confirmAmountField}>
-          <label className={styles.fieldLabel} htmlFor="lifetime-membership-price">
-            永久会员价格
-            <span className={styles.fieldLabelSub}>（单位：元，默认取后端配置 ¥{lifetimeMembershipAmountDisplay}）</span>
+          <label className={styles.fieldLabel} htmlFor="custom-membership-price">
+            {amountFieldLabel}
+            <span className={styles.fieldLabelSub}>（单位：元，默认取后端配置 ¥{amountDefaultDisplay}）</span>
           </label>
           <Input
-            id="lifetime-membership-price"
+            id="custom-membership-price"
             type="text"
             inputMode="decimal"
-            placeholder="请输入永久会员价格"
-            value={lifetimeAmountInput}
-            status={lifetimeAmountError ? 'error' : undefined}
-            onChange={(event) => onLifetimeAmountChange(event.target.value.replace(/[^\d.]/g, ''))}
+            placeholder={amountFieldPlaceholder}
+            value={amountInput}
+            status={amountError ? 'error' : undefined}
+            onChange={(event) => onAmountChange(event.target.value.replace(/[^\d.]/g, ''))}
             wrapperClassName={styles.confirmAmountInput}
           />
           <div className={styles.confirmAmountHintRow}>
             <span className={styles.confirmAmountHint}>将按该价格计入充值收入</span>
-            {lifetimeAmountError ? <span className={styles.confirmAmountError}>{lifetimeAmountError}</span> : null}
+            {amountError ? <span className={styles.confirmAmountError}>{amountError}</span> : null}
           </div>
         </div>
       ) : null}

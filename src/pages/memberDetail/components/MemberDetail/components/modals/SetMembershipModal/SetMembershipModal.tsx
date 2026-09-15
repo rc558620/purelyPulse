@@ -5,6 +5,7 @@
  *  - 选择会员类型：免费 / 月度 / 季度 / 年度 / 永久
  *  - 非永久 & 非免费会员：追加时间（多选期数）
  *  - 永久会员可降级回月度/季度/年度（设置具体时长）
+ *  - 年度会员 / 永久会员支持自定义价格（默认取后端套餐配置）
  *  - 实时预览到期日期
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -22,6 +23,7 @@ export interface SetMembershipModalProps {
   currentExpiry: number | null | undefined;
   lifetimeMembershipDays: number;
   lifetimeMembershipAmountDisplay: string;
+  annualMembershipAmountDisplay: string;
   onClose: () => void;
   onConfirm: (newLevel: MemberLevel, newExpiry: number | null, options?: { amountDisplay?: string }) => Promise<void> | void;
 }
@@ -135,6 +137,7 @@ const SetMembershipModal: React.FC<SetMembershipModalProps> = ({
   currentExpiry,
   lifetimeMembershipDays,
   lifetimeMembershipAmountDisplay,
+  annualMembershipAmountDisplay,
   onClose,
   onConfirm,
 }) => {
@@ -148,14 +151,30 @@ const SetMembershipModal: React.FC<SetMembershipModalProps> = ({
     currentLevel === 'lifetime' ? 'lifetime' :
     currentLevel;
 
+  /** 读取指定档位的默认价格展示值；非自定义价格档位返回空串。 */
+  const resolveDefaultAmountDisplay = useCallback((duration: ModalMembershipSelection): string => {
+    if (duration === 'lifetime') return lifetimeMembershipAmountDisplay || '';
+    if (duration === 'annual') return annualMembershipAmountDisplay || '';
+    return '';
+  }, [annualMembershipAmountDisplay, lifetimeMembershipAmountDisplay]);
+
   const [selectedDuration, setSelectedDuration] = useState<ModalMembershipSelection>(defaultDuration);
   const [multiplier, setMultiplier] = useState(1);
   const [step, setStep] = useState<'select' | 'confirm'>('select');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [lifetimeAmountInput, setLifetimeAmountInput] = useState<string>(() => lifetimeMembershipAmountDisplay || '');
+  // 价格草稿记录「属于哪个档位 + 该档位的默认值」，档位切换或后端配置刷新时自然回落默认值，无需副作用同步
+  const [amountDraft, setAmountDraft] = useState<{ duration: ModalMembershipSelection; defaultValue: string; value: string }>(
+    () => {
+      const defaultValue = resolveDefaultAmountDisplay(defaultDuration);
+      return { duration: defaultDuration, defaultValue, value: defaultValue };
+    },
+  );
 
   const isFree = selectedDuration === 'free';
   const isLifetime = selectedDuration === 'lifetime';
+  const isAnnual = selectedDuration === 'annual';
+  // 年度会员与永久会员一致：支持自定义价格，需在确认步骤填写
+  const requiresAmountInput = isLifetime || isAnnual;
 
   const durationOptions = useMemo(() => BASE_DURATION_OPTIONS.map((option) => (
     option.value === 'lifetime'
@@ -192,26 +211,39 @@ const SetMembershipModal: React.FC<SetMembershipModalProps> = ({
     return false;
   }, [currentLevel, selectedDuration]);
 
-  const isLifetimeAmountValid = useMemo(() => (
-    selectedDuration === 'lifetime' ? isValidAmountInput(lifetimeAmountInput) : true
-  ), [lifetimeAmountInput, selectedDuration]);
+  const amountFieldLabel = isLifetime ? '永久会员价格' : '年度会员价格';
+  const amountFieldPlaceholder = isLifetime ? '请输入永久会员价格' : '请输入年度会员价格';
+  const amountDefaultDisplay = resolveDefaultAmountDisplay(selectedDuration);
 
-  const lifetimeAmountError = useMemo(() => {
-    if (selectedDuration !== 'lifetime') {
+  // 草稿与当前档位/默认值不一致时（切换档位、后端配置更新）直接读取默认值
+  const amountInput = amountDraft.duration === selectedDuration && amountDraft.defaultValue === amountDefaultDisplay
+    ? amountDraft.value
+    : amountDefaultDisplay;
+
+  const handleAmountChange = useCallback((value: string): void => {
+    setAmountDraft({
+      duration: selectedDuration,
+      defaultValue: resolveDefaultAmountDisplay(selectedDuration),
+      value,
+    });
+  }, [resolveDefaultAmountDisplay, selectedDuration]);
+
+  const isAmountInputValid = useMemo(() => (
+    requiresAmountInput ? isValidAmountInput(amountInput) : true
+  ), [amountInput, requiresAmountInput]);
+
+  const amountError = useMemo(() => {
+    if (!requiresAmountInput) {
       return '';
     }
-    if (!lifetimeAmountInput.trim()) {
-      return '请输入永久会员价格';
+    if (!amountInput.trim()) {
+      return `请输入${amountFieldLabel}`;
     }
-    if (!isLifetimeAmountValid) {
+    if (!isAmountInputValid) {
       return '请输入有效价格，最多保留 2 位小数';
     }
     return '';
-  }, [isLifetimeAmountValid, lifetimeAmountInput, selectedDuration]);
-
-  useEffect(() => {
-    setLifetimeAmountInput(lifetimeMembershipAmountDisplay || '');
-  }, [lifetimeMembershipAmountDisplay]);
+  }, [amountFieldLabel, amountInput, isAmountInputValid, requiresAmountInput]);
 
   useEffect(() => {
     const handler = (event: KeyboardEvent): void => {
@@ -241,7 +273,7 @@ const SetMembershipModal: React.FC<SetMembershipModalProps> = ({
       await onConfirm(
         newLevel,
         selectedDuration === 'free' ? null : newExpiry,
-        selectedDuration === 'lifetime' && isLifetimeAmountValid ? { amountDisplay: lifetimeAmountInput.trim() } : undefined,
+        requiresAmountInput && isAmountInputValid ? { amountDisplay: amountInput.trim() } : undefined,
       );
       onClose();
     } catch {
@@ -249,7 +281,7 @@ const SetMembershipModal: React.FC<SetMembershipModalProps> = ({
     } finally {
       setIsSubmitting(false);
     }
-  }, [isSubmitting, isLifetimeAmountValid, lifetimeAmountInput, newExpiry, onClose, onConfirm, selectedDuration]);
+  }, [amountInput, isAmountInputValid, isSubmitting, newExpiry, onClose, onConfirm, requiresAmountInput, selectedDuration]);
 
   const selectedOption = durationOptions.find((option) => option.value === selectedDuration)!;
 
@@ -331,11 +363,14 @@ const SetMembershipModal: React.FC<SetMembershipModalProps> = ({
             multiplier={multiplier}
             addedDays={addedDays}
             newExpiry={newExpiry}
-            lifetimeAmountInput={lifetimeAmountInput}
-            lifetimeAmountError={lifetimeAmountError}
-            onLifetimeAmountChange={setLifetimeAmountInput}
+            requiresAmountInput={requiresAmountInput}
+            amountFieldLabel={amountFieldLabel}
+            amountFieldPlaceholder={amountFieldPlaceholder}
+            amountDefaultDisplay={amountDefaultDisplay}
+            amountInput={amountInput}
+            amountError={amountError}
+            onAmountChange={handleAmountChange}
             formatMembershipExpiry={formatMembershipExpiry}
-            lifetimeMembershipAmountDisplay={lifetimeMembershipAmountDisplay}
           />
         )}
 
@@ -349,7 +384,7 @@ const SetMembershipModal: React.FC<SetMembershipModalProps> = ({
           selectedOption={selectedOption}
           onCancel={step === 'confirm' ? () => setStep('select') : onClose}
           onConfirm={step === 'confirm' ? handleFinalConfirm : handleFirstConfirm}
-          isConfirmDisabled={step === 'confirm' && isLifetime ? Boolean(lifetimeAmountError) : false}
+          isConfirmDisabled={step === 'confirm' && requiresAmountInput ? Boolean(amountError) : false}
         />
       </div>
     </div>

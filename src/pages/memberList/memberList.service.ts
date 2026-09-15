@@ -1277,12 +1277,16 @@ export const submitMemberMembership = async (
 
   if (level !== 'free') {
     const config = MEMBERSHIP_REVENUE_CONFIG[level];
+    // 年度会员 / 永久会员支持在弹窗内自定义价格，其余档位按固定配置价计入
+    const supportsCustomAmountDisplay = level === 'annual' || level === 'lifetime';
+    const customAmountDisplay = options?.amountDisplay?.trim();
+
     emitMembershipRevenueSync({
       memberId,
       memberName: options?.memberName?.trim() || `会员${memberId}`,
       level,
-      amountDisplay: level === 'lifetime' && typeof options?.amountDisplay === 'string' && options.amountDisplay.trim()
-        ? options.amountDisplay.trim()
+      amountDisplay: supportsCustomAmountDisplay && customAmountDisplay
+        ? customAmountDisplay
         : config.amountDisplay,
       planName: config.planName,
       revenueTypeLabel: config.revenueTypeLabel,
