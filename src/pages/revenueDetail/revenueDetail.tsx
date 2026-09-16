@@ -72,7 +72,6 @@ const RevenueDetail: React.FC = () => {
   const showInitialError = !isLoading && !hasLoaded && Boolean(errorMessage);
   const {
     pieOption,
-    pieChartHeight,
     revenueChartOption,
     revenueChartHeight,
   } = useRevenueDetailCharts({
@@ -165,7 +164,6 @@ const RevenueDetail: React.FC = () => {
             <RevenueDetailTypeSection
               revenueTypes={safeRevenueTypes}
               pieOption={pieOption}
-              chartHeight={pieChartHeight}
             />
             <RevenueDetailRecordSection
               totalRecords={data.totalRecords}

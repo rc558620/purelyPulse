@@ -51,6 +51,7 @@ const MemberDetail: React.FC = () => {
     isSubmittingBan,
     isSubmittingSubAccount,
     isSubmittingCancel,
+    isResettingLockedPrice,
     isSubmittingAction,
     handleAdjustPoints,
     handleAdjustBeans,
@@ -59,6 +60,7 @@ const MemberDetail: React.FC = () => {
     handleUnbanMember,
     handleSetSubAccountQuota,
     handleCancelAccount,
+    handleResetLockedPrice,
     retryLoadMember,
   } = useMemberDetailPage(id);
 
@@ -304,6 +306,10 @@ const MemberDetail: React.FC = () => {
             currentLevel={memberLevel}
             currentCapability={member.subAccountCapability}
             isSubmitting={isSubmittingSubAccount}
+            isResettingLockedPrice={isResettingLockedPrice}
+            onResetLockedPrice={async () => {
+              await handleResetLockedPrice();
+            }}
             onClose={handleCloseModal}
             onConfirm={async (quota) => {
               const didSucceed = await handleSetSubAccountQuota(quota);

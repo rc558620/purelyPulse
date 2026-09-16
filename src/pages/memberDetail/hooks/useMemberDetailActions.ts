@@ -5,6 +5,7 @@ import { showToast } from '@components/ui/feedback/Toast';
 import {
   emitMemberCancelSync,
   emitMemberStatusSync,
+  resetMemberLockedPrice,
   submitMemberBan,
   submitMemberBeansAdjustment,
   submitMemberCancelAccount,
@@ -19,7 +20,7 @@ import type {
 } from '../../memberList/memberList.types';
 
 /** 会员详情页可提交的动作标识。 */
-export type MemberSubmitAction = 'points' | 'beans' | 'membership' | 'ban' | 'subAccount' | 'cancel';
+export type MemberSubmitAction = 'points' | 'beans' | 'membership' | 'ban' | 'subAccount' | 'cancel' | 'resetLockedPrice';
 
 export interface UseMemberDetailActionsParams {
   /** 当前会员详情，为 null 时不执行任何提交。 */
@@ -43,6 +44,8 @@ export interface UseMemberDetailActionsReturn {
   isSubmittingSubAccount: boolean;
   /** 是否正在提交注销账号。 */
   isSubmittingCancel: boolean;
+  /** 是否正在重置首购锁定价。 */
+  isResettingLockedPrice: boolean;
   /** 是否有任一提交动作进行中。 */
   isSubmittingAction: boolean;
   /** 调整积分并提交。 */
@@ -59,6 +62,8 @@ export interface UseMemberDetailActionsReturn {
   handleSetSubAccountQuota: (quota: number) => Promise<boolean>;
   /** 注销当前会员账号（不可逆）。 */
   handleCancelAccount: () => Promise<boolean>;
+  /** 重置首购锁定价，让下一次成交重新锁价。 */
+  handleResetLockedPrice: () => Promise<boolean>;
 }
 
 /** 会员详情提交动作 hook。 */
@@ -240,6 +245,28 @@ export const useMemberDetailActions = ({
     }
   }, [loadMember, member, submittingAction]);
 
+  const handleResetLockedPrice = useCallback(async (): Promise<boolean> => {
+    if (!member || submittingAction) {
+      return false;
+    }
+
+    setSubmittingAction('resetLockedPrice');
+    try {
+      await resetMemberLockedPrice(member.id);
+      showToast({ type: 'success', message: '锁定价已重置，下次成交将重新锁定' });
+      void loadMember({ silent: true });
+      return true;
+    } catch (error) {
+      showToast({
+        type: 'error',
+        message: error instanceof Error ? error.message : '重置锁定价失败，请稍后重试',
+      });
+      return false;
+    } finally {
+      setSubmittingAction(null);
+    }
+  }, [loadMember, member, submittingAction]);
+
   return {
     isSubmittingPoints: submittingAction === 'points',
     isSubmittingBeans: submittingAction === 'beans',
@@ -247,6 +274,7 @@ export const useMemberDetailActions = ({
     isSubmittingBan: submittingAction === 'ban',
     isSubmittingSubAccount: submittingAction === 'subAccount',
     isSubmittingCancel: submittingAction === 'cancel',
+    isResettingLockedPrice: submittingAction === 'resetLockedPrice',
     isSubmittingAction: submittingAction !== null,
     handleAdjustPoints,
     handleAdjustBeans,
@@ -255,5 +283,6 @@ export const useMemberDetailActions = ({
     handleUnbanMember,
     handleSetSubAccountQuota,
     handleCancelAccount,
+    handleResetLockedPrice,
   };
 };

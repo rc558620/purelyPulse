@@ -12,4 +12,8 @@ export interface SetSubAccountModalProps {
   isSubmitting: boolean;
   onClose: () => void;
   onConfirm: (quota: number) => Promise<void> | void;
+  /** 是否正在重置首购锁定价 */
+  isResettingLockedPrice?: boolean;
+  /** 重置首购锁定价（弹窗内提供二次确认） */
+  onResetLockedPrice?: () => Promise<void> | void;
 }

@@ -51,8 +51,13 @@ const MemberListCard: React.FC<MemberListCardProps> = ({ member, onClick }) => {
         ) : (
           avatarChar
         )}
-        {member.isPartner && (
-          <span className={styles.partnerDot} aria-label="合伙人" />
+        {/* 在线：头像右下角绿点（后端按 10 分钟窗口判定；合伙人身份由姓名后的 tag 表达） */}
+        {member.isOnline && (
+          <span
+            className={styles.onlineDot}
+            aria-label="在线"
+            title="在线：最近 10 分钟内有操作"
+          />
         )}
       </div>
 

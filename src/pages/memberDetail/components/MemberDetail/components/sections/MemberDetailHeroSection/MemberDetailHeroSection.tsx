@@ -80,7 +80,14 @@ const MemberDetailHeroSection: React.FC<MemberDetailHeroSectionProps> = React.me
           ) : (
             safeStr(member.avatarChar, '会')
           )}
-          {member.isPartner ? <span className={pageStyles.heroPartnerDot} aria-label="合伙人" /> : null}
+          {/* 在线：头像右下角绿点（行业通用语义，后端按 10 分钟窗口判定） */}
+          {member.isOnline ? (
+            <span
+              className={pageStyles.heroOnlineDot}
+              aria-label="在线"
+              title="在线：最近 10 分钟内有操作"
+            />
+          ) : null}
         </div>
 
         <div className={pageStyles.heroInfo}>

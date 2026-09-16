@@ -18,11 +18,16 @@ const SetSubAccountModal: React.FC<SetSubAccountModalProps> = ({
   isSubmitting,
   onClose,
   onConfirm,
+  isResettingLockedPrice = false,
+  onResetLockedPrice,
 }) => {
   const isEligible = currentLevel === 'annual' || currentLevel === 'lifetime';
+  // 首购锁定价快照：让运营看得到「当前锁了什么价」，而不只是一个重置按钮
+  const lockedPrices = member.lockedPrices ?? [];
   const initialQuota = isEligible ? (currentCapability?.subAccountQuota ?? 0) : 0;
   const [selectedQuota, setSelectedQuota] = useState<number>(initialQuota);
   const [inputValue, setInputValue] = useState<string>(initialQuota > 0 ? String(initialQuota) : '');
+  const [isResetConfirming, setIsResetConfirming] = useState<boolean>(false);
   const lastValidQuotaRef = useRef<number>(initialQuota > 0 ? initialQuota : 1);
 
   useEffect(() => {
@@ -105,6 +110,27 @@ const SetSubAccountModal: React.FC<SetSubAccountModalProps> = ({
     }
   }, [isSubmitting, onClose]);
 
+  const handleResetRequest = useCallback((): void => {
+    if (isSubmitting || isResettingLockedPrice) {
+      return;
+    }
+
+    setIsResetConfirming(true);
+  }, [isResettingLockedPrice, isSubmitting]);
+
+  const handleResetCancel = useCallback((): void => {
+    setIsResetConfirming(false);
+  }, []);
+
+  const handleResetConfirm = useCallback(async (): Promise<void> => {
+    if (isResettingLockedPrice) {
+      return;
+    }
+
+    setIsResetConfirming(false);
+    await Promise.resolve(onResetLockedPrice?.());
+  }, [isResettingLockedPrice, onResetLockedPrice]);
+
   const hasQuotaChanged = selectedQuota !== initialQuota;
   const isZeroSelected = selectedQuota === 0;
   const isConfirmDisabled = isSubmitting || (!isEligible && selectedQuota > 0);
@@ -157,6 +183,62 @@ const SetSubAccountModal: React.FC<SetSubAccountModalProps> = ({
             onInputFocus={handleQuotaInputFocus}
           />
           <SetSubAccountCapabilityCard />
+
+          {onResetLockedPrice ? (
+            <div className={styles.lockedPriceCard}>
+              <div className={styles.lockedPriceText}>
+                <span className={styles.lockedPriceTitle}>首购锁定价</span>
+                {lockedPrices.length > 0 ? (
+                  <ul className={styles.lockedPriceList}>
+                    {lockedPrices.map((item) => (
+                      <li key={item.planId} className={styles.lockedPriceItem}>
+                        <span className={styles.lockedPricePlan}>{item.planName}</span>
+                        <span className={styles.lockedPriceAmount}>¥{item.priceDisplay}</span>
+                        <span className={styles.lockedPriceMeta}>{item.sourceLabel}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <span className={styles.lockedPriceDesc}>
+                    当前未锁价，下次成交按当时套餐价锁定
+                  </span>
+                )}
+                <span className={styles.lockedPriceDesc}>
+                  重置后，该账号下次成交（商家续费 / 设置会员等级）会按当时的套餐价重新锁定
+                </span>
+              </div>
+              {isResetConfirming ? (
+                <div className={styles.lockedPriceActions}>
+                  <button
+                    type="button"
+                    className={styles.lockedPriceCancelBtn}
+                    onClick={handleResetCancel}
+                    disabled={isResettingLockedPrice}
+                  >
+                    取消
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.lockedPriceConfirmBtn}
+                    onClick={handleResetConfirm}
+                    disabled={isResettingLockedPrice}
+                  >
+                    {isResettingLockedPrice ? '重置中...' : '确认重置'}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className={styles.lockedPriceResetBtn}
+                  onClick={handleResetRequest}
+                  disabled={isSubmitting || isResettingLockedPrice}
+                >
+                  {isResettingLockedPrice ? '重置中...' : '重置锁定价'}
+                </button>
+              )}
+            </div>
+          ) : null}
+
           {hasQuotaChanged ? (
             <SetSubAccountChangeBanner
               initialQuota={initialQuota}

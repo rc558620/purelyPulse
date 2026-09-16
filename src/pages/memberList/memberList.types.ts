@@ -44,6 +44,32 @@ export interface SubAccountCapability {
 /** 会员等级。 */
 export type MemberLevel = 'free' | 'monthly' | 'quarterly' | 'annual' | 'lifetime';
 
+// ─── 首购锁定价 ────────────────────────────────────────────────────────────
+
+/** 首购锁定价来源：purchase=商家端下单成交，admin=平台侧设置会员等级成交。 */
+export type LockedPriceSource = 'purchase' | 'admin';
+
+/**
+ * 首购锁定价快照。
+ *
+ * 已开通子账号功能的门店续费时按【首次成交价】结算（平台为含子账号权益调价后老客不受影响），
+ * 这里展示运营「当前锁了什么价」，配合重置入口使用。
+ */
+export interface MemberLockedPrice {
+  /** 套餐档位标识（后端 Prisma 档位：monthly / quarterly / yearly / lifetime）。 */
+  planId: string;
+  /** 档位展示名（永久档位统一展示为 AGES会员）。 */
+  planName: string;
+  /** 锁定价格展示值（元，后端已格式化）。 */
+  priceDisplay: string;
+  /** 锁价来源。 */
+  source: LockedPriceSource;
+  /** 锁价来源展示名。 */
+  sourceLabel: string;
+  /** 锁定时点（ms）。 */
+  lockedAt: number;
+}
+
 /** 会员订阅时长类型。 */
 export type MembershipDuration = 'monthly' | 'quarterly' | 'annual' | 'lifetime';
 
@@ -108,6 +134,10 @@ export interface MemberDetail {
   membershipExpiry?: number | null;
   /** 子账号能力快照（平台侧）。 */
   subAccountCapability?: SubAccountCapability;
+  /** 首购锁定价快照（空数组表示未锁价）。 */
+  lockedPrices?: MemberLockedPrice[];
+  /** 是否在线（后端权威判定：最近 10 分钟内有经过鉴权的请求）。 */
+  isOnline: boolean;
 }
 
 /** 会员列表项（轻量）。 */
@@ -142,6 +172,8 @@ export interface MemberListItem {
   registeredAt: number;
   /** 最近活跃时间。 */
   lastActiveAt: number;
+  /** 是否在线（后端权威判定：最近 10 分钟内有经过鉴权的请求）。 */
+  isOnline: boolean;
   /** 邀请人数。 */
   invitedCount?: number;
   /** 充值次数。 */

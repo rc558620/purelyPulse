@@ -107,11 +107,11 @@ const DAY_MS = 86_400_000;
 // 前端不做分转元/元转分转换。金额展示值由后端直接返回 xxxDisplay 字段，
 // 用户输入的价格直接作为字符串提交给后端。
 
-/** 验证用户输入的价格字符串是否合法（最多 2 位小数的正数） */
+/** 验证用户输入的价格字符串是否合法（最多 2 位小数的正数，与后端 DTO 校验保持一致） */
 const isValidAmountInput = (value: string): boolean => {
   const normalizedValue = value.trim();
   if (!normalizedValue) return false;
-  if (!/^\d+(\.\d{0,2})?$/.test(normalizedValue)) return false;
+  if (!/^\d+(\.\d{1,2})?$/.test(normalizedValue)) return false;
   const amount = Number(normalizedValue);
   return Number.isFinite(amount) && amount > 0;
 };

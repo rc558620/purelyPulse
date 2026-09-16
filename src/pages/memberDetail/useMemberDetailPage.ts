@@ -42,6 +42,8 @@ interface UseMemberDetailPageReturn {
   isSubmittingSubAccount: boolean;
   /** 是否正在提交注销账号。 */
   isSubmittingCancel: boolean;
+  /** 是否正在重置首购锁定价。 */
+  isResettingLockedPrice: boolean;
   /** 是否有任一提交动作进行中。 */
   isSubmittingAction: boolean;
   /** 调整积分并提交。 */
@@ -58,6 +60,8 @@ interface UseMemberDetailPageReturn {
   handleSetSubAccountQuota: (quota: number) => Promise<boolean>;
   /** 注销当前会员账号（不可逆）。 */
   handleCancelAccount: () => Promise<boolean>;
+  /** 重置首购锁定价，让下一次成交重新锁价。 */
+  handleResetLockedPrice: () => Promise<boolean>;
   /** 重试拉取详情。 */
   retryLoadMember: () => void;
 }
@@ -87,6 +91,7 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
     isSubmittingBan,
     isSubmittingSubAccount,
     isSubmittingCancel,
+    isResettingLockedPrice,
     isSubmittingAction,
     handleAdjustPoints,
     handleAdjustBeans,
@@ -95,6 +100,7 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
     handleUnbanMember,
     handleSetSubAccountQuota,
     handleCancelAccount,
+    handleResetLockedPrice,
   } = useMemberDetailActions({ member, loadMember, patchMember });
 
   // 从 member 直接派生展示态，避免 useEffect 同步 setState 产生的级联渲染
@@ -121,6 +127,7 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
     isSubmittingBan,
     isSubmittingSubAccount,
     isSubmittingCancel,
+    isResettingLockedPrice,
     isSubmittingAction,
     handleAdjustPoints,
     handleAdjustBeans,
@@ -129,6 +136,7 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
     handleUnbanMember,
     handleSetSubAccountQuota,
     handleCancelAccount,
+    handleResetLockedPrice,
     retryLoadMember,
   };
 };

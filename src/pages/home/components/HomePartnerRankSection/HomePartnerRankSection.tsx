@@ -1,7 +1,7 @@
 // 首页推广排行区块：负责排行列表与详情跳转展示。
 import { memo, useMemo } from 'react';
 import { EmptyState } from '@components/ui/feedback';
-import { normalizeRegionValue } from '@constants/regionData';
+import { normalizeRegionValue, resolveRegionFieldName } from '@constants/regionData';
 import { cx, isNonEmptyArray, safeNum } from '@utils/utils';
 import type { CSSProperties } from 'react';
 import type { CascadeValue } from '@components/form/CascaderView/types';
@@ -26,7 +26,13 @@ const HomePartnerRankSection = memo(({
     }
 
     const regionLabels = normalizeRegionValue(rankRegion)?.regionLabels ?? [];
-    return isNonEmptyArray(regionLabels) ? regionLabels.join(' · ') : '全部地区';
+    if (isNonEmptyArray(regionLabels)) {
+      return regionLabels.join(' · ');
+    }
+
+    // 只选到省 / 市时拿不到完整路径，退化为单编码名称，避免显示「全部地区」但实际已筛选
+    const lastValue = String(rankRegion.slice(-1)[0] ?? '').trim();
+    return resolveRegionFieldName(lastValue) || '全部地区';
   }, [rankRegion]);
 
   const maxPartnerOrders = isNonEmptyArray(partnerTop)

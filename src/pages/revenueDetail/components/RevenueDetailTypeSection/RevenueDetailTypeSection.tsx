@@ -13,13 +13,16 @@ import styles from './RevenueDetailTypeSection.module.less';
 interface RevenueDetailTypeSectionProps {
   revenueTypes: RevenueTypeItem[];
   pieOption: echarts.EChartsOption;
-  chartHeight: number;
 }
+
+// 饼图尺寸完全交给 .typePieWrap（响应式 140/180）决定：
+// 全局 .echartsContainer 的 min-height:300px 会把画布撑高，
+// 导致圆环中心与绝对定位的中心文字错位，这里显式覆盖。
+const PIE_CANVAS_STYLE: React.CSSProperties = { minHeight: 0 };
 
 const RevenueDetailTypeSectionComponent = ({
   revenueTypes,
   pieOption,
-  chartHeight,
 }: RevenueDetailTypeSectionProps): React.JSX.Element => {
   // 饼图中心显示占比最大的类型百分比，比显示类型数量更有业务意义
   const dominantType = revenueTypes.reduce<RevenueTypeItem | null>(
@@ -38,7 +41,11 @@ const RevenueDetailTypeSectionComponent = ({
   >
     <div className={sharedStyles.typeLayout}>
       <div className={sharedStyles.typePieWrap}>
-        <ChartRenderer option={pieOption} className={sharedStyles.chartCanvas} height={chartHeight} />
+        <ChartRenderer
+          option={pieOption}
+          className={sharedStyles.chartCanvas}
+          style={PIE_CANVAS_STYLE}
+        />
         <div className={sharedStyles.typePieCenter} aria-hidden="true">
           <span className={sharedStyles.typePieCenterVal}>{centerValue}</span>
           <span className={sharedStyles.typePieCenterLbl}>{centerLabel}</span>

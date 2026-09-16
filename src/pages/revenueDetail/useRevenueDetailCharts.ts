@@ -17,7 +17,6 @@ interface UseRevenueDetailChartsParams {
 
 interface UseRevenueDetailChartsReturn {
   pieOption: echarts.EChartsOption;
-  pieChartHeight: number;
   revenueChartOption: echarts.EChartsOption;
   revenueChartHeight: number;
 }
@@ -143,7 +142,6 @@ export const useRevenueDetailCharts = ({
 
   return {
     pieOption,
-    pieChartHeight: REVENUE_DETAIL_CHART_HEIGHTS.typePie,
     revenueChartOption,
     revenueChartHeight: REVENUE_DETAIL_CHART_HEIGHTS.trend,
   };

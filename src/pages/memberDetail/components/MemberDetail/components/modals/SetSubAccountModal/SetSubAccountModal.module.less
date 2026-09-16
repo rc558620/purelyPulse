@@ -609,3 +609,108 @@
 .snapshotValueHighlight {
   color: #6366f1;
 }
+
+// ─── 首购锁定价 ────────────────────────────────────────────────────────
+.lockedPriceCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.2rem;
+  padding: 1.4rem 1.6rem;
+  border-radius: 1.4rem;
+  border: 1px solid rgba(99, 102, 241, 0.24);
+  background: rgba(99, 102, 241, 0.06);
+}
+
+.lockedPriceText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.lockedPriceTitle {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: @text-main;
+}
+
+.lockedPriceDesc {
+  font-size: 1.15rem;
+  line-height: 1.5;
+  color: @text-sub;
+}
+
+.lockedPriceList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lockedPriceItem {
+  display: flex;
+  align-items: baseline;
+  gap: 0.8rem;
+  font-size: 1.3rem;
+}
+
+.lockedPricePlan {
+  font-weight: 600;
+  color: @text-main;
+}
+
+.lockedPriceAmount {
+  font-weight: 700;
+  color: #6366f1;
+}
+
+.lockedPriceMeta {
+  font-size: 1.1rem;
+  color: @text-sub;
+}
+
+.lockedPriceActions {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-shrink: 0;
+}
+
+.lockedPriceResetBtn,
+.lockedPriceCancelBtn,
+.lockedPriceConfirmBtn {
+  height: 3.6rem;
+  padding: 0 1.4rem;
+  border-radius: 9999px;
+  font-size: 1.3rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.lockedPriceResetBtn {
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  background: @bg-white;
+  color: #6366f1;
+
+  &:hover:not(:disabled) { background: rgba(99, 102, 241, 0.08); }
+}
+
+.lockedPriceCancelBtn {
+  border: 1px solid @border-color;
+  background: @bg-slate-100;
+  color: @text-sub;
+}
+
+.lockedPriceConfirmBtn {
+  border: none;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+}

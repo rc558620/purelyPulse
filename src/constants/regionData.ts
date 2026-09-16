@@ -413,3 +413,18 @@ export const formatRegionValue = (value: unknown): string => {
 
   return segments.join(' · ');
 };
+
+/** 单个行政区划编码还原为对应层级名称：解析结果的最后一段即为该编码自身的名称 */
+const resolveRegionCodeName = (code: string): string => {
+  const labels = formatRegionValue(code).split(REGION_SEGMENT_SEPARATOR).filter(Boolean);
+  return labels[labels.length - 1] ?? '';
+};
+
+/**
+ * 地区字段兼容处理：后端 region 字段可能存在行政区划编码（如 530000 / 530300 / 530303），
+ * 直接渲染会显示成一串编码，这里统一还原为省 / 市 / 区名称；
+ * 非编码值（如「云南省」）原样返回，两种历史数据都能正确展示。
+ */
+export const resolveRegionFieldName = (value: string): string => (
+  REGION_CODE_PATTERN.test(value) ? resolveRegionCodeName(value) : value
+);

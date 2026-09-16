@@ -1,3 +1,4 @@
+import { resolveRegionFieldName } from '@constants/regionData';
 import { createKeyedInFlightRequest, http, resolveEnvPath } from '@utils/http';
 import { safeNum } from '@utils/utils';
 import type {
@@ -331,9 +332,11 @@ const mapPartnerItem = (
     return null;
   }
 
-  const province = normalizeProvinceName(pickStringField(item, ['province', 'provinceName', 'region', 'regionName']) || fallbackProvince);
-  const city = pickStringField(item, ['city', 'cityName']) || province || '--';
-  const district = pickStringField(item, ['district', 'districtName', 'area', 'areaName']);
+  const province = normalizeProvinceName(
+    resolveRegionFieldName(pickStringField(item, ['province', 'provinceName', 'region', 'regionName'])) || fallbackProvince,
+  );
+  const city = resolveRegionFieldName(pickStringField(item, ['city', 'cityName'])) || province || '--';
+  const district = resolveRegionFieldName(pickStringField(item, ['district', 'districtName', 'area', 'areaName']));
   const series = mapPartnerSeries(response, item, id);
 
   return {
@@ -362,7 +365,9 @@ const extractPartnersFromRegions = (response: unknown, regions: unknown[]): Prom
       return;
     }
 
-    const province = pickStringField(regionItem, ['province', 'provinceName', 'region', 'regionName', 'name', 'label']);
+    const province = resolveRegionFieldName(
+      pickStringField(regionItem, ['province', 'provinceName', 'region', 'regionName', 'name', 'label']),
+    );
     const regionPartners = getNestedArray(regionItem, ['partners', 'partnerList', 'items', 'rows', 'list', 'data']);
     regionPartners.forEach((partnerItem) => {
       if (!isPlainObject(partnerItem)) {
@@ -425,7 +430,9 @@ const mapPartners = (response: unknown): PromotionPartnerItem[] => {
 };
 
 const mapRegionItem = (item: Record<string, unknown>): PromotionRegionItem | null => {
-  const rawProvince = pickStringField(item, ['province', 'provinceName', 'region', 'regionName', 'name', 'label']);
+  const rawProvince = resolveRegionFieldName(
+    pickStringField(item, ['province', 'provinceName', 'region', 'regionName', 'name', 'label']),
+  );
   if (!rawProvince) {
     return null;
   }
@@ -434,7 +441,7 @@ const mapRegionItem = (item: Record<string, unknown>): PromotionRegionItem | nul
 
   return {
     province,
-    city: pickStringField(item, ['city', 'cityName']) || undefined,
+    city: resolveRegionFieldName(pickStringField(item, ['city', 'cityName'])) || undefined,
     partnerCount: pickNumberField(item, ['partnerCount', 'partners', 'count', 'totalPartners']),
     totalOrders: pickNumberField(item, ['totalOrders', 'orders', 'orderCount', 'promotionOrders']),
     totalRevenueDisplay: pickDisplayField(item, ['totalRevenueDisplay', 'revenueDisplay', 'totalAmountDisplay', 'amountDisplay']),

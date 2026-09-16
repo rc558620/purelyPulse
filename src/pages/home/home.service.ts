@@ -1,5 +1,6 @@
 // 首页总览服务层：封装首页接口请求与字段映射。
 // 前端禁止金额转换和格式化。所有金额展示值由后端直接返回 xxxDisplay 字段。
+import { resolveRegionFieldName } from '@constants/regionData';
 import { createKeyedInFlightRequest, http, resolveEnvPath } from '@utils/http';
 import { safeNum } from '@utils/utils';
 import type {
@@ -201,7 +202,10 @@ export const createEmptyHomeOverview = (): HomeOverviewData => ({
 
 export interface HomeOverviewQuery {
   revenuePeriod: RevenuePeriod;
+  /** 地区筛选名称，与 regionCode 同时下发，后端按「名称 OR 编码」匹配 */
   region?: string;
+  /** 地区筛选的行政区划编码，兼容库里存编码的合伙人数据 */
+  regionCode?: string;
   customDate?: string;
   customRangeStart?: string;
   customRangeEnd?: string;
@@ -383,7 +387,7 @@ const mapPartnerTop = (response: unknown): HomePartnerRankItem[] => {
       return {
         id,
         name,
-        city: pickStringField(item, ['city', 'regionName', 'storeCity']) || '--',
+        city: resolveRegionFieldName(pickStringField(item, ['city', 'regionName', 'storeCity'])) || '--',
         orders: pickNumberField(item, ['orders', 'orderCount', 'totalOrders']),
         revenueDisplay: pickDisplayField(item, ['revenueDisplay', 'totalRevenueDisplay', 'incomeDisplay']),
       };
@@ -427,6 +431,7 @@ const requestHomeOverview = async (query: HomeOverviewQuery): Promise<HomeOvervi
     params: {
       revenuePeriod: query.revenuePeriod,
       region: query.region || undefined,
+      regionCode: query.regionCode || undefined,
       customDate: query.customDate || undefined,
       customRangeStart: query.customRangeStart || undefined,
       customRangeEnd: query.customRangeEnd || undefined,

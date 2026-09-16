@@ -3,7 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useAnimatedNavigate } from '@hooks/useAnimatedNavigate';
 import { ROUTE_PATHS } from '../../router/paths';
 import type { CascadeValue } from '@components/form/CascaderView/types';
-import { normalizeRegionValue } from '@constants/regionData';
+import { normalizeRegionValue, resolveRegionFieldName } from '@constants/regionData';
 import type { HomeRevenuePeriodData, RevenuePeriod } from './home.types';
 import { useHomeOverview } from './useHomeOverview';
 import HomeHeroSection from './components/HomeHeroSection/HomeHeroSection';
@@ -23,17 +23,28 @@ const Home = (): React.JSX.Element => {
   const [customDate, setCustomDate] = useState<string | undefined>(undefined);
   const [customRangeStart, setCustomRangeStart] = useState<string | undefined>(undefined);
   const [customRangeEnd, setCustomRangeEnd] = useState<string | undefined>(undefined);
-  const rankRegionLabel = useMemo(() => {
-    const regionLabels = normalizeRegionValue(rankRegion)?.regionLabels ?? [];
-    return regionLabels[regionLabels.length - 1] || undefined;
+  // 地区筛选同时下发名称与编码：库里 store_partners.region 既可能存名称也可能存编码，
+  // 后端按「名称 OR 编码」匹配，两种存量数据都能筛到
+  const rankRegionFilter = useMemo(() => {
+    const lastValue = String(rankRegion.filter(Boolean).slice(-1)[0] ?? '').trim();
+    if (!lastValue) {
+      return undefined;
+    }
+
+    const normalizedRegion = normalizeRegionValue(rankRegion);
+    return {
+      region: normalizedRegion?.regionLabels.slice(-1)[0] || resolveRegionFieldName(lastValue),
+      regionCode: normalizedRegion?.region.slice(-1)[0] || lastValue,
+    };
   }, [rankRegion]);
   const homeOverviewQuery = useMemo(() => ({
     revenuePeriod,
-    region: rankRegionLabel,
+    region: rankRegionFilter?.region,
+    regionCode: rankRegionFilter?.regionCode,
     customDate,
     customRangeStart,
     customRangeEnd,
-  }), [rankRegionLabel, revenuePeriod, customDate, customRangeStart, customRangeEnd]);
+  }), [rankRegionFilter, revenuePeriod, customDate, customRangeStart, customRangeEnd]);
   const { overview, isLoading, hasLoaded, errorMessage, retryLoad } = useHomeOverview(homeOverviewQuery);
 
   const handleRankRegionChange = useCallback((value: CascadeValue[]): void => {

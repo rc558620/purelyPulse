@@ -384,8 +384,9 @@
   border-radius: 50%;
 }
 
-// 合伙人绿点（呼吸动画）
-.partnerDot {
+// 在线绿点（呼吸动画）：头像右下角
+// 在线由后端按「最近 10 分钟有鉴权请求」判定，前端只透传 isOnline
+.onlineDot {
   position: absolute;
   bottom: 1px;
   right: 1px;
@@ -394,9 +395,9 @@
   border-radius: 50%;
   background: #16a34a;
   border: 2px solid #fff;
-  animation: partnerDotPulse 2s ease-in-out infinite;
+  animation: onlineDotPulse 2s ease-in-out infinite;
 
-  @keyframes partnerDotPulse {
+  @keyframes onlineDotPulse {
     0%, 100% {
       box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.5);
     }

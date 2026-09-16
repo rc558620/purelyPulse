@@ -16,12 +16,14 @@ import type {
 } from '../partnerBeans/partnerBeans.shared.types';
 import type {
   ClubMemberStats,
+  LockedPriceSource,
   MemberDetail,
   MemberFilterExpiry,
   MemberLevel,
   MemberListItem,
   MemberListQuery,
   MemberListStats,
+  MemberLockedPrice,
   MemberSalesStats,
   MemberStatus,
   MemberStatusSyncPayload,
@@ -40,6 +42,10 @@ const PARTNER_BEANS_API_PATH = resolveEnvPath(import.meta.env.VITE_PARTNER_BEANS
 const ADJUST_MEMBER_POINTS_API_PATH = resolveEnvPath(import.meta.env.VITE_ADJUST_MEMBER_POINTS_API_PATH, '/pulse/membership/admin/members/{id}/points/adjust');
 const ADJUST_PARTNER_BEANS_API_PATH = resolveEnvPath(import.meta.env.VITE_ADJUST_PARTNER_BEANS_API_PATH, '/pulse/membership/admin/members/{id}/beans/adjust');
 const SET_MEMBERSHIP_API_PATH = resolveEnvPath(import.meta.env.VITE_SET_MEMBERSHIP_API_PATH, '/pulse/membership/admin/members/{id}/membership');
+const RESET_MEMBER_LOCKED_PRICE_API_PATH = resolveEnvPath(
+  import.meta.env.VITE_RESET_MEMBER_LOCKED_PRICE_API_PATH,
+  '/pulse/membership/admin/members/{id}/locked-price/reset',
+);
 const MEMBER_BAN_API_PATH = resolveEnvPath(import.meta.env.VITE_MEMBER_BAN_API_PATH, '/pulse/membership/admin/members/{id}/ban');
 const MEMBER_UNBAN_API_PATH = resolveEnvPath(import.meta.env.VITE_MEMBER_UNBAN_API_PATH, '/pulse/membership/admin/members/{id}/unban');
 const MEMBER_CANCEL_API_PATH = resolveEnvPath(import.meta.env.VITE_MEMBER_CANCEL_API_PATH, '/pulse/membership/admin/members/{id}/cancel');
@@ -112,6 +118,8 @@ interface PulseServerMemberListItemLike {
   totalRechargedDisplay: string;
   registeredAt: number;
   lastActiveAt: number;
+  /** 是否在线（后端按「最近 10 分钟内有鉴权请求」判定）。 */
+  isOnline?: boolean;
   partnerLevel?: string;
   invitedCount?: number;
   rechargeCount?: number;
@@ -121,10 +129,20 @@ interface PulseServerMemberListItemLike {
   membershipExpireAt?: number | null;
 }
 
+interface PulseServerLockedPriceLike {
+  planId?: string;
+  price?: number;
+  priceDisplay?: string;
+  source?: string;
+  lockedAt?: number;
+}
+
 interface PulseServerMemberDetailLike extends PulseServerMemberListItemLike {
   totalPointsEarned: number;
   rechargeHistory: PulseServerRechargeRecordLike[];
   membershipExpiry?: number | null;
+  /** 首购锁定价快照（后端 PulseMemberDetailDto.lockedPrices）。 */
+  lockedPrices?: PulseServerLockedPriceLike[];
 }
 
 type SubAccountStatusValue = 'active' | 'inactive' | 'disabled';
@@ -317,7 +335,61 @@ const mapServerMemberListItem = (value: PulseServerMemberListItemLike): MemberLi
   rechargeCount: normalizeOptionalCount(value.rechargeCount),
   remark: normalizeOptionalString(value.remark),
   membershipExpiry: resolveMembershipExpiry(value as unknown as Record<string, unknown>),
+  isOnline: resolveMemberOnline(value),
 });
+
+// ─── 首购锁定价映射 ────────────────────────────────────────────────────────
+
+/** 档位展示名：与商家端文案保持一致（永久档位统一展示为 AGES会员）。 */
+const LOCKED_PRICE_PLAN_NAMES: Record<string, string> = {
+  monthly: '月度会员',
+  quarterly: '季度会员',
+  yearly: '年度会员',
+  lifetime: 'AGES会员',
+};
+
+const LOCKED_PRICE_SOURCE_LABELS: Record<LockedPriceSource, string> = {
+  purchase: '商家续费成交',
+  admin: '平台设置等级',
+};
+
+const normalizeLockedPriceSource = (value: string): LockedPriceSource =>
+  value === 'admin' ? 'admin' : 'purchase';
+
+/** 缺少档位或价格展示值（后端已格式化）时丢弃该条，避免渲染空行。 */
+const mapLockedPriceItem = (value: unknown): MemberLockedPrice | null => {
+  const planId = pickStringField(value, ['planId', 'plan']);
+  const priceDisplay = pickStringField(value, ['priceDisplay', 'priceText']);
+  if (!planId || !priceDisplay) {
+    return null;
+  }
+
+  const source = normalizeLockedPriceSource(pickStringField(value, ['source']));
+
+  return {
+    planId,
+    planName: LOCKED_PRICE_PLAN_NAMES[planId] ?? planId,
+    priceDisplay,
+    source,
+    sourceLabel: LOCKED_PRICE_SOURCE_LABELS[source],
+    lockedAt: pickNumberField(value, ['lockedAt', 'lockedAtMs']),
+  };
+};
+
+const resolveLockedPrices = (value: unknown): MemberLockedPrice[] => {
+  const source = isPlainObject(value) ? value.lockedPrices : null;
+
+  return (Array.isArray(source) ? source : [])
+    .map((item) => mapLockedPriceItem(item))
+    .filter((item): item is MemberLockedPrice => item !== null);
+};
+
+/**
+ * 是否在线：以后端下发的 `isOnline` 为准（服务端时钟与写入方一致，避免客户端时钟/时区误差）。
+ * 字段缺失（旧后端）时按离线处理，不做本地推算，避免误标在线。
+ */
+const resolveMemberOnline = (value: unknown): boolean =>
+  isPlainObject(value) ? pickBooleanField(value, ['isOnline']) : false;
 
 const mapServerMemberDetail = (value: PulseServerMemberDetailLike): MemberDetail => ({
   ...mapServerMemberListItem(value),
@@ -327,6 +399,7 @@ const mapServerMemberDetail = (value: PulseServerMemberDetailLike): MemberDetail
   rechargeHistory: value.rechargeHistory.map((record) => mapServerRechargeRecord(record)),
   membershipExpiry: resolveMembershipExpiry(value as unknown as Record<string, unknown>),
   subAccountCapability: mapSubAccountCapability(value),
+  lockedPrices: resolveLockedPrices(value),
 });
 
 // 从后端响应结构中提取统计数据，前端不再 reduce 累加。
@@ -833,6 +906,7 @@ const mapMemberListItem = (value: unknown, index: number): MemberListItem => {
     rechargeCount: pickNumberField(value, ['rechargeCount', 'rechargeTimes', 'payCount']) || undefined,
     remark: pickStringField(value, REMARK_CANDIDATES) || undefined,
     membershipExpiry: isPlainObject(value) ? resolveMembershipExpiry(value) : undefined,
+    isOnline: resolveMemberOnline(value),
   };
 };
 
@@ -860,6 +934,7 @@ const mapMemberDetail = (value: unknown): MemberDetail => {
     remark: pickStringField(value, REMARK_CANDIDATES) || undefined,
     membershipExpiry: isPlainObject(value) ? resolveMembershipExpiry(value) : undefined,
     subAccountCapability: mapSubAccountCapability(value),
+    lockedPrices: resolveLockedPrices(value),
   };
 };
 
@@ -1267,6 +1342,11 @@ export const submitMemberMembership = async (
     payload.confirmDowngradeToFree = true;
   } else {
     payload.membershipExpiry = membershipExpiry;
+    // 本次成交价：后端首次设置该档位时写入「首购锁定价」，供有子账号的门店按首单价续费
+    const priceDisplay = options?.amountDisplay?.trim();
+    if (priceDisplay) {
+      payload.priceDisplay = priceDisplay;
+    }
   }
 
   await http.post<unknown, Record<string, unknown>>(requestTarget.url, payload, {
@@ -1293,6 +1373,21 @@ export const submitMemberMembership = async (
       createdAt: Date.now(),
     });
   }
+};
+
+/**
+ * 重置会员「首购锁定价」。
+ *
+ * 重置后该门店所有档位的锁定价被清除，下一次成交（商家端下单 / 设置会员等级）
+ * 会重新锁定价格；关闭子账号能力时后端也会自动重置。
+ */
+export const resetMemberLockedPrice = async (memberId: string): Promise<void> => {
+  const requestTarget = resolveMemberActionPath(RESET_MEMBER_LOCKED_PRICE_API_PATH, memberId);
+  await http.post<unknown, Record<string, unknown>>(requestTarget.url, { memberId }, {
+    params: requestTarget.params,
+    skipGlobalErrorHandler: true,
+    errorMessage: '重置锁定价失败，请稍后重试',
+  });
 };
 
 /** 提交会员封禁。 */
