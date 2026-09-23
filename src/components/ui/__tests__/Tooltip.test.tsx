@@ -28,6 +28,7 @@
  *    19. color="purple" 时含 tooltip-purple class
  *  ─ className 透传
  *    20. 自定义 className 附加到 tooltip 节点上
+ *    21. triggerClassName 附加到触发器节点上（而非气泡）
  *  ─ ReactNode title
  *    21. title 支持 ReactNode（渲染 JSX 内容）
  *  ─ 卸载清理
@@ -194,6 +195,15 @@ describe('Tooltip – className 透传', () => {
         renderTooltip({ className: 'my-tooltip' });
         const tooltip = screen.getByRole('tooltip', { hidden: true });
         expect(tooltip.className).toContain('my-tooltip');
+    });
+
+    it('triggerClassName 附加到触发器节点上（而非气泡）', () => {
+        renderTooltip({ triggerClassName: 'my-trigger' });
+        const tooltip = screen.getByRole('tooltip', { hidden: true });
+        const trigger = tooltip.parentElement;
+
+        expect(trigger?.className).toContain('my-trigger');
+        expect(tooltip.className).not.toContain('my-trigger');
     });
 });
 

@@ -1,4 +1,4 @@
-// 全局通知堆栈容器样式（固定右上角，移动端优先）
+// 全局通知堆栈容器样式（默认固定右上角，移动端优先）
 .stack {
   position: fixed;
   z-index: 1200;
@@ -14,5 +14,44 @@
     top: 1.2rem;
     right: 1rem;
     width: calc(100vw - 2rem);
+  }
+}
+
+// 右下角停靠：自助下单等轻量新订单通知使用，避免遮挡右上角的运营类通知
+.stackBottomRight {
+  top: auto;
+  bottom: 1.6rem;
+
+  @media (max-width: 768px) {
+    top: auto;
+    bottom: 1.2rem;
+  }
+}
+
+// 左上角停靠：服务呼叫等运营类通知使用，卡片从左侧滑入
+.stackTopLeft {
+  left: 1.6rem;
+  right: auto;
+
+  // 提高选择器权重，覆盖卡片外壳自带的「从右侧滑入」动画
+  &.stack > * {
+    animation: noticeSlideInFromLeft 0.3s ease-out;
+  }
+
+  @media (max-width: 768px) {
+    left: 1rem;
+    right: auto;
+  }
+}
+
+@keyframes noticeSlideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }

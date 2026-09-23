@@ -7,6 +7,15 @@ interface AnimatedNumberProps {
   triggerKey: string;
   className?: string;
   itemClassName?: string;
+  /**
+   * 首次数值变化时跳过滑入动画，直接展示最终值。
+   *
+   * 首屏场景必须开启：数据到达前组件渲染的是占位值（如 0），数据到达后
+   * triggerKey 变化会播放 500ms 的 slideIn。LCP 元素（大号数字）会被这段
+   * 入场动画推迟判定，实测是首屏 LCP 被拖后的主要原因。
+   * 之后用户主动切换（切周期等）仍保留动效。
+   */
+  skipFirstChange?: boolean;
 }
 
 interface AnimatedItem {
@@ -68,8 +77,11 @@ const AnimatedNumber: React.FC<AnimatedNumberProps> = ({
   triggerKey,
   className,
   itemClassName,
+  skipFirstChange = false,
 }): React.ReactElement => {
   const reducedMotion = useRef(prefersReducedMotion());
+  // 记录是否已经发生过一次 triggerKey 变化，用于 skipFirstChange 判定
+  const hasChangedRef = useRef(false);
 
   const [state, dispatch] = useReducer(reducer, {
     items: [{ key: triggerKey, value }],
@@ -78,15 +90,17 @@ const AnimatedNumber: React.FC<AnimatedNumberProps> = ({
   });
 
   // 响应 triggerKey 或 value 变化（在 effect 中派发，避免 render 阶段 setState 的双重渲染）
-  // prefers-reduced-motion 开启时跳过动画，直接更新为最新值
+  // prefers-reduced-motion 开启，或 skipFirstChange 且尚未变化过时，跳过动画直接更新为最新值
   useEffect(() => {
     if (triggerKey !== state.lastTriggerKey) {
-      if (reducedMotion.current) {
-        // 降级：直接替换为新值，无动画
+      const skipAnimation = reducedMotion.current || (skipFirstChange && !hasChangedRef.current);
+      if (skipAnimation) {
+        // 降级：直接替换为新值，无动画（首屏关键路径，避免推迟 LCP）
         dispatch({ type: 'VALUE_CHANGE', triggerKey, value });
       } else {
         dispatch({ type: 'TRIGGER_CHANGE', triggerKey, value });
       }
+      hasChangedRef.current = true;
     } else if (value !== state.lastValue) {
       dispatch({ type: 'VALUE_CHANGE', triggerKey, value });
     }

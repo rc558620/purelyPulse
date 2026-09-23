@@ -117,6 +117,7 @@ export function SelectView(props: SelectViewProps): React.JSX.Element {
     searchable = true,
     searchPlaceholder = '搜索',
     displayMode,
+    popupPlacement = 'bottom',
     prefix,
     status,
     allowClear = false,
@@ -268,6 +269,7 @@ export function SelectView(props: SelectViewProps): React.JSX.Element {
         visible && (
           <SelectPcDropdown
             isClosing={isClosing}
+            popupPlacement={popupPlacement}
             onAnimationEnd={handleAnimationEnd}
             {...panelSharedProps}
           />

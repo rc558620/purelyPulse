@@ -129,7 +129,13 @@ const DatePicker: React.FC<DatePickerProps> = ({
   const touchDeltaY  = useRef(0);
 
   // PC端下拉位置状态（Portal + fixed 定位，避免被父容器 overflow 裁切）
-  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number } | null>(null);
+  // top / bottom 二选一：向上弹出时必须用 bottom 贴住触发器上边，
+  // 否则 position:fixed 下同时给 top 会让面板从触发器顶部「向下」展开，反而盖住下方。
+  const [dropdownPos, setDropdownPos] = useState<{
+    top?: number;
+    bottom?: number;
+    left: number;
+  } | null>(null);
 
   // ── 受控/非受控状态 ──
   const [internalValue, setInternalValue] = useState<string | null>(defaultValue ?? null);
@@ -272,12 +278,13 @@ const DatePicker: React.FC<DatePickerProps> = ({
     const el = wrapperRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    setDropdownPos({
-      top: popupPlacement === 'top'
-        ? rect.top - 6
-        : rect.bottom + 6,
-      left: rect.left,
-    });
+    // 向上弹出：用 bottom 定位（fixed 下相对视口底边），让面板整体落在触发器上方；
+    // 若只设 top，panel 会从触发器顶部向下展开，视觉上仍是「向下弹」。
+    setDropdownPos(
+      popupPlacement === 'top'
+        ? { bottom: window.innerHeight - rect.top + 6, left: rect.left }
+        : { top: rect.bottom + 6, left: rect.left },
+    );
   }, [effectiveIsMobile, visible, isClosing, popupPlacement]);
 
   // ── 显示文本格式化 ──
@@ -454,7 +461,8 @@ const DatePicker: React.FC<DatePickerProps> = ({
           className={`${styles.dropdown}${isDatetimeMode ? ` ${styles.dropdownDatetime}` : ''}${popupPlacement === 'top' ? ` ${styles.dropdownTop}` : ` ${styles.dropdownBottom}`}${isClosing ? ` ${styles.dropdownClosing}` : ''}`}
           style={{
             position: 'fixed',
-            top: dropdownPos?.top ?? 0,
+            top: dropdownPos?.top ?? 'auto',
+            bottom: dropdownPos?.bottom ?? 'auto',
             left: dropdownPos?.left ?? 0,
           }}
           onAnimationEnd={handleAnimationEnd}

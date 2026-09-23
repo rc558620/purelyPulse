@@ -17,6 +17,8 @@ interface DurationOption {
   label: string;
   shortLabel: string;
   desc: string;
+  /** 新用户额度说明文案，展示在 desc（xxx 天订阅）下一行 */
+  quotaText: string;
   daysBase: number;
   color: string;
   gradientFrom: string;
@@ -165,6 +167,9 @@ const SetMembershipSelectStep: React.FC<SetMembershipSelectStepProps> = ({
                 {option.label}
               </span>
               <span className={styles.durationDesc}>{option.desc}</span>
+              {option.quotaText ? (
+                <span className={styles.durationQuota}>{option.quotaText}</span>
+              ) : null}
             </button>
           );
         })}

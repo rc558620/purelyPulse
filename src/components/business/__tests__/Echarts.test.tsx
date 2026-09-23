@@ -15,30 +15,55 @@
  *  ─ option 更新
  *    9.  option prop 变更后再次调用 setOption
  *    10. setOption 的参数为新的 option 对象
- *    11. option 更新时使用 notMerge=true 全量替换配置
+ *    11. option 更新时使用 replaceMerge 替换 series（保留组件状态与过渡动画）
  *    12. option 未变更时 setOption 不重复调用（memo 阻止重渲染）
  *  ─ ResizeObserver
- *    12. 挂载后 ResizeObserver 对容器进行 observe
- *    13. 触发 resize 时 chartInstance.resize() 被调用
+ *    13. 挂载后 ResizeObserver 对容器进行 observe
+ *    14. 尺寸未变化（RO 初始通知）时跳过 resize
+ *    15. 容器尺寸变化后 chartInstance.resize() 被调用
  *  ─ 卸载清理
  *    14. 卸载时 ResizeObserver.disconnect 被调用
  *    15. 卸载时 chartInstance.dispose 被调用
  *  ─ 空 option
  *    16. 传入空 option={} 时不抛出异常
- *  ─ EventTarget.prototype.addEventListener 补丁
- *    17. 挂载后 addEventListener patch 被还原（不影响后续测试）
+ *  ─ addEventListener（已移除 passive 补丁，仅做回归保护）
+ *    17. 挂载后 EventTarget.prototype.addEventListener 未被改写
+ *  ─ 默认高度 / aria-label / onChartReady
+ *    18. 未传 style.height 时兜底 300px
+ *    19. style.height 小于 300px 时不被 min-height 覆盖
+ *    20. 支持自定义 aria-label
+ *    21. 实例创建后触发 onChartReady
+ *  ─ theme / opts / loading / ref / dpr
+ *    22. theme 与 opts 透传给 init，opts 内容变化才重建
+ *    23. loading 切换时 showLoading / hideLoading
+ *    24. ref.getChartInstance() 暴露实例
+ *    25. dpr 变化后重新 init
  */
 
+import { createRef } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, act } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 
-const { mockSetOption, mockResize, mockDispose, mockIsDisposed, mockOn, mockOff, mockInit, mockUse } = vi.hoisted(() => {
+const {
+    mockSetOption,
+    mockResize,
+    mockDispose,
+    mockIsDisposed,
+    mockOn,
+    mockOff,
+    mockShowLoading,
+    mockHideLoading,
+    mockInit,
+    mockUse,
+} = vi.hoisted(() => {
     const mockSetOption = vi.fn();
     const mockResize = vi.fn();
     const mockDispose = vi.fn();
     const mockIsDisposed = vi.fn(() => false);
     const mockOn = vi.fn();
     const mockOff = vi.fn();
+    const mockShowLoading = vi.fn();
+    const mockHideLoading = vi.fn();
     const mockChartInstance = {
         setOption: mockSetOption,
         resize: mockResize,
@@ -46,6 +71,8 @@ const { mockSetOption, mockResize, mockDispose, mockIsDisposed, mockOn, mockOff,
         isDisposed: mockIsDisposed,
         on: mockOn,
         off: mockOff,
+        showLoading: mockShowLoading,
+        hideLoading: mockHideLoading,
     };
     const mockInit = vi.fn(() => mockChartInstance);
     const mockUse = vi.fn();
@@ -57,23 +84,31 @@ const { mockSetOption, mockResize, mockDispose, mockIsDisposed, mockOn, mockOff,
         mockIsDisposed,
         mockOn,
         mockOff,
+        mockShowLoading,
+        mockHideLoading,
         mockInit,
         mockUse,
     };
 });
 
 vi.mock('echarts/core', () => ({
-    init: (el: unknown) => (mockInit as (a: unknown) => Record<string, unknown>)(el),
+    init: (...args: unknown[]) => (mockInit as (...a: unknown[]) => Record<string, unknown>)(...args),
     use: (...args: unknown[]) => (mockUse as (...a: unknown[]) => void)(...args),
 }));
 
-import Echarts from '../Echarts/Echarts';
+import Echarts, { type EchartsRef } from '../Echarts/Echarts';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // mock ResizeObserver
 // ─────────────────────────────────────────────────────────────────────────────
 let capturedObserveCallback: (() => void) | null = null;
 let capturedObserveTarget: Element | null = null;
+
+/** jsdom 下 clientWidth/clientHeight 恒为 0，用 defineProperty 模拟尺寸变化 */
+const setContainerSize = (el: Element, width: number, height: number): void => {
+    Object.defineProperty(el, 'clientWidth', { value: width, configurable: true });
+    Object.defineProperty(el, 'clientHeight', { value: height, configurable: true });
+};
 
 const mockObserve = vi.fn((target: Element) => {
     capturedObserveTarget = target;
@@ -103,6 +138,8 @@ beforeEach(() => {
     mockIsDisposed.mockReturnValue(false);
     mockOn.mockClear();
     mockOff.mockClear();
+    mockShowLoading.mockClear();
+    mockHideLoading.mockClear();
     mockInit.mockClear();
     mockObserve.mockClear();
     mockDisconnect.mockClear();
@@ -153,7 +190,7 @@ describe('Echarts – 挂载时初始化', () => {
     it('echarts.init 传入的是容器 div 元素（HTMLDivElement）', () => {
         const { container } = render(<Echarts option={{}} />);
         const div = container.firstChild as HTMLDivElement;
-        expect(mockInit).toHaveBeenCalledWith(div);
+        expect(mockInit).toHaveBeenCalledWith(div, undefined, undefined);
     });
 
     it('模块初始化时已注册按需图表能力', () => {
@@ -206,7 +243,7 @@ describe('Echarts – option 更新', () => {
         expect(lastCall[0]).toEqual(option2);
     });
 
-    it('option 更新时第二次 setOption 使用 notMerge=true', () => {
+    it('默认策略（merge）下第二次 setOption 使用 replaceMerge 差分过渡', () => {
         const option1 = { title: { text: '图表一' } };
         const option2 = { title: { text: '图表二' } };
 
@@ -214,7 +251,25 @@ describe('Echarts – option 更新', () => {
         rerender(<Echarts option={option2} />);
 
         const lastCall = mockSetOption.mock.calls[mockSetOption.mock.calls.length - 1];
-        expect(lastCall[1]).toEqual(expect.objectContaining({ notMerge: true, lazyUpdate: true }));
+        expect(lastCall[1]).toEqual(expect.objectContaining({
+            notMerge: false,
+            lazyUpdate: false,
+            replaceMerge: ['series'],
+        }));
+    });
+
+    it('updateStrategy="full" 时使用 notMerge:true 全量替换', () => {
+        const option1 = { title: { text: '图表一' } };
+        const option2 = { title: { text: '图表二' } };
+
+        const { rerender } = render(<Echarts option={option1} updateStrategy="full" />);
+        rerender(<Echarts option={option2} updateStrategy="full" />);
+
+        const lastCall = mockSetOption.mock.calls[mockSetOption.mock.calls.length - 1];
+        expect(lastCall[1]).toEqual(expect.objectContaining({
+            notMerge: true,
+            lazyUpdate: false,
+        }));
     });
 
     it('同一 option 引用 rerender 时 setOption 不额外调用', () => {
@@ -241,14 +296,41 @@ describe('Echarts – ResizeObserver', () => {
         expect(capturedObserveTarget).toBe(div);
     });
 
-    it('跳过首次 resize callback 后，后续回调会触发 chartInstance.resize()', async () => {
+    it('尺寸未变化（RO 初始通知）时跳过 resize，不打断入场动画', async () => {
         render(<Echarts option={{}} />);
         expect(capturedObserveCallback).not.toBeNull();
 
-        act(() => {
+        await act(async () => {
             capturedObserveCallback?.();
+            await new Promise((resolve) => requestAnimationFrame(() => resolve(undefined)));
         });
+
         expect(mockResize).toHaveBeenCalledTimes(0);
+    });
+
+    it('容器尺寸变化后触发 chartInstance.resize()', async () => {
+        const { container } = render(<Echarts option={{}} />);
+        const div = container.firstChild as HTMLDivElement;
+
+        await act(async () => {
+            setContainerSize(div, 800, 300);
+            capturedObserveCallback?.();
+            await new Promise((resolve) => requestAnimationFrame(() => resolve(undefined)));
+        });
+
+        expect(mockResize).toHaveBeenCalledTimes(1);
+    });
+
+    it('容器初始为 0 尺寸（隐藏/折叠）时，首次真实变化不被跳过', async () => {
+        const { container } = render(<Echarts option={{}} />);
+        const div = container.firstChild as HTMLDivElement;
+
+        // init 时尺寸为 0，第一次通知即真实变化，必须触发 resize
+        await act(async () => {
+            capturedObserveCallback?.();
+            await new Promise((resolve) => requestAnimationFrame(() => resolve(undefined)));
+        });
+        setContainerSize(div, 640, 300);
 
         await act(async () => {
             capturedObserveCallback?.();
@@ -298,12 +380,18 @@ describe('Echarts – 空 option', () => {
     });
 });
 
-// ─── 7. EventTarget.prototype.addEventListener 补丁还原 ──────────────────────
-describe('Echarts – addEventListener 补丁还原', () => {
-    it('挂载后 EventTarget.prototype.addEventListener 被还原为原始函数', () => {
+// ─── 7. addEventListener 未被 patch ──────────────────────────────────────────
+describe('Echarts – 不 patch addEventListener', () => {
+    it('挂载后 EventTarget.prototype.addEventListener 未被改写', () => {
         const origAddEventListener = EventTarget.prototype.addEventListener;
         render(<Echarts option={{}} />);
         expect(EventTarget.prototype.addEventListener).toBe(origAddEventListener);
+    });
+
+    it('挂载后容器元素未被写入 own addEventListener 属性', () => {
+        const { container } = render(<Echarts option={{}} />);
+        const div = container.firstChild as HTMLDivElement;
+        expect(Object.prototype.hasOwnProperty.call(div, 'addEventListener')).toBe(false);
     });
 
     it('卸载后 EventTarget.prototype.addEventListener 仍然正常', () => {
@@ -480,12 +568,11 @@ describe('Echarts – memo 比较器', () => {
 describe('Echarts – disposed 后 resize 安全', () => {
     it('isDisposed() 返回 true 时，ResizeObserver 回调不调用 resize()', async () => {
         mockIsDisposed.mockReturnValue(true);
-        render(<Echarts option={{}} />);
-
-        // 跳过第一次回调
-        act(() => { capturedObserveCallback?.(); });
+        const { container } = render(<Echarts option={{}} />);
+        const div = container.firstChild as HTMLDivElement;
 
         await act(async () => {
+            setContainerSize(div, 800, 300);
             capturedObserveCallback?.();
             await new Promise((resolve) => requestAnimationFrame(() => resolve(undefined)));
         });
@@ -496,7 +583,6 @@ describe('Echarts – disposed 后 resize 安全', () => {
     it('卸载后 ResizeObserver 回调不崩溃', async () => {
         const { unmount } = render(<Echarts option={{}} />);
 
-        // 跳过第一次
         act(() => { capturedObserveCallback?.(); });
 
         unmount();
@@ -526,5 +612,163 @@ describe('Echarts – disposed 后 resize 安全', () => {
         // 新实例应正常初始化并调用 setOption
         expect(mockInit).toHaveBeenCalledTimes(1);
         expect(mockSetOption).toHaveBeenCalledWith(option2, expect.objectContaining({}));
+    });
+});
+
+// ─── 13. 默认高度 / 无障碍 ───────────────────────────────────────────────────
+describe('Echarts – 默认高度与无障碍', () => {
+    it('未传 style 时兜底高度为 300px', () => {
+        const { container } = render(<Echarts option={{}} />);
+        expect((container.firstChild as HTMLElement).style.height).toBe('300px');
+    });
+
+    it('style.height 小于 300px 时不被 min-height 覆盖', () => {
+        const { container } = render(<Echarts option={{}} style={{ height: '200px' }} />);
+        expect((container.firstChild as HTMLElement).style.height).toBe('200px');
+    });
+
+    it('默认 aria-label 为「数据图表」', () => {
+        render(<Echarts option={{}} />);
+        expect(screen.getByRole('img')).toHaveAttribute('aria-label', '数据图表');
+    });
+
+    it('支持自定义 aria-label', () => {
+        render(<Echarts option={{}} ariaLabel="销售趋势" />);
+        expect(screen.getByRole('img')).toHaveAttribute('aria-label', '销售趋势');
+    });
+});
+
+// ─── 14. onChartReady ───────────────────────────────────────────────────────
+describe('Echarts – onChartReady', () => {
+    it('实例创建完成后触发 onChartReady 并传入实例', () => {
+        const onChartReady = vi.fn();
+        render(<Echarts option={{}} onChartReady={onChartReady} />);
+        expect(onChartReady).toHaveBeenCalledTimes(1);
+        expect(onChartReady).toHaveBeenCalledWith(
+            expect.objectContaining({ setOption: mockSetOption }),
+        );
+    });
+
+    it('未传 onChartReady 时不抛异常', () => {
+        expect(() => render(<Echarts option={{}} />)).not.toThrow();
+    });
+});
+
+// ─── 15. theme / opts ───────────────────────────────────────────────────────
+describe('Echarts – theme / opts', () => {
+    it('theme 与 opts 透传给 echarts.init', () => {
+        const { container } = render(
+            <Echarts option={{}} theme="dark" opts={{ devicePixelRatio: 2 }} />,
+        );
+        const div = container.firstChild as HTMLDivElement;
+        expect(mockInit).toHaveBeenCalledWith(div, 'dark', { devicePixelRatio: 2 });
+    });
+
+    it('opts 内容相同但引用不同时不重建实例', () => {
+        const { rerender } = render(<Echarts option={{}} opts={{ devicePixelRatio: 2 }} />);
+        const callsBefore = mockInit.mock.calls.length;
+
+        rerender(<Echarts option={{}} opts={{ devicePixelRatio: 2 }} />);
+        expect(mockInit.mock.calls.length).toBe(callsBefore);
+    });
+
+    it('opts 内容变化时销毁旧实例并重建', () => {
+        const { rerender } = render(<Echarts option={{}} opts={{ devicePixelRatio: 1 }} />);
+        mockInit.mockClear();
+        mockDispose.mockClear();
+
+        rerender(<Echarts option={{}} opts={{ devicePixelRatio: 2 }} />);
+
+        expect(mockDispose).toHaveBeenCalledTimes(1);
+        expect(mockInit).toHaveBeenCalledTimes(1);
+    });
+});
+
+// ─── 16. loading ────────────────────────────────────────────────────────────
+describe('Echarts – loading', () => {
+    it('loading=true 时调用 showLoading', () => {
+        render(<Echarts option={{}} loading />);
+        expect(mockShowLoading).toHaveBeenCalledTimes(1);
+    });
+
+    it('loadingOptions 透传给 showLoading', () => {
+        const loadingOptions = { text: '加载中' };
+        render(<Echarts option={{}} loading loadingOptions={loadingOptions} />);
+        expect(mockShowLoading).toHaveBeenCalledWith(loadingOptions);
+    });
+
+    it('loading 从 true 变 false 时调用 hideLoading', () => {
+        const { rerender } = render(<Echarts option={{}} loading />);
+        mockHideLoading.mockClear();
+
+        rerender(<Echarts option={{}} loading={false} />);
+        expect(mockHideLoading).toHaveBeenCalledTimes(1);
+    });
+
+    it('从未展示 loading 时不调用 hideLoading', () => {
+        render(<Echarts option={{}} />);
+        expect(mockHideLoading).not.toHaveBeenCalled();
+    });
+});
+
+// ─── 17. ref 实例暴露 ───────────────────────────────────────────────────────
+describe('Echarts – ref 实例暴露', () => {
+    it('ref.getChartInstance() 返回当前实例', () => {
+        const ref = createRef<EchartsRef>();
+        render(<Echarts option={{}} ref={ref} />);
+
+        expect(ref.current?.getChartInstance()).toBe(
+            mockInit.mock.results[0]?.value,
+        );
+    });
+
+    it('卸载后 ref 被 React 置空，不再持有已销毁实例', () => {
+        const ref = createRef<EchartsRef>();
+        const { unmount } = render(<Echarts option={{}} ref={ref} />);
+        expect(ref.current?.getChartInstance()).toBeDefined();
+
+        unmount();
+        expect(ref.current).toBeNull();
+        expect(mockDispose).toHaveBeenCalledTimes(1);
+    });
+});
+
+// ─── 18. dpr 变化重建实例 ───────────────────────────────────────────────────
+describe('Echarts – dpr 变化', () => {
+    it('dpr 变化后重新 init（避免画布停留在旧清晰度）', async () => {
+        const listeners: Array<() => void> = [];
+        const originalMatchMedia = window.matchMedia;
+        const originalDpr = window.devicePixelRatio;
+
+        Object.defineProperty(window, 'devicePixelRatio', { value: 1, configurable: true });
+        Object.defineProperty(window, 'matchMedia', {
+            value: () => ({
+                matches: false,
+                addEventListener: (_type: string, cb: () => void) => { listeners.push(cb); },
+                removeEventListener: vi.fn(),
+            }),
+            configurable: true,
+        });
+
+        try {
+            render(<Echarts option={{}} />);
+            expect(mockInit).toHaveBeenCalledTimes(1);
+
+            Object.defineProperty(window, 'devicePixelRatio', { value: 2, configurable: true });
+            await act(async () => {
+                listeners.forEach((cb) => cb());
+            });
+
+            expect(mockInit).toHaveBeenCalledTimes(2);
+        } finally {
+            Object.defineProperty(window, 'matchMedia', {
+                value: originalMatchMedia,
+                configurable: true,
+            });
+            Object.defineProperty(window, 'devicePixelRatio', {
+                value: originalDpr,
+                configurable: true,
+            });
+        }
     });
 });

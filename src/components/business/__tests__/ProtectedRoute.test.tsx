@@ -31,7 +31,7 @@
 
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import ProtectedRoute from '../ProtectedRoute/index';
 
@@ -520,7 +520,11 @@ describe('ProtectedRoute – check 函数调用时机', () => {
         expect(check).toHaveBeenCalled();
     });
 
-    it('rerender 时 check 再次被调用', () => {
+    // check() 被 useMemo 记忆化（依赖 check 引用 + recheckToken），
+    // 因此单纯 rerender 不会重复求值——这是有意设计：
+    // 本项目启用 React Compiler，未显式声明依赖时 check() 的结果会被缓存，
+    // 外部数据源变化必须由 recheckSource 驱动。
+    it('check 引用与 recheckToken 均未变时，rerender 不重复调用 check', () => {
         const check = vi.fn(() => true);
         const { rerender } = renderRoute({ check });
         const callsBefore = check.mock.calls.length;
@@ -532,7 +536,47 @@ describe('ProtectedRoute – check 函数调用时机', () => {
                 </ProtectedRoute>
             </MemoryRouter>,
         );
-        expect(check.mock.calls.length).toBeGreaterThan(callsBefore);
+        expect(check.mock.calls.length).toBe(callsBefore);
+    });
+
+    it('check 引用变化时重新调用 check', () => {
+        const check1 = vi.fn(() => true);
+        const { rerender } = renderRoute({ check: check1 });
+
+        const check2 = vi.fn(() => true);
+        rerender(
+            <MemoryRouter>
+                <ProtectedRoute check={check2} fallback="/login">
+                    <span data-testid="protected-content">受保护内容</span>
+                </ProtectedRoute>
+            </MemoryRouter>,
+        );
+
+        expect(check1).toHaveBeenCalledTimes(1);
+        expect(check2).toHaveBeenCalledTimes(1);
+    });
+
+    it('recheckSource 快照变化时重新调用 check', () => {
+        let token = 0;
+        const listeners = new Set<() => void>();
+        const recheckSource = {
+            subscribe: (onStoreChange: () => void) => {
+                listeners.add(onStoreChange);
+                return () => { listeners.delete(onStoreChange); };
+            },
+            getSnapshot: () => token,
+        };
+        const check = vi.fn(() => true);
+
+        renderRoute({ check, recheckSource });
+        expect(check).toHaveBeenCalledTimes(1);
+
+        act(() => {
+            token += 1;
+            listeners.forEach((cb) => cb());
+        });
+
+        expect(check).toHaveBeenCalledTimes(2);
     });
 
     it('check 抛出异常时，异常向上冒泡（不被静默吞掉）', () => {

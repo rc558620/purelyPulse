@@ -407,7 +407,6 @@
 
 .select-dropdown-pc {
   position: absolute;
-  top: calc(100% + 4px);
   left: 0;
   right: 0;
   z-index: @z-dropdown-pc;
@@ -420,10 +419,9 @@
   max-height: 32rem;
   // 圆角裁切：防止顶部搜索框分隔线、选项 hover 背景、底部按钮区域在圆角处溢出露出方角
   overflow: hidden;
-  
-  // Ant Design 5 slide-up 动画：从顶部原点缩放展开，配合 ease-out-quint 缓动
+
+  // Ant Design 5 slide-up 动画：通过 transform-origin 控制展开方向
   // fill-mode: both 确保动画前保持 0% 帧、动画结束后保持 100% 帧，消除闪烁
-  transform-origin: 0% 0%;
   animation: antSlideUpIn 0.2s cubic-bezier(0.23, 1, 0.32, 1) both;
 
   @keyframes antSlideUpIn {
@@ -452,6 +450,18 @@
       opacity: 0;
     }
   }
+}
+
+// 向下弹出（默认）
+.dropdown-bottom {
+  top: calc(100% + 4px);
+  transform-origin: 0% 0%;
+}
+
+// 向上弹出
+.dropdown-top {
+  bottom: calc(100% + 4px);
+  transform-origin: 0% 100%;
 }
 
 /* PC 搜索框 */

@@ -31,6 +31,7 @@ PcOptionItem.displayName = 'PcOptionItem';
 
 const SelectPcDropdown: React.FC<SelectPcDropdownProps> = ({
   isClosing,
+  popupPlacement,
   isMultiple,
   filteredOptions,
   searchText,
@@ -50,6 +51,7 @@ const SelectPcDropdown: React.FC<SelectPcDropdownProps> = ({
   <div
     className={cx(
       styles['select-dropdown-pc'],
+      popupPlacement === 'top' ? styles['dropdown-top'] : styles['dropdown-bottom'],
       searchable && styles['with-search'],
       isClosing && styles.closing,
     )}

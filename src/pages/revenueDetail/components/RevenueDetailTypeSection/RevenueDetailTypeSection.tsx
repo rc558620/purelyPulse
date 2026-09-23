@@ -15,10 +15,12 @@ interface RevenueDetailTypeSectionProps {
   pieOption: echarts.EChartsOption;
 }
 
-// 饼图尺寸完全交给 .typePieWrap（响应式 140/180）决定：
-// 全局 .echartsContainer 的 min-height:300px 会把画布撑高，
-// 导致圆环中心与绝对定位的中心文字错位，这里显式覆盖。
-const PIE_CANVAS_STYLE: React.CSSProperties = { minHeight: 0 };
+// 饼图尺寸完全交给 .typePieWrap（响应式 140/180）决定。
+// 不传 height 时 ChartRenderer / Echarts 会兜底 DEFAULT_CHART_HEIGHT(300px)，
+// 画布变成「180 宽 × 300 高」：ECharts 按画布 50% 定位圆环中心（y=150），
+// 而中心文字按 .typePieWrap 居中（y=90），两者相差 (300-180)/2=60px 导致错位。
+// 这里显式 height:100%（覆盖兜底高度）+ minHeight:0，让画布与 wrap 完全同尺寸。
+const PIE_CANVAS_STYLE: React.CSSProperties = { height: '100%', minHeight: 0 };
 
 const RevenueDetailTypeSectionComponent = ({
   revenueTypes,

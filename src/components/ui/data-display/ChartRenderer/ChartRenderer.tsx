@@ -1,5 +1,6 @@
 import React, { Suspense, lazy, memo, useMemo } from 'react';
 import type { EChartsOption } from 'echarts';
+import { DEFAULT_CHART_HEIGHT } from '@components/business/Echarts/chart.constants';
 import ChartSkeleton from './ChartSkeleton';
 
 const Echarts = lazy(() => import('@components/business/Echarts/Echarts'));
@@ -43,9 +44,11 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({
   className,
   style,
 }): React.JSX.Element => {
-  const chartStyle = useMemo<React.CSSProperties | undefined>(() => {
-    if (height == null) return style;
-    return { ...style, height };
+  // 未传 height 时用默认高度兜底，且同时作用于骨架屏与图表，
+  // 保证 lazy-load 完成前后尺寸完全一致（否则会出现高度跳变）
+  const chartStyle = useMemo<React.CSSProperties>(() => {
+    const resolvedHeight = height ?? DEFAULT_CHART_HEIGHT;
+    return { height: resolvedHeight, ...style };
   }, [height, style]);
 
   return (

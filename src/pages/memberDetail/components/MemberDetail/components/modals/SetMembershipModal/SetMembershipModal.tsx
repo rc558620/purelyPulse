@@ -36,6 +36,8 @@ const BASE_DURATION_OPTIONS: {
   label: string;
   shortLabel: string;
   desc: string;
+  /** 新用户额度说明文案，展示在 desc（xxx 天订阅）下一行 */
+  quotaText: string;
   daysBase: number;
   color: string;
   gradientFrom: string;
@@ -46,6 +48,7 @@ const BASE_DURATION_OPTIONS: {
     label: '免费会员',
     shortLabel: '免费',
     desc: '基础权益',
+    quotaText: '新用户额度清零',
     daysBase: 0,
     color: '#94a3b8',
     gradientFrom: 'rgba(148,163,184,0.14)',
@@ -56,6 +59,7 @@ const BASE_DURATION_OPTIONS: {
     label: '月度会员',
     shortLabel: '月卡',
     desc: '30 天订阅',
+    quotaText: '50 位新客',
     daysBase: 30,
     color: '#3b82f6',
     gradientFrom: 'rgba(59,130,246,0.14)',
@@ -66,6 +70,7 @@ const BASE_DURATION_OPTIONS: {
     label: '季度会员',
     shortLabel: '季卡',
     desc: '90 天订阅',
+    quotaText: '100 位新客',
     daysBase: 90,
     color: '#84cc16',
     gradientFrom: 'rgba(132,204,22,0.14)',
@@ -76,6 +81,7 @@ const BASE_DURATION_OPTIONS: {
     label: '年度会员',
     shortLabel: '年卡',
     desc: '365 天订阅',
+    quotaText: '300 位新客',
     daysBase: 365,
     color: '#f59e0b',
     gradientFrom: 'rgba(245,158,11,0.14)',
@@ -86,6 +92,7 @@ const BASE_DURATION_OPTIONS: {
     label: '永久会员',
     shortLabel: '永久',
     desc: '',
+    quotaText: '300 位新客',
     daysBase: 0,
     color: '#a855f7',
     gradientFrom: 'rgba(168,85,247,0.14)',
@@ -369,6 +376,7 @@ const SetMembershipModal: React.FC<SetMembershipModalProps> = ({
             amountDefaultDisplay={amountDefaultDisplay}
             amountInput={amountInput}
             amountError={amountError}
+            quotaText={selectedOption.quotaText}
             onAmountChange={handleAmountChange}
             formatMembershipExpiry={formatMembershipExpiry}
           />

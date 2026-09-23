@@ -12,10 +12,24 @@ export interface TooltipProps {
   color?: TooltipColor;
   placement?: TooltipPlacement;
   children: React.ReactElement;
+  /** 气泡（浮层）自定义类名。 */
   className?: string;
+  /**
+   * 触发器（包裹 children 的外层 div）自定义类名。
+   * 触发器默认 `display: inline-flex`，作为 flex 子项时 `min-width: auto` 不会收缩，
+   * 内部 nowrap 文本会被撑开导致 ellipsis 失效，需要撑满宽度/允许收缩时用它覆盖。
+   */
+  triggerClassName?: string;
 }
 
-const Tooltip = memo(function Tooltip({ title, color, placement = 'bottom', children, className }: TooltipProps) {
+const Tooltip = memo(function Tooltip({
+  title,
+  color,
+  placement = 'bottom',
+  children,
+  className,
+  triggerClassName,
+}: TooltipProps) {
   const [visible, setVisible] = useState(false);
 
   // Use a delay for hiding to simulate AntD behavior
@@ -44,7 +58,7 @@ const Tooltip = memo(function Tooltip({ title, color, placement = 'bottom', chil
 
   return (
     <div
-      className={cx(styles.tooltipTrigger)}
+      className={cx(styles.tooltipTrigger, triggerClassName)}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >

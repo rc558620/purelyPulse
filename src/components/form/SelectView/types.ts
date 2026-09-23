@@ -30,6 +30,8 @@ interface SelectViewSharedProps {
   searchable?: boolean;
   searchPlaceholder?: string;
   displayMode?: SelectDisplayMode;
+  /** PC 端下拉面板弹出方向，默认向下。 */
+  popupPlacement?: 'bottom' | 'top';
   prefix?: React.ReactNode;
   status?: 'error' | undefined;
   allowClear?: boolean;
@@ -124,5 +126,6 @@ export interface SelectMobilePanelProps extends SelectPanelSharedProps {
 
 export interface SelectPcDropdownProps extends SelectPanelSharedProps {
   isClosing: boolean;
+  popupPlacement: 'bottom' | 'top';
   onAnimationEnd: () => void;
 }

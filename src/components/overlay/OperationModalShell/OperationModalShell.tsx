@@ -39,8 +39,8 @@ export interface OperationModalShellProps {
   ariaLabel: string;
   /** 标题左侧图标 */
   icon: ReactNode;
-  /** 标题文字 */
-  title: string;
+  /** 标题内容：需要局部染色时传 ReactNode（例如把临期天数标成紧急色） */
+  title: ReactNode;
   /** 确认按钮文字，默认"确认" */
   confirmText?: string;
   /** 确认按钮左侧图标，可选 */
@@ -73,9 +73,33 @@ export interface OperationModalShellProps {
   closeOnBackdropClick?: boolean;
 }
 
-// ─── 弹窗栈计数器（BUG-1：多实例 ESC 仅最顶层响应）─────────────────
+// ─── 弹窗栈（BUG-1：多实例 ESC 仅最顶层响应）─────────────────────
+//
+// ⚠️ 不要改回「Effect 内把计数器快照进 const」的写法。
+// React Compiler 会把那个 const 直接替换成模块变量本身（它认为该 const 未被重新赋值
+// 即可折叠），使 `myOrder !== openModalCount` 变成 `n !== n` 恒为 false——
+// 实测后果是：所有实例都通过守卫，而最先注册的实例调用 stopImmediatePropagation，
+// 于是 ESC 关掉的是**最底层**弹窗，顶层弹窗反而留着。
+//
+// 因此这里改成：注册时入栈、事件触发时再查谁在栈顶，并用 handler 自身引用做标识
+// （函数引用必须原样保留给 add/removeEventListener，编译器无法折叠）。
+const modalListenerStack: Array<(event: KeyboardEvent) => void> = [];
 
-let openModalCount = 0;
+const pushModalListener = (listener: (event: KeyboardEvent) => void): void => {
+  modalListenerStack.push(listener);
+};
+
+const popModalListener = (listener: (event: KeyboardEvent) => void): void => {
+  const index = modalListenerStack.indexOf(listener);
+  if (index >= 0) {
+    modalListenerStack.splice(index, 1);
+  }
+};
+
+/** 只有栈顶（最后注册）的弹窗才响应 ESC，避免穿透到下层 */
+const isTopModalListener = (listener: (event: KeyboardEvent) => void): boolean => (
+  modalListenerStack[modalListenerStack.length - 1] === listener
+);
 
 // ─── 组件 ──────────────────────────────────────────────────────
 
@@ -124,21 +148,18 @@ const OperationModalShell: React.FC<OperationModalShellProps> = ({
 
   // ─── BUG-1 + BUG-5: ESC 关闭（栈式管理，仅最顶层响应）─────
   useEffect(() => {
-    // 递增栈计数
-    openModalCount += 1;
-    const myOrder = openModalCount;
-
     const handler = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
-      // 只有当前实例是栈顶（最新的）才响应
-      if (myOrder !== openModalCount) return;
+      // 事件触发时才查栈顶：快照式判断会被 React Compiler 折叠掉
+      if (!isTopModalListener(handler)) return;
       e.stopImmediatePropagation();
       onCloseRef.current();
     };
 
+    pushModalListener(handler);
     window.addEventListener('keydown', handler);
     return () => {
-      openModalCount -= 1;
+      popModalListener(handler);
       window.removeEventListener('keydown', handler);
     };
   }, []);

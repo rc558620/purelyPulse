@@ -17,7 +17,7 @@
  *    11. 无 onEvents 时 data-has-events="false"
  *    12. height 数值转为 style.height（px）
  *    13. height 与 style 合并，style 其他属性保留
- *    14. height 未传时 style.height 不被设置
+ *    14. height 未传时使用默认高度 300px
  *    15. className 透传给 Echarts
  *    16. ChartRenderer 是 React.memo 包裹的组件
  */
@@ -156,12 +156,12 @@ describe('ChartRenderer – height / style 处理', () => {
         expect(el.style.width).toBe('100%');
     });
 
-    it('height 未传时 style.height 不被设置', async () => {
+    it('height 未传时使用默认高度 300px（骨架屏与图表同尺寸，避免加载后跳变）', async () => {
         await act(async () => {
             render(<ChartRenderer option={{}} style={{ width: '50%' }} />);
         });
         const el = screen.getByTestId('mock-echarts') as HTMLElement;
-        expect(el.style.height).toBe('');
+        expect(el.style.height).toBe('300px');
         expect(el.style.width).toBe('50%');
     });
 });

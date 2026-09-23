@@ -24,6 +24,8 @@ interface SetMembershipConfirmStepProps {
   amountDefaultDisplay: string;
   amountInput: string;
   amountError: string;
+  /** 新用户额度说明文案（免费会员为「新用户额度清零」） */
+  quotaText: string;
   onAmountChange: (value: string) => void;
   formatMembershipExpiry: (timestamp: number) => string;
 }
@@ -42,6 +44,7 @@ const SetMembershipConfirmStep: React.FC<SetMembershipConfirmStepProps> = ({
   amountDefaultDisplay,
   amountInput,
   amountError,
+  quotaText,
   onAmountChange,
   formatMembershipExpiry,
 }) => (
@@ -142,6 +145,11 @@ const SetMembershipConfirmStep: React.FC<SetMembershipConfirmStepProps> = ({
             </div>
           </>
         )}
+        <div className={styles.summaryDivider} />
+        <div className={styles.summaryRow}>
+          <span className={styles.summaryLabel}>新用户额度</span>
+          <span className={styles.summaryValue}>{quotaText}</span>
+        </div>
       </div>
 
       {requiresAmountInput ? (
