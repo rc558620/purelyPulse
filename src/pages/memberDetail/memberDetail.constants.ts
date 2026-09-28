@@ -6,6 +6,8 @@ export const MEMBER_RECHARGE_CHANNEL_LABEL: Record<RechargeRecord['channel'], st
   alipay: '支付宝',
   card: '礼品卡',
   manual: '手动设置',
+  admin: '计入收入',
+  gift: '赠送',
 };
 
 /** 封禁原因预设选项。 */

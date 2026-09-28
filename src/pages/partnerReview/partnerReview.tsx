@@ -36,7 +36,6 @@ const PartnerReview: React.FC = () => {
 
   return (
     <div className={styles.pageContainer}>
-      <div className={styles.blurOrb} aria-hidden="true" />
 
       <PageHeader title="合伙人申请审核" onBack={() => navigate(-1)} />
 

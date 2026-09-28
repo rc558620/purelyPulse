@@ -46,6 +46,14 @@ const RESET_MEMBER_LOCKED_PRICE_API_PATH = resolveEnvPath(
   import.meta.env.VITE_RESET_MEMBER_LOCKED_PRICE_API_PATH,
   '/pulse/membership/admin/members/{id}/locked-price/reset',
 );
+const PREVIEW_MEMBERSHIP_PRICE_API_PATH = resolveEnvPath(
+  import.meta.env.VITE_PREVIEW_MEMBERSHIP_PRICE_API_PATH,
+  '/pulse/membership/admin/members/{id}/membership/pricing-preview',
+);
+const BACKFILL_SUB_ACCOUNT_AMOUNT_API_PATH = resolveEnvPath(
+  import.meta.env.VITE_BACKFILL_SUB_ACCOUNT_AMOUNT_API_PATH,
+  '/pulse/membership/admin/members/{id}/deal-price/sub-account',
+);
 const MEMBER_BAN_API_PATH = resolveEnvPath(import.meta.env.VITE_MEMBER_BAN_API_PATH, '/pulse/membership/admin/members/{id}/ban');
 const MEMBER_UNBAN_API_PATH = resolveEnvPath(import.meta.env.VITE_MEMBER_UNBAN_API_PATH, '/pulse/membership/admin/members/{id}/unban');
 const MEMBER_CANCEL_API_PATH = resolveEnvPath(import.meta.env.VITE_MEMBER_CANCEL_API_PATH, '/pulse/membership/admin/members/{id}/cancel');
@@ -133,6 +141,8 @@ interface PulseServerLockedPriceLike {
   planId?: string;
   price?: number;
   priceDisplay?: string;
+  subAccountAmountDisplay?: string | null;
+  subAccountCount?: number | null;
   source?: string;
   lockedAt?: number;
 }
@@ -140,6 +150,9 @@ interface PulseServerLockedPriceLike {
 interface PulseServerMemberDetailLike extends PulseServerMemberListItemLike {
   totalPointsEarned: number;
   rechargeHistory: PulseServerRechargeRecordLike[];
+  /** 管理端「设置会员等级」次数与记录（后端 PulseMemberDetailDto）。 */
+  adminGrantCount?: number;
+  adminGrantHistory?: PulseServerRechargeRecordLike[];
   membershipExpiry?: number | null;
   /** 首购锁定价快照（后端 PulseMemberDetailDto.lockedPrices）。 */
   lockedPrices?: PulseServerLockedPriceLike[];
@@ -365,11 +378,27 @@ const mapLockedPriceItem = (value: unknown): MemberLockedPrice | null => {
   }
 
   const source = normalizeLockedPriceSource(pickStringField(value, ['source']));
+  // 未补录时后端下发 null；null / 空串统一归一成 null，供 UI 提示补录
+  const rawSubAccountAmount = pickStringField(value, ['subAccountAmountDisplay']);
+  const subAccountAmountDisplay =
+    rawSubAccountAmount && rawSubAccountAmount.trim() ? rawSubAccountAmount : null;
+  const rawSubAccountCount = pickNumberField(value, ['subAccountCount']);
+
+  // 续费价同样做空串归一：后端未下发（null）时 pickStringField 返回 ''，
+  // 直接透传会渲染成「= ¥」空值
+  const rawRenewalPriceDisplay = pickStringField(value, ['renewalPriceDisplay']);
+  const renewalPriceDisplay =
+    rawRenewalPriceDisplay && rawRenewalPriceDisplay.trim()
+      ? rawRenewalPriceDisplay
+      : null;
 
   return {
     planId,
     planName: LOCKED_PRICE_PLAN_NAMES[planId] ?? planId,
     priceDisplay,
+    subAccountAmountDisplay,
+    subAccountCount: subAccountAmountDisplay === null ? null : (rawSubAccountCount || null),
+    renewalPriceDisplay,
     source,
     sourceLabel: LOCKED_PRICE_SOURCE_LABELS[source],
     lockedAt: pickNumberField(value, ['lockedAt', 'lockedAtMs']),
@@ -397,6 +426,11 @@ const mapServerMemberDetail = (value: PulseServerMemberDetailLike): MemberDetail
   rechargeCount: normalizeOptionalCount(value.rechargeCount) ?? value.rechargeHistory.length,
   invitedCount: normalizeOptionalCount(value.invitedCount) ?? 0,
   rechargeHistory: value.rechargeHistory.map((record) => mapServerRechargeRecord(record)),
+  // 管理端「设置会员等级记录」：与充值记录同结构，按 tab 分开展示
+  adminGrantCount: normalizeOptionalCount(value.adminGrantCount) ?? 0,
+  adminGrantHistory: (value.adminGrantHistory ?? []).map((record) =>
+    mapServerRechargeRecord(record),
+  ),
   membershipExpiry: resolveMembershipExpiry(value as unknown as Record<string, unknown>),
   subAccountCapability: mapSubAccountCapability(value),
   lockedPrices: resolveLockedPrices(value),
@@ -672,6 +706,14 @@ const normalizeRechargeChannel = (value: string): RechargeRecord['channel'] => {
     case 'manual_set':
     case 'system':
       return 'manual';
+    // 管理端设置会员等级落的两类订单：admin=计入收入，gift=赠送。
+    // 必须走专属分支——落到 default 会被当成微信支付，详情页「设置记录」
+    // 就会出现「¥赠送」「微信支付」这类自相矛盾的文案
+    case 'admin':
+    case 'admin_grant':
+      return 'admin';
+    case 'gift':
+      return 'gift';
     case 'wechat':
     case 'wx':
     case 'wechatpay':
@@ -1019,6 +1061,10 @@ const requestMemberList = async (query: MemberListQuery): Promise<{ members: Mem
       status: query.status !== 'all' ? query.status : undefined,
       level: query.level !== 'all' ? query.level : undefined,
       expiry: query.expiry !== 'all' ? query.expiry : undefined,
+      // 待补录清单：由后端按「有子账号能力 + 缺子账号加价」筛选，前端只传开关
+      ...(query.pendingSubAccountBackfill
+        ? { pendingSubAccountBackfill: true }
+        : {}),
     },
     skipGlobalErrorHandler: true,
     errorMessage: '获取会员列表失败',
@@ -1323,7 +1369,16 @@ export const submitMemberMembership = async (
   memberId: string,
   level: MemberLevel,
   membershipExpiry: number | null,
-  options?: { memberName?: string; amountDisplay?: string },
+  options?: {
+    memberName?: string;
+    amountDisplay?: string;
+    subAccountCount?: number;
+    subAccountAmountDisplay?: string;
+    confirmDowngradePlan?: boolean;
+    countAsIncome?: boolean;
+    /** 期数：后端据此按「每期额度 × 期数」赠送新客额度（年度 × 2 = 600 位） */
+    multiplier?: number;
+  },
 ): Promise<void> => {
   const requestTarget = resolveMemberActionPath(SET_MEMBERSHIP_API_PATH, memberId);
   const isNonExpiringLevel = level === 'free';
@@ -1342,10 +1397,36 @@ export const submitMemberMembership = async (
     payload.confirmDowngradeToFree = true;
   } else {
     payload.membershipExpiry = membershipExpiry;
-    // 本次成交价：后端首次设置该档位时写入「首购锁定价」，供有子账号的门店按首单价续费
+    // 本次成交价：管理端设置视为一次显式成交，后端会覆盖该档位的成交价快照
     const priceDisplay = options?.amountDisplay?.trim();
     if (priceDisplay) {
       payload.priceDisplay = priceDisplay;
+    }
+
+    // 子账号：拆出加价供续费定价使用（标准总价 = 当前配置价 + 子账号加价）
+    const trimmedSubAccountAmount = options?.subAccountAmountDisplay?.trim();
+    if (trimmedSubAccountAmount) {
+      payload.subAccountAmountDisplay = trimmedSubAccountAmount;
+    }
+    if (typeof options?.subAccountCount === 'number') {
+      payload.subAccountCount = options.subAccountCount;
+    }
+
+    // 所选档位低于当前档位时，默认后端会保持原档位、只追加时长；
+    // 只有这里显式确认才真的降档
+    if (options?.confirmDowngradePlan === true) {
+      payload.confirmDowngradePlan = true;
+    }
+
+    // 是否计入收入：false 也要显式下发，后端据此按赠送处理（默认即赠送）
+    if (typeof options?.countAsIncome === 'boolean') {
+      payload.countAsIncome = options.countAsIncome;
+    }
+
+    // 期数：新客额度按它叠加（年度 × 2 = 600 位）；未传后端按 1 期处理，
+    // 兼容旧版本弹窗与直接调用
+    if (typeof options?.multiplier === 'number' && Number.isInteger(options.multiplier) && options.multiplier > 0) {
+      payload.multiplier = options.multiplier;
     }
   }
 
@@ -1388,6 +1469,120 @@ export const resetMemberLockedPrice = async (memberId: string): Promise<void> =>
     skipGlobalErrorHandler: true,
     errorMessage: '重置锁定价失败，请稍后重试',
   });
+};
+
+// ─── 会员成交价预览 ────────────────────────────────────────────────────────
+
+/** 会员成交价预览结果；所有金额都是后端算好的展示字符串，前端不做任何运算 */
+export interface MemberPricingPreview {
+  /** 目标档位；免费会员为 null */
+  targetPlanId: string | null;
+  /** 当前配置价（不含子账号） */
+  configPriceDisplay: string;
+  /** 参与定价的子账号加价 */
+  subAccountAmountDisplay: string;
+  /** ★ 下次续费价 = 配置价 + 子账号加价 */
+  renewalPriceDisplay: string;
+  /** 本次填写的成交金额，仅记账回显；成交价不参与续费定价 */
+  dealPriceDisplay: string | null;
+}
+
+const EMPTY_PRICING_PREVIEW: MemberPricingPreview = {
+  targetPlanId: null,
+  configPriceDisplay: '0',
+  subAccountAmountDisplay: '0',
+  renewalPriceDisplay: '0',
+  dealPriceDisplay: null,
+};
+
+const toMemberPricingPreview = (value: unknown): MemberPricingPreview => {
+  if (!isPlainObject(value)) {
+    return EMPTY_PRICING_PREVIEW;
+  }
+
+  // ⚠️ 一律用 `||` 而非 `??`：pickStringField 对缺失 / null 返回空串，
+  // `'' ?? null` 仍是 ''，兜底会永远不生效（详情页面把 '' 当成「有值」渲染）
+  return {
+    targetPlanId: pickStringField(value, ['targetPlanId']) || null,
+    configPriceDisplay: pickStringField(value, ['configPriceDisplay']) || '0',
+    subAccountAmountDisplay:
+      pickStringField(value, ['subAccountAmountDisplay']) || '0',
+    renewalPriceDisplay: pickStringField(value, ['renewalPriceDisplay']) || '0',
+    dealPriceDisplay: pickStringField(value, ['dealPriceDisplay']) || null,
+  };
+};
+
+/**
+ * 拉取会员成交价预览。
+ *
+ * 只算不落库：弹窗里运营每改一次输入就要看到新的「下次续费价 / 当期应补」，
+ * 但约定是前端不做金额计算，所以这两个数字由后端算好并以展示字符串下发，
+ * 前端原样渲染即可。
+ */
+export const fetchMembershipPricingPreview = async (
+  memberId: string,
+  params: {
+    level?: MemberLevel;
+    priceDisplay?: string;
+    subAccountCount?: number;
+    subAccountAmountDisplay?: string;
+  },
+): Promise<MemberPricingPreview> => {
+  const requestTarget = resolveMemberActionPath(PREVIEW_MEMBERSHIP_PRICE_API_PATH, memberId);
+
+  const response = await http.post<unknown, Record<string, unknown>>(
+    requestTarget.url,
+    {
+      memberId,
+      level: params.level,
+      priceDisplay: params.priceDisplay,
+      subAccountCount: params.subAccountCount,
+      subAccountAmountDisplay: params.subAccountAmountDisplay,
+    },
+    {
+      params: requestTarget.params,
+      // 预览是「输入驱动的非破坏性请求」，失败时保留上一次结果即可，不必弹全局错误
+      skipGlobalErrorHandler: true,
+    },
+  );
+
+  return toMemberPricingPreview(response);
+};
+
+/**
+ * 补录 / 撤销存量门店的子账号加价。
+ *
+ * 只更新成交价快照里的子账号字段，不改写成交总额——补录是把当初没拆出来的
+ * 那部分补上，而不是重新议价。不传 `subAccountAmountDisplay` 即撤销补录。
+ */
+export const backfillMemberSubAccountAmount = async (
+  memberId: string,
+  planId: string,
+  payload: { subAccountAmountDisplay?: string; subAccountCount?: number },
+): Promise<void> => {
+  const requestTarget = resolveMemberActionPath(
+    BACKFILL_SUB_ACCOUNT_AMOUNT_API_PATH,
+    memberId,
+  );
+
+  await http.patch<unknown, Record<string, unknown>>(
+    requestTarget.url,
+    {
+      memberId,
+      planId,
+      ...(payload.subAccountAmountDisplay !== undefined
+        ? { subAccountAmountDisplay: payload.subAccountAmountDisplay }
+        : {}),
+      ...(payload.subAccountCount !== undefined
+        ? { subAccountCount: payload.subAccountCount }
+        : {}),
+    },
+    {
+      params: requestTarget.params,
+      skipGlobalErrorHandler: true,
+      errorMessage: '补录子账号加价失败，请稍后重试',
+    },
+  );
 };
 
 /** 提交会员封禁。 */

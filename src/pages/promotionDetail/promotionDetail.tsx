@@ -220,7 +220,6 @@ const PromotionDetail: React.FC = () => {
 
   return (
     <div className={styles.pageContainer}>
-      <div className={styles.blurOrb} aria-hidden="true" />
 
       <PageHeader title={pageTitle} onBack={handleBack} />
       <PromotionDetailBreadcrumb

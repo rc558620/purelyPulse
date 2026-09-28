@@ -1,6 +1,10 @@
 // 会员详情横幅区块：展示身份信息、等级状态与快捷操作。
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { cx, safeStr } from '@utils/utils';
+import {
+  fetchMembershipPricingPreview,
+  type MemberPricingPreview,
+} from '@pages/memberList/memberList.service';
 import {
   IconBanCircle,
   IconClubStats,
@@ -65,6 +69,57 @@ const MemberDetailHeroSection: React.FC<MemberDetailHeroSectionProps> = React.me
   onOpenSalesStatsModal,
   onOpenCancelAccountModal,
 }) => {
+  // 续费价预览：拿当前档位问一次后端，得到「下次续费价」与公式各分项。
+  // 前端不做任何金额运算，只把后端返回的字符串渲染出来。
+  const [renewalPricing, setRenewalPricing] = useState<MemberPricingPreview | null>(null);
+
+  // 续费价 = 配置价 + 子账号加价，后两者都在成交价快照里。补录 / 撤销子账号加价、
+  // 重置锁定价、重新设置会员等级都会改写快照，而 member.id 与档位都没变——
+  // 只依赖 id + level 会让胶囊一直停在操作前的旧价，与页面上的快照卡片自相矛盾
+  const lockedPriceSignature = (member.lockedPrices ?? [])
+    .map((item) => [
+      item.planId,
+      item.priceDisplay,
+      item.subAccountAmountDisplay ?? '',
+      item.subAccountCount ?? '',
+    ].join(':'))
+    .join(',');
+
+  useEffect(() => {
+    // 免费会员没有定价可言，后端只会回一份全零占位，不必多发一次请求；
+    // 档位变成免费时顺手清掉上一次的结果，避免胶囊残留旧价
+    if (!member.id || memberLevel === 'free') {
+      setRenewalPricing(null);
+      return undefined;
+    }
+
+    let cancelled = false;
+
+    fetchMembershipPricingPreview(member.id, { level: memberLevel })
+      .then((result) => {
+        if (!cancelled) {
+          setRenewalPricing(result);
+        }
+      })
+      .catch(() => {
+        // 预览失败不打断详情页渲染，胶囊不展示即可
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [member.id, memberLevel, lockedPriceSignature]);
+
+  // 续费价 = 配置价 + 子账号加价；成交价不参与定价，只在有值时顺带说明
+  const renewalFormulaText = renewalPricing
+    ? `配置价 ¥${renewalPricing.configPriceDisplay}`
+      + ` + 子账号加价 ¥${renewalPricing.subAccountAmountDisplay}`
+      + ` = ¥${renewalPricing.renewalPriceDisplay}`
+      + `${renewalPricing.dealPriceDisplay === null
+        ? ''
+        : `（本次成交 ¥${renewalPricing.dealPriceDisplay}，仅记账）`}`
+    : '';
+
   const subAccountCapability = member.subAccountCapability;
   const subAccountQuota = subAccountCapability?.subAccountQuota ?? 0;
   const heroAvatarColorClassName = pageStyles[`heroAvatarColor_${member.avatarColorIdx % 6}`];
@@ -101,20 +156,30 @@ const MemberDetailHeroSection: React.FC<MemberDetailHeroSectionProps> = React.me
                 {safeStr(member.partnerLevel, '合伙人')}
               </span>
             ) : null}
-          </div>
-          <div className={pageStyles.heroPhone}>{safeStr(member.phone, '--')}</div>
-          <div className={pageStyles.heroBottomRow}>
+            {/* 账号状态与档位 / 合伙人同为身份徽章，放一行；详情行的加入时间等保持纯文本 */}
             <span className={cx(pageStyles.heroStatus, STATUS_CLASS_MAP[member.status])}>
               {STATUS_LABEL[member.status]}
             </span>
-            <span className={pageStyles.heroJoined}>加入于 {formatMemberDate(member.registeredAt)}</span>
-            <span className={pageStyles.heroActive}>活跃 {formatMemberRelativeTime(member.lastActiveAt)}</span>
+            {/* 会员到期：紧跟账号状态，同属「当前会员身份」这一组 */}
             {membershipExpiryText ? (
               <span className={cx(pageStyles.heroMembershipExpiry, membershipExpiryText === '永久有效' && pageStyles.heroMembershipExpiryLifetime)}>
-                {membershipExpiryText === '永久有效' ? '♾ ' : '📅 '}
                 {membershipExpiryText}
               </span>
             ) : null}
+            {/* 续费价胶囊：贴在标题行尾部，不再单独占 heroBanner 一列挤压正文 */}
+            {renewalPricing && renewalPricing.targetPlanId ? (
+              <div className={styles.renewalPriceBadge} title={renewalFormulaText}>
+                <span className={styles.renewalPriceLabel}>续费价</span>
+                <span className={styles.renewalPriceValue}>
+                  ¥{renewalPricing.renewalPriceDisplay}
+                </span>
+              </div>
+            ) : null}
+          </div>
+          <div className={pageStyles.heroBottomRow}>
+            <span className={pageStyles.heroPhone}>{safeStr(member.phone, '--')}</span>
+            <span className={pageStyles.heroJoined}>加入于 {formatMemberDate(member.registeredAt)}</span>
+            <span className={pageStyles.heroActive}>活跃 {formatMemberRelativeTime(member.lastActiveAt)}</span>
           </div>
           <div className={pageStyles.heroActionRow}>
             <button

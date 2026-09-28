@@ -581,7 +581,6 @@
   flex-direction: column;
   align-items: center;
   gap: 1.4rem;
-  padding: 2rem 0;
   text-align: center;
 }
 
@@ -636,6 +635,135 @@
   flex-direction: column;
   gap: 0.8rem;
   text-align: left;
+}
+
+// ─── 子账号录入 ────────────────────────────────────────────────────────
+.confirmSubAccountFields {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  text-align: left;
+}
+
+.confirmSubAccountField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.confirmSubAccountInput {
+  height: 4.8rem;
+}
+
+// 降级勾选项 + 计入收入：相邻时并排一行
+.confirmChoiceRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.4rem;
+  width: 100%;
+}
+
+// 降级勾选项：与「计入收入」同款卡片式选项行，用琥珀色呼应上方警告
+.confirmDowngradeRow {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  width: 100%;
+  padding: 1rem 1.2rem;
+  border-radius: 1rem;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  color: #d97706;
+  cursor: pointer;
+  text-align: left;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+// ─── 是否计入收入 ────────────────────────────────────────────────────────
+.confirmIncomeRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  width: 100%;
+  padding: 1rem 1.2rem;
+  border-radius: 1rem;
+  background: rgba(99, 102, 241, 0.06);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  cursor: pointer;
+  text-align: left;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.confirmIncomeHint {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: @text-slate-400;
+  line-height: 1.5;
+}
+
+
+// ─── 成交价预览（金额全部由后端算好后下发，前端只做展示）────────────────
+.confirmPricingPreview {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 1.2rem;
+  border-radius: 1rem;
+  background: rgba(148, 163, 184, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  text-align: left;
+}
+
+.pricingPreviewRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pricingPreviewLabel {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: @text-slate-400;
+}
+
+.pricingPreviewValue {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: @text-main;
+}
+
+.pricingPreviewStrong {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #059669;
+}
+
+.pricingPreviewSub {
+  font-size: 1.1rem;
+  color: @text-slate-400;
+  line-height: 1.5;
+}
+
+// 预览未就绪时的占位：防抖 300ms 内 / 请求失败都要有交代，
+// 否则运营会以为「没有补款」而直接点确认
+.pricingPreviewPending {
+  font-size: 1.2rem;
+  color: @text-slate-400;
+  line-height: 1.5;
+}
+
+.pricingPreviewUnavailable {
+  font-size: 1.2rem;
+  color: #b45309;
+  line-height: 1.5;
 }
 
 .confirmAmountInput {
@@ -706,6 +834,7 @@
   font-size: 1.15rem;
   font-weight: 600;
   line-height: 1.6;
+  text-align: left;
 
   svg {
     flex-shrink: 0;

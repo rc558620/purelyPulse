@@ -36,7 +36,6 @@ const PartnerPayout: React.FC = () => {
 
   return (
     <div className={styles.pageContainer}>
-      <div className={styles.blurOrb} aria-hidden="true" />
 
       <PageHeader title="合伙人打款" onBack={() => navigate(-1)} />
 

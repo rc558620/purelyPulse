@@ -31,7 +31,6 @@ export interface AuthPageLayoutProps {
  */
 const AuthPageLayout: React.FC<AuthPageLayoutProps> = memo(({ children, contentAlign = 'top', header }) => (
     <div className={styles.authContainer}>
-        <div className={styles.blurOrb} aria-hidden="true" />
         {/* header 渲染在滚动容器外，作为 authContainer 直接子元素，固定于顶部不随内容滚动 */}
         {contentAlign === 'top' && header && (
             <div className={styles.headerArea}>

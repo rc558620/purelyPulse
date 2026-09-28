@@ -21,6 +21,8 @@ interface UseMemberListPageReturn {
   levelFilter: MemberFilterLevel;
   /** 当前到期时间筛选值。 */
   expiryFilter: MemberFilterExpiry;
+  /** 是否只看「有子账号能力但未补录子账号加价」的门店。 */
+  pendingBackfillFilter: boolean;
   /** 当前搜索词。 */
   searchQuery: string;
   /** 更新状态筛选。 */
@@ -29,6 +31,8 @@ interface UseMemberListPageReturn {
   setLevelFilter: (value: MemberFilterLevel) => void;
   /** 更新到期时间筛选。 */
   setExpiryFilter: (value: MemberFilterExpiry) => void;
+  /** 切换「待补录子账号加价」筛选。 */
+  setPendingBackfillFilter: (value: boolean) => void;
   /** 更新搜索词。 */
   setSearchQuery: (value: string) => void;
   /** 清空搜索词。 */
@@ -52,6 +56,7 @@ export const useMemberListPage = (): UseMemberListPageReturn => {
   const [statusFilter, setStatusFilter] = useState<MemberFilterStatus>('all');
   const [levelFilter, setLevelFilter] = useState<MemberFilterLevel>('all');
   const [expiryFilter, setExpiryFilter] = useState<MemberFilterExpiry>('all');
+  const [pendingBackfillFilter, setPendingBackfillFilter] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -66,7 +71,14 @@ export const useMemberListPage = (): UseMemberListPageReturn => {
     status: statusFilter,
     level: levelFilter,
     expiry: expiryFilter,
-  }), [deferredSearchQuery, expiryFilter, levelFilter, statusFilter]);
+    pendingSubAccountBackfill: pendingBackfillFilter,
+  }), [
+    deferredSearchQuery,
+    expiryFilter,
+    levelFilter,
+    pendingBackfillFilter,
+    statusFilter,
+  ]);
   const latestQueryRef = useRef<MemberListQuery>(currentQuery);
 
   const loadMembers = useCallback(async (query: MemberListQuery): Promise<void> => {
@@ -149,10 +161,12 @@ export const useMemberListPage = (): UseMemberListPageReturn => {
     statusFilter,
     levelFilter,
     expiryFilter,
+    pendingBackfillFilter,
     searchQuery,
     setStatusFilter,
     setLevelFilter,
     setExpiryFilter,
+    setPendingBackfillFilter,
     setSearchQuery,
     handleSearchClear,
     retryLoadMembers,

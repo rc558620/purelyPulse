@@ -30,7 +30,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Type-check
-        run: pnpm tsc -b --noEmit
+        # 必须走 typecheck script：裸跑 `tsc --noEmit` 在 solution-style
+        # tsconfig（files: [] + references）下不检查任何文件，永远 exit 0
+        run: pnpm typecheck
 
       - name: Lint
         run: pnpm lint

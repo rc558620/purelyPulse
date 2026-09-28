@@ -50,18 +50,36 @@ export type MemberLevel = 'free' | 'monthly' | 'quarterly' | 'annual' | 'lifetim
 export type LockedPriceSource = 'purchase' | 'admin';
 
 /**
- * 首购锁定价快照。
+ * 成交价快照。
  *
- * 已开通子账号功能的门店续费时按【首次成交价】结算（平台为含子账号权益调价后老客不受影响），
- * 这里展示运营「当前锁了什么价」，配合重置入口使用。
+ * 续费定价公式为 `max(当前配置价 + 子账号加价, 成交总额)`：
+ * - 成交总额是下限，保证客户不会因规则改动而付得比上次更少
+ * - 子账号加价是标准总价的组成部分，配置价上涨时能正确传导
+ *
+ * 这里展示运营「当前是什么价、子账号加价补录了没有」，配合重置与补录入口使用。
  */
 export interface MemberLockedPrice {
   /** 套餐档位标识（后端 Prisma 档位：monthly / quarterly / yearly / lifetime）。 */
   planId: string;
   /** 档位展示名（永久档位统一展示为 AGES会员）。 */
   planName: string;
-  /** 锁定价格展示值（元，后端已格式化）。 */
+  /** 成交总额展示值（元，后端已格式化）。 */
   priceDisplay: string;
+  /**
+   * 子账号加价展示值（元，后端已格式化）。
+   *
+   * `null` 表示运营尚未补录：该门店续费会退化为 max(当前配置价, 成交总额)，
+   * 一旦配置价涨过成交总额，子账号就白送了，需要提示运营补录。
+   */
+  subAccountAmountDisplay: string | null;
+  /** 该档位包含的子账号数量；null 表示尚未补录。 */
+  subAccountCount: number | null;
+  /**
+   * 续费价展示值（元，后端已格式化）= 当前配置价 + 子账号加价。
+   *
+   * 仅当该档位录了子账号加价时下发，供快照展示「加价 ¥100 = ¥498」。
+   */
+  renewalPriceDisplay: string | null;
   /** 锁价来源。 */
   source: LockedPriceSource;
   /** 锁价来源展示名。 */
@@ -82,8 +100,14 @@ export interface RechargeRecord {
   amountDisplay: string;
   /** 积分奖励。 */
   pointsAwarded: number;
-  /** 支付渠道。 */
-  channel: 'wechat' | 'alipay' | 'card' | 'manual';
+  /**
+   * 支付渠道。
+   *
+   * - wechat / alipay / card：商家端支付充值
+   * - admin：Pulse 管理端设置会员等级，且勾选了「计入收入」
+   * - gift：管理端设置会员等级，按赠送处理（amountDisplay 为「赠送」）
+   */
+  channel: 'wechat' | 'alipay' | 'card' | 'manual' | 'admin' | 'gift';
   /** 充值时间。 */
   createdAt: number;
 }
@@ -128,6 +152,10 @@ export interface MemberDetail {
   invitedCount: number;
   /** 充值记录。 */
   rechargeHistory: RechargeRecord[];
+  /** 管理端「设置会员等级」次数。 */
+  adminGrantCount?: number;
+  /** 管理端「设置会员等级」记录列表（含赠送）。 */
+  adminGrantHistory?: RechargeRecord[];
   /** 备注。 */
   remark?: string;
   /** 会员到期时间戳（永久会员为 null）。 */
@@ -201,6 +229,13 @@ export interface MemberListQuery {
   level: MemberFilterLevel;
   /** 到期时间筛选。 */
   expiry: MemberFilterExpiry;
+  /**
+   * 只看「有子账号能力、但成交价快照里缺子账号加价」的门店。
+   *
+   * 这些门店的续费价会退化为 max(当前配置价, 成交总额)，配置价一旦涨过
+   * 成交总额，子账号就白送了，需要运营补录。
+   */
+  pendingSubAccountBackfill: boolean;
 }
 
 /** 会员列表统计概览。 */

@@ -1,5 +1,6 @@
 // 会员搜索行：全局 Search 搜索框 + 到期时间 SelectView 下拉框同行布局。
 import React, { memo, useMemo } from 'react';
+import { cx } from '@utils/utils';
 import { Search } from '@components/form/Search/Search';
 import { SelectView } from '@components/form/SelectView';
 import type { MemberFilterExpiry } from '../../../../memberList.types';
@@ -25,6 +26,10 @@ interface MemberListSearchBarProps {
   expiryFilter: MemberFilterExpiry;
   /** 到期时间筛选变更回调 */
   onExpiryChange: (value: MemberFilterExpiry) => void;
+  /** 是否只看待补录子账号加价的门店 */
+  pendingBackfillFilter: boolean;
+  /** 待补录筛选切换回调 */
+  onPendingBackfillChange: (value: boolean) => void;
 }
 
 const MemberListSearchBar: React.FC<MemberListSearchBarProps> = ({
@@ -33,6 +38,8 @@ const MemberListSearchBar: React.FC<MemberListSearchBarProps> = ({
   onSearchClear,
   expiryFilter,
   onExpiryChange,
+  pendingBackfillFilter,
+  onPendingBackfillChange,
 }) => {
   const selectOptions = useMemo(() => EXPIRY_OPTIONS, []);
 
@@ -70,6 +77,20 @@ const MemberListSearchBar: React.FC<MemberListSearchBarProps> = ({
           triggerClassName={styles.expirySelectTrigger}
         />
       </div>
+
+      {/* 待补录清单开关：一键筛出「有子账号但未补录子账号加价」的门店 */}
+      <button
+        type="button"
+        className={cx(
+          styles.pendingBackfillToggle,
+          pendingBackfillFilter && styles.pendingBackfillToggleActive,
+        )}
+        aria-pressed={pendingBackfillFilter}
+        title="有子账号能力但成交价快照里缺子账号加价的门店，续费会退化为 max(当前配置价, 成交总额)"
+        onClick={() => onPendingBackfillChange(!pendingBackfillFilter)}
+      >
+        待补录子账号加价
+      </button>
     </div>
   );
 };

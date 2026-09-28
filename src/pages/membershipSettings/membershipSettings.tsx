@@ -27,8 +27,6 @@ const MembershipSettings: React.FC = () => {
 
   return (
     <div className={styles.pageContainer}>
-      <div className={styles.blurOrb} aria-hidden="true" />
-      <div className={styles.blurOrb2} aria-hidden="true" />
 
       <PageHeader title="会员管理" onBack={handleBack} />
 

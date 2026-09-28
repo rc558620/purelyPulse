@@ -13,6 +13,8 @@ const buildBanManagementMemberListQuery = (query: BanManagementQuery) => ({
   status: query.status,
   level: 'all' as const,
   expiry: 'all' as const,
+  // 封禁管理页不按「待补录子账号加价」筛选，显式关掉
+  pendingSubAccountBackfill: false,
 });
 
 export const fetchBanManagementList = async (query: BanManagementQuery): Promise<BanManagementListResponse> => {

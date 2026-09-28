@@ -27,6 +27,12 @@ const getChannelClassName = (channel: RechargeRecord['channel']): string => (
 
 const MemberDetailRechargeRow: React.FC<MemberDetailRechargeRowProps> = ({ record, isLast }) => {
   const channelClassName = getChannelClassName(record.channel);
+  // 后台设置会员等级不是商家充值：不产生积分奖励，「+0 积分」是噪音
+  const isAdminGrant = record.channel === 'admin' || record.channel === 'gift';
+  // 赠送单的 amountDisplay 是「赠送」两个字，不能再拼 ¥
+  const amountText = record.channel === 'gift'
+    ? safeStr(record.amountDisplay, '赠送')
+    : `¥${record.amountDisplay || '0'}`;
 
   return (
     <div className={cx(pageStyles.rechargeRow, isLast && pageStyles.rechargeRowLast)}>
@@ -44,8 +50,10 @@ const MemberDetailRechargeRow: React.FC<MemberDetailRechargeRowProps> = ({ recor
         </div>
       </div>
       <div className={pageStyles.rechargeRight}>
-        <span className={cx(pageStyles.rechargeAmtValue, getPlanColorClass(record.planName))}>¥{record.amountDisplay || '0'}</span>
-        <span className={pageStyles.rechargePoints}>+{safeNum(record.pointsAwarded)} 积分</span>
+        <span className={cx(pageStyles.rechargeAmtValue, getPlanColorClass(record.planName))}>{amountText}</span>
+        {isAdminGrant ? null : (
+          <span className={pageStyles.rechargePoints}>+{safeNum(record.pointsAwarded)} 积分</span>
+        )}
       </div>
     </div>
   );

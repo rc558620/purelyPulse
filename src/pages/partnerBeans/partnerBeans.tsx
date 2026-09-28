@@ -41,7 +41,6 @@ const PartnerBeans: React.FC = () => {
 
   return (
     <div className={styles.pageContainer}>
-      <div className={styles.blurOrb} aria-hidden="true" />
       <PageHeader
         title="合伙人纯利豆管理"
         onBack={() => navigate(-1)}

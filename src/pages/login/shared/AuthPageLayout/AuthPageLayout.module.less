@@ -26,22 +26,6 @@
   }
 }
 
-// ─── 背景弥散光球 ─────────────────────────────────────────────
-.blurOrb {
-  position: absolute;
-  top: 20%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 500px;
-  height: 500px;
-  background-color: fade(@primary, 10%);
-  border-radius: 9999px;
-  filter: blur(100px);
-  pointer-events: none;
-  z-index: 0;
-  will-change: transform;
-  contain: strict;
-}
 
 // ─── 内容区（居中版 - 登录页） ────────────────────────────────
 .contentWrapperCenter {

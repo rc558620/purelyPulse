@@ -611,15 +611,23 @@
 }
 
 // ─── 首购锁定价 ────────────────────────────────────────────────────────
+// 卡片纵向布局：标题 + 右侧重置动作一行，正文（成交价列表 / 提示）占满整行。
+// 之前动作区独占右侧一列，正文宽度被压掉一块，摘要行很容易折行
 .lockedPriceCard {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.2rem;
+  flex-direction: column;
+  gap: 0.8rem;
   padding: 1.4rem 1.6rem;
   border-radius: 1.4rem;
   border: 1px solid rgba(99, 102, 241, 0.24);
   background: rgba(99, 102, 241, 0.06);
+}
+
+.lockedPriceHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 .lockedPriceText {
@@ -650,26 +658,144 @@
   list-style: none;
 }
 
+// 单个成交价条目：摘要（档位 / 金额 / 来源 / 状态标签）一行，补录表单另起一行。
+// 不允许在摘要行内部折行 —— 那会把「年度会员」挤成竖排
 .lockedPriceItem {
   display: flex;
-  align-items: baseline;
-  gap: 0.8rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.8rem;
   font-size: 1.3rem;
 }
 
 .lockedPricePlan {
+  flex-shrink: 0;
   font-weight: 600;
   color: @text-main;
+  white-space: nowrap;
 }
 
 .lockedPriceAmount {
+  flex-shrink: 0;
   font-weight: 700;
   color: #6366f1;
+  white-space: nowrap;
 }
 
 .lockedPriceMeta {
+  flex-shrink: 0;
   font-size: 1.1rem;
   color: @text-sub;
+  white-space: nowrap;
+}
+
+// 子账号加价「未补录」标记：续费价只按纯配置价收，等于白送子账号权益，需要提醒运营
+.lockedPricePendingTag {
+  flex-shrink: 0;
+  padding: 0.2rem 0.6rem;
+  border-radius: 0.6rem;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #d97706;
+  font-size: 1.05rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.lockedPriceBackfillBtn {
+  flex-shrink: 0;
+  padding: 0.3rem 0.8rem;
+  border-radius: 0.6rem;
+  border: 1px solid rgba(16, 185, 129, 0.32);
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  font-size: 1.05rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.lockedPriceSubAccountTag {
+  color: #059669;
+  font-size: 1.05rem;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+// 内联补录表单：数量 + 加价 + 确认/取消，一次只展开一行。
+// width:100% 让它从摘要行掉下来独占一行，而不是被硬塞进摘要行里
+.lockedPriceBackfillForm {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  width: 100%;
+  padding-top: 0.2rem;
+}
+
+.lockedPriceBackfillInput {
+  width: 9rem;
+  height: 3.2rem;
+  padding: 0 0.8rem;
+  border-radius: 0.6rem;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: #fff;
+  color: @text-main;
+  font-size: 1.15rem;
+
+  &:focus {
+    outline: none;
+    border-color: rgba(16, 185, 129, 0.6);
+  }
+}
+
+// 补录表单内的按钮对：与输入框同高、同圆角，确认/取消必须成对等大——
+// 之前「确认」用小方块、「取消」用 3.6rem 胶囊，并排放大小不一很难看
+.lockedPriceMiniConfirm,
+.lockedPriceMiniCancel {
+  height: 3.2rem;
+  padding: 0 1.2rem;
+  border-radius: 0.6rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.lockedPriceMiniConfirm {
+  border: 1px solid rgba(16, 185, 129, 0.32);
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+
+  &:hover:not(:disabled) { background: rgba(16, 185, 129, 0.18); }
+}
+
+.lockedPriceMiniCancel {
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: @bg-white;
+  color: @text-sub;
+
+  &:hover:not(:disabled) { background: rgba(148, 163, 184, 0.12); }
+}
+
+.lockedPriceWarning {
+  display: block;
+  margin-top: 0.6rem;
+  color: #d97706;
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.6;
 }
 
 .lockedPriceActions {

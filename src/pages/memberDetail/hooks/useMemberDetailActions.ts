@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { safeNum } from '@utils/utils';
 import { showToast } from '@components/ui/feedback/Toast';
 import {
+  backfillMemberSubAccountAmount,
   emitMemberCancelSync,
   emitMemberStatusSync,
   resetMemberLockedPrice,
@@ -20,7 +21,7 @@ import type {
 } from '../../memberList/memberList.types';
 
 /** 会员详情页可提交的动作标识。 */
-export type MemberSubmitAction = 'points' | 'beans' | 'membership' | 'ban' | 'subAccount' | 'cancel' | 'resetLockedPrice';
+export type MemberSubmitAction = 'points' | 'beans' | 'membership' | 'ban' | 'subAccount' | 'cancel' | 'resetLockedPrice' | 'backfillSubAccountAmount';
 
 export interface UseMemberDetailActionsParams {
   /** 当前会员详情，为 null 时不执行任何提交。 */
@@ -46,6 +47,8 @@ export interface UseMemberDetailActionsReturn {
   isSubmittingCancel: boolean;
   /** 是否正在重置首购锁定价。 */
   isResettingLockedPrice: boolean;
+  /** 是否正在补录 / 撤销子账号加价。 */
+  isBackfillingSubAccount: boolean;
   /** 是否有任一提交动作进行中。 */
   isSubmittingAction: boolean;
   /** 调整积分并提交。 */
@@ -53,7 +56,19 @@ export interface UseMemberDetailActionsReturn {
   /** 调整纯利豆并提交。 */
   handleAdjustBeans: (delta: number, reason: string) => Promise<void>;
   /** 设置会员等级并提交。 */
-  handleSetMembership: (newLevel: MemberLevel, newExpiry: number | null, options?: { amountDisplay?: string }) => Promise<void>;
+  handleSetMembership: (
+    newLevel: MemberLevel,
+    newExpiry: number | null,
+    options?: {
+      amountDisplay?: string;
+      subAccountCount?: number;
+      subAccountAmountDisplay?: string;
+      confirmDowngradePlan?: boolean;
+      countAsIncome?: boolean;
+      /** 期数：追加时长与新客额度都按它叠加（年度 × 2 = 730 天 / 600 位新客） */
+      multiplier?: number;
+    },
+  ) => Promise<void>;
   /** 封禁当前会员。 */
   handleBanMember: (reason: string) => Promise<boolean>;
   /** 解封当前会员。 */
@@ -64,6 +79,16 @@ export interface UseMemberDetailActionsReturn {
   handleCancelAccount: () => Promise<boolean>;
   /** 重置首购锁定价，让下一次成交重新锁价。 */
   handleResetLockedPrice: () => Promise<boolean>;
+  /**
+   * 补录 / 撤销子账号加价。返回是否成功（失败时调用方应保留表单内容）。
+   *
+   * 金额传空串即撤销补录，续费价回到纯配置价口径。
+   * `subAccountCount` 省略表示不动数量（只改加价），传数字才覆盖。
+   */
+  handleBackfillSubAccountAmount: (
+    planId: string,
+    payload: { subAccountCount?: number; subAccountAmountDisplay: string },
+  ) => Promise<boolean>;
 }
 
 /** 会员详情提交动作 hook。 */
@@ -119,7 +144,14 @@ export const useMemberDetailActions = ({
   const handleSetMembership = useCallback(async (
     newLevel: MemberLevel,
     newExpiry: number | null,
-    options?: { amountDisplay?: string },
+    options?: {
+      amountDisplay?: string;
+      subAccountCount?: number;
+      subAccountAmountDisplay?: string;
+      confirmDowngradePlan?: boolean;
+      countAsIncome?: boolean;
+      multiplier?: number;
+    },
   ): Promise<void> => {
     if (!member || submittingAction) {
       return;
@@ -130,6 +162,11 @@ export const useMemberDetailActions = ({
       await submitMemberMembership(member.id, newLevel, newExpiry, {
         memberName: member.name,
         amountDisplay: options?.amountDisplay,
+        subAccountCount: options?.subAccountCount,
+        subAccountAmountDisplay: options?.subAccountAmountDisplay,
+        confirmDowngradePlan: options?.confirmDowngradePlan,
+        countAsIncome: options?.countAsIncome,
+        multiplier: options?.multiplier,
       });
       showToast({ type: 'success', message: '会员等级设置成功' });
       void loadMember({ silent: true });
@@ -267,6 +304,47 @@ export const useMemberDetailActions = ({
     }
   }, [loadMember, member, submittingAction]);
 
+  /**
+   * 补录 / 撤销子账号加价。
+   *
+   * 只提交子账号数量与加价：成交总额是当初真实成交的，补录不该改写它。
+   * 金额为空串即撤销补录，续费价回到纯配置价口径。
+   *
+   * 返回是否成功：失败时调用方必须保留内联表单，否则运营刚填的数量 / 加价会被清掉。
+   */
+  const handleBackfillSubAccountAmount = useCallback(
+    async (
+      planId: string,
+      payload: { subAccountCount?: number; subAccountAmountDisplay: string },
+    ): Promise<boolean> => {
+      if (!member || submittingAction) {
+        return false;
+      }
+
+      setSubmittingAction('backfillSubAccountAmount');
+      try {
+        await backfillMemberSubAccountAmount(member.id, planId, payload);
+        showToast({
+          type: 'success',
+          message: payload.subAccountAmountDisplay
+            ? '子账号加价已补录'
+            : '已撤销子账号加价补录',
+        });
+        void loadMember({ silent: true });
+        return true;
+      } catch (error) {
+        showToast({
+          type: 'error',
+          message: error instanceof Error ? error.message : '补录失败，请稍后重试',
+        });
+        return false;
+      } finally {
+        setSubmittingAction(null);
+      }
+    },
+    [loadMember, member, submittingAction],
+  );
+
   return {
     isSubmittingPoints: submittingAction === 'points',
     isSubmittingBeans: submittingAction === 'beans',
@@ -275,6 +353,7 @@ export const useMemberDetailActions = ({
     isSubmittingSubAccount: submittingAction === 'subAccount',
     isSubmittingCancel: submittingAction === 'cancel',
     isResettingLockedPrice: submittingAction === 'resetLockedPrice',
+    isBackfillingSubAccount: submittingAction === 'backfillSubAccountAmount',
     isSubmittingAction: submittingAction !== null,
     handleAdjustPoints,
     handleAdjustBeans,
@@ -284,5 +363,6 @@ export const useMemberDetailActions = ({
     handleSetSubAccountQuota,
     handleCancelAccount,
     handleResetLockedPrice,
+    handleBackfillSubAccountAmount,
   };
 };

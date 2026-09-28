@@ -52,6 +52,7 @@ const MemberDetail: React.FC = () => {
     isSubmittingSubAccount,
     isSubmittingCancel,
     isResettingLockedPrice,
+    isBackfillingSubAccount,
     isSubmittingAction,
     handleAdjustPoints,
     handleAdjustBeans,
@@ -61,6 +62,7 @@ const MemberDetail: React.FC = () => {
     handleSetSubAccountQuota,
     handleCancelAccount,
     handleResetLockedPrice,
+    handleBackfillSubAccountAmount,
     retryLoadMember,
   } = useMemberDetailPage(id);
 
@@ -195,7 +197,6 @@ const MemberDetail: React.FC = () => {
 
   return (
     <div className={styles.pageContainer}>
-      <div className={styles.blurOrb} aria-hidden="true" />
 
       {/* 页面顶部导航 */}
       <PageHeader title="会员详情" onBack={handleBack} />
@@ -237,6 +238,8 @@ const MemberDetail: React.FC = () => {
         <MemberDetailRechargePanel
           rechargeHistory={member.rechargeHistory}
           rechargeCount={member.rechargeCount}
+          adminGrantHistory={member.adminGrantHistory}
+          adminGrantCount={member.adminGrantCount}
         />
 
         {/* 会员备注卡（有备注才渲染） */}
@@ -268,6 +271,7 @@ const MemberDetail: React.FC = () => {
         {isMembershipModalOpen ? (
           <SetMembershipModal
             member={member}
+            memberId={member.id}
             currentLevel={memberLevel}
             currentExpiry={displayMemberExpiry}
             lifetimeMembershipDays={lifetimeMembershipDays}
@@ -310,6 +314,10 @@ const MemberDetail: React.FC = () => {
             onResetLockedPrice={async () => {
               await handleResetLockedPrice();
             }}
+            isBackfillingSubAccount={isBackfillingSubAccount}
+            onBackfillSubAccountAmount={async (item, payload) =>
+              handleBackfillSubAccountAmount(item.planId, payload)
+            }
             onClose={handleCloseModal}
             onConfirm={async (quota) => {
               const didSucceed = await handleSetSubAccountQuota(quota);

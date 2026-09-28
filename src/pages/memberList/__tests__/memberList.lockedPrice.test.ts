@@ -68,13 +68,16 @@ describe('会员详情首购锁定价映射', () => {
     vi.clearAllMocks();
   });
 
-  it('把档位与来源映射成运营可读文案', async () => {
+  it('把档位与来源映射成运营可读文案，并区分子账号加价是否已补录', async () => {
     const detail = await fetchDetail({
       lockedPrices: [
         {
           planId: 'yearly',
           price: 58800,
           priceDisplay: '588',
+          subAccountAmountDisplay: '150',
+          subAccountCount: 3,
+          renewalPriceDisplay: '738',
           source: 'purchase',
           lockedAt: 1773500000000,
         },
@@ -82,6 +85,10 @@ describe('会员详情首购锁定价映射', () => {
           planId: 'lifetime',
           price: 59800,
           priceDisplay: '598',
+          // 存量门店尚未补录：后端下发 null，前端需提示运营
+          subAccountAmountDisplay: null,
+          subAccountCount: null,
+          renewalPriceDisplay: null,
           source: 'admin',
           lockedAt: 1773400000000,
         },
@@ -93,6 +100,10 @@ describe('会员详情首购锁定价映射', () => {
         planId: 'yearly',
         planName: '年度会员',
         priceDisplay: '588',
+        subAccountAmountDisplay: '150',
+        subAccountCount: 3,
+        // 配置价 + 子账号加价 = 续费价，供快照展示「加价 ¥150 = ¥738」
+        renewalPriceDisplay: '738',
         source: 'purchase',
         sourceLabel: '商家续费成交',
         lockedAt: 1773500000000,
@@ -102,11 +113,34 @@ describe('会员详情首购锁定价映射', () => {
         planId: 'lifetime',
         planName: 'AGES会员',
         priceDisplay: '598',
+        subAccountAmountDisplay: null,
+        subAccountCount: null,
+        renewalPriceDisplay: null,
         source: 'admin',
         sourceLabel: '平台设置等级',
         lockedAt: 1773400000000,
       },
     ]);
+  });
+
+  it('补录金额为空串时按未补录处理（避免渲染成 ¥ 空值）', async () => {
+    const detail = await fetchDetail({
+      lockedPrices: [
+        {
+          planId: 'yearly',
+          priceDisplay: '588',
+          subAccountAmountDisplay: '   ',
+          subAccountCount: 3,
+          source: 'purchase',
+        },
+      ],
+    });
+
+    expect(detail.lockedPrices?.[0]).toMatchObject({
+      subAccountAmountDisplay: null,
+      // 加价缺失时数量一并归一为 null，避免出现「含 3 个子账号 · 加价 ¥」
+      subAccountCount: null,
+    });
   });
 
   it('未知来源按 purchase 兜底，未知档位回退原始 planId', async () => {
@@ -121,6 +155,9 @@ describe('会员详情首购锁定价映射', () => {
         planId: 'biennial',
         planName: 'biennial',
         priceDisplay: '999',
+        subAccountAmountDisplay: null,
+        subAccountCount: null,
+        renewalPriceDisplay: null,
         source: 'purchase',
         sourceLabel: '商家续费成交',
         lockedAt: 0,

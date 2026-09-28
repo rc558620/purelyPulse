@@ -1,3 +1,35 @@
 .root {
   display: contents;
 }
+
+// 续费价胶囊：heroBanner 右上角常驻，hover 通过 title 展示完整定价公式。
+// 所有数值均由后端算好后下发，前端只做渲染。
+// 续费价胶囊：排在标题行尾部，与等级 / 合伙人徽章同排。
+// 之前是 heroBanner 的独立右列，把姓名、状态、操作按钮整块压窄了
+.renewalPriceBadge {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.35rem 1rem;
+  border-radius: 9999px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  cursor: help;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.renewalPriceLabel {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #059669;
+  letter-spacing: 0.02em;
+}
+
+.renewalPriceValue {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #047857;
+  line-height: 1.2;
+}

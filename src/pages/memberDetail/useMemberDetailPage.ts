@@ -42,8 +42,10 @@ interface UseMemberDetailPageReturn {
   isSubmittingSubAccount: boolean;
   /** 是否正在提交注销账号。 */
   isSubmittingCancel: boolean;
-  /** 是否正在重置首购锁定价。 */
+  /** 是否正在重置成交价快照。 */
   isResettingLockedPrice: boolean;
+  /** 是否正在补录子账号加价。 */
+  isBackfillingSubAccount: boolean;
   /** 是否有任一提交动作进行中。 */
   isSubmittingAction: boolean;
   /** 调整积分并提交。 */
@@ -51,7 +53,17 @@ interface UseMemberDetailPageReturn {
   /** 调整纯利豆并提交。 */
   handleAdjustBeans: (delta: number, reason: string) => Promise<void>;
   /** 设置会员等级并提交。 */
-  handleSetMembership: (newLevel: MemberLevel, newExpiry: number | null, options?: { amountDisplay?: string }) => Promise<void>;
+  handleSetMembership: (
+    newLevel: MemberLevel,
+    newExpiry: number | null,
+    options?: {
+      amountDisplay?: string;
+      subAccountCount?: number;
+      subAccountAmountDisplay?: string;
+      confirmDowngradePlan?: boolean;
+      countAsIncome?: boolean;
+    },
+  ) => Promise<void>;
   /** 封禁当前会员。 */
   handleBanMember: (reason: string) => Promise<boolean>;
   /** 解封当前会员。 */
@@ -60,8 +72,17 @@ interface UseMemberDetailPageReturn {
   handleSetSubAccountQuota: (quota: number) => Promise<boolean>;
   /** 注销当前会员账号（不可逆）。 */
   handleCancelAccount: () => Promise<boolean>;
-  /** 重置首购锁定价，让下一次成交重新锁价。 */
+  /** 重置成交价快照，让下一次成交重新记录。 */
   handleResetLockedPrice: () => Promise<boolean>;
+  /**
+   * 补录 / 撤销某档位的子账号加价。
+   *
+   * 只提交子账号数量与加价，不改写成交总额；金额传空串即撤销补录。
+   */
+  handleBackfillSubAccountAmount: (
+    planId: string,
+    payload: { subAccountCount?: number; subAccountAmountDisplay: string },
+  ) => Promise<boolean>;
   /** 重试拉取详情。 */
   retryLoadMember: () => void;
 }
@@ -92,6 +113,7 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
     isSubmittingSubAccount,
     isSubmittingCancel,
     isResettingLockedPrice,
+    isBackfillingSubAccount,
     isSubmittingAction,
     handleAdjustPoints,
     handleAdjustBeans,
@@ -101,6 +123,7 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
     handleSetSubAccountQuota,
     handleCancelAccount,
     handleResetLockedPrice,
+    handleBackfillSubAccountAmount,
   } = useMemberDetailActions({ member, loadMember, patchMember });
 
   // 从 member 直接派生展示态，避免 useEffect 同步 setState 产生的级联渲染
@@ -128,6 +151,7 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
     isSubmittingSubAccount,
     isSubmittingCancel,
     isResettingLockedPrice,
+    isBackfillingSubAccount,
     isSubmittingAction,
     handleAdjustPoints,
     handleAdjustBeans,
@@ -137,6 +161,7 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
     handleSetSubAccountQuota,
     handleCancelAccount,
     handleResetLockedPrice,
+    handleBackfillSubAccountAmount,
     retryLoadMember,
   };
 };

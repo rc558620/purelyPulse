@@ -5,14 +5,17 @@ import pageStyles from '../../../../../../../memberDetail.module.less';
 interface MemberDetailRechargeHeaderProps {
   rechargeCount: number;
   fallbackCount: number;
+  /** 标题；默认「充值记录」，设置记录 tab 传「设置会员等级记录」 */
+  title?: string;
 }
 
 const MemberDetailRechargeHeader: React.FC<MemberDetailRechargeHeaderProps> = ({
   rechargeCount,
   fallbackCount,
+  title = '充值记录',
 }) => (
   <div className={pageStyles.rechargeCardHeader}>
-    <span className={pageStyles.rechargeCardTitle}>充值记录</span>
+    <span className={pageStyles.rechargeCardTitle}>{title}</span>
     <span className={pageStyles.rechargeCardCount}>{safeNum(rechargeCount || fallbackCount)} 笔</span>
   </div>
 );

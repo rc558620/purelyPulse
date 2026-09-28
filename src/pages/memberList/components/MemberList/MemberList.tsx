@@ -21,10 +21,12 @@ const MemberList: React.FC = () => {
     statusFilter,
     levelFilter,
     expiryFilter,
+    pendingBackfillFilter,
     searchQuery,
     setStatusFilter,
     setLevelFilter,
     setExpiryFilter,
+    setPendingBackfillFilter,
     setSearchQuery,
     handleSearchClear,
     retryLoadMembers,
@@ -36,8 +38,6 @@ const MemberList: React.FC = () => {
 
   return (
     <div className={styles.pageContainer}>
-      <div className={styles.blurOrb} aria-hidden="true" />
-      <div className={styles.blurOrb2} aria-hidden="true" />
 
       {/* 页面顶部导航 */}
       <PageHeader title="会员管理" onBack={() => navigate(-1)} />
@@ -53,6 +53,8 @@ const MemberList: React.FC = () => {
           onSearchClear={handleSearchClear}
           expiryFilter={expiryFilter}
           onExpiryChange={setExpiryFilter}
+          pendingBackfillFilter={pendingBackfillFilter}
+          onPendingBackfillChange={setPendingBackfillFilter}
         />
 
         {/* 状态 Tab + 等级 Chip 筛选区 */}

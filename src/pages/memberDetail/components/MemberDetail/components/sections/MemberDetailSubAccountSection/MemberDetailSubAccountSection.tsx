@@ -118,9 +118,8 @@ interface UsageBarProps {
   total: number;
 }
 
-// 将使用率映射至 10 个离散百分比档位（0/10/20/.../100）
-const PCT_STEPS = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100] as const;
-type PctStep = typeof PCT_STEPS[number];
+// 使用率映射至 11 个离散档位（0/10/20/.../100），对应 less 里的 usageBarFillPct{档位}
+type PctStep = 0 | 10 | 20 | 30 | 40 | 50 | 60 | 70 | 80 | 90 | 100;
 
 function snapToPctStep(pct: number): PctStep {
   const clamped = Math.min(100, Math.max(0, pct));

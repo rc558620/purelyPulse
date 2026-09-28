@@ -17,11 +17,18 @@
 }
 
 // ─── 吸顶（默认）────────────────────────────────────────────────────────────
+// 吸顶栏必须有实底：Pulse 的页面容器自身滚动（pageContainer overflow-y:auto），
+// sticky 的透明 header 会让滚上来的内容直接穿透。
+// 参考 purelyProfit 的做法（header 在滚动容器外 + fade(@bg-light, 95%) 实底），
+// 这里用「95% 底色 + blur」达到同样的遮挡效果，且保留一点背景光斑的通透感。
 .header {
     position: sticky;
     top: 0;
     z-index: 30;
     .header-base();
+    background-color: fade(@bg-light, 95%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
 
 // ─── sticky 透明变体（背景装饰页专用，如 Profile）──────────────────────────

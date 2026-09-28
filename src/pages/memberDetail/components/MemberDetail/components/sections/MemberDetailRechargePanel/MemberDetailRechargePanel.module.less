@@ -1,3 +1,12 @@
 .root {
   display: contents;
 }
+
+// tab 行：分段控件贴在卡片顶部，与下方标题区保持同一内边距节奏
+.tabRow {
+  padding: 1.2rem 1.2rem 0;
+}
+
+.tabRow :global(.segment) {
+  width: 100%;
+}

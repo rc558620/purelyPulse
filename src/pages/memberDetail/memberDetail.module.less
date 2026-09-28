@@ -17,18 +17,6 @@
   -webkit-overflow-scrolling: touch;
 }
 
-// 背景光球
-.blurOrb {
-  position: fixed;
-  top: -12rem;
-  right: -8rem;
-  width: 40rem;
-  height: 40rem;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(132, 204, 22, 0.1), transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
 
 // ─── 内容区 ───────────────────────────────────────────────────────
 .contentWrapper {
@@ -207,8 +195,11 @@
   color: #059669;
 }
 
+// 手机号已并入详情行（与加入时间 / 活跃同一行）：字号与同行对齐，
+// 靠字重稍作区分，免得比旁边文字大出一截
 .heroPhone {
-  font-size: 1.3rem;
+  font-size: 1.15rem;
+  font-weight: 600;
   color: @text-sub;
 }
 
@@ -239,7 +230,8 @@
   color: @text-slate-400;
 }
 
-// 会员到期时间提示
+// 会员到期时间提示：与档位 / 合伙人 / 状态同排在标题行，纯底色无描边，
+// 避免和旁边的实心徽章抢视觉
 .heroMembershipExpiry {
   display: inline-flex;
   align-items: center;
@@ -248,15 +240,13 @@
   font-weight: 600;
   color: #d97706;
   background: rgba(245, 158, 11, 0.1);
-  padding: 0.2rem 0.7rem;
+  padding: 0.2rem 0.8rem;
   border-radius: 9999px;
-  border: 1px solid rgba(245, 158, 11, 0.22);
 }
 
 .heroMembershipExpiryLifetime {
   color: #9333ea;
   background: rgba(168, 85, 247, 0.1);
-  border-color: rgba(168, 85, 247, 0.22);
 }
 
 // 设置会员等级按钮
@@ -849,6 +839,15 @@
 
 .rechargeChannelManual {
   color: #6b7280;
+}
+
+// 后台设置会员等级：admin=计入收入，gift=赠送
+.rechargeChannelAdmin {
+  color: #4f46e5;
+}
+
+.rechargeChannelGift {
+  color: #0891b2;
 }
 
 .rechargeDot {

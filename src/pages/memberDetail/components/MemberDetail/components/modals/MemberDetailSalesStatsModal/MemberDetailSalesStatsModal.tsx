@@ -152,7 +152,10 @@ const MemberDetailSalesStatsModal: React.FC<MemberDetailSalesStatsModalProps> = 
   }, [memberId]);
 
   useEffect(() => {
-    void loadStats();
+    // loadStats 开头的状态重置（清空数据 / 置为加载中）是同步执行的，
+    // 直接在 effect 主体调用会构成「同步 setState → 级联渲染」。
+    // 放进微任务后仍在同一帧内跑完，视觉表现一致，但不再多一轮渲染。
+    void Promise.resolve().then(() => loadStats());
   }, [loadStats]);
 
   // ESC 关闭

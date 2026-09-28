@@ -1,6 +1,6 @@
 // SetSubAccountMemberCard：展示会员摘要与当前子账号配额。
 import React, { useMemo } from 'react';
-import { cx, safeStr } from '@utils/utils';
+import { cx, safeNum, safeStr } from '@utils/utils';
 import { IconSlotGrid } from '@pages/memberDetail/components/MemberDetailIcons/MemberDetailIcons';
 import { LEVEL_LABEL } from '@pages/memberList/memberList.constants';
 import type { MemberDetail, MemberLevel } from '@pages/memberList/memberList.types';
@@ -59,7 +59,7 @@ const SetSubAccountMemberCard: React.FC<SetSubAccountMemberCardProps> = ({
         )}
       >
         <IconSlotGrid width={11} height={11} />
-        {initialQuota > 0 ? `${initialQuota} 个子账号` : '未开通'}
+        {safeNum(initialQuota) > 0 ? `${safeNum(initialQuota)} 个子账号` : '未开通'}
       </div>
     </div>
   );

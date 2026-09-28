@@ -42,7 +42,6 @@ const MemberPoints: React.FC = () => {
 
   return (
     <div className={styles.pageContainer}>
-      <div className={styles.blurOrb} aria-hidden="true" />
       <MemberPointsPageHeader
         isSubmitting={isSubmitting}
         onBack={handleBack}

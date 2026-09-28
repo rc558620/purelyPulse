@@ -17,30 +17,7 @@
   -webkit-overflow-scrolling: touch;
 }
 
-// 背景光球
-.blurOrb {
-  position: fixed;
-  top: -10rem;
-  right: -8rem;
-  width: 36rem;
-  height: 36rem;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(132, 204, 22, 0.1), transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.blurOrb2 {
-  position: fixed;
-  bottom: 0;
-  left: -6rem;
-  width: 28rem;
-  height: 28rem;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.07), transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
+// ─── 会员列表 ───────────────────────────────────────────────────
 
 // ─── 内容区 ───────────────────────────────────────────────────────
 .contentWrapper {
@@ -129,6 +106,9 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  // 搜索框是 flex:1，另两个控件 flex-shrink:0 —— 窄屏（375px）下三者相加会
+  // 把搜索框挤到只剩几十像素，放不下就换行，别让输入框被压扁
+  flex-wrap: wrap;
 }
 
 .searchRowInput {
@@ -143,6 +123,31 @@
   @media (min-width: @bp-mobile) {
     width: 12.5rem;
   }
+}
+
+// 待补录清单开关：筛出「有子账号能力但成交价快照里缺子账号加价」的门店
+.pendingBackfillToggle {
+  flex-shrink: 0;
+  height: 4.16rem;
+  padding: 0 1.4rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(245, 158, 11, 0.32);
+  background: rgba(255, 255, 255, 0.9);
+  color: #b45309;
+  font-size: 1.3rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+
+  &:hover {
+    border-color: rgba(245, 158, 11, 0.6);
+  }
+}
+
+.pendingBackfillToggleActive {
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.7);
 }
 
 // SelectView 触发器尺寸适配：与 Search 高度对齐
