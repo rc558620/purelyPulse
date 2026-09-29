@@ -9,26 +9,13 @@ import {
 } from '@pages/memberDetail/components/MemberDetailIcons/MemberDetailIcons';
 import { AVATAR_COLORS } from '@pages/memberList/memberList.constants';
 import type { MemberDetail, MemberLevel } from '@pages/memberList/memberList.types';
-import type { ModalMembershipSelection } from '../../SetMembershipModal';
+import { MULTIPLIER_OPTIONS } from '../../SetMembershipModal.constants';
+import type { DurationOption, ModalMembershipSelection } from '../../SetMembershipModal.types';
+import {
+  formatMembershipDaysLeft,
+  formatMembershipExpiry,
+} from '../../setMembershipModal.utils';
 import styles from '../../SetMembershipModal.module.less';
-
-interface DurationOption {
-  value: ModalMembershipSelection;
-  label: string;
-  shortLabel: string;
-  desc: string;
-  /** 新用户额度说明文案，展示在 desc（xxx 天订阅）下一行 */
-  quotaText: string;
-  daysBase: number;
-  color: string;
-  gradientFrom: string;
-  gradientTo: string;
-}
-
-interface MultiplierOption {
-  value: number;
-  label: string;
-}
 
 interface SetMembershipSelectStepProps {
   member: MemberDetail;
@@ -45,11 +32,8 @@ interface SetMembershipSelectStepProps {
   newExpiry: number | null;
   now: number;
   durationOptions: DurationOption[];
-  multiplierOptions: MultiplierOption[];
   onDurationChange: (value: ModalMembershipSelection) => void;
   onMultiplierChange: (value: number) => void;
-  formatMembershipExpiry: (timestamp: number) => string;
-  formatMembershipDaysLeft: (timestamp: number) => string;
   lifetimeMembershipDays: number;
 }
 
@@ -81,11 +65,8 @@ const SetMembershipSelectStep: React.FC<SetMembershipSelectStepProps> = ({
   newExpiry,
   now,
   durationOptions,
-  multiplierOptions,
   onDurationChange,
   onMultiplierChange,
-  formatMembershipExpiry,
-  formatMembershipDaysLeft,
   lifetimeMembershipDays,
 }) => {
   const avatarBg = AVATAR_COLORS[member.avatarColorIdx % AVATAR_COLORS.length];
@@ -184,7 +165,7 @@ const SetMembershipSelectStep: React.FC<SetMembershipSelectStepProps> = ({
         </label>
         {!isLifetime ? (
           <div className={styles.multiplierRow}>
-            {multiplierOptions.map((option) => (
+            {MULTIPLIER_OPTIONS.map((option) => (
               <button
                 key={option.value}
                 type="button"

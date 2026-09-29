@@ -4,18 +4,15 @@ import { Input } from '@components/form/Input/Input';
 import { IconCircleChevronUp, IconWarningTriangle } from '@pages/memberDetail/components/MemberDetailIcons/MemberDetailIcons';
 import type { MemberPricingPreview } from '@pages/memberList/memberList.service';
 // fenToYuan 已删除：前端不做分转元转换。金额展示值由后端直接返回 xxxDisplay 字段。
+import type { DurationOption } from '../../SetMembershipModal.types';
+import { formatMembershipExpiry } from '../../setMembershipModal.utils';
 import styles from '../../SetMembershipModal.module.less';
-
-interface SelectedOption {
-  label: string;
-  color: string;
-}
 
 interface SetMembershipConfirmStepProps {
   isLifetime: boolean;
   isFree: boolean;
   isCurrentLifetime: boolean;
-  selectedOption: SelectedOption;
+  selectedOption: Pick<DurationOption, 'label' | 'color'>;
   multiplier: number;
   addedDays: number;
   newExpiry: number | null;
@@ -29,7 +26,6 @@ interface SetMembershipConfirmStepProps {
   /** 新用户额度说明文案（免费会员为「新用户额度清零」） */
   quotaText: string;
   onAmountChange: (value: string) => void;
-  formatMembershipExpiry: (timestamp: number) => string;
   // ─── 子账号与成交价预览 ───
   /** 子账号数量草稿（字符串，不做数值运算） */
   subAccountCountInput: string;
@@ -69,7 +65,6 @@ const SetMembershipConfirmStep: React.FC<SetMembershipConfirmStepProps> = ({
   amountError,
   quotaText,
   onAmountChange,
-  formatMembershipExpiry,
   subAccountCountInput,
   subAccountAmountInput,
   subAccountAmountError = '',

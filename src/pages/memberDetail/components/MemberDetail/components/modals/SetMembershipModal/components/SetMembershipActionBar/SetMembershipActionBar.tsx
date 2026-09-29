@@ -1,20 +1,19 @@
 import React from 'react';
 import { IconCheck } from '@pages/memberDetail/components/MemberDetailIcons/MemberDetailIcons';
+import type {
+  DurationOption,
+  SetMembershipStep,
+} from '../../SetMembershipModal.types';
 import styles from '../../SetMembershipModal.module.less';
 
-interface SelectedOption {
-  shortLabel: string;
-  color: string;
-}
-
 interface SetMembershipActionBarProps {
-  step: 'select' | 'confirm';
+  step: SetMembershipStep;
   isSubmitting: boolean;
   isSameAsNow: boolean;
   isLifetime: boolean;
   isFree: boolean;
   multiplier: number;
-  selectedOption: SelectedOption;
+  selectedOption: Pick<DurationOption, 'shortLabel' | 'color'>;
   onCancel: () => void;
   onConfirm: () => void;
   isConfirmDisabled?: boolean;
@@ -22,7 +21,7 @@ interface SetMembershipActionBarProps {
 
 const getConfirmLabel = (
   isSubmitting: boolean,
-  step: 'select' | 'confirm',
+  step: SetMembershipStep,
   isLifetime: boolean,
   isFree: boolean,
   shortLabel: string,

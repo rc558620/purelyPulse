@@ -38,6 +38,18 @@ export interface HomeRevenueTypeItem {
   value: number;
 }
 
+/** 首页总览查询条件。 */
+export interface HomeOverviewQuery {
+  revenuePeriod: RevenuePeriod;
+  /** 地区筛选名称，与 regionCode 同时下发，后端按「名称 OR 编码」匹配 */
+  region?: string;
+  /** 地区筛选的行政区划编码，兼容库里存编码的合伙人数据 */
+  regionCode?: string;
+  customDate?: string;
+  customRangeStart?: string;
+  customRangeEnd?: string;
+}
+
 export interface HomeOverviewData {
   onlineCount: number;
   onlinePeak: number;

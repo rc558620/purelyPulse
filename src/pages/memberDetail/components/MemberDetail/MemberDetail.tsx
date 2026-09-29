@@ -1,39 +1,18 @@
-// 会员详情页主体组件：状态编排 + 事件处理 + 子组件组合。
-import React, { Suspense, lazy, useCallback, useMemo, useState } from 'react';
+// 会员详情主体组件：区块组合与弹窗挂载，状态编排下沉到专用 hook。
+import React, { useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import PageHeader from '@components/ui/layout/PageHeader';
-import type { SetMembershipModalProps } from './components/modals/SetMembershipModal/SetMembershipModal';
 import { useAnimatedNavigate } from '@hooks/useAnimatedNavigate';
 import MemberDetailHeroSection from './components/sections/MemberDetailHeroSection/MemberDetailHeroSection';
 import MemberDetailMetricsGrid from './components/sections/MemberDetailMetricsGrid/MemberDetailMetricsGrid';
 import MemberDetailPageState from './components/pageState/MemberDetailPageState/MemberDetailPageState';
 import MemberDetailRechargePanel from './components/sections/MemberDetailRechargePanel/MemberDetailRechargePanel';
 import MemberDetailRemarkCard from './components/sections/MemberDetailRemarkCard/MemberDetailRemarkCard';
-import {
-  formatMemberDate,
-  resolveSubAccountAddOnPriceDisplay,
-  resolveSubAccountBackfillState,
-} from '../../memberDetail.utils';
+import MemberDetailModals from './components/modals/MemberDetailModals/MemberDetailModals';
+import { useMemberDetailMemberSummary } from './hooks/useMemberDetailMemberSummary';
+import { useMemberDetailModals } from './hooks/useMemberDetailModals';
 import { useMemberDetailPage } from '../../useMemberDetailPage';
 import styles from '../../memberDetail.module.less';
-
-const AdjustBeanModal = lazy(() => import('./components/modals/AdjustBeanModal/AdjustBeanModal'));
-const AdjustPointsModal = lazy(() => import('./components/modals/AdjustPointsModal/AdjustPointsModal'));
-const MemberDetailStatusModal = lazy(() => import('./components/modals/MemberDetailStatusModal/MemberDetailStatusModal'));
-const SetMembershipModal = lazy(async () => {
-  const module = await import('./components/modals/SetMembershipModal/SetMembershipModal');
-  return { default: module.default as React.ComponentType<SetMembershipModalProps> };
-});
-const SetSubAccountModal = lazy(() => import('./components/modals/SetSubAccountModal/SetSubAccountModal'));
-const RenewalPriceModal = lazy(() => import('./components/modals/RenewalPriceModal/RenewalPriceModal'));
-const SubAccountDetailModal = lazy(() => import('./components/modals/SubAccountDetailModal/SubAccountDetailModal'));
-const MemberDetailClubStatsModal = lazy(() => import('./components/modals/MemberDetailClubStatsModal/MemberDetailClubStatsModal'));
-const MemberDetailSalesStatsModal = lazy(() => import('./components/modals/MemberDetailSalesStatsModal/MemberDetailSalesStatsModal'));
-const CancelAccountModal = lazy(() => import('./components/modals/CancelAccountModal/CancelAccountModal'));
-
-type ActiveModal = 'points' | 'beans' | 'membership' | 'renewalPrice' | 'status' | 'subAccount' | 'subAccountDetail' | 'clubStats' | 'salesStats' | 'cancelAccount' | null;
-
-const DAY_MS = 86_400_000;
 
 const MemberDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -73,135 +52,30 @@ const MemberDetail: React.FC = () => {
     retryLoadMember,
   } = useMemberDetailPage(id);
 
-  const [activeModal, setActiveModal] = useState<ActiveModal>(null);
-  const [banReason, setBanReason] = useState<string>('');
-
-  const displayMemberExpiry = useMemo(() => {
-    if (memberLevel !== 'lifetime' || memberExpiry || !member) {
-      return memberExpiry;
-    }
-
-    const latestRechargeAt = member.rechargeHistory.reduce<number | null>((latest, record) => {
-      if (!Number.isFinite(record.createdAt)) {
-        return latest;
-      }
-      return latest === null ? record.createdAt : Math.max(latest, record.createdAt);
-    }, null);
-
-    const inferredStartAt = latestRechargeAt ?? member.registeredAt;
-    return Number.isFinite(inferredStartAt) ? inferredStartAt + lifetimeMembershipDays * DAY_MS : null;
-  }, [lifetimeMembershipDays, member, memberExpiry, memberLevel]);
-
-  const membershipExpiryText =
-    memberLevel === 'free' ? null :
-    displayMemberExpiry ? `${formatMemberDate(displayMemberExpiry)} 到期` :
-    memberLevel === 'lifetime' ? '永久有效' : null;
-
-  // 子账号加价补录状态：会员级（不是某条记录的历史快照），
-  // 子账号设置记录每行都用徽章区分「待补录 / 已补录」
-  const subAccountBackfillState = useMemo(
-    () => resolveSubAccountBackfillState(memberLevel, member?.lockedPrices),
-    [member, memberLevel],
-  );
-
-  // 已补录的子账号加价：子账号记录行展示成「10 个 = ¥1000」，
-  // 未补录时为 null，行内退回只展示额度
-  const subAccountAddOnPriceDisplay = useMemo(
-    () => resolveSubAccountAddOnPriceDisplay(memberLevel, member?.lockedPrices),
-    [member, memberLevel],
-  );
-
   const isBannedMember = member?.status === 'banned';
-  const isPointsModalOpen = activeModal === 'points';
-  const isBeanModalOpen = activeModal === 'beans';
-  const isMembershipModalOpen = activeModal === 'membership';
-  const isRenewalPriceModalOpen = activeModal === 'renewalPrice';
-  const isStatusModalOpen = activeModal === 'status';
-  const isSubAccountModalOpen = activeModal === 'subAccount';
-  const isSubAccountDetailModalOpen = activeModal === 'subAccountDetail';
-  const isClubStatsModalOpen = activeModal === 'clubStats';
-  const isSalesStatsModalOpen = activeModal === 'salesStats';
-  const isCancelAccountModalOpen = activeModal === 'cancelAccount';
-
   const handleBack = useCallback((): void => {
     navigate(-1);
   }, [navigate]);
 
-  const handleOpenPointsModal = useCallback((): void => {
-    setActiveModal('points');
-  }, []);
+  const {
+    membershipExpiry,
+    membershipExpiryText,
+    subAccountBackfillState,
+    subAccountAddOnPriceDisplay,
+  } = useMemberDetailMemberSummary({
+    member,
+    memberLevel,
+    memberExpiry,
+    lifetimeMembershipDays,
+  });
 
-  const handleOpenBeanModal = useCallback((): void => {
-    setActiveModal('beans');
-  }, []);
-
-  const handleOpenMembershipModal = useCallback((): void => {
-    setActiveModal('membership');
-  }, []);
-
-  const handleOpenRenewalPriceModal = useCallback((): void => {
-    setActiveModal('renewalPrice');
-  }, []);
-
-  const handleCloseModal = useCallback((): void => {
-    setActiveModal(null);
-  }, []);
-
-  const handleOpenStatusModal = useCallback((): void => {
-    setBanReason('');
-    setActiveModal('status');
-  }, []);
-
-  const handleOpenSubAccountModal = useCallback((): void => {
-    setActiveModal('subAccount');
-  }, []);
-
-  const handleOpenSubAccountDetailModal = useCallback((): void => {
-    setActiveModal('subAccountDetail');
-  }, []);
-
-  const handleOpenClubStatsModal = useCallback((): void => {
-    setActiveModal('clubStats');
-  }, []);
-
-  const handleOpenSalesStatsModal = useCallback((): void => {
-    setActiveModal('salesStats');
-  }, []);
-
-  const handleOpenCancelAccountModal = useCallback((): void => {
-    setActiveModal('cancelAccount');
-  }, []);
-
-  const handleCancelAccountConfirm = useCallback(async (): Promise<void> => {
-    const didCancel = await handleCancelAccount();
-    if (didCancel) {
-      setActiveModal(null);
-    }
-  }, [handleCancelAccount]);
-
-  const handleCloseStatusModal = useCallback((): void => {
-    if (isSubmittingBan) {
-      return;
-    }
-
-    setActiveModal(null);
-    setBanReason('');
-  }, [isSubmittingBan]);
-
-  const handleStatusConfirm = useCallback(async (): Promise<void> => {
-    if (isBannedMember) {
-      const didUnban = await handleUnbanMember();
-      if (didUnban) {
-        setActiveModal(null);
-      }
-      return;
-    }
-
-    const didBan = await handleBanMember(banReason);
-    if (didBan) {
-      setActiveModal(null);
-    }
-  }, [banReason, handleBanMember, handleUnbanMember, isBannedMember]);
+  const modals = useMemberDetailModals({
+    isBannedMember,
+    isSubmittingBan,
+    handleBanMember,
+    handleUnbanMember,
+    handleCancelAccount,
+  });
 
   if (isLoading) {
     return <MemberDetailPageState message="会员详情加载中..." onBack={handleBack} />;
@@ -240,14 +114,14 @@ const MemberDetail: React.FC = () => {
           isSubmittingSubAccount={isSubmittingSubAccount}
           isSubmittingCancel={isSubmittingCancel}
           isSubmittingRenewalPrice={isSubmittingRenewalPrice}
-          onOpenMembershipModal={handleOpenMembershipModal}
-          onOpenRenewalPriceModal={handleOpenRenewalPriceModal}
-          onOpenStatusModal={handleOpenStatusModal}
-          onOpenSubAccountModal={handleOpenSubAccountModal}
-          onOpenSubAccountDetailModal={handleOpenSubAccountDetailModal}
-          onOpenClubStatsModal={handleOpenClubStatsModal}
-          onOpenSalesStatsModal={handleOpenSalesStatsModal}
-          onOpenCancelAccountModal={handleOpenCancelAccountModal}
+          onOpenMembershipModal={modals.handleOpenMembershipModal}
+          onOpenRenewalPriceModal={modals.handleOpenRenewalPriceModal}
+          onOpenStatusModal={modals.handleOpenStatusModal}
+          onOpenSubAccountModal={modals.handleOpenSubAccountModal}
+          onOpenSubAccountDetailModal={modals.handleOpenSubAccountDetailModal}
+          onOpenClubStatsModal={modals.handleOpenClubStatsModal}
+          onOpenSalesStatsModal={modals.handleOpenSalesStatsModal}
+          onOpenCancelAccountModal={modals.handleOpenCancelAccountModal}
         />
 
         {/* 核心数据网格：积分、豆、充值额、邀请数 */}
@@ -258,8 +132,8 @@ const MemberDetail: React.FC = () => {
           isSubmittingAction={isSubmittingAction}
           isSubmittingPoints={isSubmittingPoints}
           isSubmittingBeans={isSubmittingBeans}
-          onOpenPointsModal={handleOpenPointsModal}
-          onOpenBeanModal={handleOpenBeanModal}
+          onOpenPointsModal={modals.handleOpenPointsModal}
+          onOpenBeanModal={modals.handleOpenBeanModal}
         />
 
         {/* 记录面板：充值 / 设置会员等级 / 调整续费 / 子账号设置 四态切换 */}
@@ -280,129 +154,30 @@ const MemberDetail: React.FC = () => {
         {member.remark?.trim() ? <MemberDetailRemarkCard remark={member.remark} /> : null}
       </main>
 
-      <Suspense fallback={null}>
-        {/* 调整积分弹窗 */}
-        {isPointsModalOpen ? (
-          <AdjustPointsModal
-            member={member}
-            currentPoints={points}
-            onClose={handleCloseModal}
-            onConfirm={handleAdjustPoints}
-          />
-        ) : null}
-
-        {/* 调整纯利豆弹窗 */}
-        {isBeanModalOpen ? (
-          <AdjustBeanModal
-            member={member}
-            currentBeans={beans}
-            onClose={handleCloseModal}
-            onConfirm={handleAdjustBeans}
-          />
-        ) : null}
-
-        {/* 设置会员等级弹窗 */}
-        {isMembershipModalOpen ? (
-          <SetMembershipModal
-            member={member}
-            memberId={member.id}
-            currentLevel={memberLevel}
-            currentExpiry={displayMemberExpiry}
-            lifetimeMembershipDays={lifetimeMembershipDays}
-            lifetimeMembershipAmountDisplay={lifetimeMembershipAmountDisplay}
-            annualMembershipAmountDisplay={annualMembershipAmountDisplay}
-            onClose={handleCloseModal}
-            onConfirm={handleSetMembership}
-          />
-        ) : null}
-
-        {/* 调整续费价格弹窗：只改该账号以后的续费价，不动本次成交 */}
-        {isRenewalPriceModalOpen ? (
-          <RenewalPriceModal
-            memberId={member.id}
-            memberName={member.name}
-            currentLevel={memberLevel}
-            isSubmitting={isSubmittingRenewalPrice}
-            onClose={handleCloseModal}
-            onSubmit={handleUpdateRenewalPrices}
-          />
-        ) : null}
-
-        {/* 封禁 / 解封确认弹窗 */}
-        {isStatusModalOpen ? (
-          <MemberDetailStatusModal
-            isBannedMember={isBannedMember}
-            isSubmittingBan={isSubmittingBan}
-            banReason={banReason}
-            onBanReasonChange={setBanReason}
-            onClose={handleCloseStatusModal}
-            onConfirm={handleStatusConfirm}
-          />
-        ) : null}
-
-        {/* 子账号详情弹窗：查看 purelyProfit 端的角色分配快照 */}
-        {isSubAccountDetailModalOpen ? (
-          <SubAccountDetailModal
-            capability={member.subAccountCapability}
-            onClose={handleCloseModal}
-            onEditQuota={handleOpenSubAccountModal}
-          />
-        ) : null}
-
-        {/* 子账号配置弹窗（平台侧，年/永久会员专属；角色分配由商家在 purelyProfit 端操作） */}
-        {isSubAccountModalOpen ? (
-          <SetSubAccountModal
-            member={member}
-            currentLevel={memberLevel}
-            currentCapability={member.subAccountCapability}
-            isSubmitting={isSubmittingSubAccount}
-            isResettingLockedPrice={isResettingLockedPrice}
-            onResetLockedPrice={async () => {
-              await handleResetLockedPrice();
-            }}
-            isBackfillingSubAccount={isBackfillingSubAccount}
-            onBackfillSubAccountAmount={async (item, payload) =>
-              handleBackfillSubAccountAmount(item.planId, payload)
-            }
-            onClose={handleCloseModal}
-            onConfirm={async (quota) => {
-              const didSucceed = await handleSetSubAccountQuota(quota);
-              if (didSucceed) {
-                handleCloseModal();
-              }
-            }}
-          />
-        ) : null}
-
-        {/* 会员运营情况弹窗：查看该商家在 purelyClub C 端的储值与等级分布 */}
-        {isClubStatsModalOpen ? (
-          <MemberDetailClubStatsModal
-            memberId={member.id}
-            memberName={member.name}
-            onClose={handleCloseModal}
-          />
-        ) : null}
-
-        {/* 营业详情弹窗：查看该商家今日/本周/本月/今年/去年的销售额与利润柱状图 */}
-        {isSalesStatsModalOpen ? (
-          <MemberDetailSalesStatsModal
-            memberId={member.id}
-            memberName={member.name}
-            onClose={handleCloseModal}
-          />
-        ) : null}
-
-        {/* 注销账号弹窗：二次确认不可逆的账号注销操作 */}
-        {isCancelAccountModalOpen ? (
-          <CancelAccountModal
-            memberName={member.name}
-            memberPhone={member.phone}
-            isSubmitting={isSubmittingCancel}
-            onClose={handleCloseModal}
-            onConfirm={handleCancelAccountConfirm}
-          />
-        ) : null}
-      </Suspense>
+      <MemberDetailModals
+        member={member}
+        points={points}
+        beans={beans}
+        memberLevel={memberLevel}
+        membershipExpiry={membershipExpiry}
+        lifetimeMembershipDays={lifetimeMembershipDays}
+        lifetimeMembershipAmountDisplay={lifetimeMembershipAmountDisplay}
+        annualMembershipAmountDisplay={annualMembershipAmountDisplay}
+        isSubmittingBan={isSubmittingBan}
+        isSubmittingSubAccount={isSubmittingSubAccount}
+        isResettingLockedPrice={isResettingLockedPrice}
+        isBackfillingSubAccount={isBackfillingSubAccount}
+        isSubmittingRenewalPrice={isSubmittingRenewalPrice}
+        isSubmittingCancel={isSubmittingCancel}
+        modals={modals}
+        handleAdjustPoints={handleAdjustPoints}
+        handleAdjustBeans={handleAdjustBeans}
+        handleSetMembership={handleSetMembership}
+        handleSetSubAccountQuota={handleSetSubAccountQuota}
+        handleResetLockedPrice={handleResetLockedPrice}
+        handleBackfillSubAccountAmount={handleBackfillSubAccountAmount}
+        handleUpdateRenewalPrices={handleUpdateRenewalPrices}
+      />
     </div>
   );
 };
