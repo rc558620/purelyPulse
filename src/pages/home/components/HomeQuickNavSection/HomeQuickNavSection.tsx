@@ -2,11 +2,11 @@
 import { memo } from 'react';
 import { cx, isNonEmptyArray, safeNum } from '@utils/utils';
 import { ROUTE_PATHS } from '../../../../router/paths';
-import { IconHomeBan, IconHomeBeans, IconHomeChevronRight, IconHomeGrid, IconHomeMemberList, IconHomeMembershipSettings, IconHomePayout, IconHomePoints, IconHomeReview } from '../HomeIcons/HomeIcons';
+import { IconHomeBan, IconHomeBeans, IconHomeChevronRight, IconHomeGrid, IconHomeMemberList, IconHomeMemberRecords, IconHomeMembershipSettings, IconHomePayout, IconHomePoints, IconHomeReview } from '../HomeIcons/HomeIcons';
 import styles from './HomeQuickNavSection.module.less';
 
-type HomeQuickNavTone = 'green' | 'purple' | 'amber' | 'blue' | 'red' | 'teal';
-type HomeQuickNavIcon = 'payout' | 'review' | 'beans' | 'points' | 'ban' | 'memberList' | 'membershipSettings';
+type HomeQuickNavTone = 'green' | 'purple' | 'amber' | 'blue' | 'red' | 'teal' | 'indigo';
+type HomeQuickNavIcon = 'payout' | 'review' | 'beans' | 'points' | 'ban' | 'memberList' | 'membershipSettings' | 'memberRecords';
 
 interface HomeQuickNavItemConfig {
   title: string;
@@ -30,8 +30,9 @@ const QUICK_NAV_ITEMS: HomeQuickNavItemConfig[] = [
   { title: '纯利豆', desc: '合伙人豆管理', ariaLabel: '纯利豆管理', path: ROUTE_PATHS.partnerBeans, tone: 'amber', icon: 'beans' },
   { title: '积分管理', desc: '会员积分增减', ariaLabel: '会员积分管理', path: ROUTE_PATHS.memberPoints, tone: 'blue', icon: 'points' },
   { title: '封禁管理', desc: '用户封禁与解封', ariaLabel: '用户封禁管理', path: ROUTE_PATHS.banManagement, tone: 'red', icon: 'ban' },
-  { title: '会员列表', desc: '查看与管理全部会员', ariaLabel: '会员列表', path: ROUTE_PATHS.memberList, tone: 'teal', icon: 'memberList' },
   { title: '会员管理', desc: '会员套餐价格设置', ariaLabel: '会员管理', path: ROUTE_PATHS.membershipSettings, tone: 'green', icon: 'membershipSettings' },
+  { title: '会员记录', desc: '充值 / 等级 / 续费 / 子账号记录', ariaLabel: '会员记录管理', path: ROUTE_PATHS.memberRecords, tone: 'indigo', icon: 'memberRecords' },
+  { title: '会员列表', desc: '查看与管理全部会员', ariaLabel: '会员列表', path: ROUTE_PATHS.memberList, tone: 'teal', icon: 'memberList' },
 ];
 
 const getQuickNavItemToneClassName = (tone: HomeQuickNavTone): string => {
@@ -48,6 +49,8 @@ const getQuickNavItemToneClassName = (tone: HomeQuickNavTone): string => {
       return styles.quickNavItemRed;
     case 'teal':
       return styles.quickNavItemTeal;
+    case 'indigo':
+      return styles.quickNavItemIndigo;
     default:
       return '';
   }
@@ -67,6 +70,8 @@ const getQuickNavIconToneClassName = (tone: HomeQuickNavTone): string => {
       return styles.quickNavIconRed;
     case 'teal':
       return styles.quickNavIconTeal;
+    case 'indigo':
+      return styles.quickNavIconIndigo;
     default:
       return '';
   }
@@ -88,6 +93,8 @@ const renderQuickNavIcon = (icon: HomeQuickNavIcon): React.JSX.Element => {
       return <IconHomeMemberList />;
     case 'membershipSettings':
       return <IconHomeMembershipSettings />;
+    case 'memberRecords':
+      return <IconHomeMemberRecords />;
     default:
       return <IconHomeGrid />;
   }

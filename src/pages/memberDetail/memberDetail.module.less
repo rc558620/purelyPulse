@@ -26,7 +26,7 @@
   display: flex;
   flex-direction: column;
   gap: 1.4rem;
-  padding: 1.6rem 1.6rem 4rem;
+  padding: 0 1.6rem 1.6rem;
   max-width: 48rem;
   margin: 0 auto;
   width: 100%;
@@ -34,13 +34,13 @@
 
   @media (min-width: @bp-mobile) {
     max-width: 72rem;
-    padding: 2.4rem 3.2rem 4rem;
+    padding: 0 2.4rem 2.4rem;
     gap: 1.8rem;
   }
 
   @media (min-width: @bp-tablet) {
     max-width: 96rem;
-    padding: 3.2rem 4.8rem 4rem;
+    padding: 0 2.4rem 2.4rem;
     gap: 2.2rem;
   }
 }
@@ -274,6 +274,51 @@
     border-color: rgba(132, 204, 22, 0.7);
     transform: translateY(-1px);
     box-shadow: 0 3px 10px rgba(132, 204, 22, 0.2);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  @media (min-width: @bp-mobile) {
+    font-size: 1.3rem;
+    padding: 0.6rem 1.4rem 0.6rem 1.2rem;
+  }
+}
+
+// 调整续费价格按钮（琥珀色系，与弹窗主色一致）
+.adjustRenewalPriceBtn {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0;
+  padding: 0.5rem 1.2rem 0.5rem 1rem;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(245, 158, 11, 0.42);
+  background: rgba(245, 158, 11, 0.08);
+  color: #b45309;
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+  align-self: flex-start;
+
+  &:hover {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.68);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(245, 158, 11, 0.2);
   }
 
   &:active {
@@ -873,14 +918,70 @@
 .rechargeAmtValue {
   font-size: 1.5rem;
   font-weight: 800;
-  color: @text-main;
+  // 金额用 emerald 强调，与续费价胶囊 / 「已调续费价」徽章同一套绿
+  color: #059669;
   letter-spacing: -0.01em;
+}
+
+// 子账号额度被调到 0 = 关闭功能，这是状态而非金额，用中性灰，别跟着绿
+.rechargeAmtClosed {
+  color: @text-slate-400;
 }
 
 .rechargePoints {
   font-size: 1.1rem;
   color: darken(#84cc16, 8%);
   font-weight: 600;
+}
+
+// 调整续费记录：右侧副行展示「此前 ¥398」这类改价前的对比值
+.rechargeAdjustPrevPrice {
+  font-size: 1.1rem;
+  color: @text-slate-400;
+  font-weight: 600;
+}
+
+// 子账号设置记录：变更原因由运营手填，可能很长，单行省略避免撑破卡片
+.rechargeRecordReason {
+  font-size: 1.1rem;
+  color: @text-slate-400;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// 记录行标题 + 徽章同行：标题过长 / 窄屏时换行，不把徽章挤出可视区
+.rechargePlanNameRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+// 子账号加价补录状态徽章：配色与会员列表的清单筛选开关保持一致，
+// 让「待补录」在列表页与详情页是同一个视觉信号
+.subAccountBackfillBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.subAccountBackfillPending {
+  background: rgba(245, 158, 11, 0.14);
+  border: 1px solid rgba(245, 158, 11, 0.32);
+  color: #b45309;
+}
+
+.subAccountBackfillDone {
+  background: rgba(13, 148, 136, 0.12);
+  border: 1px solid rgba(13, 148, 136, 0.28);
+  color: #0f766e;
 }
 
 // ─── 套餐类型配色（文字 + 价格共用） ──────────────────────────────

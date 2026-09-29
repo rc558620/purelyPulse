@@ -81,6 +81,7 @@ export const pages = {
   partnerBeans: lazyWithPreload(() => import('../pages/partnerBeans/partnerBeans')),
   memberList:   lazyWithPreload(() => import('../pages/memberList/memberList')),
   memberDetail: lazyWithPreload(() => import('../pages/memberDetail/memberDetail')),
+  memberRecords: lazyWithPreload(() => import('../pages/memberRecords/memberRecords')),
   // ─── 用户管理 ───────────────────────────────────────────────────────
   banManagement: lazyWithPreload(() => import('../pages/banManagement/banManagement')),
   // ─── 会员设置 ───────────────────────────────────────────────────────

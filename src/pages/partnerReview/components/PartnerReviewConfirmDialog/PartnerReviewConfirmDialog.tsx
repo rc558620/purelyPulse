@@ -46,11 +46,6 @@ const PartnerReviewConfirmDialog: React.FC<PartnerReviewConfirmDialogProps> = ({
       role="dialog"
       aria-modal="true"
       aria-label={isApprove ? '确认通过' : '确认拒绝'}
-      onClick={(event) => {
-        if (!isSubmitting && event.target === event.currentTarget) {
-          onCancel();
-        }
-      }}
     >
       <div className={styles.dialogCard}>
         <div

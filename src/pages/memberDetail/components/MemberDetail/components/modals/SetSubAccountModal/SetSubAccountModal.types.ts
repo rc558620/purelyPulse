@@ -1,10 +1,6 @@
 // SetSubAccountModal 类型定义：收敛弹窗对外契约。
-import type {
-  MemberDetail,
-  MemberLevel,
-  MemberLockedPrice,
-  SubAccountCapability,
-} from '@pages/memberList/memberList.types';
+import type { MemberDetail, MemberLevel, SubAccountCapability } from '@pages/memberList/memberList.types';
+import type { MemberLockedPrice } from '@pages/memberList/memberList.pricing.types';
 
 export interface SetSubAccountModalProps {
   member: MemberDetail;

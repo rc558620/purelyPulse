@@ -3,31 +3,32 @@
 @import (reference) '@styles/breakpoints.less';
 
 // ─── 页面容器 ──────────────────────────────────────────────────────
+// 这一页的滚动交给 PullRefreshLoadMore 自己的滚动视口（它按容器高度计算下拉距离），
+// 所以页面容器只负责「占满高度 + 不抢滚动」，不能再写 overflow-y: auto。
 .pageContainer {
   position: relative;
   width: 100%;
-  height: 100%;
+  height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   background-color: @bg-light;
   color: @text-main;
   font-family: 'Inter', 'Noto Sans SC', sans-serif;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden;
 }
 
-// ─── 会员列表 ───────────────────────────────────────────────────
-
-// ─── 内容区 ───────────────────────────────────────────────────────
+// ─── 内容总装层 ───────────────────────────────────────────────────
+// 宽度约束必须在这一层（PullRefreshLoadMore 的外层）：组件内部滚动区与回顶按钮
+// 都以它的宽度为定位基准，滚动条才会贴内容区右缘而不是浏览器窗口边缘。
 .contentWrapper {
   position: relative;
   z-index: 1;
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 1.4rem;
-  padding: 1.6rem 1.6rem 8rem;
+  overflow: hidden;
   max-width: 48rem;
   margin: 0 auto;
   width: 100%;
@@ -35,14 +36,39 @@
 
   @media (min-width: @bp-mobile) {
     max-width: 72rem;
-    padding: 2.4rem 3.2rem 8rem;
-    gap: 1.8rem;
   }
 
   @media (min-width: @bp-tablet) {
     max-width: 96rem;
-    padding: 3.2rem 4.8rem 8rem;
-    gap: 2.2rem;
+  }
+}
+
+// 列表滚动视口：占满头部固定区以下的剩余高度
+.refreshShell {
+  flex: 1;
+  min-height: 0;
+}
+
+// 视口内容层：只写 padding，不写宽度与 transform（会覆盖组件的下拉位移动画）
+.refreshContent {
+  min-height: 100%;
+  padding: 0 1.6rem 1.6rem;
+
+  @media (min-width: @bp-mobile) {
+    padding: 0 2.4rem 2.4rem;
+  }
+}
+
+// 统计 + 搜索固定区：在刷新视口之外，底部留白即视口顶部与列表卡的间距
+.listHeadShell {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  padding: 0 1.6rem 1.4rem;
+
+  @media (min-width: @bp-mobile) {
+    gap: 1.8rem;
+    padding: 0 2.4rem 1.8rem;
   }
 }
 
@@ -101,44 +127,113 @@
   flex-shrink: 0;
 }
 
-// ─── 搜索行：全局 Search + 到期时间 SelectView 同行 ──────────────────
+// ─── 搜索行：手机端「搜索框 + 到期下拉」/「清单开关」两行 ──────────────
 .searchRow {
   display: flex;
   align-items: center;
   gap: 1rem;
-  // 搜索框是 flex:1，另两个控件 flex-shrink:0 —— 窄屏（375px）下三者相加会
-  // 把搜索框挤到只剩几十像素，放不下就换行，别让输入框被压扁
+  // 手机端换两行：第一行「搜索框 + 到期下拉」，第二行「清单筛选开关」。
+  // 搜索框是 flex:1（flex-basis:0），本身可以被压到 0 而永不触发换行，
+  // 所以不能让清单开关和它并排——否则 375px 下它会缩成只剩一个放大镜图标。
   flex-wrap: wrap;
 }
 
 .searchRowInput {
-  flex: 1;
+  // 手机端独占一整行：下拉组放不下同行，别让搜索框被挤成细条
+  flex: 1 1 100%;
   min-width: 0;
+
+  @media (min-width: @bp-mobile) {
+    flex: 1;
+    // 宽度上限：右侧要给状态 / 等级 / 到期下拉留位，搜索框不必占满整行
+    max-width: 24rem;
+  }
+}
+
+// 状态 / 等级 / 到期下拉组：手机端独占一行 + 横向滚动，桌面端回到与搜索框同行
+.searchRowSelects {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex: 1 1 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar { display: none; }
+
+  @media (min-width: @bp-mobile) {
+    flex: 0 0 auto;
+    gap: 1rem;
+    overflow: visible;
+  }
 }
 
 .searchRowSelect {
   flex-shrink: 0;
-  width: 11rem;
+  // 12rem 是「全部到期日」不被截断的下限（见 .expirySelectTrigger 的 padding 收紧）
+  width: 12rem;
 
   @media (min-width: @bp-mobile) {
     width: 12.5rem;
   }
 }
 
-// 待补录清单开关：筛出「有子账号能力但成交价快照里缺子账号加价」的门店
-.pendingBackfillToggle {
+// 状态 / 等级下拉：与到期下拉同宽
+.searchRowSelectSm {
   flex-shrink: 0;
-  height: 4.16rem;
-  padding: 0 1.4rem;
+  width: 12.5rem;
+}
+
+// 清单筛选开关行（待补录 / 已调续费价）：手机端独占一行，窄屏可横向滚动兜底；
+// 桌面端收回成一个不压缩的 item，回到与搜索框同行。
+.filterToggleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex: 1 1 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar { display: none; }
+
+  @media (min-width: @bp-mobile) {
+    flex: 0 0 auto;
+    gap: 1rem;
+    overflow: visible;
+  }
+}
+
+// 清单开关（门店维度筛选）：桌面端与到期下拉同高、形状统一，仅换配色。
+// 手机端独占一行后不再受搜索框高度牵制，降到 3.6rem 与状态 Tab 的视觉重量对齐，
+// 否则它比下方真正的一级筛选还重，会把注意力从 Tab 上抢走。
+.searchRowToggle {
+  flex-shrink: 0;
+  height: 3.6rem;
+  padding: 0 1.2rem;
   border-radius: 9999px;
-  border: 1px solid rgba(245, 158, 11, 0.32);
   background: rgba(255, 255, 255, 0.9);
-  color: #b45309;
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
   transition: background 0.2s ease, border-color 0.2s ease;
+
+  @media (min-width: @bp-mobile) {
+    height: 4.16rem;
+    padding: 0 1.4rem;
+    font-size: 1.3rem;
+  }
+}
+
+// 待补录清单开关（琥珀）：有子账号能力但成交价快照里缺子账号加价的门店
+.pendingBackfillToggle {
+  border: 1px solid rgba(245, 158, 11, 0.32);
+  color: #b45309;
 
   &:hover {
     border-color: rgba(245, 158, 11, 0.6);
@@ -150,17 +245,51 @@
   border-color: rgba(245, 158, 11, 0.7);
 }
 
+// 已调续费价开关（青）：存在议定价覆盖的门店，用配色与待补录清单区分开
+.renewalPriceToggle {
+  border: 1px solid rgba(13, 148, 136, 0.32);
+  color: #0f766e;
+
+  &:hover {
+    border-color: rgba(13, 148, 136, 0.6);
+  }
+}
+
+.renewalPriceToggleActive {
+  background: rgba(13, 148, 136, 0.14);
+  border-color: rgba(13, 148, 136, 0.7);
+}
+
+// Search 触发器尺寸适配：手机端与下拉 / 清单开关统一 3.6rem，桌面端恢复 4.16rem
+.memberSearchTrigger {
+  height: 3.6rem !important;
+
+  @media (min-width: @bp-mobile) {
+    height: 4.16rem !important;
+  }
+}
+
 // SelectView 触发器尺寸适配：与 Search 高度对齐
 .expirySelectTrigger {
-  height: 4.16rem !important;
+  // 手机端压到 3.6rem，与清单开关行的视觉重量对齐；桌面端恢复 4.16rem 与 Search 高度对齐
+  height: 3.6rem !important;
   border-radius: 9999px !important;
   background: rgba(255, 255, 255, 0.9) !important;
-  // padding: 0 1.2rem !important;
+  // 组件默认左右内边距 1.6rem，手机端 12rem 宽度下「全部到期日」会被省略成「全部到...」，
+  // 收到 1.2rem 让 5 个字 + 箭头放得下；桌面端宽度充裕，恢复组件默认
+  padding: 0 1.2rem !important;
 
   // 文字大小和颜色：直接覆盖 SelectView 内部的文字 span
   span {
-    font-size: 1.38rem !important;
+    font-size: 1.3rem !important;
     color: @text-slate-400 !important;
+  }
+
+  @media (min-width: @bp-mobile) {
+    height: 4.16rem !important;
+    padding: 0 1.6rem !important;
+
+    span { font-size: 1.38rem !important; }
   }
 }
 
@@ -291,6 +420,21 @@
   padding: 5rem 2rem;
   color: @text-slate-400;
   font-size: 1.3rem;
+}
+
+// 筛选型空态：主文案说明「筛的是什么」，副文案给下一步动作，
+// 避免运营盯着一句「暂无符合条件的会员」猜是没数据还是筛错了
+.emptyStateTitle {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: @text-main;
+}
+
+.emptyStateDesc {
+  font-size: 1.2rem;
+  line-height: 1.6;
+  text-align: center;
+  color: @text-slate-400;
 }
 
 .retryBtn {
@@ -463,6 +607,22 @@
   font-weight: 700;
   background: rgba(16, 185, 129, 0.12);
   color: #059669;
+}
+
+// 已调价徽章（青，与「已调续费价」筛选开关同色系，二者互相呼应）
+// cursor: help 提示「悬停有说明」，气泡由 Tooltip 组件给出（原生 title 太慢且触屏不出现）
+.adjustedPriceBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  background: rgba(13, 148, 136, 0.12);
+  color: #0f766e;
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: help;
 }
 
 .memberPhone {

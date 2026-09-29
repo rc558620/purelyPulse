@@ -64,11 +64,6 @@ const SetSubAccountModal: React.FC<SetSubAccountModalProps> = ({
     await Promise.resolve(onConfirm(selectedQuota));
   }, [isSubmitting, onConfirm, selectedQuota]);
 
-  const handleOverlayClick = useCallback((event: React.MouseEvent<HTMLDivElement>): void => {
-    if (!isSubmitting && event.target === event.currentTarget) {
-      onClose();
-    }
-  }, [isSubmitting, onClose]);
 
   const isConfirmDisabled = isSubmitting || (!isEligible && selectedQuota > 0);
 
@@ -78,7 +73,6 @@ const SetSubAccountModal: React.FC<SetSubAccountModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-label="配置子账号"
-      onClick={handleOverlayClick}
     >
       <div className={styles.sheet}>
         <div className={styles.dragHandle} aria-hidden="true" />

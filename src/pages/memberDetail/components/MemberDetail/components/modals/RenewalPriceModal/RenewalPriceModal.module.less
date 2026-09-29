@@ -1,0 +1,471 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/mixins.less';
+@import (reference) '@styles/breakpoints.less';
+
+// 弹窗主色：价格语义用琥珀色，与「设置会员等级」的草绿区分
+@renewal-accent: #f59e0b;
+
+// ─── 遮罩 ─────────────────────────────────────────────────────────────
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+// ─── 底部抽屉 ────────────────────────────────────────────────────────
+.sheet {
+  width: 100%;
+  max-width: 56rem;
+  max-height: 92dvh;
+  border-radius: 2.4rem 2.4rem 0 0;
+  background: @bg-white;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+
+  @media (min-width: @bp-mobile) {
+    border-radius: 2.4rem;
+    margin: auto;
+    max-height: 90dvh;
+  }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.dragHandle {
+  width: 4rem;
+  height: 0.4rem;
+  border-radius: 9999px;
+  background: @border-color;
+  margin: 1.2rem auto 0;
+  flex-shrink: 0;
+}
+
+// ─── 标题行 ──────────────────────────────────────────────────────────
+.sheetHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.2rem;
+  padding: 1.6rem 2rem 1.4rem;
+  flex-shrink: 0;
+}
+
+.sheetTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-width: 0;
+}
+
+.sheetTitleIcon {
+  width: 3.2rem;
+  height: 3.2rem;
+  border-radius: @radius-md;
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sheetTitleText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.sheetTitle {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: @text-main;
+  line-height: 1.2;
+}
+
+.sheetSubtitle {
+  font-size: 1.2rem;
+  color: @text-sub;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.closeBtn {
+  width: 3.2rem;
+  height: 3.2rem;
+  border-radius: 9999px;
+  border: none;
+  background: @bg-slate-100;
+  color: @text-sub;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover { background: @border-color; color: @text-main; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+// ─── 可滚动内容区 ─────────────────────────────────────────────────────
+.sheetBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.4rem 2rem 1.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  -webkit-overflow-scrolling: touch;
+
+  scrollbar-width: thin;
+  scrollbar-color: rgba(245, 158, 11, 0.25) transparent;
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background-color: rgba(245, 158, 11, 0.2); border-radius: 4px; }
+}
+
+// ─── 规则说明卡 ───────────────────────────────────────────────────────
+.ruleCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 1.2rem 1.4rem;
+  border-radius: 1.2rem;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  color: #92620a;
+  font-size: 1.25rem;
+  line-height: 1.6;
+
+  svg { flex-shrink: 0; margin-top: 0.2rem; }
+  strong { color: #7c4a03; font-weight: 700; }
+}
+
+// ─── 状态位（加载 / 空 / 失败） ───────────────────────────────────────
+.stateText {
+  margin: 2.4rem 0;
+  text-align: center;
+  font-size: 1.3rem;
+  color: @text-sub;
+}
+
+.errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 2.4rem 0;
+}
+
+.errorStateText {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.3rem;
+  color: #dc2626;
+}
+
+.retryBtn {
+  padding: 0.8rem 2rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.1);
+  color: #b45309;
+  font-size: 1.3rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover:not(:disabled) { background: rgba(245, 158, 11, 0.18); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+// ─── 档位行 ──────────────────────────────────────────────────────────
+.rowList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1.4rem 1.5rem;
+  border-radius: 1.4rem;
+  border: 1px solid @border-color;
+  background: @bg-white;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+// 当前档位：琥珀描边 + 淡底，让运营一眼看到「他现在是这一档」
+.rowCurrent {
+  border-color: rgba(245, 158, 11, 0.45);
+  background: rgba(245, 158, 11, 0.05);
+  box-shadow: 0 2px 12px rgba(245, 158, 11, 0.12);
+}
+
+// 不可编辑档位（含子账号站点的月 / 季）：整行降级为只读提示
+.rowLocked {
+  background: @bg-slate-100;
+  border-style: dashed;
+}
+
+.rowHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.rowTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: @text-main;
+}
+
+.currentBadge {
+  padding: 0.1rem 0.8rem;
+  border-radius: 9999px;
+  background: rgba(245, 158, 11, 0.16);
+  color: #b45309;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.stateBadge {
+  margin-left: auto;
+  padding: 0.1rem 0.8rem;
+  border-radius: 9999px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  // 「已议价（低于配置价，未生效）」比其它徽标长，允许换行并右对齐，避免撑破行头
+  text-align: right;
+  line-height: 1.5;
+}
+
+.stateBadgeOverridden {
+  background: rgba(16, 185, 129, 0.14);
+  color: #047857;
+}
+
+// 议价记录还在库里、只是被配置价压过不再参与定价：用与主色同源的琥珀描边区分「生效中」的绿
+.stateBadgeInactive {
+  background: rgba(245, 158, 11, 0.14);
+  color: #b45309;
+}
+
+.stateBadgeDefault {
+  background: @bg-slate-100;
+  color: @text-sub;
+}
+
+// ─── 现状分项：配置价 [+ 子账号加价] = 现续费价 ────────────────────────
+.factRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  font-size: 1.2rem;
+  color: @text-sub;
+}
+
+.fact {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+
+  strong { color: @text-main; font-weight: 700; font-size: 1.3rem; }
+}
+
+.factSurcharge strong { color: #7c3aed; }
+.factRenewal strong { color: #047857; }
+.factOperator { color: @border-color; font-weight: 700; }
+
+// ─── 覆盖价输入 ──────────────────────────────────────────────────────
+.editRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.inputWrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 1.2rem;
+  height: 4.4rem;
+  border-radius: 1.1rem;
+  border: 1.5px solid @border-color;
+  background: @bg-white;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:focus-within {
+    border-color: @renewal-accent;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.14);
+  }
+}
+
+.inputWrapperInvalid {
+  border-color: #dc2626;
+
+  &:focus-within {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.14);
+  }
+}
+
+.inputPrefix {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: @text-sub;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: @text-main;
+  font-variant-numeric: tabular-nums;
+
+  &::placeholder { color: @text-sub; font-weight: 500; }
+  &:disabled { color: @text-sub; }
+}
+
+.clearBtn {
+  flex-shrink: 0;
+  padding: 0.7rem 1.2rem;
+  border-radius: 0.9rem;
+  border: 1px solid @border-color;
+  background: @bg-slate-100;
+  color: @text-sub;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover:not(:disabled) { background: @border-color; color: @text-main; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.previewText {
+  font-size: 1.2rem;
+  color: @text-sub;
+
+  strong { color: #047857; font-size: 1.35rem; font-weight: 700; }
+}
+
+.previewHint { color: @text-sub; }
+
+.errorText {
+  font-size: 1.2rem;
+  color: #dc2626;
+}
+
+.lockedHint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.2rem;
+  color: @text-sub;
+  line-height: 1.5;
+
+  svg { flex-shrink: 0; }
+}
+
+// ─── 底部操作区 ──────────────────────────────────────────────────────
+.sheetActions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.4rem 2rem calc(1.4rem + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid @border-color;
+  flex-shrink: 0;
+}
+
+.footerHint {
+  font-size: 1.2rem;
+  color: @text-sub;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.footerHintActive {
+  color: #b45309;
+  font-weight: 600;
+}
+
+.actionRow {
+  display: flex;
+  gap: 1.2rem;
+}
+
+.cancelBtn {
+  flex: 1;
+  height: 5rem;
+  border-radius: @radius-lg;
+  border: 1.5px solid @border-color;
+  background: @bg-slate-100;
+  color: @text-sub;
+  font-size: 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover:not(:disabled) { background: @border-color; color: @text-main; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.confirmBtn {
+  flex: 2;
+  height: 5rem;
+  border-radius: @radius-lg;
+  border: none;
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: filter 0.2s, transform 0.15s;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover:not(:disabled) { filter: brightness(1.08); }
+  &:active:not(:disabled) { transform: scale(0.97); }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: none !important;
+  }
+}

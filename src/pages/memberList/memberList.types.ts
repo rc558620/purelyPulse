@@ -1,7 +1,17 @@
 // 会员列表 / 会员详情模块 — 类型定义。
+// 定价与统计两类子类型定义在 memberList.pricing.types.ts / memberList.stats.types.ts，
+// 消费方按语义直连对应文件，此处不做再导出。
+// 说明：类型中的 number 字段是后端契约，进入 UI 前统一由映射层经 safeNum 归一。
+import type { MemberLockedPrice, MemberRenewalPriceAdjustRecord } from './memberList.pricing.types';
 
 /** 会员状态。 */
 export type MemberStatus = 'active' | 'inactive' | 'banned' | 'cancelled';
+
+/** 会员等级。 */
+export type MemberLevel = 'free' | 'monthly' | 'quarterly' | 'annual' | 'lifetime';
+
+/** 会员订阅时长类型。 */
+export type MembershipDuration = 'monthly' | 'quarterly' | 'annual' | 'lifetime';
 
 // ─── 子账号类型 ────────────────────────────────────────────────────────────
 
@@ -41,55 +51,31 @@ export interface SubAccountCapability {
   subAccountRoleSummary: SubAccountRoleSummary[];
 }
 
-/** 会员等级。 */
-export type MemberLevel = 'free' | 'monthly' | 'quarterly' | 'annual' | 'lifetime';
-
-// ─── 首购锁定价 ────────────────────────────────────────────────────────────
-
-/** 首购锁定价来源：purchase=商家端下单成交，admin=平台侧设置会员等级成交。 */
-export type LockedPriceSource = 'purchase' | 'admin';
-
 /**
- * 成交价快照。
+ * 子账号设置记录（会员详情「子账号设置记录」tab 的一行）。
  *
- * 续费定价公式为 `max(当前配置价 + 子账号加价, 成交总额)`：
- * - 成交总额是下限，保证客户不会因规则改动而付得比上次更少
- * - 子账号加价是标准总价的组成部分，配置价上涨时能正确传导
+ * 后端取额度变更审计（`store_sub_account_quota_audits`），每次调额留一条：
+ * 谁、什么时候、把额度从多少调成了多少、原因是什么。
  *
- * 这里展示运营「当前是什么价、子账号加价补录了没有」，配合重置与补录入口使用。
+ * ⚠️ 只覆盖**额度数值**变更：槽位的角色 / 状态 / 分配员工改动没有留痕，
+ * 因此运营在本 tab 里看不到那部分历史。
  */
-export interface MemberLockedPrice {
-  /** 套餐档位标识（后端 Prisma 档位：monthly / quarterly / yearly / lifetime）。 */
-  planId: string;
-  /** 档位展示名（永久档位统一展示为 AGES会员）。 */
-  planName: string;
-  /** 成交总额展示值（元，后端已格式化）。 */
-  priceDisplay: string;
-  /**
-   * 子账号加价展示值（元，后端已格式化）。
-   *
-   * `null` 表示运营尚未补录：该门店续费会退化为 max(当前配置价, 成交总额)，
-   * 一旦配置价涨过成交总额，子账号就白送了，需要提示运营补录。
-   */
-  subAccountAmountDisplay: string | null;
-  /** 该档位包含的子账号数量；null 表示尚未补录。 */
-  subAccountCount: number | null;
-  /**
-   * 续费价展示值（元，后端已格式化）= 当前配置价 + 子账号加价。
-   *
-   * 仅当该档位录了子账号加价时下发，供快照展示「加价 ¥100 = ¥498」。
-   */
-  renewalPriceDisplay: string | null;
-  /** 锁价来源。 */
-  source: LockedPriceSource;
-  /** 锁价来源展示名。 */
-  sourceLabel: string;
-  /** 锁定时点（ms）。 */
-  lockedAt: number;
+export interface MemberSubAccountQuotaRecord {
+  /** 记录 id。 */
+  id: string;
+  /** 变更前的子账号额度。 */
+  oldQuota: number;
+  /** 变更后的子账号额度（0 = 关闭子账号功能）。 */
+  newQuota: number;
+  /** 操作人名称；查不到用户（已注销 / 历史数据）时为 null。 */
+  operatorName: string | null;
+  /** 变更原因；未填写时为 null。 */
+  reason: string | null;
+  /** 变更时间戳（ms）。 */
+  createdAt: number;
 }
 
-/** 会员订阅时长类型。 */
-export type MembershipDuration = 'monthly' | 'quarterly' | 'annual' | 'lifetime';
+// ─── 充值记录 ──────────────────────────────────────────────────────────────
 
 /** 充值记录。 */
 export interface RechargeRecord {
@@ -111,6 +97,8 @@ export interface RechargeRecord {
   /** 充值时间。 */
   createdAt: number;
 }
+
+// ─── 会员模型 ──────────────────────────────────────────────────────────────
 
 /** 会员详情。 */
 export interface MemberDetail {
@@ -156,6 +144,14 @@ export interface MemberDetail {
   adminGrantCount?: number;
   /** 管理端「设置会员等级」记录列表（含赠送）。 */
   adminGrantHistory?: RechargeRecord[];
+  /** 「调整续费价格」次数。 */
+  renewalPriceAdjustCount?: number;
+  /** 「调整续费价格」记录列表（议定基础价的覆盖变更留痕）。 */
+  renewalPriceAdjustHistory?: MemberRenewalPriceAdjustRecord[];
+  /** 「子账号设置」次数（额度变更次数）。 */
+  subAccountQuotaRecordCount?: number;
+  /** 「子账号设置」记录列表（额度变更审计）。 */
+  subAccountQuotaRecordHistory?: MemberSubAccountQuotaRecord[];
   /** 备注。 */
   remark?: string;
   /** 会员到期时间戳（永久会员为 null）。 */
@@ -210,7 +206,14 @@ export interface MemberListItem {
   remark?: string;
   /** 会员到期时间戳（永久会员可能为 null）。 */
   membershipExpiry?: number | null;
+  /**
+   * 续费价是否被调整过（曾经调过即 true，清空恢复配置价后仍为 true）。
+   * 后端以改价审计判定，供列表「已调价」徽章展示。
+   */
+  renewalPriceAdjusted?: boolean;
 }
+
+// ─── 会员列表查询与结果 ────────────────────────────────────────────────────
 
 /** 会员列表筛选状态。 */
 export type MemberFilterStatus = 'all' | MemberStatus;
@@ -236,6 +239,14 @@ export interface MemberListQuery {
    * 成交总额，子账号就白送了，需要运营补录。
    */
   pendingSubAccountBackfill: boolean;
+  /**
+   * 只看「续费价被调整过」的门店。
+   *
+   * 口径是**曾经调过**：判据由后端取改价审计（`store_membership_price_override_audits`），
+   * 并上「当前仍有覆盖价」兜底。因此运营在弹窗里清空覆盖、恢复配置价之后，
+   * 门店依然留在清单里——改价这件事发生过，不该因为后来取消了就查不到。
+   */
+  renewalPriceAdjusted: boolean;
 }
 
 /** 会员列表统计概览。 */
@@ -252,91 +263,19 @@ export interface MemberListStats {
   bannedCount: number;
 }
 
-// ─── purelyClub C 端会员运营数据 ──────────────────────────────────────────
-
-/** C 端会员等级（purelyClub 储值会员分层）。 */
-export type ClubMemberLevel = 'free' | 'gold' | 'platinum' | 'diamond';
-
-/** C 端各等级会员数量分布。 */
-export interface ClubMemberLevelBreakdown {
-  /** 免费会员数量。 */
-  free: number;
-  /** 黄金会员数量。 */
-  gold: number;
-  /** 铂金会员数量。 */
-  platinum: number;
-  /** 钻石会员数量。 */
-  diamond: number;
+/** 会员列表单页请求结果（分页切片 + 全量统计）。 */
+export interface MemberListPageResult {
+  /** 当前页会员列表。 */
+  members: MemberListItem[];
+  /** 统计概览（按当前筛选条件的完整列表计算，与分页无关）。 */
+  stats: MemberListStats;
+  /** 当前筛选条件下的会员总数。 */
+  total: number;
+  /** 是否还有下一页。 */
+  hasMore: boolean;
 }
 
-/** 该商家在 purelyClub 的会员运营统计（owner 视角）。 */
-export interface ClubMemberStats {
-  /** 顾客在途余额展示值（后端直接返回，前端不再分转元）。 */
-  pendingBalanceDisplay: string;
-  /** 会员充值总金额展示值（后端直接返回，前端不再分转元）。 */
-  totalRechargeDisplay: string;
-  /** 会员用户总数。 */
-  totalMemberCount: number;
-  /** 累计充值笔数。 */
-  rechargeCount: number;
-  /** 今日储值金额展示值（后端直接返回，前端不再分转元）。 */
-  todayRechargeDisplay: string;
-  /** 本月储值金额展示值（后端直接返回，前端不再分转元）。 */
-  monthRechargeDisplay: string;
-  /** 本季储值金额展示值（后端直接返回，前端不再分转元）。 */
-  quarterRechargeDisplay: string;
-  /** 本年储值金额展示值（后端直接返回，前端不再分转元）。 */
-  yearRechargeDisplay: string;
-  /** 去年储值金额展示值（后端直接返回，前端不再分转元）。 */
-  lastYearRechargeDisplay: string;
-  /** 各等级会员数量分布。 */
-  levelBreakdown: ClubMemberLevelBreakdown;
-}
-
-// ─── 会员营业详情：销售额与利润数据 ────────────────────────────────────────────
-
-/** 单周期销售/利润数据点。 */
-export interface SalesPeriodDataPoint {
-  /** 时间标签（如"周一"、"1月"等）。 */
-  label: string;
-  /** 销售额展示值（后端直接返回，前端不再分转元）。 */
-  salesDisplay: string;
-  /** 利润展示值（后端直接返回，前端不再分转元）。 */
-  profitDisplay: string;
-}
-
-/** 销售统计时间维度类型。 */
-export type SalesPeriodType = 'today' | 'week' | 'month' | 'year' | 'lastYear';
-
-/** 单维度销售汇总。 */
-export interface SalesPeriodSummary {
-  /** 时间维度。 */
-  period: SalesPeriodType;
-  /** 销售总额展示值（后端直接返回，前端不再分转元）。 */
-  totalSalesDisplay: string;
-  /** 利润总额展示值（后端直接返回，前端不再分转元）。 */
-  totalProfitDisplay: string;
-  /** 销售额环比增幅（百分比，null = 无数据）。 */
-  salesGrowthPct: number | null;
-  /** 利润环比增幅（百分比，null = 无数据）。 */
-  profitGrowthPct: number | null;
-  /** 各时间点明细（今日=小时，本周=天，本月=天，今年/去年=月）。 */
-  dataPoints: SalesPeriodDataPoint[];
-}
-
-/** 该商家的营业详情统计（owner 视角，含 5 个周期）。 */
-export interface MemberSalesStats {
-  /** 今日数据。 */
-  today: SalesPeriodSummary;
-  /** 本周数据。 */
-  week: SalesPeriodSummary;
-  /** 本月数据。 */
-  month: SalesPeriodSummary;
-  /** 今年数据。 */
-  year: SalesPeriodSummary;
-  /** 去年数据。 */
-  lastYear: SalesPeriodSummary;
-}
+// ─── 跨页面同步事件载荷 ────────────────────────────────────────────────────
 
 /** 会员状态同步事件载荷。 */
 export interface MemberStatusSyncPayload {
@@ -346,4 +285,16 @@ export interface MemberStatusSyncPayload {
   status: MemberStatus;
   /** 变更后的备注。 */
   remark?: string;
+}
+
+/** 会员等级设置产生的收入同步事件载荷。 */
+export interface MembershipRevenueSyncPayload {
+  memberId: string;
+  memberName: string;
+  level: Exclude<MemberLevel, 'free'>;
+  /** 金额展示值（后端直接返回，前端不再分转元）。 */
+  amountDisplay: string;
+  planName: string;
+  revenueTypeLabel: string;
+  createdAt: number;
 }

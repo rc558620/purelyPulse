@@ -8,6 +8,7 @@ import {
 } from '../MemberListIcons/MemberListIcons';
 import { LEVEL_LABEL } from '../../../../memberList.constants';
 import { formatMemberRelativeTime, formatMemberExpiry } from '../../../../memberList.utils';
+import Tooltip from '@components/ui/feedback/Tooltip/Tooltip';
 import type { MemberListItem } from '../../../../memberList.types';
 import styles from '../../../../memberList.module.less';
 
@@ -73,6 +74,17 @@ const MemberListCard: React.FC<MemberListCardProps> = ({ member, onClick }) => {
           )}
           {member.isPartner && (
             <span className={styles.partnerBadge}>合伙人</span>
+          )}
+          {/* 已调价徽章：放在徽章行最后。口径与「已调续费价」筛选一致（曾经调过即标）。
+              用项目 Tooltip 而非原生 title：原生 title 有约 1s 延迟且触屏不出现。 */}
+          {member.renewalPriceAdjusted && (
+            <Tooltip
+              title="续费价被调整过；后来清空、恢复配置价的也保留此标记"
+              color="cyan"
+              placement="top"
+            >
+              <span className={styles.adjustedPriceBadge}>已调价</span>
+            </Tooltip>
           )}
         </div>
         <div className={styles.memberPhone}>{memberPhone}</div>

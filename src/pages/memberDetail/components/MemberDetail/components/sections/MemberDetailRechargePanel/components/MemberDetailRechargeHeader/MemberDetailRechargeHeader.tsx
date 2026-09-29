@@ -5,7 +5,7 @@ import pageStyles from '../../../../../../../memberDetail.module.less';
 interface MemberDetailRechargeHeaderProps {
   rechargeCount: number;
   fallbackCount: number;
-  /** 标题；默认「充值记录」，设置记录 tab 传「设置会员等级记录」 */
+  /** 标题；默认「充值记录」，会员等级设置记录 tab 传「会员等级设置记录」 */
   title?: string;
 }
 

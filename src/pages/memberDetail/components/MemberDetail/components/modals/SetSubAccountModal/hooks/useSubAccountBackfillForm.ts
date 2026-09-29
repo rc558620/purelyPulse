@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 import { safeNum } from '@utils/utils';
 import { QUOTA_MAX, SUB_ACCOUNT_AMOUNT_PATTERN } from '../SetSubAccountModal.constants';
 import type { SetSubAccountModalProps } from '../SetSubAccountModal.types';
-import type { MemberLockedPrice } from '@pages/memberList/memberList.types';
+import type { MemberLockedPrice } from '@pages/memberList/memberList.pricing.types';
 
 /** 补录提交器：缺失时表示当前弹窗未提供补录入口。 */
 type BackfillSubmitter = NonNullable<SetSubAccountModalProps['onBackfillSubAccountAmount']>;

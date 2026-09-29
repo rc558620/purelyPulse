@@ -46,7 +46,7 @@ const UserPickerModal: React.FC<UserPickerModalProps> = ({
   }, []);
 
   return ReactDOM.createPortal(
-    <div className={styles.bodyOverlay} onClick={onClose} role="dialog" aria-modal="true" aria-label="选择要调整积分的用户">
+    <div className={styles.bodyOverlay} role="dialog" aria-modal="true" aria-label="选择要调整积分的用户">
       <div className={styles.modalCard} onClick={(event) => event.stopPropagation()}>
         <div className={styles.header}>
           <span className={styles.title}>选择用户</span>

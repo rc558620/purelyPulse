@@ -548,9 +548,6 @@ const SetMembershipModal: React.FC<SetMembershipModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-label="设置会员等级"
-      onClick={(event) => {
-        if (!isSubmitting && event.target === event.currentTarget) onClose();
-      }}
     >
       <div className={styles.sheet}>
         <div className={styles.dragHandle} aria-hidden="true" />

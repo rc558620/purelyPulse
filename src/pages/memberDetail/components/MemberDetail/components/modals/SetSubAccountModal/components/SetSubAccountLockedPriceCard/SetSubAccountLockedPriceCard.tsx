@@ -5,7 +5,7 @@ import SetSubAccountLockedPriceList from '../SetSubAccountLockedPriceList/SetSub
 import styles from '../../SetSubAccountModal.module.less';
 import { SUB_ACCOUNT_PRICING_PLAN_IDS } from '../../SetSubAccountModal.constants';
 import type { SetSubAccountModalProps } from '../../SetSubAccountModal.types';
-import type { MemberLockedPrice } from '@pages/memberList/memberList.types';
+import type { MemberLockedPrice } from '@pages/memberList/memberList.pricing.types';
 
 interface SetSubAccountLockedPriceCardProps {
   lockedPrices: MemberLockedPrice[];
@@ -90,7 +90,7 @@ const SetSubAccountLockedPriceCard: React.FC<SetSubAccountLockedPriceCardProps> 
         ) : null}
         <span className={styles.lockedPriceDesc}>
           续费价 = 当前配置价 + 子账号加价；成交价只作记账，不影响续费。
-          重置后，该账号的成交记录会被清除，下次成交（商家续费 / 设置会员等级）重新记录
+          重置只清除成交记录（下次成交时重新记录），已议定的续费价会保留
         </span>
       </div>
     </div>

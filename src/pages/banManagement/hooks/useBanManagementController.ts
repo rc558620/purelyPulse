@@ -79,6 +79,11 @@ export const useBanManagementController = (): UseBanManagementControllerReturn =
       setStats(response.stats);
       setErrorMessage('');
       hasLoadedRef.current = true;
+
+      // 封禁名单超过单页上限时不再静默截断，明确告知当前展示范围
+      if (response.hasMore) {
+        showToast({ type: 'warning', message: '封禁名单较多，当前仅展示前 100 条' });
+      }
     } catch (error) {
       if (currentRequestId !== requestIdRef.current) {
         return;
@@ -97,16 +102,13 @@ export const useBanManagementController = (): UseBanManagementControllerReturn =
     }
   }, []);
 
-  // Bug #12: 用 ref 追踪最新的 searchQuery，保证清空时 debounce 不会残留旧值请求
-  const searchQueryRef = useRef(searchQuery);
-  searchQueryRef.current = searchQuery;
-
+  // Bug #12: searchQuery 每次变化都会重建定时器并由 cleanup 清掉上一个，
+  // 因此 debounce 窗口内清空不会残留旧值请求——直接闭包读 searchQuery 即可，
+  // 不需要再用 ref 在 render 期同步一份（写 ref 属于 render 期副作用，会被 lint 拦下）。
   useEffect(() => {
-    const currentSearchQuery = searchQueryRef.current;
     const timeoutId = window.setTimeout(() => {
-      // 只在 timeout 触发时读取最新值，避免 debounce 窗口内清空产生多余请求
-      setDebouncedKeyword(searchQueryRef.current);
-    }, currentSearchQuery.trim() ? SEARCH_DEBOUNCE_DELAY : 0);
+      setDebouncedKeyword(searchQuery);
+    }, searchQuery.trim() ? SEARCH_DEBOUNCE_DELAY : 0);
 
     return () => {
       window.clearTimeout(timeoutId);
@@ -115,7 +117,15 @@ export const useBanManagementController = (): UseBanManagementControllerReturn =
 
   useEffect(() => {
     queryRef.current = currentQuery;
-    void loadMembers(currentQuery);
+    // 与会员列表页同款：请求放进 setTimeout，避免 effect 内同步 setState 引发级联渲染。
+    // cleanup 顺带保证 currentQuery 快速变化时不会漏掉清理。
+    const timeoutId = window.setTimeout(() => {
+      void loadMembers(currentQuery);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, [currentQuery, loadMembers]);
 
   const loadLatestMembers = useCallback((): void => {

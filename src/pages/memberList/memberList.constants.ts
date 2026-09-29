@@ -30,6 +30,12 @@ export const AVATAR_COLORS = [
   'linear-gradient(135deg, #f43f5e, #fb7185)',
 ] as const;
 
+/** 会员列表默认单页条数（与后端默认值保持一致）。 */
+export const MEMBER_LIST_PAGE_SIZE = 20;
+
+/** 会员列表单页最大条数（与后端上限保持一致）。 */
+export const MEMBER_LIST_MAX_PAGE_SIZE = 100;
+
 /** 会员状态变更后的跨页面同步事件名。 */
 export const MEMBER_STATUS_SYNC_EVENT = 'member-status-sync';
 

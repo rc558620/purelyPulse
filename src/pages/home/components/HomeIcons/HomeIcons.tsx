@@ -154,6 +154,16 @@ export const IconHomeMembershipSettings = (props: SvgProps): React.JSX.Element =
   </svg>
 );
 
+/** 快捷入口：会员记录管理（带明细行的记录清单）图标 */
+export const IconHomeMemberRecords = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <rect x="8" y="2" width="8" height="4" rx="1.5" />
+    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+    <path d="M12 11h4M12 16h4" />
+    <path d="M8 11h.01M8 16h.01" />
+  </svg>
+);
+
 /** 通用跳转：向右箭头图标 */
 export const IconHomeChevronRight = (props: SvgProps): React.JSX.Element => (
   <svg aria-hidden="true" viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="currentColor" strokeWidth={2.5} {...props}>

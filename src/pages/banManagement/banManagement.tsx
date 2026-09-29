@@ -77,8 +77,13 @@ const BanManagement: React.FC = () => {
         />
       </main>
 
+      {/*
+        确认弹窗 key 绑 member.id：换一个会员就整体重挂载，自定义原因输入框自然回到初始态，
+        不需要在弹窗内部用 effect 同步 setState 去「重置」。
+      */}
       {confirmTarget ? (
         <BanManagementConfirmDialog
+          key={confirmTarget.member.id}
           member={confirmTarget.member}
           action={confirmTarget.action}
           selectedReason={banReason}

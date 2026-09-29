@@ -242,6 +242,22 @@
   }
 }
 
+.quickNavItemIndigo {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.22);
+
+  &::after {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0%, rgba(99, 102, 241, 0.01) 100%);
+  }
+
+  &:hover {
+    border-color: rgba(99, 102, 241, 0.42);
+    box-shadow:
+      0 8px 24px rgba(99, 102, 241, 0.14),
+      0 2px 8px rgba(99, 102, 241, 0.08);
+  }
+}
+
 .quickNavIconWrap {
   position: relative;
   width: 4.2rem;
@@ -302,6 +318,12 @@
   background: linear-gradient(135deg, rgba(20, 184, 166, 0.18), rgba(20, 184, 166, 0.1));
   border: 1px solid rgba(20, 184, 166, 0.28);
   color: #0d9488;
+}
+
+.quickNavIconIndigo {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(99, 102, 241, 0.1));
+  border: 1px solid rgba(99, 102, 241, 0.28);
+  color: #6366f1;
 }
 
 .quickNavItemContent {

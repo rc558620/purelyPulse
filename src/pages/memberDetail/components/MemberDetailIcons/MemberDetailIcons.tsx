@@ -372,6 +372,14 @@ export const IconUserCircle = (props: SvgProps): React.JSX.Element => (
   </svg>
 );
 
+/** 价格标签：调整续费价格入口与档位价格标识。 */
+export const IconPriceTag = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="currentColor" strokeWidth={2.2} {...props}>
+    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V4a2 2 0 0 1 2-2h8l8.59 8.59a2 2 0 0 1 0 2.82z" />
+    <line x1="7" y1="7" x2="7.01" y2="7" />
+  </svg>
+);
+
 /** 会员时长：不同订阅类型的区分图标。 */
 export const IconMembershipDuration = ({ duration, ...props }: IconMembershipDurationProps): React.JSX.Element => {
   if (duration === 'free') {

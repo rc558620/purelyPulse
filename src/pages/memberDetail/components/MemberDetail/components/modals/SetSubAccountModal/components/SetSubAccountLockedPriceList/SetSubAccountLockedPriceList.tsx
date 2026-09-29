@@ -5,7 +5,7 @@ import SetSubAccountLockedPriceItem from '../SetSubAccountLockedPriceItem/SetSub
 import styles from '../../SetSubAccountModal.module.less';
 import { useSubAccountBackfillForm } from '../../hooks/useSubAccountBackfillForm';
 import type { SetSubAccountModalProps } from '../../SetSubAccountModal.types';
-import type { MemberLockedPrice } from '@pages/memberList/memberList.types';
+import type { MemberLockedPrice } from '@pages/memberList/memberList.pricing.types';
 
 interface SetSubAccountLockedPriceListProps {
   /** 已归一化的成交价快照（未锁价时为空数组） */

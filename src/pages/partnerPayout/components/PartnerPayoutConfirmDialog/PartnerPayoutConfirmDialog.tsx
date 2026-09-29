@@ -60,11 +60,6 @@ const PartnerPayoutConfirmDialog: React.FC<PartnerPayoutConfirmDialogProps> = ({
       role="dialog"
       aria-modal="true"
       aria-label={isApprove ? '确认打款' : '拒绝打款'}
-      onClick={(event) => {
-        if (!isSubmitting && event.target === event.currentTarget) {
-          onCancel();
-        }
-      }}
     >
       <div className={styles.dialogCard}>
         <div className={cx(styles.dialogIconWrap, isApprove ? styles.dialogIconApprove : styles.dialogIconReject)} aria-hidden="true">

@@ -2,7 +2,7 @@ import React from 'react';
 import { cx, safeNum, safeStr } from '@utils/utils';
 import { IconPaymentChannel } from '@pages/memberDetail/components/MemberDetailIcons/MemberDetailIcons';
 import { MEMBER_RECHARGE_CHANNEL_LABEL } from '../../../../../../../memberDetail.constants';
-import { formatMemberDate } from '../../../../../../../memberDetail.utils';
+import { formatMemberDateTime } from '../../../../../../../memberDetail.utils';
 import type { RechargeRecord } from '@pages/memberList/memberList.types';
 import pageStyles from '../../../../../../../memberDetail.module.less';
 
@@ -46,7 +46,7 @@ const MemberDetailRechargeRow: React.FC<MemberDetailRechargeRowProps> = ({ recor
             {MEMBER_RECHARGE_CHANNEL_LABEL[record.channel]}
           </span>
           <span className={pageStyles.rechargeDot} aria-hidden="true" />
-          <span className={pageStyles.rechargeDate}>{formatMemberDate(record.createdAt)}</span>
+          <span className={pageStyles.rechargeDate}>{formatMemberDateTime(record.createdAt)}</span>
         </div>
       </div>
       <div className={pageStyles.rechargeRight}>

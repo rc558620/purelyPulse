@@ -11,7 +11,7 @@ import {
   IconSalesBarChart,
   IconSalesRevenue,
 } from '@pages/memberDetail/components/MemberDetailIcons/MemberDetailIcons';
-import type { MemberSalesStats, SalesPeriodType } from '@pages/memberList/memberList.types';
+import type { MemberSalesStats, SalesPeriodType } from '@pages/memberList/memberList.stats.types';
 import { fetchMemberSalesStats } from '@pages/memberList/memberList.service';
 import {
   type ChartMetric,
@@ -167,10 +167,6 @@ const MemberDetailSalesStatsModal: React.FC<MemberDetailSalesStatsModalProps> = 
     return () => window.removeEventListener('keydown', handler);
   }, [onClose]);
 
-  const handleOverlayClick = useCallback((event: React.MouseEvent<HTMLDivElement>): void => {
-    if (event.target === event.currentTarget) onClose();
-  }, [onClose]);
-
   const handleRetry = useCallback((): void => {
     void loadStats();
   }, [loadStats]);
@@ -311,7 +307,6 @@ const MemberDetailSalesStatsModal: React.FC<MemberDetailSalesStatsModalProps> = 
       role="dialog"
       aria-modal="true"
       aria-label={`${memberName} 营业详情`}
-      onClick={handleOverlayClick}
     >
       <div className={styles.card}>
         {/* 弹窗头部 */}

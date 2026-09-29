@@ -20,6 +20,7 @@ interface ImportMetaEnv {
   readonly VITE_PARTNER_BEANS_API_PATH?: string;
   readonly VITE_MEMBER_LIST_API_PATH?: string;
   readonly VITE_MEMBER_DETAIL_API_PATH?: string;
+  readonly VITE_MEMBER_RECORDS_API_PATH?: string;
   readonly VITE_SET_MEMBERSHIP_API_PATH?: string;
   readonly VITE_MEMBER_BAN_API_PATH?: string;
   readonly VITE_MEMBER_UNBAN_API_PATH?: string;
@@ -28,6 +29,7 @@ interface ImportMetaEnv {
   readonly VITE_ADJUST_PARTNER_BEANS_API_PATH?: string;
   readonly VITE_MEMBERSHIP_SETTINGS_API_PATH?: string;
   readonly VITE_UPDATE_MEMBERSHIP_SETTINGS_API_PATH?: string;
+  readonly VITE_MEMBER_RENEWAL_PRICE_API_PATH?: string;
 }
 
 interface ImportMeta {

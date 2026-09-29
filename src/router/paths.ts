@@ -17,6 +17,8 @@ export const ROUTE_PATHS = {
     // ─── 会员列表 / 详情 ──────────────────────────────────────────
     memberList:   '/member-list',
     memberDetail: '/member-list/detail',
+    // 会员记录管理：跨会员聚合四类记录（充值 / 等级设置 / 调整续费 / 子账号）
+    memberRecords: '/member-records',
     // ─── 用户管理 ────────────────────────────────────────────────
     banManagement: '/ban-management',
     // ─── 会员设置 ────────────────────────────────────────────────

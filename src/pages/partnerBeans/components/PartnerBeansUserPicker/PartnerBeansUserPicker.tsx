@@ -24,7 +24,6 @@ const PartnerBeansUserPickerComponent: React.FC<PartnerBeansUserPickerProps> = (
 }) => (
   <div
     className={styles.pickerOverlay}
-    onClick={onClose}
     role="dialog"
     aria-modal="true"
     aria-label="选择要调整纯利豆的合伙人"

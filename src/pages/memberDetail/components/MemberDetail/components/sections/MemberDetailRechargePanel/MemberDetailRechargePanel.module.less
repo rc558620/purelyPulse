@@ -7,6 +7,19 @@
   padding: 1.2rem 1.2rem 0;
 }
 
-.tabRow :global(.segment) {
+// 四个 tab 在窄屏上放不下：容器开横向滚动，避免标签被裁切。
+// 宽屏内容不溢出时滚动条不会出现，仍由组件自带的 flex:1 平分铺满。
+.tabBar {
   width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+// 保住标签不换行、不被压缩：放不下时由容器滚动，而不是把字挤没
+.tabBtn {
+  min-width: max-content;
 }

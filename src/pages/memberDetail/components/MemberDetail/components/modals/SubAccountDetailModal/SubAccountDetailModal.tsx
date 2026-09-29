@@ -36,11 +36,6 @@ const SubAccountDetailModal: React.FC<SubAccountDetailModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-label="子账号详情"
-      onClick={(event) => {
-        if (event.target === event.currentTarget) {
-          onClose();
-        }
-      }}
     >
       <div className={styles.card}>
         <div className={styles.header}>

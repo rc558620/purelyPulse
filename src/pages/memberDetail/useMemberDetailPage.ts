@@ -2,10 +2,8 @@
 import { useMemberDetailActions } from './hooks/useMemberDetailActions';
 import { useMemberDetailMembershipSettings } from './hooks/useMemberDetailMembershipSettings';
 import { useMemberDetailRequest } from './hooks/useMemberDetailRequest';
-import type {
-  MemberDetail,
-  MemberLevel,
-} from '../memberList/memberList.types';
+import type { MemberDetail, MemberLevel } from '../memberList/memberList.types';
+import type { MemberRenewalPrice, MemberRenewalPriceUpdateItem } from '../memberList/memberList.pricing.types';
 
 interface UseMemberDetailPageReturn {
   /** 当前会员详情。 */
@@ -46,6 +44,8 @@ interface UseMemberDetailPageReturn {
   isResettingLockedPrice: boolean;
   /** 是否正在补录子账号加价。 */
   isBackfillingSubAccount: boolean;
+  /** 是否正在提交续费价调整。 */
+  isSubmittingRenewalPrice: boolean;
   /** 是否有任一提交动作进行中。 */
   isSubmittingAction: boolean;
   /** 调整积分并提交。 */
@@ -83,6 +83,14 @@ interface UseMemberDetailPageReturn {
     planId: string,
     payload: { subAccountCount?: number; subAccountAmountDisplay: string },
   ) => Promise<boolean>;
+  /**
+   * 调整该会员的续费价覆盖。
+   *
+   * 成功返回后端算好的最新档位列表（弹窗就地刷新），失败返回 null。
+   */
+  handleUpdateRenewalPrices: (
+    items: MemberRenewalPriceUpdateItem[],
+  ) => Promise<MemberRenewalPrice[] | null>;
   /** 重试拉取详情。 */
   retryLoadMember: () => void;
 }
@@ -114,6 +122,7 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
     isSubmittingCancel,
     isResettingLockedPrice,
     isBackfillingSubAccount,
+    isSubmittingRenewalPrice,
     isSubmittingAction,
     handleAdjustPoints,
     handleAdjustBeans,
@@ -124,6 +133,7 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
     handleCancelAccount,
     handleResetLockedPrice,
     handleBackfillSubAccountAmount,
+    handleUpdateRenewalPrices,
   } = useMemberDetailActions({ member, loadMember, patchMember });
 
   // 从 member 直接派生展示态，避免 useEffect 同步 setState 产生的级联渲染
@@ -152,6 +162,7 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
     isSubmittingCancel,
     isResettingLockedPrice,
     isBackfillingSubAccount,
+    isSubmittingRenewalPrice,
     isSubmittingAction,
     handleAdjustPoints,
     handleAdjustBeans,
@@ -162,6 +173,7 @@ export const useMemberDetailPage = (memberId: string | undefined): UseMemberDeta
     handleCancelAccount,
     handleResetLockedPrice,
     handleBackfillSubAccountAmount,
+    handleUpdateRenewalPrices,
     retryLoadMember,
   };
 };

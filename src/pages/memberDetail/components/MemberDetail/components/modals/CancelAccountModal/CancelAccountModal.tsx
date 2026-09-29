@@ -53,11 +53,6 @@ const CancelAccountModal: React.FC<CancelAccountModalProps> = ({
     return () => window.removeEventListener('keydown', handler);
   }, [isSubmitting, onClose]);
 
-  const handleOverlayClick = (event: React.MouseEvent<HTMLDivElement>): void => {
-    if (!isSubmitting && event.target === event.currentTarget) {
-      onClose();
-    }
-  };
 
   const handleConfirmClick = (): void => {
     if (!isInputValid || isSubmitting) {
@@ -74,7 +69,6 @@ const CancelAccountModal: React.FC<CancelAccountModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-label="确认注销账号"
-        onClick={handleOverlayClick}
       >
         <div className={pageStyles.statusModalCard}>
           {/* 危险图标 */}

@@ -42,7 +42,14 @@ const HomeHeroSection = memo(({ overview }: HomeHeroSectionProps): React.JSX.Ele
 
       {/* 趋势图：绝对定位填满卡片右半侧，作为视觉背景层 */}
       <div className={styles.heroSparkline} aria-hidden="true">
-        <ChartRenderer option={sparklineOption} className={styles.heroSparklineCanvas} />
+        <ChartRenderer
+          option={sparklineOption}
+          className={styles.heroSparklineCanvas}
+          // Echarts 会内联 DEFAULT_CHART_HEIGHT(300px)，优先级压过 class 的 height:100%，
+          // 画布比 heroCard 高出一截、底部被 overflow:hidden 裁掉 —— 渐变下半段整段丢失，
+          // 峰形被压成右侧一块畸形色块。显式按容器高度铺满。
+          style={{ height: '100%' }}
+        />
       </div>
 
       <div className={styles.heroDecorCircle} aria-hidden="true" />

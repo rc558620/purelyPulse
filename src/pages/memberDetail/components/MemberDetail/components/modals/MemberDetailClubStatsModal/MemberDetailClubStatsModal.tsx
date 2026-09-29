@@ -16,7 +16,7 @@ import {
   IconRechargeTotal,
   IconWallet,
 } from '@pages/memberDetail/components/MemberDetailIcons/MemberDetailIcons';
-import type { ClubMemberStats } from '@pages/memberList/memberList.types';
+import type { ClubMemberStats } from '@pages/memberList/memberList.stats.types';
 import { fetchMemberClubStats } from '@pages/memberList/memberList.service';
 import styles from './MemberDetailClubStatsModal.module.less';
 
@@ -334,11 +334,6 @@ const MemberDetailClubStatsModal: React.FC<MemberDetailClubStatsModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-label={`${memberName} 会员运营情况`}
-      onClick={(event) => {
-        if (event.target === event.currentTarget) {
-          onClose();
-        }
-      }}
     >
       <div className={styles.card}>
         {/* 弹窗头部 */}

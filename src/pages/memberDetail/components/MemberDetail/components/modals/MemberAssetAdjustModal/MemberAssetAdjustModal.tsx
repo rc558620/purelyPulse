@@ -116,11 +116,6 @@ const MemberAssetAdjustModal: React.FC<MemberAssetAdjustModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-label={title}
-      onClick={(event) => {
-        if (!isSubmitting && event.target === event.currentTarget) {
-          onClose();
-        }
-      }}
     >
       <div className={styles.sheet}>
         <div className={styles.dragHandle} aria-hidden="true" />

@@ -41,11 +41,6 @@ const MemberDetailStatusModal: React.FC<MemberDetailStatusModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-label={isBannedMember ? '确认解除封禁' : '确认封禁会员'}
-        onClick={(event) => {
-          if (!isSubmittingBan && event.target === event.currentTarget) {
-            onClose();
-          }
-        }}
       >
         <div className={pageStyles.statusModalCard}>
           <div className={cx(pageStyles.statusModalIcon, isBannedMember ? pageStyles.statusModalIconSafe : pageStyles.statusModalIconDanger)} aria-hidden="true">

@@ -9,6 +9,7 @@ import {
   IconBanCircle,
   IconClubStats,
   IconInfoCircle,
+  IconPriceTag,
   IconSalesBarChart,
   IconShieldCheck,
   IconStarBadge,
@@ -32,7 +33,11 @@ interface MemberDetailHeroSectionProps {
   isSubmittingSubAccount: boolean;
   /** 是否正在提交注销操作。 */
   isSubmittingCancel: boolean;
+  /** 是否正在提交续费价调整。 */
+  isSubmittingRenewalPrice: boolean;
   onOpenMembershipModal: () => void;
+  /** 打开「调整续费价格」弹窗。 */
+  onOpenRenewalPriceModal: () => void;
   onOpenStatusModal: () => void;
   onOpenSubAccountModal: () => void;
   onOpenSubAccountDetailModal: () => void;
@@ -61,7 +66,9 @@ const MemberDetailHeroSection: React.FC<MemberDetailHeroSectionProps> = React.me
   isSubmittingBan,
   isSubmittingSubAccount,
   isSubmittingCancel,
+  isSubmittingRenewalPrice,
   onOpenMembershipModal,
+  onOpenRenewalPriceModal,
   onOpenStatusModal,
   onOpenSubAccountModal,
   onOpenSubAccountDetailModal,
@@ -191,6 +198,17 @@ const MemberDetailHeroSection: React.FC<MemberDetailHeroSectionProps> = React.me
             >
               <IconStarBadge width={13} height={13} strokeWidth={2.5} />
               {isSubmittingMembership ? '设置中...' : '设置会员等级'}
+            </button>
+            {/* 调整续费价格入口：只改该账号以后的续费价，不动本次成交（与左侧的「设置会员等级」互补） */}
+            <button
+              type="button"
+              className={pageStyles.adjustRenewalPriceBtn}
+              onClick={onOpenRenewalPriceModal}
+              aria-label="调整续费价格"
+              disabled={isSubmittingAction}
+            >
+              <IconPriceTag width={13} height={13} strokeWidth={2.2} />
+              {isSubmittingRenewalPrice ? '调整中...' : '调整续费价格'}
             </button>
             <button
               type="button"

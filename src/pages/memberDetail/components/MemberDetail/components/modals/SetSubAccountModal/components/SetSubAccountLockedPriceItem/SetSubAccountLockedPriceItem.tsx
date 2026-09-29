@@ -5,7 +5,7 @@ import { SUB_ACCOUNT_PRICING_PLAN_IDS } from '../../SetSubAccountModal.constants
 import SetSubAccountBackfillForm from '../SetSubAccountBackfillForm/SetSubAccountBackfillForm';
 import styles from '../../SetSubAccountModal.module.less';
 import type { SubAccountBackfillForm } from '../../hooks/useSubAccountBackfillForm';
-import type { MemberLockedPrice } from '@pages/memberList/memberList.types';
+import type { MemberLockedPrice } from '@pages/memberList/memberList.pricing.types';
 
 interface SetSubAccountLockedPriceItemProps {
   item: MemberLockedPrice;

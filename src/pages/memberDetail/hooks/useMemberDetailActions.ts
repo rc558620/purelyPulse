@@ -12,16 +12,15 @@ import {
   submitMemberCancelAccount,
   submitMemberMembership,
   submitMemberPointsAdjustment,
+  submitMemberRenewalPrices,
   submitMemberUnban,
   submitSubAccountQuota,
 } from '../../memberList/memberList.service';
-import type {
-  MemberDetail,
-  MemberLevel,
-} from '../../memberList/memberList.types';
+import type { MemberDetail, MemberLevel } from '../../memberList/memberList.types';
+import type { MemberRenewalPrice, MemberRenewalPriceUpdateItem } from '../../memberList/memberList.pricing.types';
 
 /** 会员详情页可提交的动作标识。 */
-export type MemberSubmitAction = 'points' | 'beans' | 'membership' | 'ban' | 'subAccount' | 'cancel' | 'resetLockedPrice' | 'backfillSubAccountAmount';
+export type MemberSubmitAction = 'points' | 'beans' | 'membership' | 'ban' | 'subAccount' | 'cancel' | 'resetLockedPrice' | 'backfillSubAccountAmount' | 'renewalPrice';
 
 export interface UseMemberDetailActionsParams {
   /** 当前会员详情，为 null 时不执行任何提交。 */
@@ -49,6 +48,8 @@ export interface UseMemberDetailActionsReturn {
   isResettingLockedPrice: boolean;
   /** 是否正在补录 / 撤销子账号加价。 */
   isBackfillingSubAccount: boolean;
+  /** 是否正在提交续费价调整。 */
+  isSubmittingRenewalPrice: boolean;
   /** 是否有任一提交动作进行中。 */
   isSubmittingAction: boolean;
   /** 调整积分并提交。 */
@@ -89,6 +90,15 @@ export interface UseMemberDetailActionsReturn {
     planId: string,
     payload: { subAccountCount?: number; subAccountAmountDisplay: string },
   ) => Promise<boolean>;
+  /**
+   * 调整该会员的续费价覆盖。
+   *
+   * 成功返回后端算好的最新档位列表（弹窗就地刷新），失败返回 null。
+   * 只提交改动过的档位，未提交的档位保持原样；空金额即清除覆盖、恢复配置价。
+   */
+  handleUpdateRenewalPrices: (
+    items: MemberRenewalPriceUpdateItem[],
+  ) => Promise<MemberRenewalPrice[] | null>;
 }
 
 /** 会员详情提交动作 hook。 */
@@ -290,7 +300,10 @@ export const useMemberDetailActions = ({
     setSubmittingAction('resetLockedPrice');
     try {
       await resetMemberLockedPrice(member.id);
-      showToast({ type: 'success', message: '锁定价已重置，下次成交将重新锁定' });
+      showToast({
+        type: 'success',
+        message: '成交价已重置，下次成交重新记录；已议定的续费价保留',
+      });
       void loadMember({ silent: true });
       return true;
     } catch (error) {
@@ -345,6 +358,39 @@ export const useMemberDetailActions = ({
     [loadMember, member, submittingAction],
   );
 
+  /**
+   * 调整续费价覆盖。
+   *
+   * 只写 `renewalPriceOverride`，不碰成交价与子账号加价——续费价与「本次卖多少钱」
+   * 是两件事，混在一次写入里会让历史成交记录跟着变。
+   *
+   * 成功后静默刷新详情：hero 的续费价胶囊与快照卡片都依赖这次刷新。
+   */
+  const handleUpdateRenewalPrices = useCallback(
+    async (items: MemberRenewalPriceUpdateItem[]): Promise<MemberRenewalPrice[] | null> => {
+      if (!member || submittingAction || items.length === 0) {
+        return null;
+      }
+
+      setSubmittingAction('renewalPrice');
+      try {
+        const nextItems = await submitMemberRenewalPrices(member.id, items);
+        showToast({ type: 'success', message: `续费价格已更新（${items.length} 项）` });
+        void loadMember({ silent: true });
+        return nextItems;
+      } catch (error) {
+        showToast({
+          type: 'error',
+          message: error instanceof Error ? error.message : '调整续费价格失败，请稍后重试',
+        });
+        return null;
+      } finally {
+        setSubmittingAction(null);
+      }
+    },
+    [loadMember, member, submittingAction],
+  );
+
   return {
     isSubmittingPoints: submittingAction === 'points',
     isSubmittingBeans: submittingAction === 'beans',
@@ -354,6 +400,7 @@ export const useMemberDetailActions = ({
     isSubmittingCancel: submittingAction === 'cancel',
     isResettingLockedPrice: submittingAction === 'resetLockedPrice',
     isBackfillingSubAccount: submittingAction === 'backfillSubAccountAmount',
+    isSubmittingRenewalPrice: submittingAction === 'renewalPrice',
     isSubmittingAction: submittingAction !== null,
     handleAdjustPoints,
     handleAdjustBeans,
@@ -364,5 +411,6 @@ export const useMemberDetailActions = ({
     handleCancelAccount,
     handleResetLockedPrice,
     handleBackfillSubAccountAmount,
+    handleUpdateRenewalPrices,
   };
 };

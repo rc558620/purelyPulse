@@ -1,5 +1,5 @@
 // 封禁管理确认弹窗：承载封禁与解封确认交互。
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { cx, safeStr } from '@utils/utils';
 import type { MemberListItem } from '../../../memberList/memberList.types';
 import { BAN_REASONS, type ConfirmAction } from '../../banManagement.types';
@@ -30,10 +30,6 @@ export const BanManagementConfirmDialog: React.FC<BanManagementConfirmDialogProp
   // 注意：当用户输入自定义原因后，selectedReason 会变为 "其他：xxx"，所以用 startsWith 判断
   const isOtherSelected = selectedReason === '其他' || selectedReason.startsWith('其他：');
   const [customReason, setCustomReason] = useState('');
-  // 弹窗每次打开时（member 变化），重置自定义输入框
-  useEffect(() => {
-    setCustomReason('');
-  }, [member.id]);
   // 实际提交的原因：选"其他"且输入了内容时用 "其他：xxx"，否则用 selectedReason 本身
   const effectiveReason = isOtherSelected && customReason.trim() ? `其他：${customReason.trim()}` : selectedReason;
   // 当 customReason 变化时实时同步给 controller（通过 onReasonChange）
@@ -52,11 +48,6 @@ export const BanManagementConfirmDialog: React.FC<BanManagementConfirmDialogProp
       role="dialog"
       aria-modal="true"
       aria-label={isBan ? '确认封禁' : '确认解封'}
-      onClick={(event) => {
-        if (!isSubmitting && event.target === event.currentTarget) {
-          onCancel();
-        }
-      }}
     >
       <div className={styles.dialogCard}>
         <div className={cx(styles.dialogIconWrap, isBan ? styles.dialogIconBan : styles.dialogIconUnban)} aria-hidden="true">

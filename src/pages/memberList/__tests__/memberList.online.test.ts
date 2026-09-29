@@ -83,6 +83,7 @@ const buildListItemPayload = (
 
 const fetchList = async (
   overrides: Record<string, unknown> = {},
+  page = 1,
 ): Promise<MemberListItem[]> => {
   mocks.httpGet.mockResolvedValueOnce({
     items: [buildListItemPayload(overrides)],
@@ -94,7 +95,9 @@ const fetchList = async (
     status: 'all',
     level: 'all',
     expiry: 'all',
-  });
+    pendingSubAccountBackfill: false,
+    renewalPriceAdjusted: false,
+  }, page);
 
   return members;
 };
@@ -139,5 +142,67 @@ describe('会员在线状态映射', () => {
     const members = await fetchList();
 
     expect(members[0].isOnline).toBe(false);
+  });
+});
+
+describe('会员列表分页映射', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('透传后端 total / hasMore / stats，页码与分页参数随请求下发', async () => {
+    mocks.httpGet.mockResolvedValueOnce({
+      items: [buildListItemPayload(), buildListItemPayload({ id: '43', name: 'Jeffrey2' })],
+      total: 12,
+      page: 2,
+      pageSize: 2,
+      hasMore: true,
+      stats: {
+        totalCount: 12,
+        activeCount: 10,
+        inactiveCount: 2,
+        partnerCount: 1,
+        bannedCount: 0,
+      },
+    });
+
+    const result = await fetchMemberList({
+      keyword: '',
+      status: 'all',
+      level: 'all',
+      expiry: 'all',
+      pendingSubAccountBackfill: false,
+      renewalPriceAdjusted: false,
+    }, 2);
+
+    expect(result.total).toBe(12);
+    expect(result.hasMore).toBe(true);
+    expect(result.stats.totalCount).toBe(12);
+    expect(result.stats.activeCount).toBe(10);
+    expect(result.members).toHaveLength(2);
+    expect(mocks.httpGet).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        params: expect.objectContaining({ page: 2, pageSize: 20 }),
+      }),
+    );
+  });
+
+  it('旧后端未下发 hasMore 时按「已加载条数 < total」推导', async () => {
+    mocks.httpGet.mockResolvedValueOnce({
+      items: [buildListItemPayload()],
+      total: 3,
+    });
+
+    const result = await fetchMemberList({
+      keyword: '',
+      status: 'all',
+      level: 'all',
+      expiry: 'all',
+      pendingSubAccountBackfill: false,
+      renewalPriceAdjusted: false,
+    }, 1);
+
+    expect(result.hasMore).toBe(true);
   });
 });

@@ -9,7 +9,11 @@ import MemberDetailMetricsGrid from './components/sections/MemberDetailMetricsGr
 import MemberDetailPageState from './components/pageState/MemberDetailPageState/MemberDetailPageState';
 import MemberDetailRechargePanel from './components/sections/MemberDetailRechargePanel/MemberDetailRechargePanel';
 import MemberDetailRemarkCard from './components/sections/MemberDetailRemarkCard/MemberDetailRemarkCard';
-import { formatMemberDate } from '../../memberDetail.utils';
+import {
+  formatMemberDate,
+  resolveSubAccountAddOnPriceDisplay,
+  resolveSubAccountBackfillState,
+} from '../../memberDetail.utils';
 import { useMemberDetailPage } from '../../useMemberDetailPage';
 import styles from '../../memberDetail.module.less';
 
@@ -21,12 +25,13 @@ const SetMembershipModal = lazy(async () => {
   return { default: module.default as React.ComponentType<SetMembershipModalProps> };
 });
 const SetSubAccountModal = lazy(() => import('./components/modals/SetSubAccountModal/SetSubAccountModal'));
+const RenewalPriceModal = lazy(() => import('./components/modals/RenewalPriceModal/RenewalPriceModal'));
 const SubAccountDetailModal = lazy(() => import('./components/modals/SubAccountDetailModal/SubAccountDetailModal'));
 const MemberDetailClubStatsModal = lazy(() => import('./components/modals/MemberDetailClubStatsModal/MemberDetailClubStatsModal'));
 const MemberDetailSalesStatsModal = lazy(() => import('./components/modals/MemberDetailSalesStatsModal/MemberDetailSalesStatsModal'));
 const CancelAccountModal = lazy(() => import('./components/modals/CancelAccountModal/CancelAccountModal'));
 
-type ActiveModal = 'points' | 'beans' | 'membership' | 'status' | 'subAccount' | 'subAccountDetail' | 'clubStats' | 'salesStats' | 'cancelAccount' | null;
+type ActiveModal = 'points' | 'beans' | 'membership' | 'renewalPrice' | 'status' | 'subAccount' | 'subAccountDetail' | 'clubStats' | 'salesStats' | 'cancelAccount' | null;
 
 const DAY_MS = 86_400_000;
 
@@ -63,6 +68,8 @@ const MemberDetail: React.FC = () => {
     handleCancelAccount,
     handleResetLockedPrice,
     handleBackfillSubAccountAmount,
+    isSubmittingRenewalPrice,
+    handleUpdateRenewalPrices,
     retryLoadMember,
   } = useMemberDetailPage(id);
 
@@ -90,10 +97,25 @@ const MemberDetail: React.FC = () => {
     displayMemberExpiry ? `${formatMemberDate(displayMemberExpiry)} 到期` :
     memberLevel === 'lifetime' ? '永久有效' : null;
 
+  // 子账号加价补录状态：会员级（不是某条记录的历史快照），
+  // 子账号设置记录每行都用徽章区分「待补录 / 已补录」
+  const subAccountBackfillState = useMemo(
+    () => resolveSubAccountBackfillState(memberLevel, member?.lockedPrices),
+    [member, memberLevel],
+  );
+
+  // 已补录的子账号加价：子账号记录行展示成「10 个 = ¥1000」，
+  // 未补录时为 null，行内退回只展示额度
+  const subAccountAddOnPriceDisplay = useMemo(
+    () => resolveSubAccountAddOnPriceDisplay(memberLevel, member?.lockedPrices),
+    [member, memberLevel],
+  );
+
   const isBannedMember = member?.status === 'banned';
   const isPointsModalOpen = activeModal === 'points';
   const isBeanModalOpen = activeModal === 'beans';
   const isMembershipModalOpen = activeModal === 'membership';
+  const isRenewalPriceModalOpen = activeModal === 'renewalPrice';
   const isStatusModalOpen = activeModal === 'status';
   const isSubAccountModalOpen = activeModal === 'subAccount';
   const isSubAccountDetailModalOpen = activeModal === 'subAccountDetail';
@@ -115,6 +137,10 @@ const MemberDetail: React.FC = () => {
 
   const handleOpenMembershipModal = useCallback((): void => {
     setActiveModal('membership');
+  }, []);
+
+  const handleOpenRenewalPriceModal = useCallback((): void => {
+    setActiveModal('renewalPrice');
   }, []);
 
   const handleCloseModal = useCallback((): void => {
@@ -213,7 +239,9 @@ const MemberDetail: React.FC = () => {
           isSubmittingBan={isSubmittingBan}
           isSubmittingSubAccount={isSubmittingSubAccount}
           isSubmittingCancel={isSubmittingCancel}
+          isSubmittingRenewalPrice={isSubmittingRenewalPrice}
           onOpenMembershipModal={handleOpenMembershipModal}
+          onOpenRenewalPriceModal={handleOpenRenewalPriceModal}
           onOpenStatusModal={handleOpenStatusModal}
           onOpenSubAccountModal={handleOpenSubAccountModal}
           onOpenSubAccountDetailModal={handleOpenSubAccountDetailModal}
@@ -234,12 +262,18 @@ const MemberDetail: React.FC = () => {
           onOpenBeanModal={handleOpenBeanModal}
         />
 
-        {/* 充值记录面板 */}
+        {/* 记录面板：充值 / 设置会员等级 / 调整续费 / 子账号设置 四态切换 */}
         <MemberDetailRechargePanel
           rechargeHistory={member.rechargeHistory}
           rechargeCount={member.rechargeCount}
           adminGrantHistory={member.adminGrantHistory}
           adminGrantCount={member.adminGrantCount}
+          renewalPriceAdjustHistory={member.renewalPriceAdjustHistory}
+          renewalPriceAdjustCount={member.renewalPriceAdjustCount}
+          subAccountQuotaRecordHistory={member.subAccountQuotaRecordHistory}
+          subAccountQuotaRecordCount={member.subAccountQuotaRecordCount}
+          subAccountBackfillState={subAccountBackfillState}
+          subAccountAddOnPriceDisplay={subAccountAddOnPriceDisplay}
         />
 
         {/* 会员备注卡（有备注才渲染） */}
@@ -279,6 +313,18 @@ const MemberDetail: React.FC = () => {
             annualMembershipAmountDisplay={annualMembershipAmountDisplay}
             onClose={handleCloseModal}
             onConfirm={handleSetMembership}
+          />
+        ) : null}
+
+        {/* 调整续费价格弹窗：只改该账号以后的续费价，不动本次成交 */}
+        {isRenewalPriceModalOpen ? (
+          <RenewalPriceModal
+            memberId={member.id}
+            memberName={member.name}
+            currentLevel={memberLevel}
+            isSubmitting={isSubmittingRenewalPrice}
+            onClose={handleCloseModal}
+            onSubmit={handleUpdateRenewalPrices}
           />
         ) : null}
 
