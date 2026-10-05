@@ -1,0 +1,223 @@
+@import (reference) '@styles/variables.less';
+
+.pickerOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+
+  @media (min-width: 540px) {
+    align-items: center;
+  }
+}
+
+.pickerCard {
+  width: 100%;
+  max-width: 48rem;
+  max-height: 70vh;
+  background: #fff;
+  border-radius: 2rem 2rem 0 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  @media (min-width: 540px) {
+    border-radius: 2rem;
+    max-height: 60vh;
+  }
+}
+
+.pickerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.6rem 1.8rem 1.2rem;
+  border-bottom: 1px solid @border-color;
+  flex-shrink: 0;
+}
+
+.pickerTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: @text-main;
+}
+
+.pickerClose {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.2rem;
+  height: 3.2rem;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.06);
+  color: @text-sub;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.1);
+  }
+}
+
+.pickerSearch {
+  padding: 1.2rem 1.6rem;
+  border-bottom: 1px solid @border-color;
+  flex-shrink: 0;
+}
+
+.pickerSearchInput {
+  width: 100%;
+  height: 4rem;
+  padding: 0 1.4rem;
+  border-radius: 1rem;
+  border: 1.5px solid @border-color;
+  background: @bg-light;
+  font-size: 1.3rem;
+  color: @text-main;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+
+  &::placeholder {
+    color: @text-slate-400;
+  }
+
+  &:focus {
+    border-color: #0891b2;
+  }
+}
+
+.pickerList {
+  overflow-y: auto;
+  flex: 1;
+  padding: 0.8rem 0;
+}
+
+.pickerStoreItem {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1.2rem 1.6rem;
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s;
+
+  &:hover {
+    background: rgba(6, 182, 212, 0.06);
+  }
+}
+
+.pickerAvatar {
+  width: 3.8rem;
+  height: 3.8rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0891b2, #22d3ee);
+  border: 1.5px solid rgba(6, 182, 212, 0.3);
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.pickerAvatarWithImage {
+  background: transparent;
+  border-color: @border-color;
+}
+
+.pickerAvatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.pickerStoreInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.pickerStoreNameRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.pickerStoreName {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: @text-main;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pickerHealthTag {
+  padding: 0.15rem 0.6rem;
+  border-radius: 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  flex-shrink: 0;
+
+  &_exhausted {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+  }
+
+  &_none {
+    background: rgba(100, 116, 139, 0.1);
+    color: @text-sub;
+  }
+}
+
+.pickerStorePhone {
+  font-size: 1.15rem;
+  color: @text-sub;
+}
+
+.pickerQuota {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+  flex-shrink: 0;
+}
+
+.pickerQuotaExhausted .pickerQuotaVal {
+  color: #ef4444;
+}
+
+.pickerQuotaVal {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0891b2;
+}
+
+.pickerQuotaLbl {
+  font-size: 1.1rem;
+  color: @text-sub;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 4rem 2rem;
+  color: @text-sub;
+  font-size: 1.3rem;
+}

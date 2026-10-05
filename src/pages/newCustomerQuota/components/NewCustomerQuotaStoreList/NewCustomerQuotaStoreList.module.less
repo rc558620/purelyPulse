@@ -1,0 +1,231 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/breakpoints.less';
+
+.listCard {
+  background: #fff;
+  border-radius: 1.6rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border: 1px solid @border-color;
+  overflow: hidden;
+
+  @media (min-width: @bp-mobile) {
+    border-radius: 2rem;
+  }
+}
+
+.listHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.4rem 1.6rem;
+  border-bottom: 1px solid @border-color;
+
+  @media (min-width: @bp-mobile) {
+    padding: 1.6rem 2rem;
+  }
+
+  @media (min-width: @bp-tablet) {
+    padding: 1.8rem 2.4rem;
+  }
+}
+
+.listTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: @text-sub;
+}
+
+.listCount {
+  font-size: 1.2rem;
+  color: @text-sub;
+}
+
+.storeList {
+  display: flex;
+  flex-direction: column;
+}
+
+.storeItem {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1.3rem 1.6rem;
+  border-bottom: 1px solid @border-color;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  @media (min-width: @bp-mobile) {
+    padding: 1.5rem 2rem;
+    gap: 1.6rem;
+  }
+
+  @media (min-width: @bp-tablet) {
+    padding: 1.6rem 2.4rem;
+  }
+}
+
+// ─── 主账号头像 ────────────────────────────────────────────────────────
+.storeAvatar {
+  width: 3.8rem;
+  height: 3.8rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0891b2, #22d3ee);
+  border: 1.5px solid rgba(6, 182, 212, 0.3);
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.storeAvatarWithImage {
+  background: transparent;
+  border-color: @border-color;
+}
+
+.storeAvatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+// ─── 主账号信息 ────────────────────────────────────────────────────────
+.storeInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.storeTopRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.storeName {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: @text-main;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  @media (min-width: @bp-mobile) {
+    font-size: 1.4rem;
+  }
+}
+
+.storeHealthTag {
+  padding: 0.15rem 0.7rem;
+  border-radius: 2rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &_none {
+    background: rgba(100, 116, 139, 0.1);
+    color: @text-sub;
+  }
+
+  &_healthy {
+    background: rgba(6, 182, 212, 0.1);
+    color: #0891b2;
+  }
+
+  &_warning {
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+  }
+
+  &_exhausted {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+  }
+}
+
+.storePhone {
+  font-size: 1.15rem;
+  color: @text-sub;
+}
+
+// ─── 额度现状 ──────────────────────────────────────────────────────────
+.storeQuota {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+  flex-shrink: 0;
+}
+
+.storeQuotaRow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+}
+
+.storeQuotaVal {
+  font-size: 1.7rem;
+  font-weight: 700;
+
+  &_none {
+    color: @text-sub;
+  }
+
+  &_healthy {
+    color: #0891b2;
+  }
+
+  &_warning {
+    color: #f59e0b;
+  }
+
+  &_exhausted {
+    color: #ef4444;
+  }
+}
+
+.storeQuotaUnit {
+  font-size: 1.1rem;
+  color: @text-sub;
+  font-weight: 400;
+}
+
+.storeConsumed {
+  font-size: 1.1rem;
+  color: @text-sub;
+}
+
+.adjustBtn {
+  padding: 0.5rem 1.2rem;
+  border-radius: 2rem;
+  border: 1.5px solid rgba(6, 182, 212, 0.4);
+  background: rgba(6, 182, 212, 0.08);
+  color: #0891b2;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  &:hover {
+    background: rgba(6, 182, 212, 0.16);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}

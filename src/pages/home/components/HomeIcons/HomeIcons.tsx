@@ -121,6 +121,16 @@ export const IconHomeBeans = (props: SvgProps): React.JSX.Element => (
   </svg>
 );
 
+/** 快捷入口：新客额度图标（证卡 + 用户） */
+export const IconHomeNewCustomerQuota = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <rect x="2" y="5" width="15" height="14" rx="2.5" />
+    <circle cx="8.5" cy="11" r="2.2" />
+    <path d="M5 17c.6-1.6 2-2.4 3.5-2.4s2.9.8 3.5 2.4" />
+    <path d="M20 8h2M20 12h2M20 16h1.5" />
+  </svg>
+);
+
 /** 快捷入口：会员积分图标 */
 export const IconHomePoints = (props: SvgProps): React.JSX.Element => (
   <svg aria-hidden="true" viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="currentColor" strokeWidth={2} {...props}>

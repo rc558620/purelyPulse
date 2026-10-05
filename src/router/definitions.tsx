@@ -35,6 +35,7 @@ export const routeDefinitions: AppRouteDefinition[] = [
     { path: ROUTE_PATHS.promotionDetail, page: pages.promotionDetail, wrap: withAuthGuard },
     { path: ROUTE_PATHS.memberPoints, page: pages.memberPoints, wrap: withAuthGuard },
     { path: ROUTE_PATHS.partnerBeans, page: pages.partnerBeans, wrap: withAuthGuard },
+    { path: ROUTE_PATHS.newCustomerQuota, page: pages.newCustomerQuota, wrap: withAuthGuard },
     { path: ROUTE_PATHS.memberList, page: pages.memberList, wrap: withAuthGuard },
     { path: `${ROUTE_PATHS.memberDetail}/:id`, page: pages.memberDetail, wrap: withAuthGuard },
     { path: ROUTE_PATHS.memberRecords, page: pages.memberRecords, wrap: withAuthGuard },

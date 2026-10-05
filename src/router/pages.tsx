@@ -79,6 +79,7 @@ export const pages = {
   // ─── 会员管理 ───────────────────────────────────────────────────────
   memberPoints: lazyWithPreload(() => import('../pages/memberPoints/memberPoints')),
   partnerBeans: lazyWithPreload(() => import('../pages/partnerBeans/partnerBeans')),
+  newCustomerQuota: lazyWithPreload(() => import('../pages/newCustomerQuota/newCustomerQuota')),
   memberList:   lazyWithPreload(() => import('../pages/memberList/memberList')),
   memberDetail: lazyWithPreload(() => import('../pages/memberDetail/memberDetail')),
   memberRecords: lazyWithPreload(() => import('../pages/memberRecords/memberRecords')),

@@ -2,11 +2,11 @@
 import { memo } from 'react';
 import { cx, isNonEmptyArray, safeNum } from '@utils/utils';
 import { ROUTE_PATHS } from '../../../../router/paths';
-import { IconHomeBan, IconHomeBeans, IconHomeChevronRight, IconHomeGrid, IconHomeMemberList, IconHomeMemberRecords, IconHomeMembershipSettings, IconHomePayout, IconHomePoints, IconHomeReview } from '../HomeIcons/HomeIcons';
+import { IconHomeBan, IconHomeBeans, IconHomeChevronRight, IconHomeGrid, IconHomeMemberList, IconHomeMemberRecords, IconHomeMembershipSettings, IconHomeNewCustomerQuota, IconHomePayout, IconHomePoints, IconHomeReview } from '../HomeIcons/HomeIcons';
 import styles from './HomeQuickNavSection.module.less';
 
-type HomeQuickNavTone = 'green' | 'purple' | 'amber' | 'blue' | 'red' | 'teal' | 'indigo';
-type HomeQuickNavIcon = 'payout' | 'review' | 'beans' | 'points' | 'ban' | 'memberList' | 'membershipSettings' | 'memberRecords';
+type HomeQuickNavTone = 'green' | 'purple' | 'amber' | 'blue' | 'red' | 'teal' | 'indigo' | 'cyan';
+type HomeQuickNavIcon = 'payout' | 'review' | 'beans' | 'newCustomerQuota' | 'points' | 'ban' | 'memberList' | 'membershipSettings' | 'memberRecords';
 
 interface HomeQuickNavItemConfig {
   title: string;
@@ -28,6 +28,7 @@ const QUICK_NAV_ITEMS: HomeQuickNavItemConfig[] = [
   { title: '打款管理', desc: '合伙人收益发放', ariaLabel: '合伙人打款管理', path: ROUTE_PATHS.partnerPayout, tone: 'green', icon: 'payout' },
   { title: '申请审核', desc: '合伙人申请处理', ariaLabel: '合伙人申请审核', path: ROUTE_PATHS.partnerReview, tone: 'purple', icon: 'review', showPendingBadge: true, showPulseDot: true },
   { title: '纯利豆', desc: '合伙人豆管理', ariaLabel: '纯利豆管理', path: ROUTE_PATHS.partnerBeans, tone: 'amber', icon: 'beans' },
+  { title: '新客额度', desc: '新客额度设置', ariaLabel: '新客额度管理', path: ROUTE_PATHS.newCustomerQuota, tone: 'cyan', icon: 'newCustomerQuota' },
   { title: '积分管理', desc: '会员积分增减', ariaLabel: '会员积分管理', path: ROUTE_PATHS.memberPoints, tone: 'blue', icon: 'points' },
   { title: '封禁管理', desc: '用户封禁与解封', ariaLabel: '用户封禁管理', path: ROUTE_PATHS.banManagement, tone: 'red', icon: 'ban' },
   { title: '会员管理', desc: '会员套餐价格设置', ariaLabel: '会员管理', path: ROUTE_PATHS.membershipSettings, tone: 'green', icon: 'membershipSettings' },
@@ -51,6 +52,8 @@ const getQuickNavItemToneClassName = (tone: HomeQuickNavTone): string => {
       return styles.quickNavItemTeal;
     case 'indigo':
       return styles.quickNavItemIndigo;
+    case 'cyan':
+      return styles.quickNavItemCyan;
     default:
       return '';
   }
@@ -72,6 +75,8 @@ const getQuickNavIconToneClassName = (tone: HomeQuickNavTone): string => {
       return styles.quickNavIconTeal;
     case 'indigo':
       return styles.quickNavIconIndigo;
+    case 'cyan':
+      return styles.quickNavIconCyan;
     default:
       return '';
   }
@@ -85,6 +90,8 @@ const renderQuickNavIcon = (icon: HomeQuickNavIcon): React.JSX.Element => {
       return <IconHomeReview />;
     case 'beans':
       return <IconHomeBeans />;
+    case 'newCustomerQuota':
+      return <IconHomeNewCustomerQuota />;
     case 'points':
       return <IconHomePoints />;
     case 'ban':

@@ -14,6 +14,8 @@ export const ROUTE_PATHS = {
     // ─── 会员管理 ────────────────────────────────────────────────
     memberPoints: '/member-points',
     partnerBeans: '/partner-beans',
+    // 新客额度管理：平台运营查看 / 设置各门店的新客额度
+    newCustomerQuota: '/new-customer-quota',
     // ─── 会员列表 / 详情 ──────────────────────────────────────────
     memberList:   '/member-list',
     memberDetail: '/member-list/detail',
