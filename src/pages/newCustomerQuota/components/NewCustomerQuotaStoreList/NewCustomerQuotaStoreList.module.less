@@ -13,6 +13,41 @@
   }
 }
 
+// 刷新失败但列表已有内容时的顶部横幅：保留列表，只提示 + 给重试入口
+.listErrorBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.2rem;
+  padding: 1rem 1.6rem;
+  background: rgba(239, 68, 68, 0.08);
+  border-bottom: 1px solid rgba(239, 68, 68, 0.18);
+}
+
+.listErrorText {
+  flex: 1;
+  min-width: 0;
+  font-size: 1.2rem;
+  color: #dc2626;
+}
+
+.listErrorRetry {
+  flex-shrink: 0;
+  padding: 0.4rem 1.2rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: #fff;
+  color: #dc2626;
+  font-size: 1.15rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.1);
+  }
+}
+
 .listHeader {
   display: flex;
   align-items: center;

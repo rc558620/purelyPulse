@@ -1,5 +1,5 @@
 // 合伙人纯利豆调整弹窗
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import OperationModalShell from '@components/overlay/OperationModalShell/OperationModalShell';
 import { cx, isNonEmptyArray, safeNum } from '@utils/utils';
 import type { AdjustDir, UserSnapshot } from '../../partnerBeans.shared.types';
@@ -38,17 +38,15 @@ const AdjustBeanModal: React.FC<AdjustBeanModalProps> = ({
   const isBalanceInsufficient = dir === 'subtract' && parsedAmount > user.beanBalance;
   const isValid = parsedAmount > 0 && reason.trim().length > 0 && !isBalanceInsufficient;
 
-  // 使用 ref 保存最新提交参数，避免 useCallback 闭包捕获旧值
-  const pendingSubmitRef = useRef({ userId: user.id, delta, reason: reason.trim() });
-  pendingSubmitRef.current = { userId: user.id, delta, reason: reason.trim() };
-
+  // 提交参数直接读当前值并写进依赖即可，无需用 ref 中转：
+  // 在 render 期写 ref 会让 lint 报「Cannot update ref during render」，且拿到的仍是同一轮的值
   const handleConfirm = useCallback((): void => {
     if (!isValid || isSubmitting) {
       return;
     }
-    const { userId, delta: latestDelta, reason: latestReason } = pendingSubmitRef.current;
-    void onConfirm(userId, latestDelta, latestReason);
-  }, [isSubmitting, isValid, onConfirm]);
+
+    void onConfirm(user.id, delta, reason.trim());
+  }, [delta, isSubmitting, isValid, onConfirm, reason, user.id]);
 
   const handleAmountChange = useCallback((event: React.ChangeEvent<HTMLInputElement>): void => {
     const value = event.target.value.replace(/\D/g, '');

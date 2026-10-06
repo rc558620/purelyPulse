@@ -7,12 +7,15 @@ import type { PartnerBeansPageUser } from '../../partnerBeans.types';
 import styles from './PartnerBeansSummaryCard.module.less';
 
 interface PartnerBeansSummaryCardProps {
+  /** 首屏加载中：合伙人快照先于流水到位，避免短暂闪一下「暂无数据」 */
+  isLoading: boolean;
   isSubmitting: boolean;
   users: PartnerBeansPageUser[];
   onAdjust: (user: PartnerBeansPageUser) => void;
 }
 
 const PartnerBeansSummaryCardComponent: React.FC<PartnerBeansSummaryCardProps> = ({
+  isLoading,
   isSubmitting,
   users,
   onAdjust,
@@ -22,7 +25,10 @@ const PartnerBeansSummaryCardComponent: React.FC<PartnerBeansSummaryCardProps> =
       <IconPartnerBeansSummary />
       合伙人余额一览
     </div>
-    {isNonEmptyArray(users) ? (
+    {isLoading ? (
+      <PartnerBeansPageState message="合伙人余额加载中..." variant="loading" />
+    ) : null}
+    {!isLoading && isNonEmptyArray(users) ? (
       <div className={styles.partnerList}>
         {users.map((user) => (
           <div key={user.id} className={styles.partnerItem}>
@@ -49,9 +55,10 @@ const PartnerBeansSummaryCardComponent: React.FC<PartnerBeansSummaryCardProps> =
           </div>
         ))}
       </div>
-    ) : (
+    ) : null}
+    {!isLoading && !isNonEmptyArray(users) ? (
       <PartnerBeansPageState message="暂无合伙人余额数据" variant="empty" />
-    )}
+    ) : null}
   </div>
 );
 

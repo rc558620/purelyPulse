@@ -54,6 +54,33 @@
   }
 }
 
+// ─── 加载 / 错误态 ───────────────────────────────────────────────
+.stateBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 3.2rem 2rem;
+  color: @text-sub;
+  font-size: 1.3rem;
+}
+
+.retryBtn {
+  padding: 0.8rem 2rem;
+  border: 1px solid @border-color;
+  border-radius: 2rem;
+  background: #fff;
+  color: @primary;
+  font-size: 1.3rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(132, 204, 22, 0.06);
+  }
+}
+
 .recordList {
   display: flex;
   flex-direction: column;
@@ -254,27 +281,5 @@
 
   &Expire {
     color: #94a3b8;
-  }
-}
-
-// ─── 加载更多按钮 ──────────────────────────────────────────────────
-.loadMoreBtn {
-  width: 100%;
-  padding: 1.4rem;
-  border: none;
-  border-top: 1px solid @border-color;
-  background: transparent;
-  color: @primary;
-  font-size: 1.3rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.12s;
-
-  &:hover {
-    background: rgba(132, 204, 22, 0.04);
-  }
-
-  &:active {
-    background: rgba(132, 204, 22, 0.08);
   }
 }

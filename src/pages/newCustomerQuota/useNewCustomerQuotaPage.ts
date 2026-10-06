@@ -1,15 +1,14 @@
-// 新客额度页面状态与交互管理 hook
-import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+// 新客额度页面状态与交互管理 hook：组合列表分页、选店弹层与额度调整流程。
+// 搜索 / 筛选条件在本层持有，列表数据由 useQuotaStoreList 按条件分页拉取。
+import { useCallback, useDeferredValue, useMemo, useState } from 'react';
 import { showToast } from '@components/ui/feedback/Toast';
 import { safeNum } from '@utils/utils';
 import {
-  fetchNewCustomerQuotaStores,
-  submitNewCustomerQuotaAdjust,
-} from './newCustomerQuota.service';
-import {
   NEW_CUSTOMER_QUOTA_DEFAULT_FILTER_TAB,
-  resolveQuotaHealth,
 } from './newCustomerQuota.constants';
+import { submitNewCustomerQuotaAdjust } from './newCustomerQuota.service';
+import { useQuotaStoreList } from './useQuotaStoreList';
+import { useQuotaStorePicker } from './useQuotaStorePicker';
 import type {
   NewCustomerQuotaFilterTab,
   NewCustomerQuotaStats,
@@ -17,18 +16,44 @@ import type {
 } from './newCustomerQuota.types';
 
 interface UseNewCustomerQuotaPageReturn {
+  /** 已加载的门店列表（分页累积，已按当前条件由后端过滤） */
   stores: NewCustomerQuotaStore[];
-  filteredStores: NewCustomerQuotaStore[];
-  pickerStores: NewCustomerQuotaStore[];
-  activeTab: NewCustomerQuotaFilterTab;
-  searchQuery: string;
-  pickerSearchQuery: string;
-  targetStore: NewCustomerQuotaStore | null;
-  showStorePicker: boolean;
-  isLoading: boolean;
-  isSubmitting: boolean;
-  errorMessage: string;
+  /** 后端统计概览 */
   stats: NewCustomerQuotaStats;
+  /** 当前筛选条件命中的门店总数（含健康度 Tab），列表头「N 家」的事实源 */
+  total: number;
+  /** 是否还有下一页 */
+  hasMore: boolean;
+  /** 首屏加载中 */
+  isLoading: boolean;
+  /** 非首屏刷新中 */
+  isRefreshing: boolean;
+  /** 列表错误文案 */
+  errorMessage: string;
+  /** 提交调整中 */
+  isSubmitting: boolean;
+  /** 当前筛选 Tab */
+  activeTab: NewCustomerQuotaFilterTab;
+  /** 主列表搜索词 */
+  searchQuery: string;
+  /** 选店弹层搜索词 */
+  pickerSearchQuery: string;
+  /** 选店弹层门店列表（分页累积） */
+  pickerStores: NewCustomerQuotaStore[];
+  /** 选店弹层是否还有下一页 */
+  pickerHasMore: boolean;
+  /** 选店弹层搜索请求中 */
+  pickerIsLoading: boolean;
+  /** 选店弹层加载更多请求中 */
+  pickerIsLoadingMore: boolean;
+  /** 额度调整后的刷新序号：变化即触发列表回顶，避免刷新成第 1 页后停在中段 */
+  refreshSeq: number;
+  /** 选店弹层错误文案 */
+  pickerErrorMessage: string;
+  /** 选店弹层当前调整目标 */
+  targetStore: NewCustomerQuotaStore | null;
+  /** 选店弹层是否可见 */
+  showStorePicker: boolean;
   setActiveTab: (tab: NewCustomerQuotaFilterTab) => void;
   setSearchQuery: (value: string) => void;
   setPickerSearchQuery: (value: string) => void;
@@ -37,135 +62,57 @@ interface UseNewCustomerQuotaPageReturn {
   handleOpenAdjust: (store: NewCustomerQuotaStore) => void;
   handleCloseAdjust: () => void;
   handleConfirmAdjust: (storeId: string, delta: number, reason: string) => Promise<void>;
+  /** 下拉刷新（供 PullRefreshLoadMore 等待完成） */
+  refreshStores: () => Promise<void>;
+  /** 上拉加载更多（供 PullRefreshLoadMore 等待完成） */
+  loadMoreStores: () => Promise<void>;
+  /** 选店弹层加载更多（供弹层按钮等待完成） */
+  loadMorePickerStores: () => Promise<void>;
   retryLoad: () => void;
+  retryPickerLoad: () => void;
 }
-
-interface IndexedStore {
-  store: NewCustomerQuotaStore;
-  searchText: string;
-}
-
-/** 健康度口径复用列表与 Tab 的同一判定：未发放不计入「已耗尽」 */
-const buildStats = (stores: NewCustomerQuotaStore[]): NewCustomerQuotaStats => {
-  let totalRemaining = 0;
-  let warningCount = 0;
-  let exhaustedCount = 0;
-
-  for (const store of stores) {
-    totalRemaining += safeNum(store.remaining);
-
-    const health = resolveQuotaHealth(store);
-    if (health === 'exhausted') {
-      exhaustedCount += 1;
-    } else if (health === 'warning') {
-      warningCount += 1;
-    }
-  }
-
-  return {
-    storeCount: stores.length,
-    totalRemaining,
-    warningCount,
-    exhaustedCount,
-  };
-};
-
-/** 搜索文本：主账号昵称 / 手机号 / 门店名 都可命中 */
-const buildStoreSearchText = (store: NewCustomerQuotaStore): string => (
-  `${store.ownerName} ${store.ownerPhone} ${store.storeName}`.toLowerCase()
-);
 
 export const useNewCustomerQuotaPage = (): UseNewCustomerQuotaPageReturn => {
-  const [stores, setStores] = useState<NewCustomerQuotaStore[]>([]);
   const [activeTab, setActiveTab] = useState<NewCustomerQuotaFilterTab>(NEW_CUSTOMER_QUOTA_DEFAULT_FILTER_TAB);
   const [searchQuery, setSearchQuery] = useState('');
   const [pickerSearchQuery, setPickerSearchQuery] = useState('');
   const [targetStore, setTargetStore] = useState<NewCustomerQuotaStore | null>(null);
   const [showStorePicker, setShowStorePicker] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [refreshSeq, setRefreshSeq] = useState(0);
 
-  const requestIdRef = useRef(0);
   const deferredSearchQuery = useDeferredValue(searchQuery);
-  const deferredPickerSearchQuery = useDeferredValue(pickerSearchQuery);
+  const deferredPickerKeyword = useDeferredValue(pickerSearchQuery);
 
-  const indexedStores = useMemo<IndexedStore[]>(() => stores.map((store) => ({
-    store,
-    searchText: buildStoreSearchText(store),
-  })), [stores]);
+  // 列表查询条件：搜索词 + 健康度 Tab，全部下推给后端过滤
+  const listQuery = useMemo(() => ({
+    keyword: deferredSearchQuery.trim(),
+    health: activeTab === 'all' ? null : activeTab,
+  }), [activeTab, deferredSearchQuery]);
 
-  // 统计口径完全由门店列表推导，不额外维护一份 state，避免两处数据不同步
-  const stats = useMemo<NewCustomerQuotaStats>(() => buildStats(stores), [stores]);
+  const {
+    stores,
+    stats,
+    total,
+    hasMore,
+    isLoading,
+    isRefreshing,
+    errorMessage,
+    refreshStores,
+    loadMoreStores,
+    patchStore,
+    retryLoad,
+  } = useQuotaStoreList(listQuery);
 
-  // 首屏加载态由 useState(true) 承担，这里不再同步 setIsLoading(true)：
-  // 效果体内同步 setState 会触发级联渲染（react-hooks/set-state-in-effect）。
-  const loadPageData = useCallback(async (): Promise<void> => {
-    requestIdRef.current += 1;
-    const currentRequestId = requestIdRef.current;
-
-    try {
-      const nextStores = await fetchNewCustomerQuotaStores();
-      if (currentRequestId !== requestIdRef.current) {
-        return;
-      }
-
-      setStores(nextStores);
-      setErrorMessage('');
-    } catch (error) {
-      if (currentRequestId !== requestIdRef.current) {
-        return;
-      }
-
-      setStores([]);
-      setErrorMessage(error instanceof Error ? error.message : '获取新客额度数据失败');
-    } finally {
-      if (currentRequestId === requestIdRef.current) {
-        setIsLoading(false);
-      }
-    }
-  }, []);
-
-  // 首屏自动加载：放进宏任务，避免在 effect 体内同步 setState 触发级联渲染
-  // （与 memberList 的取数入口同一惯用法）。
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      void loadPageData();
-    }, 0);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [loadPageData]);
-
-  const filteredStores = useMemo(() => {
-    let nextStores = indexedStores;
-
-    if (activeTab === 'warning') {
-      nextStores = nextStores.filter(({ store }) => resolveQuotaHealth(store) === 'warning');
-    } else if (activeTab === 'exhausted') {
-      // 只统计「真的用完了」的门店：从未发放过额度（remaining=0 且 consumed=0）不算
-      nextStores = nextStores.filter(({ store }) => resolveQuotaHealth(store) === 'exhausted');
-    }
-
-    const normalizedQuery = deferredSearchQuery.trim().toLowerCase();
-    if (normalizedQuery) {
-      nextStores = nextStores.filter(({ searchText }) => searchText.includes(normalizedQuery));
-    }
-
-    return nextStores.map(({ store }) => store);
-  }, [activeTab, deferredSearchQuery, indexedStores]);
-
-  const pickerStores = useMemo(() => {
-    const normalizedQuery = deferredPickerSearchQuery.trim().toLowerCase();
-    if (!normalizedQuery) {
-      return stores;
-    }
-
-    return indexedStores
-      .filter(({ searchText }) => searchText.includes(normalizedQuery))
-      .map(({ store }) => store);
-  }, [deferredPickerSearchQuery, indexedStores, stores]);
+  const {
+    stores: pickerStores,
+    hasMore: pickerHasMore,
+    isLoading: pickerIsLoading,
+    isLoadingMore: pickerIsLoadingMore,
+    errorMessage: pickerErrorMessage,
+    loadMoreStores: loadMorePickerStores,
+    retryLoad: retryPickerLoad,
+  } = useQuotaStorePicker(deferredPickerKeyword.trim(), showStorePicker);
 
   const openStorePicker = useCallback((): void => {
     if (isSubmitting) {
@@ -204,7 +151,7 @@ export const useNewCustomerQuotaPage = (): UseNewCustomerQuotaPageReturn => {
     delta: number,
     reason: string,
   ): Promise<void> => {
-    if (isSubmitting || delta === 0) {
+    if (isSubmitting || safeNum(delta) === 0) {
       return;
     }
 
@@ -213,29 +160,21 @@ export const useNewCustomerQuotaPage = (): UseNewCustomerQuotaPageReturn => {
     try {
       const updatedStore = await submitNewCustomerQuotaAdjust(storeId, delta, reason);
 
-      // 提交成功后重新拉取最新列表，确保余额与统计口径一致
-      try {
-        const nextStores = await fetchNewCustomerQuotaStores();
-        setStores(nextStores);
-      } catch {
-        // 后端刷新失败时退回乐观更新：只在拿到有效快照时回写，
-        // 否则宁可保留旧值，也不能把兜底的 0 当成真实余额显示出来。
-        if (updatedStore) {
-          setStores((prevStores) => prevStores.map((store) => (
-            store.id === storeId
-              ? {
-                  ...store,
-                  remaining: safeNum(updatedStore.remaining),
-                  consumed: safeNum(updatedStore.consumed),
-                  updatedAt: Date.now(),
-                }
-              : store
-          )));
-        }
+      // 提交成功后刷新第 1 页，让余额与后端统计口径保持一致
+      // （replace 模式失败时不抛错：列表保持旧数据并进入错误态）。
+      await refreshStores();
+
+      // 无论刷新成败，都用后端返回的快照校准当前行：
+      // 刷新失败时这就是唯一的余额修正来源，避免把旧余额继续展示给运营。
+      if (updatedStore) {
+        patchStore(storeId, updatedStore.remaining, updatedStore.consumed);
       }
 
+      // 刷新只回第 1 页：翻过页时必须回顶，否则会出现「列表被换成第 1 页但滚动在中段」
+      // 并在底部触发连锁自动加载，运营也看不到刚调整的那一行。
+      setRefreshSeq((previousSeq) => previousSeq + 1);
       setTargetStore(null);
-      showToast({ type: 'success', message: delta > 0 ? '新客额度已发放' : '新客额度已回收' });
+      showToast({ type: 'success', message: safeNum(delta) > 0 ? '新客额度已发放' : '新客额度已回收' });
     } catch (error) {
       showToast({
         type: 'error',
@@ -245,26 +184,28 @@ export const useNewCustomerQuotaPage = (): UseNewCustomerQuotaPageReturn => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [isSubmitting]);
-
-  const retryLoad = useCallback((): void => {
-    setIsLoading(true);
-    void loadPageData();
-  }, [loadPageData]);
+  }, [isSubmitting, patchStore, refreshStores]);
 
   return {
     stores,
-    filteredStores,
-    pickerStores,
+    stats,
+    total,
+    hasMore,
+    isLoading,
+    isRefreshing,
+    errorMessage,
+    isSubmitting,
     activeTab,
     searchQuery,
     pickerSearchQuery,
+    pickerStores,
+    pickerHasMore,
+    pickerIsLoading,
+    pickerIsLoadingMore,
+    pickerErrorMessage,
     targetStore,
     showStorePicker,
-    isLoading,
-    isSubmitting,
-    errorMessage,
-    stats,
+    refreshSeq,
     setActiveTab,
     setSearchQuery,
     setPickerSearchQuery,
@@ -273,6 +214,10 @@ export const useNewCustomerQuotaPage = (): UseNewCustomerQuotaPageReturn => {
     handleOpenAdjust,
     handleCloseAdjust,
     handleConfirmAdjust,
+    refreshStores,
+    loadMoreStores,
+    loadMorePickerStores,
     retryLoad,
+    retryPickerLoad,
   };
 };

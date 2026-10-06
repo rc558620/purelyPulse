@@ -89,3 +89,35 @@ export interface MemberPointsTabOption {
   /** Tab 文案 */
   label: string;
 }
+
+/** 积分流水查询条件：Tab 与关键词全部下推后端，前端不再对已加载页做本地过滤。 */
+export interface MemberPointsRecordQuery {
+  /** 当前筛选 Tab */
+  tab: MemberPointsFilterTab;
+  /** 搜索关键词（会员姓名 / 手机号 / 流水说明） */
+  keyword: string;
+}
+
+/** 积分流水单页结果（游标分页）。 */
+export interface MemberPointsRecordPage {
+  /** 本页流水 */
+  records: MemberPointsRecord[];
+  /** 后端按当前筛选的完整结果集计算的统计（与分页无关） */
+  stats: MemberPointsStats;
+  /** 是否还有下一页 */
+  hasMore: boolean;
+  /** 下一页游标，没有更多时为 null */
+  nextCursor: string | null;
+}
+
+/** 拉取单页流水的入参：每页条数由页面常量统一给出，避免分页口径散落到调用方。 */
+export interface MemberPointsRecordRequestParams {
+  /** 查询条件 */
+  query: MemberPointsRecordQuery;
+  /** 游标，null 表示拉第一页 */
+  cursor: string | null;
+  /** 会员快照：用于回填流水行的头像与可用积分 */
+  users: MemberPointsPageUser[];
+  /** 取消信号：换条件 / 卸载时作废在途请求，避免旧响应回写与带宽浪费 */
+  signal?: AbortSignal;
+}

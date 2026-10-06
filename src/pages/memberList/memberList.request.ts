@@ -1,5 +1,4 @@
 // 会员模块读请求：列表、详情、积分页与纯利豆页的原始请求与响应解包。
-import { STORAGE_KEYS } from '@constants/storageKeys';
 import { http } from '@utils/http';
 import { safeNum } from '@utils/utils';
 import {
@@ -16,11 +15,36 @@ import {
   POINTS_RECORD_SOURCE_CANDIDATES,
 } from './memberList.ledger.mapper';
 import { buildMemberListStats, mapMemberDetail, mapMemberListItem } from './memberList.member.mapper';
-import { getNestedArray, getNestedRecord, isFiniteNumber, isPlainObject, pickNumberField } from './memberList.normalize';
+import {
+  getNestedArray,
+  getNestedRecord,
+  isFiniteNumber,
+  isPlainObject,
+  pickNumberField,
+  pickStringField,
+} from './memberList.normalize';
+import {
+  PARTNER_BEANS_EMPTY_STATS,
+  PARTNER_BEANS_PAGE_SIZE,
+} from '../partnerBeans/partnerBeans.constants';
+import type {
+  PartnerBeansRecordPage,
+  PartnerBeansRecordRequestParams,
+} from '../partnerBeans/partnerBeans.types';
 import type { MemberDetail, MemberListPageResult, MemberListQuery } from './memberList.types';
 import { isServerMemberDetailLike, isServerMembersResponseLike } from './memberList.dto';
-import type { MemberPointsPageUser, MemberPointsRecord, MemberPointsStats } from '../memberPoints/memberPoints.types';
-import type { BeanRecord, PartnerBeansStats, UserSnapshot } from '../partnerBeans/partnerBeans.shared.types';
+import {
+  MEMBER_POINTS_EMPTY_STATS,
+  MEMBER_POINTS_PAGE_SIZE,
+  MEMBER_POINTS_USERS_PAGE_SIZE,
+} from '../memberPoints/memberPoints.constants';
+import type {
+  MemberPointsPageUser,
+  MemberPointsRecordPage,
+  MemberPointsRecordRequestParams,
+  MemberPointsStats,
+} from '../memberPoints/memberPoints.types';
+import type { PartnerBeansStats, UserSnapshot } from '../partnerBeans/partnerBeans.shared.types';
 
 const MEMBER_LIST_SOURCE_CANDIDATES = ['list', 'items', 'records', 'rows', 'members', 'data'] as const;
 const MEMBER_DETAIL_SOURCE_CANDIDATES = ['member', 'detail', 'profile', 'info', 'data'] as const;
@@ -69,46 +93,6 @@ const resolveMemberListTotal = (payload: unknown, loadedCount: number): number =
   }
 
   return loadedCount;
-};
-
-/** 读取积分页本地缓存：接口异常时用于恢复上一次成功数据。 */
-const readCachedPointsPageData = (): { records: MemberPointsRecord[]; users: MemberPointsPageUser[]; stats: MemberPointsStats } | null => {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-
-  try {
-    const rawValue = localStorage.getItem(STORAGE_KEYS.MEMBER_POINTS_PAGE_DATA);
-    if (!rawValue) {
-      return null;
-    }
-
-    const parsedValue = JSON.parse(rawValue);
-    if (!isPlainObject(parsedValue) || !Array.isArray(parsedValue.records)) {
-      return null;
-    }
-
-    return {
-      records: parsedValue.records,
-      users: Array.isArray(parsedValue.users) ? parsedValue.users : [],
-      stats: isPlainObject(parsedValue.stats) ? parsedValue.stats as unknown as MemberPointsStats : { totalRecords: 0, adminAdjustCount: 0, todayChangeCount: 0 },
-    };
-  } catch {
-    return null;
-  }
-};
-
-/** 写入积分页本地缓存。 */
-const persistPointsPageData = (data: { records: MemberPointsRecord[]; users: MemberPointsPageUser[]; stats: MemberPointsStats }): void => {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  try {
-    localStorage.setItem(STORAGE_KEYS.MEMBER_POINTS_PAGE_DATA, JSON.stringify(data));
-  } catch {
-    // localStorage 写入失败（如空间不足）时静默忽略
-  }
 };
 
 /** 会员列表单页请求：筛选与分页全部由后端权威处理。 */
@@ -170,111 +154,161 @@ export const requestMemberDetail = async (id: string): Promise<MemberDetail | nu
   return mapMemberDetail(memberDetailSource);
 };
 
-/** 积分页主数据：流水与会员快照并行拉取，任一成功即视为可用。 */
-export const requestMemberPointsPageData = async (): Promise<{
-  records: MemberPointsRecord[];
-  users: MemberPointsPageUser[];
-  stats: MemberPointsStats;
-}> => {
-  const [recordsResponse, usersResponse] = await Promise.all([
-    http.get<unknown>(MEMBER_POINTS_API_PATH, {
-      skipGlobalErrorHandler: true,
-      errorMessage: '获取积分记录失败',
-    }).catch((error: unknown) => {
-      console.warn('[memberPoints] 积分记录接口请求失败:', error);
-      return null;
-    }),
-    http.get<unknown>(MEMBER_LIST_API_PATH, {
-      skipGlobalErrorHandler: true,
-      errorMessage: '获取会员列表失败',
-    }).catch((error: unknown) => {
-      console.warn('[memberPoints] 会员列表接口请求失败:', error);
-      return null;
-    }),
-  ]);
-
-  // 两个接口均失败时，抛出错误让 hook 层展示错误状态
-  if (recordsResponse === null && usersResponse === null) {
-    throw new Error('获取积分数据失败，请检查网络后重试');
-  }
-
-  const users: MemberPointsPageUser[] = resolveMemberListSource(usersResponse).map((item, index) => mapUserSnapshot(item, index));
-  const userLookup = new Map<string, MemberPointsPageUser>(users.map((user) => [user.id, user]));
-  const records = getNestedArray(recordsResponse, POINTS_RECORD_SOURCE_CANDIDATES)
-    .map((item, index) => mapPointsRecord(item, index, userLookup))
-    .sort((left, right) => right.createdAt - left.createdAt);
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const result = {
-    records,
-    users,
-    stats: {
-      totalRecords: records.length,
-      adminAdjustCount: records.filter((record) => record.source === 'admin_adjust').length,
-      todayChangeCount: records.filter((record) => record.createdAt >= today.getTime()).length,
+/**
+ * 会员积分流水单页（游标分页）。
+ *
+ * Tab 与关键词下推后端：分页后前端只有一页数据，本地过滤只会过滤到已加载的页。
+ * 流水行不带「变动后积分」，可用积分统一用会员快照回填。
+ */
+export const requestMemberPointsRecords = async (
+  params: MemberPointsRecordRequestParams,
+): Promise<MemberPointsRecordPage> => {
+  const response = await http.get<unknown>(MEMBER_POINTS_API_PATH, {
+    params: {
+      pointsTab: params.query.tab === 'all' ? undefined : params.query.tab,
+      keyword: params.query.keyword.trim() || undefined,
+      cursor: params.cursor ?? undefined,
+      limit: MEMBER_POINTS_PAGE_SIZE,
     },
-  };
+    signal: params.signal,
+    skipGlobalErrorHandler: true,
+    errorMessage: '获取积分记录失败',
+  });
 
-  // 成功获取数据后缓存到 localStorage
-  if (records.length > 0 || users.length > 0) {
-    persistPointsPageData(result);
-  }
-
-  // 如果后端返回空数据，尝试从缓存中恢复
-  if (records.length === 0 && users.length === 0) {
-    const cachedData = readCachedPointsPageData();
-    if (cachedData && (cachedData.records.length > 0 || cachedData.users.length > 0)) {
-      // 后端返回空数据，从缓存恢复
-      return cachedData;
-    }
-  }
-
-  return result;
-};
-
-/** 纯利豆页主数据：豆流水与合伙人快照并行拉取。 */
-export const requestPartnerBeansPageData = async (): Promise<{
-  records: BeanRecord[];
-  users: UserSnapshot[];
-  stats: PartnerBeansStats;
-}> => {
-  const [recordsResponse, usersResponse] = await Promise.all([
-    http.get<unknown>(PARTNER_BEANS_API_PATH, {
-      skipGlobalErrorHandler: true,
-      errorMessage: '获取纯利豆记录失败',
-    }).catch((error: unknown) => {
-      console.warn('[partnerBeans] 纯利豆记录接口请求失败:', error);
-      return null;
-    }),
-    http.get<unknown>(MEMBER_LIST_API_PATH, {
-      params: { partner: true },
-      skipGlobalErrorHandler: true,
-      errorMessage: '获取合伙人列表失败',
-    }).catch((error: unknown) => {
-      console.warn('[partnerBeans] 合伙人列表接口请求失败:', error);
-      return null;
-    }),
-  ]);
-
-  const rawUsers = getNestedArray(usersResponse, PARTNER_USERS_SOURCE_CANDIDATES);
-  const users = rawUsers
-    .map((item, index) => mapUserSnapshot(item, index))
-    .filter((user) => user.isPartner || user.beanBalance > 0);
-  const userLookup = new Map<string, UserSnapshot>(users.map((user) => [user.id, user]));
-  const records = getNestedArray(recordsResponse, POINTS_RECORD_SOURCE_CANDIDATES)
-    .map((item, index) => mapBeanRecord(item, index, userLookup))
-    .sort((left, right) => right.createdAt - left.createdAt);
+  const userLookup = new Map<string, MemberPointsPageUser>(params.users.map((user) => [user.id, user]));
+  const records = getNestedArray(response, POINTS_RECORD_SOURCE_CANDIDATES)
+    .map((item, index) => mapPointsRecord(item, index, userLookup));
+  const nextCursor = pickStringField(response, LOG_CURSOR_CANDIDATES) || null;
+  // 游标分页只能靠 cursor 往下翻：没有游标就没有下一页，
+  // 否则底部会留一个点了没反应的「加载更多」；后端明确给出 hasMore:false 时同样尊重
+  const hasMore = Boolean(nextCursor)
+    && pickOptionalBoolean(response, LOG_HAS_MORE_CANDIDATES) !== false;
 
   return {
     records,
-    users,
-    stats: {
-      totalRecords: records.length,
-      adminAdjustCount: records.filter((record) => record.source === 'admin_adjust').length,
-      withdrawCount: records.filter((record) => record.source === 'withdrawal').length,
-      promoRewardCount: records.filter((record) => record.source === 'promo_reward').length,
+    stats: resolveMemberPointsStats(response),
+    hasMore,
+    nextCursor,
+  };
+};
+
+/**
+ * 会员快照（选人弹层的用户源、流水行的头像与余额来源）：与流水分页无关，单独一次性拉取。
+ *
+ * 会员列表接口默认只给 20 条（服务端切片），这里显式取满单页上限：
+ * 快照少一条，对应流水行就会「余额 0」且调整积分时选不到人。
+ */
+export const requestMemberPointsUsers = async (signal?: AbortSignal): Promise<MemberPointsPageUser[]> => {
+  const response = await http.get<unknown>(MEMBER_LIST_API_PATH, {
+    params: { page: 1, pageSize: MEMBER_POINTS_USERS_PAGE_SIZE },
+    signal,
+    skipGlobalErrorHandler: true,
+    errorMessage: '获取会员列表失败',
+  });
+
+  return resolveMemberListSource(response).map((item, index) => mapUserSnapshot(item, index));
+};
+
+const LOG_CURSOR_CANDIDATES = ['nextCursor', 'cursor'] as const;
+const LOG_HAS_MORE_CANDIDATES = ['hasMore', 'hasNext'] as const;
+const LOG_STATS_CANDIDATES = ['stats', 'summary', 'overview'] as const;
+
+/** 读取可选布尔字段：缺失时返回 undefined，由调用方决定兜底口径。 */
+const pickOptionalBoolean = (value: unknown, keys: readonly string[]): boolean | undefined => {
+  if (!isPlainObject(value)) {
+    return undefined;
+  }
+
+  for (const key of keys) {
+    if (typeof value[key] === 'boolean') {
+      return value[key];
+    }
+  }
+
+  return undefined;
+};
+
+/**
+ * 解析后端返回的流水统计。
+ *
+ * 统计由后端按「当前筛选 + 完整结果集」计数，前端不再对已加载页二次统计 ——
+ * 分页后前端只有一页数据，本地 count 会让概览卡数字随加载量变化。
+ */
+const resolveMemberPointsStats = (response: unknown): MemberPointsStats => {
+  const rawStats = getNestedRecord(response, LOG_STATS_CANDIDATES);
+  if (!rawStats) {
+    return MEMBER_POINTS_EMPTY_STATS;
+  }
+
+  return {
+    totalRecords: pickNumberField(rawStats, ['totalRecords', 'total']),
+    adminAdjustCount: pickNumberField(rawStats, ['adminAdjustCount']),
+    todayChangeCount: pickNumberField(rawStats, ['todayChangeCount']),
+  };
+};
+
+const resolvePartnerBeanStats = (response: unknown): PartnerBeansStats => {
+  const rawStats = getNestedRecord(response, LOG_STATS_CANDIDATES);
+  if (!rawStats) {
+    return PARTNER_BEANS_EMPTY_STATS;
+  }
+
+  return {
+    totalRecords: pickNumberField(rawStats, ['totalRecords', 'total']),
+    adminAdjustCount: pickNumberField(rawStats, ['adminAdjustCount']),
+    withdrawCount: pickNumberField(rawStats, ['withdrawCount']),
+    promoRewardCount: pickNumberField(rawStats, ['promoRewardCount']),
+  };
+};
+
+/** 合伙人快照（余额一览与调整弹层的用户源）：与流水分页无关，单独全量拉取。 */
+export const requestPartnerBeanUsers = async (signal?: AbortSignal): Promise<UserSnapshot[]> => {
+  const response = await http.get<unknown>(MEMBER_LIST_API_PATH, {
+    params: { partner: true },
+    signal,
+    skipGlobalErrorHandler: true,
+    errorMessage: '获取合伙人列表失败',
+  });
+
+  return getNestedArray(response, PARTNER_USERS_SOURCE_CANDIDATES)
+    .map((item, index) => mapUserSnapshot(item, index))
+    .filter((user) => user.isPartner || user.beanBalance > 0);
+};
+
+/**
+ * 纯利豆流水单页（游标分页）。
+ *
+ * Tab 与关键词下推后端：分页后前端只有一页数据，本地过滤只会过滤到已加载的页。
+ * 流水行没有余额字段，余额与头像统一用合伙人快照回填。
+ */
+export const requestPartnerBeanRecords = async (
+  params: PartnerBeansRecordRequestParams,
+): Promise<PartnerBeansRecordPage> => {
+  const response = await http.get<unknown>(PARTNER_BEANS_API_PATH, {
+    params: {
+      beanTab: params.query.tab === 'all' ? undefined : params.query.tab,
+      keyword: params.query.keyword.trim() || undefined,
+      cursor: params.cursor ?? undefined,
+      limit: PARTNER_BEANS_PAGE_SIZE,
     },
+    signal: params.signal,
+    skipGlobalErrorHandler: true,
+    errorMessage: '获取纯利豆记录失败',
+  });
+
+  const userLookup = new Map<string, UserSnapshot>(params.users.map((user) => [user.id, user]));
+  const records = getNestedArray(response, POINTS_RECORD_SOURCE_CANDIDATES)
+    .map((item, index) => mapBeanRecord(item, index, userLookup));
+  const nextCursor = pickStringField(response, LOG_CURSOR_CANDIDATES) || null;
+  // 游标分页只能靠 cursor 往下翻：没有游标就没有下一页，
+  // 否则底部会留一个点了没反应的「加载更多」；后端明确给出 hasMore:false 时同样尊重
+  const hasMore = Boolean(nextCursor)
+    && pickOptionalBoolean(response, LOG_HAS_MORE_CANDIDATES) !== false;
+
+  return {
+    records,
+    stats: resolvePartnerBeanStats(response),
+    hasMore,
+    nextCursor,
   };
 };

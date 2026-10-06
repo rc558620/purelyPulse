@@ -17,6 +17,9 @@ export const NEW_CUSTOMER_QUOTA_FILTER_TABS: NewCustomerQuotaTabOption[] = [
 
 export const NEW_CUSTOMER_QUOTA_DEFAULT_FILTER_TAB: NewCustomerQuotaFilterTab = 'all';
 
+/** 门店额度列表单页条数 */
+export const NEW_CUSTOMER_QUOTA_PAGE_SIZE = 20;
+
 /** 额度健康度 → 展示文案 */
 export const NEW_CUSTOMER_QUOTA_HEALTH_LABELS: Record<NewCustomerQuotaHealth, string> = {
   none: '未发放',

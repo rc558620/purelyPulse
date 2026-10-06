@@ -1,33 +1,56 @@
-// partnerBeans 页面状态与交互管理 hook
-import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+// partnerBeans 页面状态与交互管理 hook：筛选条件编排 + 调整提交流程，分页数据交给 usePartnerBeanRecords。
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { showToast } from '@components/ui/feedback/Toast';
-import { fallbackKey, safeNum } from '@utils/utils';
+import { safeNum } from '@utils/utils';
+import { submitMemberBeansAdjustment } from '../memberList/memberList.service';
 import {
-  fetchPartnerBeansPageData,
-  submitMemberBeansAdjustment,
-} from '../memberList/memberList.service';
-import { PARTNER_BEANS_DEFAULT_FILTER_TAB, PARTNER_BEANS_EMPTY_STATS } from './partnerBeans.constants';
+  PARTNER_BEANS_DEFAULT_FILTER_TAB,
+  PARTNER_BEANS_SEARCH_DEBOUNCE_MS,
+} from './partnerBeans.constants';
 import type {
   PartnerBeansFilterTab,
-  PartnerBeansPageRecord,
-  PartnerBeansPageStats,
   PartnerBeansPageUser,
+  PartnerBeansRecordQuery,
 } from './partnerBeans.types';
+import { usePartnerBeanRecords } from './usePartnerBeanRecords';
 
 interface UsePartnerBeansPageReturn {
-  records: PartnerBeansPageRecord[];
+  /** 当前已加载的流水（分页累积） */
+  records: ReturnType<typeof usePartnerBeanRecords>['records'];
+  /** 合伙人快照 */
   users: PartnerBeansPageUser[];
-  filteredRecords: PartnerBeansPageRecord[];
+  /** 弹层内按关键词过滤后的合伙人 */
   pickerUsers: PartnerBeansPageUser[];
+  /** 当前筛选 Tab（输入态） */
   activeTab: PartnerBeansFilterTab;
+  /** 搜索输入值（输入态） */
   searchQuery: string;
+  /** 弹层搜索输入值 */
   pickerSearchQuery: string;
+  /** 当前调整目标 */
   adjustTarget: PartnerBeansPageUser | null;
+  /** 是否展示选人弹层 */
   showUserPicker: boolean;
-  isLoading: boolean;
+  /** 首屏加载中 */
+  isInitialLoading: boolean;
+  /** 合伙人快照加载中 */
+  isUsersLoading: boolean;
+  /** 合伙人快照是否可用（不可用时不展示流水余额） */
+  isUsersLoaded: boolean;
+  /** 下拉刷新中 */
+  isRefreshing: boolean;
+  /** 加载更多中 */
+  isLoadingMore: boolean;
+  /** 是否还有下一页 */
+  hasMore: boolean;
+  /** 提交调整中 */
   isSubmitting: boolean;
+  /** 流水请求错误文案 */
   errorMessage: string;
-  stats: PartnerBeansPageStats;
+  /** 后端统计（按当前筛选的完整结果集计算） */
+  stats: ReturnType<typeof usePartnerBeanRecords>['stats'];
+  /** 换筛选条件时回顶的信号：值变化即触发容器回到顶部 */
+  scrollToTopTrigger: string;
   setActiveTab: (tab: PartnerBeansFilterTab) => void;
   setSearchQuery: (value: string) => void;
   setPickerSearchQuery: (value: string) => void;
@@ -36,123 +59,72 @@ interface UsePartnerBeansPageReturn {
   handleOpenAdjust: (user: PartnerBeansPageUser) => void;
   handleCloseAdjust: () => void;
   handleConfirmAdjust: (userId: string, delta: number, reason: string) => Promise<void>;
+  /** 下拉刷新：重拉第一页（供 PullRefreshLoadMore 等待完成） */
+  refreshRecords: () => Promise<void>;
+  /** 上拉加载更多：追加下一页（失败时抛错，由容器呈现失败态） */
+  loadMoreRecords: () => Promise<void>;
+  /** 重试当前筛选 */
   retryLoad: () => void;
 }
 
-interface IndexedPartnerBeansRecord {
-  record: PartnerBeansPageRecord;
-  searchText: string;
-}
-
-interface IndexedPartnerBeansUser {
-  user: PartnerBeansPageUser;
-  searchText: string;
-}
-
-const buildPartnerBeansStats = (records: PartnerBeansPageRecord[]): PartnerBeansPageStats => ({
-  totalRecords: records.length,
-  adminAdjustCount: records.filter((record) => record.source === 'admin_adjust').length,
-  withdrawCount: records.filter((record) => record.source === 'withdrawal').length,
-  promoRewardCount: records.filter((record) => record.source === 'promo_reward').length,
+/** 默认查询条件：全部 Tab + 空关键词。 */
+const createDefaultRecordQuery = (): PartnerBeansRecordQuery => ({
+  tab: PARTNER_BEANS_DEFAULT_FILTER_TAB,
+  keyword: '',
 });
-
-const buildRecordSearchText = (record: PartnerBeansPageRecord): string => `${record.userName} ${record.userPhone} ${record.description}`.toLowerCase();
 
 const buildUserSearchText = (user: PartnerBeansPageUser): string => `${user.name} ${user.phone}`.toLowerCase();
 
 export const usePartnerBeansPage = (): UsePartnerBeansPageReturn => {
-  const [records, setRecords] = useState<PartnerBeansPageRecord[]>([]);
-  const [users, setUsers] = useState<PartnerBeansPageUser[]>([]);
   const [activeTab, setActiveTab] = useState<PartnerBeansFilterTab>(PARTNER_BEANS_DEFAULT_FILTER_TAB);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [pickerSearchQuery, setPickerSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [appliedQuery, setAppliedQuery] = useState<PartnerBeansRecordQuery>(createDefaultRecordQuery);
+  const [pickerSearchQuery, setPickerSearchQuery] = useState<string>('');
   const [adjustTarget, setAdjustTarget] = useState<PartnerBeansPageUser | null>(null);
-  const [showUserPicker, setShowUserPicker] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [stats, setStats] = useState<PartnerBeansPageStats>(PARTNER_BEANS_EMPTY_STATS);
+  const [showUserPicker, setShowUserPicker] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const requestIdRef = useRef(0);
-  const deferredSearchQuery = useDeferredValue(searchQuery);
-  const deferredPickerSearchQuery = useDeferredValue(pickerSearchQuery);
+  const {
+    records,
+    users,
+    stats,
+    hasMore,
+    isInitialLoading,
+    isUsersLoading,
+    isUsersLoaded,
+    isRefreshing,
+    isLoadingMore,
+    errorMessage,
+    refreshRecords,
+    loadMoreRecords,
+    retryLoad,
+  } = usePartnerBeanRecords(appliedQuery);
 
-  const indexedRecords = useMemo<IndexedPartnerBeansRecord[]>(() => records.map((record) => ({
-    record,
-    searchText: buildRecordSearchText(record),
-  })), [records]);
-
-  const indexedUsers = useMemo<IndexedPartnerBeansUser[]>(() => users.map((user) => ({
-    user,
-    searchText: buildUserSearchText(user),
-  })), [users]);
-
-  const loadPageData = useCallback(async (): Promise<void> => {
-    requestIdRef.current += 1;
-    const currentRequestId = requestIdRef.current;
-    setIsLoading(true);
-
-    try {
-      const response = await fetchPartnerBeansPageData();
-      if (currentRequestId !== requestIdRef.current) {
-        return;
-      }
-
-      setRecords(response.records);
-      setUsers(response.users);
-      setStats(response.stats);
-      setErrorMessage('');
-    } catch (error) {
-      if (currentRequestId !== requestIdRef.current) {
-        return;
-      }
-
-      setRecords([]);
-      setUsers([]);
-      setStats(PARTNER_BEANS_EMPTY_STATS);
-      setErrorMessage(error instanceof Error ? error.message : '获取纯利豆数据失败');
-    } finally {
-      if (currentRequestId === requestIdRef.current) {
-        setIsLoading(false);
-      }
-    }
-  }, []);
-
+  // 搜索词带防抖：连续输入只打最后一次请求；Tab 切换立即生效
   useEffect(() => {
-    void loadPageData();
-  }, [loadPageData]);
+    const nextKeyword = searchQuery.trim();
+    const timeoutId = window.setTimeout(() => {
+      // 条件没变就返回原对象：保持引用稳定，避免「同一条件」重复触发一次首屏请求
+      setAppliedQuery((prevQuery) => (
+        prevQuery.tab === activeTab && prevQuery.keyword === nextKeyword
+          ? prevQuery
+          : { tab: activeTab, keyword: nextKeyword }
+      ));
+    }, nextKeyword ? PARTNER_BEANS_SEARCH_DEBOUNCE_MS : 0);
 
-  const filteredRecords = useMemo(() => {
-    let nextRecords = indexedRecords;
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [activeTab, searchQuery]);
 
-    if (activeTab === 'admin') {
-      nextRecords = nextRecords.filter(({ record }) => record.source === 'admin_adjust');
-    } else if (activeTab === 'earn') {
-      // "获得"tab：只显示业务性获得（推广奖励等），排除管理员调整
-      nextRecords = nextRecords.filter(({ record }) => record.type === 'earn' && record.source !== 'admin_adjust');
-    } else if (activeTab === 'spend') {
-      // "消耗/提现"tab：合并展示 spend（抵扣消费）和 withdraw（提现），排除管理员调整
-      nextRecords = nextRecords.filter(({ record }) => record.type !== 'earn' && record.source !== 'admin_adjust');
-    }
-
-    const normalizedQuery = deferredSearchQuery.trim().toLowerCase();
-    if (normalizedQuery) {
-      nextRecords = nextRecords.filter(({ searchText }) => searchText.includes(normalizedQuery));
-    }
-
-    return nextRecords.map(({ record }) => record);
-  }, [activeTab, deferredSearchQuery, indexedRecords]);
-
-  const pickerUsers = useMemo(() => {
-    const normalizedQuery = deferredPickerSearchQuery.trim().toLowerCase();
+  const pickerUsers = useMemo((): PartnerBeansPageUser[] => {
+    const normalizedQuery = pickerSearchQuery.trim().toLowerCase();
     if (!normalizedQuery) {
       return users;
     }
 
-    return indexedUsers
-      .filter(({ searchText }) => searchText.includes(normalizedQuery))
-      .map(({ user }) => user);
-  }, [deferredPickerSearchQuery, indexedUsers, users]);
+    return users.filter((user) => buildUserSearchText(user).includes(normalizedQuery));
+  }, [pickerSearchQuery, users]);
 
   const openUserPicker = useCallback((): void => {
     if (isSubmitting) {
@@ -197,48 +169,21 @@ export const usePartnerBeansPage = (): UsePartnerBeansPageReturn => {
       return;
     }
 
+    // 调整量来自弹层输入：提交前归一，脏值（NaN / 空串解析失败）不能进写接口
+    const normalizedDelta = safeNum(delta);
     setIsSubmitting(true);
 
     try {
-      await submitMemberBeansAdjustment(userId, delta, reason);
-
-      // 提交成功后重新从后端拉取最新数据，确保数据一致性
-      try {
-        const response = await fetchPartnerBeansPageData();
-        setRecords(response.records);
-        setUsers(response.users);
-        setStats(response.stats);
-      } catch {
-        // 后端刷新失败时退回乐观更新
-        const newRecord: PartnerBeansPageRecord = {
-          id: fallbackKey('partner-bean-record'),
-          userId,
-          userName: targetUser.name,
-          userPhone: targetUser.phone,
-          avatarUrl: targetUser.avatarUrl,
-          beanBalance: safeNum(targetUser.beanBalance + delta),
-          amount: delta,
-          type: delta > 0 ? 'earn' : 'spend',
-          source: 'admin_adjust',
-          description: reason,
-          createdAt: Date.now(),
-        };
-
-        setRecords((prevRecords) => {
-          const nextRecords = [newRecord, ...prevRecords];
-          setStats(buildPartnerBeansStats(nextRecords));
-          return nextRecords;
-        });
-
-        setUsers((prevUsers) => prevUsers.map((user) => (
-          user.id === userId
-            ? { ...user, beanBalance: safeNum(user.beanBalance + delta) }
-            : user
-        )));
-      }
-
+      await submitMemberBeansAdjustment(userId, normalizedDelta, reason);
       setAdjustTarget(null);
-      showToast({ type: 'success', message: delta >= 0 ? '纯利豆调整成功' : '纯利豆扣减成功' });
+      showToast({ type: 'success', message: normalizedDelta >= 0 ? '纯利豆调整成功' : '纯利豆扣减成功' });
+
+      // 提交成功后重拉第一页：余额与统计的权威口径都在后端，前端不再乐观拼接记录
+      try {
+        await refreshRecords();
+      } catch {
+        showToast({ type: 'error', message: '调整已生效，列表刷新失败，请下拉重试' });
+      }
     } catch (error) {
       showToast({
         type: 'error',
@@ -248,26 +193,27 @@ export const usePartnerBeansPage = (): UsePartnerBeansPageReturn => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [isSubmitting, users]);
-
-  const retryLoad = useCallback((): void => {
-    void loadPageData();
-  }, [loadPageData]);
+  }, [isSubmitting, refreshRecords, users]);
 
   return {
     records,
     users,
-    filteredRecords,
     pickerUsers,
     activeTab,
     searchQuery,
     pickerSearchQuery,
     adjustTarget,
     showUserPicker,
-    isLoading,
+    isInitialLoading,
+    isUsersLoading,
+    isUsersLoaded,
+    isRefreshing,
+    isLoadingMore,
+    hasMore,
     isSubmitting,
     errorMessage,
     stats,
+    scrollToTopTrigger: `${appliedQuery.tab}__${appliedQuery.keyword}`,
     setActiveTab,
     setSearchQuery,
     setPickerSearchQuery,
@@ -276,6 +222,8 @@ export const usePartnerBeansPage = (): UsePartnerBeansPageReturn => {
     handleOpenAdjust,
     handleCloseAdjust,
     handleConfirmAdjust,
+    refreshRecords,
+    loadMoreRecords,
     retryLoad,
   };
 };

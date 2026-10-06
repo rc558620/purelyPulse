@@ -5,7 +5,13 @@
 // 因此这里调整成功后，商家端额度页与 purelyClub 的新客下单闸门会立即按新额度生效。
 import { createKeyedInFlightRequest, http, resolveEnvPath } from '@utils/http';
 import { safeNum, safeStr } from '@utils/utils';
-import type { NewCustomerQuotaStore } from './newCustomerQuota.types';
+import { NEW_CUSTOMER_QUOTA_PAGE_SIZE } from './newCustomerQuota.constants';
+import type {
+  NewCustomerQuotaListPageResult,
+  NewCustomerQuotaListQuery,
+  NewCustomerQuotaStore,
+  NewCustomerQuotaStats,
+} from './newCustomerQuota.types';
 
 const QUOTA_STORES_API_PATH = resolveEnvPath(
   import.meta.env.VITE_NEW_CUSTOMER_QUOTA_STORES_API_PATH,
@@ -31,8 +37,20 @@ interface QuotaStoreResponseDTO {
   updatedAt?: number | null;
 }
 
+interface QuotaStoresStatsResponseDTO {
+  storeCount?: number | null;
+  totalRemaining?: number | null;
+  warningCount?: number | null;
+  exhaustedCount?: number | null;
+}
+
 interface QuotaStoresResponseDTO {
   items?: QuotaStoreResponseDTO[] | null;
+  total?: number | null;
+  page?: number | null;
+  pageSize?: number | null;
+  hasMore?: boolean | null;
+  stats?: QuotaStoresStatsResponseDTO | null;
 }
 
 // ─── DTO → 领域模型 ─────────────────────────────────────────────────
@@ -73,19 +91,50 @@ export const resolveQuotaAdjustPath = (storeId: string): string => {
 
 // ─── 接口方法 ────────────────────────────────────────────────────────
 
-const requestQuotaStores = async (): Promise<NewCustomerQuotaStore[]> => {
+/** 统计概览 DTO → 领域模型（数值全部 safeNum 兜底） */
+const mapQuotaStats = (response: QuotaStoresStatsResponseDTO | null | undefined): NewCustomerQuotaStats => ({
+  storeCount: safeNum(response?.storeCount, 0),
+  totalRemaining: safeNum(response?.totalRemaining, 0),
+  warningCount: safeNum(response?.warningCount, 0),
+  exhaustedCount: safeNum(response?.exhaustedCount, 0),
+});
+
+/** 门店额度列表单页请求：搜索 / 健康度筛选 / 分页全部由后端权威处理 */
+const requestQuotaStores = async (
+  query: NewCustomerQuotaListQuery,
+  page: number,
+): Promise<NewCustomerQuotaListPageResult> => {
   const response = await http.get<QuotaStoresResponseDTO>(QUOTA_STORES_API_PATH, {
+    params: {
+      keyword: query.keyword || undefined,
+      health: query.health ?? undefined,
+      page,
+      pageSize: NEW_CUSTOMER_QUOTA_PAGE_SIZE,
+    },
     skipGlobalErrorHandler: true,
     errorMessage: '获取门店新客额度失败，请稍后重试',
   });
   const rawItems = Array.isArray(response?.items) ? response.items : [];
-  return rawItems.map(mapQuotaStore);
+
+  return {
+    stores: rawItems.map(mapQuotaStore),
+    stats: mapQuotaStats(response?.stats),
+    // 命中当前筛选条件的总数（含 health），列表头「N 家」的事实源；
+    // 后端在无可访问门店等分支下可能不回传，退回已加载条数而不是 0
+    total: safeNum(response?.total, rawItems.length),
+    hasMore: response?.hasMore === true,
+  };
 };
 
-/** 拉取门店新客额度列表（并发去重） */
+/**
+ * 拉取门店新客额度列表单页数据，并按「查询条件 + 页码」对并发请求做去重。
+ *
+ * 搜索 / 筛选 / 分页均由后端处理，前端不再做客户端过滤。
+ */
 export const fetchNewCustomerQuotaStores = createKeyedInFlightRequest(
-  () => 'new-customer-quota-stores',
-  async (): Promise<NewCustomerQuotaStore[]> => requestQuotaStores(),
+  (query: NewCustomerQuotaListQuery, page: number) => JSON.stringify({ query, page }),
+  async (query: NewCustomerQuotaListQuery, page: number): Promise<NewCustomerQuotaListPageResult> =>
+    requestQuotaStores(query, safeNum(page, 1)),
 );
 
 /**

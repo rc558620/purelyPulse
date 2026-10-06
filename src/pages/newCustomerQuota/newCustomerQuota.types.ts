@@ -8,6 +8,9 @@ type SafeNumber = ReturnType<typeof safeNum>;
 /** 门店列表筛选 Tab */
 export type NewCustomerQuotaFilterTab = 'all' | 'warning' | 'exhausted';
 
+/** 健康度筛选值（对应后端 health 查询参数，all 不传参） */
+export type NewCustomerQuotaHealthFilter = Exclude<NewCustomerQuotaFilterTab, 'all'>;
+
 /** 额度调整方向：add=发放，subtract=回收 */
 export type NewCustomerQuotaAdjustDir = 'add' | 'subtract';
 
@@ -58,7 +61,13 @@ export interface NewCustomerQuotaStore {
   updatedAt: SafeNumber;
 }
 
-/** 新客额度页面概览统计（由门店列表在前端聚合） */
+/**
+ * 新客额度页面概览统计。
+ *
+ * ⚠️ 后端刻意只吃 keyword 过滤、**不吃 health 筛选**：顶部「门店数 / 额度合计」是
+ * 概览指标，若跟随「已耗尽」Tab 会恒为 0 而失去意义。
+ * 因此它不等于列表条数——列表头要用 `NewCustomerQuotaListPageResult.total`。
+ */
 export interface NewCustomerQuotaStats {
   /** 门店总数 */
   storeCount: SafeNumber;
@@ -68,4 +77,28 @@ export interface NewCustomerQuotaStats {
   warningCount: SafeNumber;
   /** 额度已耗尽门店数 */
   exhaustedCount: SafeNumber;
+}
+
+/** 门店额度列表查询条件（keyword + 健康度，均由后端权威过滤） */
+export interface NewCustomerQuotaListQuery {
+  /** 搜索关键词：主账号昵称 / 手机号 / 门店名 */
+  keyword: string;
+  /** 健康度筛选，null 表示全部门店 */
+  health: NewCustomerQuotaHealthFilter | null;
+}
+
+/** 门店额度列表单页结果 */
+export interface NewCustomerQuotaListPageResult {
+  /** 当前页门店列表 */
+  stores: NewCustomerQuotaStore[];
+  /** 后端统计概览（只吃 keyword，不随健康度 Tab 变化） */
+  stats: NewCustomerQuotaStats;
+  /**
+   * 当前筛选条件（keyword + health）命中的门店总数，与分页无关。
+   * 列表头的「N 家」必须用这个值：用 stats.storeCount 会在切到「预警 / 已耗尽」
+   * Tab 时显示全量门店数，与列表实际条数对不上。
+   */
+  total: SafeNumber;
+  /** 是否还有下一页 */
+  hasMore: boolean;
 }

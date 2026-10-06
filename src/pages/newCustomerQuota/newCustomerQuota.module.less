@@ -2,18 +2,19 @@
 @import (reference) '@styles/mixins.less';
 @import (reference) '@styles/breakpoints.less';
 
+// 页面容器：滚动交给 PullRefreshLoadMore 自己的滚动视口（它按容器高度计算下拉距离），
+// 所以页面容器只负责「占满高度 + 不抢滚动」，不能再写 overflow-y: auto。
 .pageContainer {
   position: relative;
   width: 100%;
-  height: 100%;
+  height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   background-color: @bg-light;
   color: @text-main;
   font-family: 'Inter', 'Noto Sans SC', sans-serif;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden;
 }
 
 .adjustEntryBtn {
@@ -45,14 +46,16 @@
   }
 }
 
+// 内容总装层：宽度约束必须在这一层（PullRefreshLoadMore 的外层），
+// 组件内部滚动区与回顶按钮都以它的宽度为定位基准。
 .contentWrapper {
   position: relative;
   z-index: 1;
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 1.6rem;
-  padding: 0 1.6rem 1.6rem;
+  overflow: hidden;
   max-width: 48rem;
   margin: 0 auto;
   width: 100%;
@@ -60,13 +63,39 @@
 
   @media (min-width: @bp-mobile) {
     max-width: 72rem;
-    padding: 0 2.4rem 2.4rem;
-    gap: 2rem;
   }
 
   @media (min-width: @bp-tablet) {
     max-width: 96rem;
+  }
+}
+
+// 统计 + 搜索 / Tab 固定区：在刷新视口之外，底部留白即视口顶部与列表卡的间距
+.listHeadShell {
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+  padding: 0 1.6rem 1.6rem;
+  flex-shrink: 0;
+
+  @media (min-width: @bp-mobile) {
+    gap: 2rem;
+    padding: 0 2.4rem 1.8rem;
+  }
+}
+
+// 列表滚动视口：占满头部固定区以下的剩余高度
+.refreshShell {
+  flex: 1;
+  min-height: 0;
+}
+
+// 视口内容层：只写 padding，不写宽度与 transform（会覆盖组件的下拉位移动画）
+.refreshContent {
+  min-height: 100%;
+  padding: 0 1.6rem 1.6rem;
+
+  @media (min-width: @bp-mobile) {
     padding: 0 2.4rem 2.4rem;
-    gap: 2.4rem;
   }
 }

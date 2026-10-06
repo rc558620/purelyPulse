@@ -54,6 +54,36 @@
   }
 }
 
+// ─── 加载 / 错误态 ────────────────────────────────────────────────────
+// 与空态同一套留白：分页后首屏与失败态都在卡片里就地呈现，不整页替换
+.stateBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: @text-sub;
+  font-size: 1.3rem;
+}
+
+.retryBtn {
+  padding: 0.7rem 1.4rem;
+  border-radius: 9999px;
+  border: 1px solid fade(@primary, 35%);
+  background: fade(@primary, 10%);
+  color: darken(@primary, 12%);
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    background: fade(@primary, 16%);
+    border-color: fade(@primary, 60%);
+  }
+}
+
 .recordList {
   display: flex;
   flex-direction: column;

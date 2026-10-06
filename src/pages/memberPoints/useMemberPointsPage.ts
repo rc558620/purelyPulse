@@ -1,32 +1,56 @@
-// memberPoints 页面状态与交互管理 hook。
-import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+// memberPoints 页面状态与交互管理 hook：筛选条件编排 + 调整提交流程，分页数据交给 useMemberPointsRecords。
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { showToast } from '@components/ui/feedback/Toast';
-import { fallbackKey, safeNum } from '@utils/utils';
+import { safeNum } from '@utils/utils';
 import {
-  fetchMemberPointsPageData,
   submitMemberPointsAdjustment,
 } from '../memberList/memberList.service';
+import {
+  MEMBER_POINTS_DEFAULT_FILTER_TAB,
+  MEMBER_POINTS_SEARCH_DEBOUNCE_MS,
+} from './memberPoints.constants';
 import type {
   MemberPointsFilterTab,
   MemberPointsPageUser,
-  MemberPointsRecord,
-  MemberPointsStats,
+  MemberPointsRecordQuery,
 } from './memberPoints.types';
+import { useMemberPointsRecords } from './useMemberPointsRecords';
 
 interface UseMemberPointsPageReturn {
-  records: MemberPointsRecord[];
+  /** 当前已加载的流水（分页累积） */
+  records: ReturnType<typeof useMemberPointsRecords>['records'];
+  /** 会员快照 */
   users: MemberPointsPageUser[];
-  filteredRecords: MemberPointsRecord[];
+  /** 弹层内按关键词过滤后的会员 */
   filteredUsers: MemberPointsPageUser[];
+  /** 当前筛选 Tab（输入态） */
   activeTab: MemberPointsFilterTab;
+  /** 搜索输入值（输入态） */
   recordSearchQuery: string;
+  /** 弹层搜索输入值 */
   pickerKeyword: string;
+  /** 当前调整目标 */
   adjustTarget: MemberPointsPageUser | null;
+  /** 是否展示选人弹层 */
   showUserPicker: boolean;
-  isLoading: boolean;
+  /** 首屏加载中 */
+  isInitialLoading: boolean;
+  /** 会员快照是否可用：不可用时流水行不展示余额 */
+  isUsersLoaded: boolean;
+  /** 下拉刷新中 */
+  isRefreshing: boolean;
+  /** 加载更多中 */
+  isLoadingMore: boolean;
+  /** 是否还有下一页 */
+  hasMore: boolean;
+  /** 提交调整中 */
   isSubmitting: boolean;
+  /** 流水请求错误文案 */
   errorMessage: string;
-  stats: MemberPointsStats;
+  /** 后端统计（按当前筛选的完整结果集计算） */
+  stats: ReturnType<typeof useMemberPointsRecords>['stats'];
+  /** 换筛选条件时回顶的信号：值变化即触发容器回到顶部 */
+  scrollToTopTrigger: string;
   setActiveTab: (tab: MemberPointsFilterTab) => void;
   setRecordSearchQuery: (value: string) => void;
   setPickerKeyword: (value: string) => void;
@@ -35,131 +59,71 @@ interface UseMemberPointsPageReturn {
   handleOpenAdjust: (user: MemberPointsPageUser) => void;
   handleCloseAdjust: () => void;
   handleConfirmAdjust: (userId: string, delta: number, reason: string) => Promise<void>;
+  /** 下拉刷新：重拉第一页（供 PullRefreshLoadMore 等待完成） */
+  refreshRecords: () => Promise<void>;
+  /** 上拉加载更多：追加下一页（失败时抛错，由容器呈现失败态） */
+  loadMoreRecords: () => Promise<void>;
+  /** 重试当前筛选 */
   retryLoad: () => void;
 }
 
-const EMPTY_STATS: MemberPointsStats = {
-  totalRecords: 0,
-  adminAdjustCount: 0,
-  todayChangeCount: 0,
-};
+/** 默认查询条件：全部 Tab + 空关键词。 */
+const createDefaultRecordQuery = (): MemberPointsRecordQuery => ({
+  tab: MEMBER_POINTS_DEFAULT_FILTER_TAB,
+  keyword: '',
+});
 
-const normalizeQuery = (value: string): string => value.trim().toLowerCase();
-
-/** 根据 records 前端推导 stats（仅用于乐观更新回退场景，service 层为主数据源） */
-const deriveStatsFromRecords = (records: MemberPointsRecord[]): MemberPointsStats => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  let adminAdjustCount = 0;
-  let todayChangeCount = 0;
-
-  for (const record of records) {
-    if (record.source === 'admin_adjust') {
-      adminAdjustCount += 1;
-    }
-
-    if (record.createdAt >= today.getTime()) {
-      todayChangeCount += 1;
-    }
-  }
-
-  return {
-    totalRecords: records.length,
-    adminAdjustCount,
-    todayChangeCount,
-  };
-};
+const buildUserSearchText = (user: MemberPointsPageUser): string => `${user.name} ${user.phone}`.toLowerCase();
 
 export const useMemberPointsPage = (): UseMemberPointsPageReturn => {
-  const [records, setRecords] = useState<MemberPointsRecord[]>([]);
-  const [users, setUsers] = useState<MemberPointsPageUser[]>([]);
-  const [activeTab, setActiveTab] = useState<MemberPointsFilterTab>('all');
-  const [recordSearchQuery, setRecordSearchQuery] = useState('');
-  const [pickerKeyword, setPickerKeyword] = useState('');
+  const [activeTab, setActiveTab] = useState<MemberPointsFilterTab>(MEMBER_POINTS_DEFAULT_FILTER_TAB);
+  const [recordSearchQuery, setRecordSearchQuery] = useState<string>('');
+  const [appliedQuery, setAppliedQuery] = useState<MemberPointsRecordQuery>(createDefaultRecordQuery);
+  const [pickerKeyword, setPickerKeyword] = useState<string>('');
   const [adjustTarget, setAdjustTarget] = useState<MemberPointsPageUser | null>(null);
-  const [showUserPicker, setShowUserPicker] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [stats, setStats] = useState<MemberPointsStats>(EMPTY_STATS);
+  const [showUserPicker, setShowUserPicker] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const requestIdRef = useRef(0);
-  const deferredRecordSearchQuery = useDeferredValue(recordSearchQuery);
-  const deferredPickerKeyword = useDeferredValue(pickerKeyword);
+  const {
+    records,
+    users,
+    stats,
+    hasMore,
+    isInitialLoading,
+    isUsersLoaded,
+    isRefreshing,
+    isLoadingMore,
+    errorMessage,
+    refreshRecords,
+    loadMoreRecords,
+    retryLoad,
+  } = useMemberPointsRecords(appliedQuery);
 
-  const loadPageData = useCallback(async (): Promise<void> => {
-    requestIdRef.current += 1;
-    const currentRequestId = requestIdRef.current;
-    setIsLoading(true);
-
-    try {
-      const response = await fetchMemberPointsPageData();
-      if (currentRequestId !== requestIdRef.current) {
-        return;
-      }
-
-      setRecords(response.records);
-      setUsers(response.users);
-      setStats(response.stats);
-      setErrorMessage('');
-    } catch (error) {
-      if (currentRequestId !== requestIdRef.current) {
-        return;
-      }
-
-      setRecords([]);
-      setUsers([]);
-      setStats(EMPTY_STATS);
-      setErrorMessage(error instanceof Error ? error.message : '获取积分数据失败');
-    } finally {
-      if (currentRequestId === requestIdRef.current) {
-        setIsLoading(false);
-      }
-    }
-  }, []);
-
+  // 搜索词带防抖：连续输入只打最后一次请求；Tab 切换立即生效
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- 页面初始化加载异步数据，setState 在 await 后执行，非同步级联渲染
-    void loadPageData();
-  }, [loadPageData]);
+    const nextKeyword = recordSearchQuery.trim();
+    const timeoutId = window.setTimeout(() => {
+      // 条件没变就返回原对象：保持引用稳定，避免「同一条件」重复触发一次首屏请求
+      setAppliedQuery((prevQuery) => (
+        prevQuery.tab === activeTab && prevQuery.keyword === nextKeyword
+          ? prevQuery
+          : { tab: activeTab, keyword: nextKeyword }
+      ));
+    }, nextKeyword ? MEMBER_POINTS_SEARCH_DEBOUNCE_MS : 0);
 
-  const filteredRecords = useMemo(() => {
-    let nextRecords = records;
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [activeTab, recordSearchQuery]);
 
-    if (activeTab === 'admin') {
-      nextRecords = nextRecords.filter((record) => record.source === 'admin_adjust');
-    } else if (activeTab === 'earn') {
-      // "获得"tab：只显示非管理员调整的获得记录（购买奖励等）
-      nextRecords = nextRecords.filter((record) => record.source !== 'admin_adjust' && record.type === 'earn');
-    } else if (activeTab === 'spend') {
-      // "消耗"tab：只显示非管理员调整的消耗/过期记录（抵扣消费、积分过期等）
-      nextRecords = nextRecords.filter((record) => record.source !== 'admin_adjust' && record.type !== 'earn');
-    }
-
-    const normalizedQuery = normalizeQuery(deferredRecordSearchQuery);
+  const filteredUsers = useMemo((): MemberPointsPageUser[] => {
+    const normalizedQuery = pickerKeyword.trim().toLowerCase();
     if (!normalizedQuery) {
-      return nextRecords;
-    }
-
-    return nextRecords.filter((record) => (
-      record.userName.toLowerCase().includes(normalizedQuery)
-      || record.userPhone.toLowerCase().includes(normalizedQuery)
-      || record.description.toLowerCase().includes(normalizedQuery)
-    ));
-  }, [activeTab, deferredRecordSearchQuery, records]);
-
-  const filteredUsers = useMemo(() => {
-    const normalizedQuery = normalizeQuery(deferredPickerKeyword);
-    if (!showUserPicker || !normalizedQuery) {
       return users;
     }
 
-    return users.filter((user) => (
-      user.name.toLowerCase().includes(normalizedQuery)
-      || user.phone.toLowerCase().includes(normalizedQuery)
-    ));
-  }, [deferredPickerKeyword, showUserPicker, users]);
+    return users.filter((user) => buildUserSearchText(user).includes(normalizedQuery));
+  }, [pickerKeyword, users]);
 
   const openUserPicker = useCallback((): void => {
     if (isSubmitting) {
@@ -208,44 +172,21 @@ export const useMemberPointsPage = (): UseMemberPointsPageReturn => {
       return;
     }
 
+    // 调整量来自弹层输入：提交前归一，脏值（NaN / 空串解析失败）不能进写接口
+    const normalizedDelta = safeNum(delta);
     setIsSubmitting(true);
+
     try {
-      await submitMemberPointsAdjustment(userId, delta, reason);
-
-      // 提交成功后重新从后端拉取最新数据，确保数据一致性
-      try {
-        const response = await fetchMemberPointsPageData();
-        setRecords(response.records);
-        setUsers(response.users);
-        setStats(response.stats);
-      } catch {
-        // 后端刷新失败时退回乐观更新
-        const newRecord: MemberPointsRecord = {
-          id: fallbackKey('member-points-record'),
-          userId,
-          userName: targetUser.name,
-          userPhone: targetUser.phone,
-          avatarUrl: targetUser.avatarUrl,
-          availablePoints: targetUser.availablePoints,
-          amount: delta,
-          type: delta > 0 ? 'earn' : 'spend',
-          source: 'admin_adjust',
-          description: reason,
-          createdAt: Date.now(),
-        };
-
-        const nextRecords = [newRecord, ...records];
-        setRecords(nextRecords);
-        setStats(deriveStatsFromRecords(nextRecords));
-        setUsers((prev) => prev.map((user) => (
-          user.id === userId
-            ? { ...user, availablePoints: safeNum(user.availablePoints + delta) }
-            : user
-        )));
-      }
-
+      await submitMemberPointsAdjustment(userId, normalizedDelta, reason);
       setAdjustTarget(null);
-      showToast({ type: 'success', message: delta >= 0 ? '积分调整成功' : '积分扣减成功' });
+      showToast({ type: 'success', message: normalizedDelta >= 0 ? '积分调整成功' : '积分扣减成功' });
+
+      // 提交成功后重拉第一页：余额与统计的权威口径都在后端，前端不再乐观拼接记录
+      try {
+        await refreshRecords();
+      } catch {
+        showToast({ type: 'error', message: '调整已生效，列表刷新失败，请下拉重试' });
+      }
     } catch (error) {
       showToast({
         type: 'error',
@@ -255,26 +196,26 @@ export const useMemberPointsPage = (): UseMemberPointsPageReturn => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [isSubmitting, users]);
-
-  const retryLoad = useCallback((): void => {
-    void loadPageData();
-  }, [loadPageData]);
+  }, [isSubmitting, refreshRecords, users]);
 
   return {
     records,
     users,
-    filteredRecords,
     filteredUsers,
     activeTab,
     recordSearchQuery,
     pickerKeyword,
     adjustTarget,
     showUserPicker,
-    isLoading,
+    isInitialLoading,
+    isUsersLoaded,
+    isRefreshing,
+    isLoadingMore,
+    hasMore,
     isSubmitting,
     errorMessage,
     stats,
+    scrollToTopTrigger: `${appliedQuery.tab}__${appliedQuery.keyword}`,
     setActiveTab,
     setRecordSearchQuery,
     setPickerKeyword,
@@ -283,6 +224,8 @@ export const useMemberPointsPage = (): UseMemberPointsPageReturn => {
     handleOpenAdjust,
     handleCloseAdjust,
     handleConfirmAdjust,
+    refreshRecords,
+    loadMoreRecords,
     retryLoad,
   };
 };

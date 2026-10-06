@@ -24,6 +24,12 @@ export const PARTNER_BEANS_EMPTY_STATS = {
 
 export const PARTNER_BEANS_DEFAULT_FILTER_TAB: PartnerBeansFilterTab = 'all';
 
+/** 纯利豆流水单页条数（与后端 cursor 分页默认口径一致）。 */
+export const PARTNER_BEANS_PAGE_SIZE = 20;
+
+/** 搜索输入防抖时长：连续输入只打最后一次请求。 */
+export const PARTNER_BEANS_SEARCH_DEBOUNCE_MS = 250;
+
 export const PARTNER_BEANS_ADJUST_PRESET_AMOUNTS = [50, 100, 200, 500];
 
 export const PARTNER_BEANS_REASON_PRESETS = [
