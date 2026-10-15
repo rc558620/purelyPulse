@@ -25,4 +25,7 @@ export const ROUTE_PATHS = {
     banManagement: '/ban-management',
     // ─── 会员设置 ────────────────────────────────────────────────
     membershipSettings: '/membership-settings',
+    // ─── 营销管理 ────────────────────────────────────────────────
+    // 群发短信管理：平台运营查看 / 赠送各门店的短信余额
+    smsBroadcast: '/sms-broadcast',
 } as const;

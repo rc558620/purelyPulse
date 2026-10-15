@@ -2,11 +2,11 @@
 import { memo } from 'react';
 import { cx, isNonEmptyArray, safeNum } from '@utils/utils';
 import { ROUTE_PATHS } from '../../../../router/paths';
-import { IconHomeBan, IconHomeBeans, IconHomeChevronRight, IconHomeGrid, IconHomeMemberList, IconHomeMemberRecords, IconHomeMembershipSettings, IconHomeNewCustomerQuota, IconHomePayout, IconHomePoints, IconHomeReview } from '../HomeIcons/HomeIcons';
+import { IconHomeBan, IconHomeBeans, IconHomeChevronRight, IconHomeGrid, IconHomeMemberList, IconHomeMemberRecords, IconHomeMembershipSettings, IconHomeNewCustomerQuota, IconHomePayout, IconHomePoints, IconHomeReview, IconHomeSmsBroadcast } from '../HomeIcons/HomeIcons';
 import styles from './HomeQuickNavSection.module.less';
 
-type HomeQuickNavTone = 'green' | 'purple' | 'amber' | 'blue' | 'red' | 'teal' | 'indigo' | 'cyan';
-type HomeQuickNavIcon = 'payout' | 'review' | 'beans' | 'newCustomerQuota' | 'points' | 'ban' | 'memberList' | 'membershipSettings' | 'memberRecords';
+type HomeQuickNavTone = 'green' | 'purple' | 'amber' | 'blue' | 'red' | 'teal' | 'indigo' | 'cyan' | 'violet';
+type HomeQuickNavIcon = 'payout' | 'review' | 'beans' | 'newCustomerQuota' | 'points' | 'ban' | 'memberList' | 'membershipSettings' | 'memberRecords' | 'smsBroadcast';
 
 interface HomeQuickNavItemConfig {
   title: string;
@@ -34,6 +34,7 @@ const QUICK_NAV_ITEMS: HomeQuickNavItemConfig[] = [
   { title: '会员管理', desc: '会员套餐价格设置', ariaLabel: '会员管理', path: ROUTE_PATHS.membershipSettings, tone: 'green', icon: 'membershipSettings' },
   { title: '会员记录', desc: '充值 / 等级 / 续费 / 子账号记录', ariaLabel: '会员记录管理', path: ROUTE_PATHS.memberRecords, tone: 'indigo', icon: 'memberRecords' },
   { title: '会员列表', desc: '查看与管理全部会员', ariaLabel: '会员列表', path: ROUTE_PATHS.memberList, tone: 'teal', icon: 'memberList' },
+  { title: '群发短信', desc: '短信余额与赠送', ariaLabel: '群发短信管理', path: ROUTE_PATHS.smsBroadcast, tone: 'violet', icon: 'smsBroadcast' },
 ];
 
 const getQuickNavItemToneClassName = (tone: HomeQuickNavTone): string => {
@@ -54,6 +55,8 @@ const getQuickNavItemToneClassName = (tone: HomeQuickNavTone): string => {
       return styles.quickNavItemIndigo;
     case 'cyan':
       return styles.quickNavItemCyan;
+    case 'violet':
+      return styles.quickNavItemViolet;
     default:
       return '';
   }
@@ -77,6 +80,8 @@ const getQuickNavIconToneClassName = (tone: HomeQuickNavTone): string => {
       return styles.quickNavIconIndigo;
     case 'cyan':
       return styles.quickNavIconCyan;
+    case 'violet':
+      return styles.quickNavIconViolet;
     default:
       return '';
   }
@@ -102,6 +107,8 @@ const renderQuickNavIcon = (icon: HomeQuickNavIcon): React.JSX.Element => {
       return <IconHomeMembershipSettings />;
     case 'memberRecords':
       return <IconHomeMemberRecords />;
+    case 'smsBroadcast':
+      return <IconHomeSmsBroadcast />;
     default:
       return <IconHomeGrid />;
   }

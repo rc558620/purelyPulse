@@ -131,6 +131,16 @@ export const IconHomeNewCustomerQuota = (props: SvgProps): React.JSX.Element => 
   </svg>
 );
 
+/** 快捷入口：群发短信图标（消息气泡 + 省略号，取「一条发给多人」语义） */
+export const IconHomeSmsBroadcast = (props: SvgProps): React.JSX.Element => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="M21 5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3l4 4v-4h7a2 2 0 0 0 2-2V5z" />
+    <circle cx="8" cy="9.5" r="1" fill="currentColor" stroke="none" />
+    <circle cx="12" cy="9.5" r="1" fill="currentColor" stroke="none" />
+    <circle cx="16" cy="9.5" r="1" fill="currentColor" stroke="none" />
+  </svg>
+);
+
 /** 快捷入口：会员积分图标 */
 export const IconHomePoints = (props: SvgProps): React.JSX.Element => (
   <svg aria-hidden="true" viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="currentColor" strokeWidth={2} {...props}>

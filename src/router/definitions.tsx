@@ -41,4 +41,5 @@ export const routeDefinitions: AppRouteDefinition[] = [
     { path: ROUTE_PATHS.memberRecords, page: pages.memberRecords, wrap: withAuthGuard },
     { path: ROUTE_PATHS.banManagement, page: pages.banManagement, wrap: withAuthGuard },
     { path: ROUTE_PATHS.membershipSettings, page: pages.membershipSettings, wrap: withAuthGuard },
+    { path: ROUTE_PATHS.smsBroadcast, page: pages.smsBroadcast, wrap: withAuthGuard },
 ];

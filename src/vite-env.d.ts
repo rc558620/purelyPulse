@@ -30,6 +30,9 @@ interface ImportMetaEnv {
   readonly VITE_MEMBERSHIP_SETTINGS_API_PATH?: string;
   readonly VITE_UPDATE_MEMBERSHIP_SETTINGS_API_PATH?: string;
   readonly VITE_MEMBER_RENEWAL_PRICE_API_PATH?: string;
+  // ─── 营销管理：群发短信 ────────────────────────────────────────
+  readonly VITE_SMS_BROADCAST_ACCOUNTS_API_PATH?: string;
+  readonly VITE_GRANT_SMS_BALANCE_API_PATH?: string;
 }
 
 interface ImportMeta {
