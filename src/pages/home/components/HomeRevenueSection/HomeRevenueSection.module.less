@@ -8,9 +8,9 @@
   padding: 2rem 1.6rem;
   .flex-col();
   gap: 2rem;
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  // 去掉 backdrop-filter 毛玻璃：卡内 ECharts 画布重绘时会连带触发背景模糊重算，
+  // 是 GPU 占用大头；提高底色不透明度后观感一致。
+  background: rgba(255, 255, 255, 0.96);
   border: 1px solid rgba(255, 255, 255, 0.7);
   border-radius: 20px;
   box-shadow:

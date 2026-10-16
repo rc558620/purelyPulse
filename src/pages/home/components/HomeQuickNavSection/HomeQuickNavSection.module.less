@@ -8,9 +8,9 @@
   padding: 1.8rem 1.6rem;
   .flex-col();
   gap: 1.4rem;
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  // 去掉 backdrop-filter 毛玻璃，避免合成器每帧重算卡片背后的模糊（GPU 主要开销）；
+  // 装饰层透明度很低，提高卡片底色后视觉无差异。
+  background: rgba(255, 255, 255, 0.96);
   border: 1px solid rgba(255, 255, 255, 0.7);
   border-radius: 20px;
   box-shadow:
@@ -472,10 +472,7 @@
   height: 1rem;
   border-radius: 50%;
   background: #ef4444;
-  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6);
-  animation:
-    quickNavDotAppear 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both,
-    quickNavDotPulse 2.2s ease-in-out 0.4s infinite;
+  animation: quickNavDotAppear 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   pointer-events: none;
   z-index: 1;
 
@@ -488,8 +485,23 @@
     border: 0.15rem solid rgba(255, 255, 255, 0.9);
   }
 
+  // 扩散光环改到伪元素上绘制，动画只跑 transform + opacity，全程走合成器线程；
+  // 原来的 box-shadow 扩散动画每帧触发重绘，还会和入场的 transform 动画互相抢占。
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    box-shadow: 0 0 0 0.15rem rgba(239, 68, 68, 0.55);
+    animation: quickNavDotPulse 2.2s ease-in-out 0.4s infinite;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     animation: quickNavDotAppear 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+
+    &::after {
+      animation: none;
+    }
   }
 }
 
@@ -500,7 +512,7 @@
 }
 
 @keyframes quickNavDotPulse {
-  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55); }
-  50% { box-shadow: 0 0 0 0.6rem rgba(239, 68, 68, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+  0% { transform: scale(0.6); opacity: 1; }
+  50% { transform: scale(1.9); opacity: 0; }
+  100% { transform: scale(1.9); opacity: 0; }
 }

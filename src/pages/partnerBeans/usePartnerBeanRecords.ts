@@ -1,15 +1,11 @@
-// 纯利豆流水游标分页 hook：首屏 / 下拉刷新 / 加载更多、竞态与请求取消、合伙人快照。
+// 纯利豆流水游标分页 hook：首屏 / 下拉刷新 / 加载更多、竞态与请求取消。
 //
 // 只负责「按当前筛选条件取数」，筛选条件的产生与调整提交流程归页面 hook。
-// 与 newCustomerQuota 的 useQuotaStoreList 同构：请求时机与分页状态收敛在这里，
-// 页面层只消费数据与回调。
+// 查询为 null（余额一览模式）时不发请求、保持空态，等页面进入单合伙人视图再取数；
+// 合伙人快照由页面传入（余额一览分页加载的那份），流水行的余额与头像统一用它回填。
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { showToast } from '@components/ui/feedback/Toast';
 import { safeNum } from '@utils/utils';
-import {
-  fetchPartnerBeanRecords,
-  fetchPartnerBeanUsers,
-} from '../memberList/memberList.service';
+import { fetchPartnerBeanRecords } from '../memberList/memberList.service';
 import { PARTNER_BEANS_EMPTY_STATS } from './partnerBeans.constants';
 import type {
   PartnerBeansPageRecord,
@@ -22,18 +18,12 @@ import type {
 interface UsePartnerBeanRecordsReturn {
   /** 当前已加载的流水（分页累积） */
   records: PartnerBeansPageRecord[];
-  /** 合伙人快照 */
-  users: PartnerBeansPageUser[];
   /** 后端统计（按当前筛选的完整结果集计算） */
   stats: PartnerBeansPageStats;
   /** 是否还有下一页 */
   hasMore: boolean;
   /** 首屏加载中 */
   isInitialLoading: boolean;
-  /** 合伙人快照加载中 */
-  isUsersLoading: boolean;
-  /** 合伙人快照是否可用（不可用时不展示流水余额） */
-  isUsersLoaded: boolean;
   /** 下拉刷新中 */
   isRefreshing: boolean;
   /** 加载更多中 */
@@ -72,15 +62,13 @@ const createRequestController = (
 };
 
 export const usePartnerBeanRecords = (
-  query: PartnerBeansRecordQuery,
+  query: PartnerBeansRecordQuery | null,
+  users: PartnerBeansPageUser[],
 ): UsePartnerBeanRecordsReturn => {
   const [records, setRecords] = useState<PartnerBeansPageRecord[]>([]);
-  const [users, setUsers] = useState<PartnerBeansPageUser[]>([]);
   const [stats, setStats] = useState<PartnerBeansPageStats>(PARTNER_BEANS_EMPTY_STATS);
   const [hasMore, setHasMore] = useState<boolean>(false);
   const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
-  const [isUsersLoading, setIsUsersLoading] = useState<boolean>(true);
-  const [isUsersLoaded, setIsUsersLoaded] = useState<boolean>(false);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -99,13 +87,17 @@ export const usePartnerBeanRecords = (
   // 避免整块列表被「加载中」顶替（与 newCustomerQuota 的 useQuotaStoreList 同口径）
   const hasLoadedRef = useRef<boolean>(false);
   const isLoadingMoreRef = useRef<boolean>(false);
-  // 合伙人快照：流水行的余额与头像来自它，加载更多时直接复用，不必每页重拉
-  const usersRef = useRef<PartnerBeansPageUser[]>([]);
-  const queryRef = useRef<PartnerBeansRecordQuery>(query);
+  // 合伙人快照：流水行的余额与头像来自它，加载更多时直接复用
+  const usersRef = useRef<PartnerBeansPageUser[]>(users);
+  const queryRef = useRef<PartnerBeansRecordQuery | null>(query);
 
   useEffect(() => {
     queryRef.current = query;
   }, [query]);
+
+  useEffect(() => {
+    usersRef.current = users;
+  }, [users]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -117,40 +109,6 @@ export const usePartnerBeanRecords = (
       mountedRef.current = false;
       controllerRef.current?.abort();
     };
-  }, []);
-
-  /**
-   * 拉取合伙人快照。
-   *
-   * 快照是流水行余额的唯一来源（流水表没有「变动后余额」字段），
-   * 因此失败时不能静默：没有任何快照时提示一次并让列表隐藏余额，
-   * 否则会把「余额未知」显示成「余额 0 豆」。已有旧快照时保留旧值，不重复打扰。
-   */
-  const loadUsers = useCallback(async (signal?: AbortSignal): Promise<PartnerBeansPageUser[]> => {
-    // 已有快照时静默刷新：切 Tab 会随第一页一起重拉快照，但余额卡不该为此闪一次「加载中」
-    if (usersRef.current.length === 0) {
-      setIsUsersLoading(true);
-    }
-
-    try {
-      const nextUsers = await fetchPartnerBeanUsers(signal);
-      usersRef.current = nextUsers;
-      setUsers(nextUsers);
-      setIsUsersLoaded(true);
-      return nextUsers;
-    } catch (error) {
-      if (isAbortError(error)) {
-        return usersRef.current;
-      }
-
-      if (usersRef.current.length === 0) {
-        setIsUsersLoaded(false);
-        showToast({ type: 'error', message: '合伙人余额加载失败，流水余额暂不可用' });
-      }
-      return usersRef.current;
-    } finally {
-      setIsUsersLoading(false);
-    }
   }, []);
 
   /** 拉第一页：换条件 / 重试 / 下拉刷新 / 写操作成功后都走这里。 */
@@ -173,18 +131,10 @@ export const usePartnerBeanRecords = (
     }
 
     try {
-      // 快照只在这三种情况下重拉：首屏、下拉刷新（余额要最新）、还没有快照。
-      // 切 Tab / 改关键词与快照无关，复用已有快照，省掉一次全量合伙人列表请求。
-      const shouldReloadUsers = isRefresh || !hasLoadedRef.current || usersRef.current.length === 0;
-      const nextUsers = shouldReloadUsers ? await loadUsers(signal) : usersRef.current;
-      if (currentRequestId !== requestIdRef.current) {
-        return;
-      }
-
       const page: PartnerBeansRecordPage = await fetchPartnerBeanRecords({
         query: targetQuery,
         cursor: null,
-        users: nextUsers,
+        users: usersRef.current,
         signal,
       });
       if (currentRequestId !== requestIdRef.current) {
@@ -227,12 +177,26 @@ export const usePartnerBeanRecords = (
         setIsRefreshing(false);
       }
     }
-  }, [loadUsers]);
+  }, []);
 
   useEffect(() => {
     // 延后一拍发起：既避免在 effect 体内同步 setState（会触发级联渲染），
     // 也让连续改条件只打最后一次请求（与 memberRecords 同一口径）
     const timeoutId = window.setTimeout(() => {
+      // 余额一览模式（query 为 null）不发流水请求：回到空态，等进入单合伙人视图再取数
+      if (!query) {
+        requestIdRef.current += 1;
+        hasLoadedRef.current = false;
+        cursorRef.current = null;
+        hasMoreRef.current = false;
+        setRecords([]);
+        setStats(PARTNER_BEANS_EMPTY_STATS);
+        setHasMore(false);
+        setErrorMessage('');
+        setIsInitialLoading(true);
+        return;
+      }
+
       void loadFirstPage(query, false).catch(() => undefined);
     }, 0);
 
@@ -246,6 +210,11 @@ export const usePartnerBeanRecords = (
       return;
     }
 
+    const currentQuery = queryRef.current;
+    if (!currentQuery) {
+      return;
+    }
+
     isLoadingMoreRef.current = true;
     setIsLoadingMore(true);
     const currentRequestId = requestIdRef.current;
@@ -253,7 +222,7 @@ export const usePartnerBeanRecords = (
 
     try {
       const page = await fetchPartnerBeanRecords({
-        query: queryRef.current,
+        query: currentQuery,
         cursor: cursorRef.current,
         users: usersRef.current,
         signal,
@@ -285,21 +254,28 @@ export const usePartnerBeanRecords = (
   }, []);
 
   const refreshRecords = useCallback(async (): Promise<void> => {
-    await loadFirstPage(queryRef.current, true);
+    const currentQuery = queryRef.current;
+    if (!currentQuery) {
+      return;
+    }
+
+    await loadFirstPage(currentQuery, true);
   }, [loadFirstPage]);
 
   const retryLoad = useCallback((): void => {
-    void loadFirstPage(queryRef.current, false).catch(() => undefined);
+    const currentQuery = queryRef.current;
+    if (!currentQuery) {
+      return;
+    }
+
+    void loadFirstPage(currentQuery, false).catch(() => undefined);
   }, [loadFirstPage]);
 
   return {
     records,
-    users,
     stats,
     hasMore,
     isInitialLoading,
-    isUsersLoading,
-    isUsersLoaded,
     isRefreshing,
     isLoadingMore,
     errorMessage,

@@ -6,20 +6,22 @@ import {
   requestMemberDetail,
   requestMemberList,
   requestMemberPointsRecords,
-  requestMemberPointsUsers,
+  requestMemberPointsUserPage,
   requestPartnerBeanRecords,
-  requestPartnerBeanUsers,
+  requestPartnerBeanUserPage,
 } from './memberList.request';
 import type {
   PartnerBeansRecordPage,
   PartnerBeansRecordRequestParams,
+  PartnerBeansUserPage,
+  PartnerBeansUserRequestParams,
 } from '../partnerBeans/partnerBeans.types';
-import type { UserSnapshot } from '../partnerBeans/partnerBeans.shared.types';
 import type { MemberDetail, MemberListPageResult, MemberListQuery } from './memberList.types';
 import type {
-  MemberPointsPageUser,
   MemberPointsRecordPage,
   MemberPointsRecordRequestParams,
+  MemberPointsUserPage,
+  MemberPointsUserRequestParams,
 } from '../memberPoints/memberPoints.types';
 
 // ─── 写操作与统计 / 同步事件：实现下沉到各自模块，这里统一出口 ──────────────
@@ -52,9 +54,14 @@ export const fetchMemberPointsRecords = async (
   params: MemberPointsRecordRequestParams,
 ): Promise<MemberPointsRecordPage> => requestMemberPointsRecords(params);
 
-/** 获取会员快照：选人弹层的用户源，与流水分页无关。 */
-export const fetchMemberPointsUsers = async (signal?: AbortSignal): Promise<MemberPointsPageUser[]> =>
-  requestMemberPointsUsers(signal);
+/**
+ * 获取会员积分一览单页（页码分页）。
+ *
+ * 不做并发去重：翻页 / 刷新语义不同，去重反而会吞掉下拉刷新的请求（与流水同口径）。
+ */
+export const fetchMemberPointsUserPage = async (
+  params: MemberPointsUserRequestParams,
+): Promise<MemberPointsUserPage> => requestMemberPointsUserPage(params);
 
 /**
  * 获取纯利豆流水单页（游标分页）。
@@ -66,9 +73,14 @@ export const fetchPartnerBeanRecords = async (
   params: PartnerBeansRecordRequestParams,
 ): Promise<PartnerBeansRecordPage> => requestPartnerBeanRecords(params);
 
-/** 获取合伙人快照：余额一览与调整弹层的用户源，与流水分页无关。 */
-export const fetchPartnerBeanUsers = async (signal?: AbortSignal): Promise<UserSnapshot[]> =>
-  requestPartnerBeanUsers(signal);
+/**
+ * 获取合伙人余额一览单页（页码分页）。
+ *
+ * 不做并发去重：翻页 / 刷新语义不同，去重反而会吞掉下拉刷新的请求（与流水同口径）。
+ */
+export const fetchPartnerBeanUserPage = async (
+  params: PartnerBeansUserRequestParams,
+): Promise<PartnerBeansUserPage> => requestPartnerBeanUserPage(params);
 
 /**
  * 获取会员列表单页数据，并按「查询条件 + 页码 + 页大小」对并发请求做去重。

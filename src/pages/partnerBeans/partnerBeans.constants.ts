@@ -27,6 +27,9 @@ export const PARTNER_BEANS_DEFAULT_FILTER_TAB: PartnerBeansFilterTab = 'all';
 /** 纯利豆流水单页条数（与后端 cursor 分页默认口径一致）。 */
 export const PARTNER_BEANS_PAGE_SIZE = 20;
 
+/** 合伙人余额一览单页条数（会员列表接口 pageSize 上限 100）。 */
+export const PARTNER_BEANS_USERS_PAGE_SIZE = 20;
+
 /** 搜索输入防抖时长：连续输入只打最后一次请求。 */
 export const PARTNER_BEANS_SEARCH_DEBOUNCE_MS = 250;
 

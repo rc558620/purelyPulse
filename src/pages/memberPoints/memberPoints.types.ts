@@ -96,6 +96,30 @@ export interface MemberPointsRecordQuery {
   tab: MemberPointsFilterTab;
   /** 搜索关键词（会员姓名 / 手机号 / 流水说明） */
   keyword: string;
+  /** 单会员（门店）过滤：积分一览点击进入单会员变动记录时下发；null = 全部会员 */
+  storeId: string | null;
+}
+
+/** 会员积分一览单页结果（页码分页）。 */
+export interface MemberPointsUserPage {
+  /** 本页会员快照 */
+  users: MemberPointsPageUser[];
+  /** 当前关键词下的会员总数（后端口径） */
+  total: number;
+  /** 是否还有下一页 */
+  hasMore: boolean;
+  /** 下一页页码，没有更多时为 null */
+  nextPage: number | null;
+}
+
+/** 拉取单页会员积分一览的入参：每页条数由页面常量统一给出。 */
+export interface MemberPointsUserRequestParams {
+  /** 搜索关键词（会员姓名 / 手机号） */
+  keyword: string;
+  /** 页码，从 1 开始 */
+  page: number;
+  /** 取消信号：换条件 / 卸载时作废在途请求 */
+  signal?: AbortSignal;
 }
 
 /** 积分流水单页结果（游标分页）。 */

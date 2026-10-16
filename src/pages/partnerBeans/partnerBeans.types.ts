@@ -16,6 +16,30 @@ export interface PartnerBeansRecordQuery {
   tab: PartnerBeansFilterTab;
   /** 搜索关键词（合伙人姓名 / 手机号 / 流水说明） */
   keyword: string;
+  /** 单合伙人（门店）过滤：余额一览点击进入单合伙人变动记录时下发；null = 全部合伙人 */
+  storeId: string | null;
+}
+
+/** 合伙人余额一览单页结果（页码分页）。 */
+export interface PartnerBeansUserPage {
+  /** 本页合伙人快照 */
+  users: PartnerBeansPageUser[];
+  /** 当前关键词下的合伙人总数（后端口径） */
+  total: number;
+  /** 是否还有下一页 */
+  hasMore: boolean;
+  /** 下一页页码，没有更多时为 null */
+  nextPage: number | null;
+}
+
+/** 拉取单页合伙人余额一览的入参：每页条数由页面常量统一给出。 */
+export interface PartnerBeansUserRequestParams {
+  /** 搜索关键词（合伙人姓名 / 手机号） */
+  keyword: string;
+  /** 页码，从 1 开始 */
+  page: number;
+  /** 取消信号：换条件 / 卸载时作废在途请求 */
+  signal?: AbortSignal;
 }
 
 /** 纯利豆流水单页结果（游标分页）。 */

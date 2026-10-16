@@ -19,9 +19,9 @@
   padding: 1.6rem 1.4rem;
   .flex-col();
   gap: 0.6rem;
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  // 去掉 backdrop-filter 毛玻璃：背后的装饰光斑/网格是静态的，
+  // 但合成器仍要为每张卡片每帧重算模糊，GPU 开销极大；提高底色不透明度后观感一致。
+  background: rgba(255, 255, 255, 0.96);
   border: 1px solid rgba(255, 255, 255, 0.7);
   border-radius: 20px;
   box-shadow:

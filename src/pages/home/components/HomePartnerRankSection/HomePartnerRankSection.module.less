@@ -6,9 +6,9 @@
   padding: 2rem 1.6rem;
   .flex-col();
   gap: 1.6rem;
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  // 去掉 backdrop-filter 毛玻璃，避免合成器每帧重算卡片背后的模糊；
+  // 装饰层透明度很低，提高卡片底色后视觉无差异。
+  background: rgba(255, 255, 255, 0.96);
   border: 1px solid rgba(255, 255, 255, 0.7);
   border-radius: 20px;
   box-shadow:

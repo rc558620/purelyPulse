@@ -11,7 +11,6 @@ import {
   mapBeanRecord,
   mapPointsRecord,
   mapUserSnapshot,
-  PARTNER_USERS_SOURCE_CANDIDATES,
   POINTS_RECORD_SOURCE_CANDIDATES,
 } from './memberList.ledger.mapper';
 import { buildMemberListStats, mapMemberDetail, mapMemberListItem } from './memberList.member.mapper';
@@ -26,23 +25,28 @@ import {
 import {
   PARTNER_BEANS_EMPTY_STATS,
   PARTNER_BEANS_PAGE_SIZE,
+  PARTNER_BEANS_USERS_PAGE_SIZE,
 } from '../partnerBeans/partnerBeans.constants';
 import type {
   PartnerBeansRecordPage,
   PartnerBeansRecordRequestParams,
+  PartnerBeansUserPage,
+  PartnerBeansUserRequestParams,
 } from '../partnerBeans/partnerBeans.types';
 import type { MemberDetail, MemberListPageResult, MemberListQuery } from './memberList.types';
 import { isServerMemberDetailLike, isServerMembersResponseLike } from './memberList.dto';
 import {
   MEMBER_POINTS_EMPTY_STATS,
+  MEMBER_POINTS_OVERVIEW_PAGE_SIZE,
   MEMBER_POINTS_PAGE_SIZE,
-  MEMBER_POINTS_USERS_PAGE_SIZE,
 } from '../memberPoints/memberPoints.constants';
 import type {
   MemberPointsPageUser,
   MemberPointsRecordPage,
   MemberPointsRecordRequestParams,
   MemberPointsStats,
+  MemberPointsUserPage,
+  MemberPointsUserRequestParams,
 } from '../memberPoints/memberPoints.types';
 import type { PartnerBeansStats, UserSnapshot } from '../partnerBeans/partnerBeans.shared.types';
 
@@ -167,6 +171,8 @@ export const requestMemberPointsRecords = async (
     params: {
       pointsTab: params.query.tab === 'all' ? undefined : params.query.tab,
       keyword: params.query.keyword.trim() || undefined,
+      // 单会员（门店）过滤：积分一览点击进入单会员变动记录时下发
+      storeId: params.query.storeId ?? undefined,
       cursor: params.cursor ?? undefined,
       limit: MEMBER_POINTS_PAGE_SIZE,
     },
@@ -193,20 +199,40 @@ export const requestMemberPointsRecords = async (
 };
 
 /**
- * 会员快照（选人弹层的用户源、流水行的头像与余额来源）：与流水分页无关，单独一次性拉取。
+ * 会员积分一览单页（页码分页）：筛选与分页全部下推后端，前端不做本地切片。
  *
- * 会员列表接口默认只给 20 条（服务端切片），这里显式取满单页上限：
- * 快照少一条，对应流水行就会「余额 0」且调整积分时选不到人。
+ * 与纯利豆的合伙人余额一览同口径：一览自己翻页，流水行不再依赖「一次性全量快照」，
+ * 单会员变动记录只传当前会员作快照即可回填头像与可用积分。
  */
-export const requestMemberPointsUsers = async (signal?: AbortSignal): Promise<MemberPointsPageUser[]> => {
+export const requestMemberPointsUserPage = async (
+  params: MemberPointsUserRequestParams,
+): Promise<MemberPointsUserPage> => {
   const response = await http.get<unknown>(MEMBER_LIST_API_PATH, {
-    params: { page: 1, pageSize: MEMBER_POINTS_USERS_PAGE_SIZE },
-    signal,
+    params: {
+      keyword: params.keyword.trim() || undefined,
+      page: params.page,
+      pageSize: MEMBER_POINTS_OVERVIEW_PAGE_SIZE,
+    },
+    signal: params.signal,
     skipGlobalErrorHandler: true,
     errorMessage: '获取会员列表失败',
   });
 
-  return resolveMemberListSource(response).map((item, index) => mapUserSnapshot(item, index));
+  const users = resolveMemberListSource(response)
+    .map((item, index) => mapUserSnapshot(item, index));
+  // total 缺失时回退已加载条数：此时「整页拉满」视为可能还有下一页，
+  // 多翻一次空页即可停住，比提前断流更安全
+  const total = resolveMemberListTotal(response, users.length);
+  const hasMore = total > users.length
+    ? params.page * MEMBER_POINTS_OVERVIEW_PAGE_SIZE < total
+    : users.length >= MEMBER_POINTS_OVERVIEW_PAGE_SIZE;
+
+  return {
+    users,
+    total,
+    hasMore,
+    nextPage: hasMore ? params.page + 1 : null,
+  };
 };
 
 const LOG_CURSOR_CANDIDATES = ['nextCursor', 'cursor'] as const;
@@ -261,18 +287,37 @@ const resolvePartnerBeanStats = (response: unknown): PartnerBeansStats => {
   };
 };
 
-/** 合伙人快照（余额一览与调整弹层的用户源）：与流水分页无关，单独全量拉取。 */
-export const requestPartnerBeanUsers = async (signal?: AbortSignal): Promise<UserSnapshot[]> => {
+/** 合伙人余额一览单页（页码分页）：筛选与分页全部下推后端，前端不做本地切片。 */
+export const requestPartnerBeanUserPage = async (
+  params: PartnerBeansUserRequestParams,
+): Promise<PartnerBeansUserPage> => {
   const response = await http.get<unknown>(MEMBER_LIST_API_PATH, {
-    params: { partner: true },
-    signal,
+    params: {
+      partner: true,
+      keyword: params.keyword.trim() || undefined,
+      page: params.page,
+      pageSize: PARTNER_BEANS_USERS_PAGE_SIZE,
+    },
+    signal: params.signal,
     skipGlobalErrorHandler: true,
     errorMessage: '获取合伙人列表失败',
   });
 
-  return getNestedArray(response, PARTNER_USERS_SOURCE_CANDIDATES)
-    .map((item, index) => mapUserSnapshot(item, index))
-    .filter((user) => user.isPartner || user.beanBalance > 0);
+  const users = resolveMemberListSource(response)
+    .map((item, index) => mapUserSnapshot(item, index));
+  // total 缺失时回退已加载条数：此时「整页拉满」视为可能还有下一页，
+  // 多翻一次空页即可停住，比提前断流更安全
+  const total = resolveMemberListTotal(response, users.length);
+  const hasMore = total > users.length
+    ? params.page * PARTNER_BEANS_USERS_PAGE_SIZE < total
+    : users.length >= PARTNER_BEANS_USERS_PAGE_SIZE;
+
+  return {
+    users,
+    total,
+    hasMore,
+    nextPage: hasMore ? params.page + 1 : null,
+  };
 };
 
 /**
@@ -288,6 +333,8 @@ export const requestPartnerBeanRecords = async (
     params: {
       beanTab: params.query.tab === 'all' ? undefined : params.query.tab,
       keyword: params.query.keyword.trim() || undefined,
+      // 单合伙人（门店）过滤：余额一览点击进入详情时下发
+      storeId: params.query.storeId ?? undefined,
       cursor: params.cursor ?? undefined,
       limit: PARTNER_BEANS_PAGE_SIZE,
     },

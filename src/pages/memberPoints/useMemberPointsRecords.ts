@@ -1,15 +1,12 @@
-// 积分流水游标分页 hook：首屏 / 下拉刷新 / 加载更多、竞态与请求取消、会员快照。
+// 积分流水游标分页 hook：首屏 / 下拉刷新 / 加载更多、竞态与请求取消。
 //
 // 只负责「按当前筛选条件取数」，筛选条件的产生与调整提交流程归页面 hook。
-// 与 partnerBeans 的 usePartnerBeanRecords 同构：请求时机与分页状态收敛在这里，
-// 页面层只消费数据与回调。
+// 与 partnerBeans 的 usePartnerBeanRecords 同构：查询为 null（积分一览视图）时不发请求、
+// 保持空态，等页面进入单会员视图再取数；会员快照由页面传入（积分一览分页加载的那份），
+// 流水行的头像与可用积分统一用它回填。
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { showToast } from '@components/ui/feedback/Toast';
 import { safeNum } from '@utils/utils';
-import {
-  fetchMemberPointsRecords,
-  fetchMemberPointsUsers,
-} from '../memberList/memberList.service';
+import { fetchMemberPointsRecords } from '../memberList/memberList.service';
 import { MEMBER_POINTS_EMPTY_STATS } from './memberPoints.constants';
 import type {
   MemberPointsPageUser,
@@ -22,16 +19,12 @@ import type {
 interface UseMemberPointsRecordsReturn {
   /** 当前已加载的流水（分页累积） */
   records: MemberPointsRecord[];
-  /** 会员快照 */
-  users: MemberPointsPageUser[];
   /** 后端统计（按当前筛选的完整结果集计算） */
   stats: MemberPointsStats;
   /** 是否还有下一页 */
   hasMore: boolean;
   /** 首屏加载中 */
   isInitialLoading: boolean;
-  /** 会员快照是否可用：不可用时流水行不展示余额，避免把「余额未知」显示成「余额 0」 */
-  isUsersLoaded: boolean;
   /** 下拉刷新中 */
   isRefreshing: boolean;
   /** 加载更多中 */
@@ -41,7 +34,7 @@ interface UseMemberPointsRecordsReturn {
   /**
    * 重拉第一页：下拉刷新直接等它完成，写操作成功后同样走它。
    *
-   * 失败时抛错：下拉刷新据此切「失败 + 重试」。
+   * 失败时抛错：下拉刷新据此切「失败 + 重试」，写成功后由页面转成一句提示。
    */
   refreshRecords: () => Promise<void>;
   /** 上拉加载更多：追加下一页（失败时抛错，由容器呈现失败态） */
@@ -70,14 +63,13 @@ const createRequestController = (
 };
 
 export const useMemberPointsRecords = (
-  query: MemberPointsRecordQuery,
+  query: MemberPointsRecordQuery | null,
+  users: MemberPointsPageUser[],
 ): UseMemberPointsRecordsReturn => {
   const [records, setRecords] = useState<MemberPointsRecord[]>([]);
-  const [users, setUsers] = useState<MemberPointsPageUser[]>([]);
   const [stats, setStats] = useState<MemberPointsStats>(MEMBER_POINTS_EMPTY_STATS);
   const [hasMore, setHasMore] = useState<boolean>(false);
   const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
-  const [isUsersLoaded, setIsUsersLoaded] = useState<boolean>(false);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -92,17 +84,21 @@ export const useMemberPointsRecords = (
   const mountedRef = useRef<boolean>(true);
   const cursorRef = useRef<string | null>(null);
   const hasMoreRef = useRef<boolean>(false);
-  // 是否已经成功加载过一次：切 Tab / 换关键词时只标记「刷新中」，不再回到首屏加载态，
+  // 是否已经成功加载过一次：切 Tab 时只标记「刷新中」，不再回到首屏加载态，
   // 避免整块列表被「加载中」顶替（与 partnerBeans 同口径）
   const hasLoadedRef = useRef<boolean>(false);
   const isLoadingMoreRef = useRef<boolean>(false);
-  // 会员快照：流水行的头像与可用积分来自它，加载更多时直接复用，不必每页重拉
-  const usersRef = useRef<MemberPointsPageUser[]>([]);
-  const queryRef = useRef<MemberPointsRecordQuery>(query);
+  // 会员快照：流水行的头像与可用积分来自它，加载更多时直接复用
+  const usersRef = useRef<MemberPointsPageUser[]>(users);
+  const queryRef = useRef<MemberPointsRecordQuery | null>(query);
 
   useEffect(() => {
     queryRef.current = query;
   }, [query]);
+
+  useEffect(() => {
+    usersRef.current = users;
+  }, [users]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -116,31 +112,6 @@ export const useMemberPointsRecords = (
     };
   }, []);
 
-  /**
-   * 拉取会员快照：失败时保留旧值，只有「从来没有快照」才提示一次。
-   *
-   * 已有快照时静默刷新：切 Tab 不再随第一页重拉它，避免筛选动作多打一个 pageSize=100 的请求。
-   */
-  const loadUsers = useCallback(async (signal?: AbortSignal): Promise<MemberPointsPageUser[]> => {
-    try {
-      const nextUsers = await fetchMemberPointsUsers(signal);
-      usersRef.current = nextUsers;
-      setUsers(nextUsers);
-      setIsUsersLoaded(true);
-      return nextUsers;
-    } catch (error) {
-      if (isAbortError(error)) {
-        return usersRef.current;
-      }
-
-      if (usersRef.current.length === 0) {
-        setIsUsersLoaded(false);
-        showToast({ type: 'error', message: '会员列表加载失败，积分记录头像与余额暂不可用' });
-      }
-      return usersRef.current;
-    }
-  }, []);
-
   /** 拉第一页：换条件 / 重试 / 下拉刷新 / 写操作成功后都走这里。 */
   const loadFirstPage = useCallback(async (
     targetQuery: MemberPointsRecordQuery,
@@ -150,7 +121,7 @@ export const useMemberPointsRecords = (
     const currentRequestId = requestIdRef.current;
     const { signal } = createRequestController(abortControllerRef);
 
-    // 已加载过就只走「刷新中」：切 Tab / 换关键词保留旧列表与旧统计，
+    // 已加载过就只走「刷新中」：切 Tab 保留旧列表与旧统计，
     // 首屏（或首次失败后重试）才占用整块加载态
     if (isRefresh || hasLoadedRef.current) {
       setIsRefreshing(true);
@@ -161,18 +132,10 @@ export const useMemberPointsRecords = (
     }
 
     try {
-      // 快照只在这三种情况下重拉：首屏、下拉刷新（余额要最新）、还没有快照。
-      // 切 Tab / 改关键词与快照无关，复用已有快照，省掉一次 pageSize=100 的请求。
-      const shouldReloadUsers = isRefresh || !hasLoadedRef.current || usersRef.current.length === 0;
-      const nextUsers = shouldReloadUsers ? await loadUsers(signal) : usersRef.current;
-      if (currentRequestId !== requestIdRef.current) {
-        return;
-      }
-
       const page: MemberPointsRecordPage = await fetchMemberPointsRecords({
         query: targetQuery,
         cursor: null,
-        users: nextUsers,
+        users: usersRef.current,
         signal,
       });
       if (currentRequestId !== requestIdRef.current) {
@@ -214,12 +177,26 @@ export const useMemberPointsRecords = (
         setIsRefreshing(false);
       }
     }
-  }, [loadUsers]);
+  }, []);
 
   useEffect(() => {
     // 延后一拍发起：既避免在 effect 体内同步 setState（会触发级联渲染），
     // 也让连续改条件只打最后一次请求（与 partnerBeans 同一口径）
     const timeoutId = window.setTimeout(() => {
+      // 积分一览视图（query 为 null）不发流水请求：回到空态，等进入单会员视图再取数
+      if (!query) {
+        requestIdRef.current += 1;
+        hasLoadedRef.current = false;
+        cursorRef.current = null;
+        hasMoreRef.current = false;
+        setRecords([]);
+        setStats(MEMBER_POINTS_EMPTY_STATS);
+        setHasMore(false);
+        setErrorMessage('');
+        setIsInitialLoading(true);
+        return;
+      }
+
       void loadFirstPage(query, false).catch(() => undefined);
     }, 0);
 
@@ -233,6 +210,11 @@ export const useMemberPointsRecords = (
       return;
     }
 
+    const currentQuery = queryRef.current;
+    if (!currentQuery) {
+      return;
+    }
+
     isLoadingMoreRef.current = true;
     setIsLoadingMore(true);
     const currentRequestId = requestIdRef.current;
@@ -240,7 +222,7 @@ export const useMemberPointsRecords = (
 
     try {
       const page = await fetchMemberPointsRecords({
-        query: queryRef.current,
+        query: currentQuery,
         cursor: cursorRef.current,
         users: usersRef.current,
         signal,
@@ -272,20 +254,28 @@ export const useMemberPointsRecords = (
   }, []);
 
   const refreshRecords = useCallback(async (): Promise<void> => {
-    await loadFirstPage(queryRef.current, true);
+    const currentQuery = queryRef.current;
+    if (!currentQuery) {
+      return;
+    }
+
+    await loadFirstPage(currentQuery, true);
   }, [loadFirstPage]);
 
   const retryLoad = useCallback((): void => {
-    void loadFirstPage(queryRef.current, false).catch(() => undefined);
+    const currentQuery = queryRef.current;
+    if (!currentQuery) {
+      return;
+    }
+
+    void loadFirstPage(currentQuery, false).catch(() => undefined);
   }, [loadFirstPage]);
 
   return {
     records,
-    users,
     stats,
     hasMore,
     isInitialLoading,
-    isUsersLoaded,
     isRefreshing,
     isLoadingMore,
     errorMessage,

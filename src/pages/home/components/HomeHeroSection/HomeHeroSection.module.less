@@ -8,9 +8,10 @@
   padding: 2.4rem 2rem;
   display: flex;
   align-items: stretch;
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  // 不用 backdrop-filter：卡片背后是 900px 径向渐变光斑 + 全屏网格，
+  // 毛玻璃会迫使合成器每帧重算模糊（卡内还有 ECharts 画布），是 GPU 占用的主要来源。
+  // 装饰层本身只有 4%~9% 透明度，提高卡片底色不透明度后观感几乎无差别。
+  background: rgba(255, 255, 255, 0.96);
   border: 1px solid rgba(255, 255, 255, 0.7);
   border-radius: 20px;
   min-height: 14rem;
@@ -67,18 +68,34 @@
 }
 
 .heroLiveDot {
+  position: relative;
   width: 7px;
   height: 7px;
   border-radius: 9999px;
   background-color: @primary;
-  box-shadow: 0 0 0 0 fade(@primary, 50%);
+}
+
+// 脉冲光环：伪元素只画一次静态阴影，动画只跑 transform + opacity，
+// 全程在合成器线程完成；原来的 box-shadow 扩散动画每帧都会触发重绘。
+.heroLiveDot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  box-shadow: 0 0 0 2.5px fade(@primary, 55%);
   animation: heroPulse 2s ease-out infinite;
 }
 
 @keyframes heroPulse {
-  0% { box-shadow: 0 0 0 0 fade(@primary, 60%); }
-  60% { box-shadow: 0 0 0 6px fade(@primary, 0%); }
-  100% { box-shadow: 0 0 0 0 fade(@primary, 0%); }
+  0% { transform: scale(1); opacity: 0.9; }
+  60% { transform: scale(2); opacity: 0; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heroLiveDot::after {
+    animation: none;
+  }
 }
 
 .heroCountWrap {

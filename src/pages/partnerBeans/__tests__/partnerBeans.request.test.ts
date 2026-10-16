@@ -16,7 +16,7 @@ vi.mock('@utils/http', () => ({
 
 const {
   requestPartnerBeanRecords,
-  requestPartnerBeanUsers,
+  requestPartnerBeanUserPage,
 } = await import('../../memberList/memberList.request');
 
 const buildUser = () => ({
@@ -66,7 +66,7 @@ describe('requestPartnerBeanRecords 游标分页', () => {
     mocks.httpGet.mockResolvedValue(buildPagePayload());
 
     await requestPartnerBeanRecords({
-      query: { tab: 'all', keyword: '  ' },
+      query: { tab: 'all', keyword: '  ', storeId: null },
       cursor: null,
       users: [buildUser()],
     });
@@ -77,6 +77,7 @@ describe('requestPartnerBeanRecords 游标分页', () => {
         params: {
           beanTab: undefined,
           keyword: undefined,
+          storeId: undefined,
           cursor: undefined,
           limit: 20,
         },
@@ -84,11 +85,28 @@ describe('requestPartnerBeanRecords 游标分页', () => {
     );
   });
 
+  it('单合伙人详情按下发 storeId 过滤', async () => {
+    mocks.httpGet.mockResolvedValue(buildPagePayload());
+
+    await requestPartnerBeanRecords({
+      query: { tab: 'all', keyword: '', storeId: '18' },
+      cursor: null,
+      users: [buildUser()],
+    });
+
+    expect(mocks.httpGet).toHaveBeenCalledWith(
+      '/pulse/membership/admin/beans/logs',
+      expect.objectContaining({
+        params: expect.objectContaining({ storeId: '18' }),
+      }),
+    );
+  });
+
   it('按 cursor 翻页，并用后端统计而非本页条数', async () => {
     mocks.httpGet.mockResolvedValue(buildPagePayload());
 
-    const page = await requestPartnerBeanRecords({
-      query: { tab: 'admin', keyword: '张三' },
+    const page =     await requestPartnerBeanRecords({
+      query: { tab: 'admin', keyword: '张三', storeId: null },
       cursor: '1747123200000_11',
       users: [buildUser()],
     });
@@ -99,6 +117,7 @@ describe('requestPartnerBeanRecords 游标分页', () => {
         params: {
           beanTab: 'admin',
           keyword: '张三',
+          storeId: undefined,
           cursor: '1747123200000_11',
           limit: 20,
         },
@@ -120,8 +139,8 @@ describe('requestPartnerBeanRecords 游标分页', () => {
       stats: undefined,
     }));
 
-    const page = await requestPartnerBeanRecords({
-      query: { tab: 'all', keyword: '' },
+    const page =     await requestPartnerBeanRecords({
+      query: { tab: 'all', keyword: '', storeId: null },
       cursor: null,
       users: [],
     });
@@ -135,17 +154,44 @@ describe('requestPartnerBeanRecords 游标分页', () => {
     });
   });
 
-  it('合伙人快照只保留合伙人与有豆余额的用户', async () => {
+  it('余额一览分页：partner/keyword/page/pageSize 下推，hasMore 按后端 total 判断', async () => {
     mocks.httpGet.mockResolvedValue({
       items: [
         { id: '18', isPartner: true, beanBalance: 0 },
-        { id: '19', isPartner: false, beanBalance: 30 },
-        { id: '20', isPartner: false, beanBalance: 0 },
+        { id: '19', isPartner: true, beanBalance: 30 },
       ],
+      total: 22,
     });
 
-    const users = await requestPartnerBeanUsers();
+    const page = await requestPartnerBeanUserPage({ keyword: '张三', page: 1 });
 
-    expect(users.map((user) => user.id)).toEqual(['18', '19']);
+    expect(mocks.httpGet).toHaveBeenCalledWith(
+      '/pulse/membership/admin/members',
+      expect.objectContaining({
+        params: {
+          partner: true,
+          keyword: '张三',
+          page: 1,
+          pageSize: 20,
+        },
+      }),
+    );
+    expect(page.users.map((user) => user.id)).toEqual(['18', '19']);
+    expect(page.total).toBe(22);
+    expect(page.hasMore).toBe(true);
+    expect(page.nextPage).toBe(2);
+  });
+
+  it('余额一览最后一页：total 未超已加载条数时停住，total 缺失时整页拉满视为可能还有下一页', async () => {
+    mocks.httpGet
+      .mockResolvedValueOnce({ items: [{ id: '18', isPartner: true }], total: 1 })
+      .mockResolvedValueOnce({ items: Array.from({ length: 20 }, (_, index) => ({ id: String(index) })) });
+
+    const lastPage = await requestPartnerBeanUserPage({ keyword: '', page: 2 });
+    expect(lastPage.hasMore).toBe(false);
+    expect(lastPage.nextPage).toBeNull();
+
+    const fullPageWithoutTotal = await requestPartnerBeanUserPage({ keyword: '', page: 3 });
+    expect(fullPageWithoutTotal.hasMore).toBe(true);
   });
 });

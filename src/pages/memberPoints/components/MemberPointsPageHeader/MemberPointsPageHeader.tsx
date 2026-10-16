@@ -1,24 +1,19 @@
-// memberPoints 页面头部组件
+// memberPoints 页面头部组件：标题随视图切换，右侧操作区由页面传入
 import React from 'react';
 import PageHeader from '@components/ui/layout/PageHeader';
-import MemberPointsHeaderAction from '../MemberPointsHeaderAction/MemberPointsHeaderAction';
 
 interface MemberPointsPageHeaderProps {
-  isSubmitting: boolean;
+  title: string;
   onBack: () => void;
-  onOpenUserPicker: () => void;
+  rightExtra?: React.ReactNode;
 }
 
 const MemberPointsPageHeader: React.FC<MemberPointsPageHeaderProps> = React.memo(({
-  isSubmitting,
+  title,
   onBack,
-  onOpenUserPicker,
+  rightExtra,
 }) => (
-  <PageHeader
-    title="会员积分管理"
-    onBack={onBack}
-    rightExtra={<MemberPointsHeaderAction disabled={isSubmitting} onClick={onOpenUserPicker} />}
-  />
+  <PageHeader title={title} onBack={onBack} rightExtra={rightExtra} />
 ));
 
 export default MemberPointsPageHeader;

@@ -1,0 +1,158 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/breakpoints.less';
+
+.summaryCard {
+  background: #fff;
+  border-radius: 1.6rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border: 1px solid @border-color;
+  overflow: hidden;
+
+  @media (min-width: @bp-mobile) {
+    border-radius: 2rem;
+  }
+}
+
+.summaryTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1.4rem 1.6rem;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: @text-sub;
+  border-bottom: 1px solid @border-color;
+}
+
+.summaryCount {
+  margin-left: auto;
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: @text-sub;
+}
+
+.memberList {
+  display: flex;
+  flex-direction: column;
+}
+
+.memberItem {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1.2rem 1.6rem;
+  border-bottom: 1px solid @border-color;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  @media (min-width: @bp-mobile) {
+    padding: 1.4rem 2rem;
+    gap: 1.6rem;
+  }
+
+  @media (min-width: @bp-tablet) {
+    padding: 1.6rem 2.4rem;
+  }
+}
+
+.memberItemActionable {
+  cursor: pointer;
+  transition: background-color 0.15s;
+
+  &:hover {
+    background-color: rgba(132, 204, 22, 0.05);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(132, 204, 22, 0.5);
+    outline-offset: -2px;
+  }
+}
+
+.memberAvatar {
+  width: 3.6rem;
+  height: 3.6rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #84cc16, #a3e635);
+  border: 1.5px solid rgba(132, 204, 22, 0.35);
+  color: #fff;
+  font-size: 1.4rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.memberAvatarWithImage {
+  background: transparent;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.memberAvatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.memberInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.memberName {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: @text-main;
+}
+
+.memberPhone {
+  font-size: 1.15rem;
+  color: @text-sub;
+}
+
+.memberPoints {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.memberPointsVal {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #65a30d;
+}
+
+.memberPointsUnit {
+  font-size: 1.2rem;
+  color: @text-sub;
+}
+
+.quickAdjustBtn {
+  padding: 0.5rem 1.2rem;
+  border-radius: 2rem;
+  border: 1.5px solid rgba(132, 204, 22, 0.45);
+  background: rgba(132, 204, 22, 0.1);
+  color: #65a30d;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+
+  &:hover {
+    background: rgba(132, 204, 22, 0.18);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
