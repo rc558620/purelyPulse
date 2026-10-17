@@ -19,9 +19,11 @@
 }
 
 // 无内边距版本：适用于 MenuRow 列表等内容自带 padding 的场景
+// 贴边内容的 hover 背景需要被卡片圆角裁切，因此强制 overflow: hidden
 .cardNoPadding {
   padding: 0;
   gap: 0;
+  overflow: hidden;
 }
 
 // 裁切溢出版本：需要时显式传入 overflowHidden prop
