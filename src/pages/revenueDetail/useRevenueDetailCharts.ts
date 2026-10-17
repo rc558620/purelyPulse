@@ -50,8 +50,6 @@ export const useRevenueDetailCharts = ({
           value: safeNum(item.value),
           itemStyle: {
             color: meta.color,
-            shadowColor: `${meta.color}40`,
-            shadowBlur: 10,
           },
         };
       }),
@@ -113,13 +111,13 @@ export const useRevenueDetailCharts = ({
       symbol: 'circle',
       symbolSize: 6,
       showSymbol: false,
-      lineStyle: { color: '#f97316', width: 3, shadowColor: 'rgba(249,115,22,0.35)', shadowBlur: 8 },
+      // 不使用 shadowBlur：canvas 阴影模糊在 Retina(dpr×2 像素) 下
+      // 每帧重绘成本极高，入场/切换动画期间是图表 GPU 开销大头
+      lineStyle: { color: '#f97316', width: 3 },
       itemStyle: {
         color: '#f97316',
         borderColor: '#fff',
         borderWidth: 2,
-        shadowColor: 'rgba(249,115,22,0.5)',
-        shadowBlur: 6,
       },
       emphasis: { scale: true, focus: 'self' },
       areaStyle: {

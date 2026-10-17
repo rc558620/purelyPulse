@@ -39,43 +39,24 @@
   z-index: 0;
 }
 
-// 顶部橙色光晕
-.bgGlow1 {
+// 顶部橙色光晕 + 左下绿色柔光 + 右上紫色柔光
+// 三个 fixed 渐变层合并为一个元素：同样视觉下减少合成层数量。
+.bgGlow {
   position: fixed;
-  top: -8%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 640px;
-  height: 480px;
-  background: radial-gradient(ellipse at center, fade(@accent, 11%) 0%, transparent 68%);
+  inset: 0;
   pointer-events: none;
   z-index: 0;
+  background-image:
+    radial-gradient(ellipse 640px 480px at 50% -8%, fade(@accent, 11%) 0%, transparent 68%),
+    radial-gradient(circle 400px at -5% 90%, fade(@primary, 7%) 0%, transparent 68%),
+    radial-gradient(circle 300px at 104% 20%, fade(#a855f7, 5%) 0%, transparent 68%);
 
-  @media (min-width: @bp-mobile) { width: 1000px; height: 700px; }
-}
-
-// 左下绿色柔光
-.bgGlow2 {
-  position: fixed;
-  bottom: 10%;
-  left: -5%;
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, fade(@primary, 7%) 0%, transparent 68%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-// 右上紫色柔光
-.bgGlow3 {
-  position: fixed;
-  top: 20%;
-  right: -4%;
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, fade(#a855f7, 5%) 0%, transparent 68%);
-  pointer-events: none;
-  z-index: 0;
+  @media (min-width: @bp-mobile) {
+    background-image:
+      radial-gradient(ellipse 1000px 700px at 50% -8%, fade(@accent, 11%) 0%, transparent 68%),
+      radial-gradient(circle 400px at -5% 90%, fade(@primary, 7%) 0%, transparent 68%),
+      radial-gradient(circle 300px at 104% 20%, fade(#a855f7, 5%) 0%, transparent 68%);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -135,9 +116,10 @@
 
 // ─── 通用卡片基础 ─────────────────────────────────────────────
 .glassCard() {
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  // 磨砂观感用高不透明度背景实现，不使用 backdrop-filter：
+  // backdrop-filter 会迫使合成器为每张卡、每一帧重新采样并模糊背后的
+  // fixed 全屏装饰层，是本页 GPU 占用的主要来源。
+  background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.9);
   border-radius: 20px;
   box-shadow:
@@ -280,19 +262,29 @@
 }
 
 .heroLiveDot {
+  position: relative;
   display: inline-block;
   width: 8px;
   height: 8px;
   background: @accent;
   border-radius: 9999px;
-  box-shadow: 0 0 0 3px fade(@accent, 25%);
-  animation: pulseOrb 2s ease-in-out infinite;
   flex-shrink: 0;
+
+  // 脉冲圈用 transform/opacity 动画（合成器加速），
+  // 替代原来逐帧重绘的 box-shadow infinite 动画
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: fade(@accent, 30%);
+    animation: pulseOrb 2s ease-in-out infinite;
+  }
 }
 
 @keyframes pulseOrb {
-  0%, 100% { box-shadow: 0 0 0 3px fade(@accent, 25%); }
-  50%       { box-shadow: 0 0 0 6px fade(@accent, 8%); }
+  0%, 100% { transform: scale(1); opacity: 0.55; }
+  50%       { transform: scale(2.75); opacity: 0; }
 }
 
 .heroRegionTag {

@@ -83,9 +83,7 @@ const RevenueDetail: React.FC = () => {
   return (
     <div className={styles.pageContainer}>
       <div className={styles.bgMesh} aria-hidden="true" />
-      <div className={styles.bgGlow1} aria-hidden="true" />
-      <div className={styles.bgGlow2} aria-hidden="true" />
-      <div className={styles.bgGlow3} aria-hidden="true" />
+      <div className={styles.bgGlow} aria-hidden="true" />
 
       <PageHeader title="充值收入趋势" />
 
