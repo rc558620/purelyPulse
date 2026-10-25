@@ -16,6 +16,7 @@ export const REVENUE_TYPE_DEFAULTS = ['月卡会员', '季度会员', '年卡会
 export const createEmptyRevenuePeriod = (): HomeRevenuePeriodData => ({
   dates: [],
   values: [],
+  valuesDisplay: [],
   totalDisplay: '',
   avgDisplay: '',
   growth: 0,
@@ -44,8 +45,9 @@ export const createEmptyRevenueTypes = (): HomeRevenueTypeItem[] => (
 
 export const createEmptyHomeOverview = (): HomeOverviewData => ({
   onlineCount: 0,
+  profitOnlineCount: 0,
+  clubOnlineCount: 0,
   onlinePeak: 0,
-  onlineTrend: [],
   onlineGrowthRate: 0,
   pendingApplicationCount: 0,
   partnerStats: createEmptyPartnerStats(),

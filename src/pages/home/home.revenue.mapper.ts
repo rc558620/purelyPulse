@@ -8,6 +8,7 @@ import {
   isPlainObject,
   pickDisplayArray,
   pickDisplayField,
+  pickNumberArray,
   pickNumberField,
   pickStringArray,
   pickStringField,
@@ -63,7 +64,9 @@ const resolvePeriodMetrics = (root: Record<string, unknown> | null) => ({
 
 const buildRevenuePeriod = (source: Record<string, unknown> | null): HomeRevenuePeriodData => ({
   dates: resolveTrendDates(source),
-  values: pickDisplayArray(source, ['valuesDisplay', 'amountsDisplay', 'dataDisplay']),
+  // values 取原始数值（图表坐标），valuesDisplay 取展示字符串（tooltip / 数值展示）
+  values: pickNumberArray(source, ['values', 'amounts', 'data']),
+  valuesDisplay: pickDisplayArray(source, ['valuesDisplay', 'amountsDisplay', 'dataDisplay']),
   ...resolvePeriodMetrics(source),
 });
 
@@ -101,7 +104,8 @@ export const mapRevenuePeriod = (
 
   return {
     dates: resolveTrendDates(trendRoot),
-    values: pickDisplayArray(trendRoot, ['valuesDisplay', 'amountsDisplay', 'dataDisplay']),
+    values: pickNumberArray(trendRoot, ['values', 'amounts', 'data']),
+    valuesDisplay: pickDisplayArray(trendRoot, ['valuesDisplay', 'amountsDisplay', 'dataDisplay']),
     ...resolvePeriodMetrics(summaryRoot),
   };
 };

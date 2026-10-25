@@ -4,8 +4,10 @@ export type RevenuePeriod = 'today' | 'week' | 'month' | 'season';
 
 export interface HomeRevenuePeriodData {
   dates: string[];
-  /** 金额展示值（后端直接返回，前端不再分转元） */
-  values: string[];
+  /** 金额原始值（分），仅供图表坐标取值，前端不做换算、不作任何展示 */
+  values: number[];
+  /** 金额展示值（元字符串，后端计算并直接返回，前端原样展示） */
+  valuesDisplay: string[];
   /** 期间总额展示值 */
   totalDisplay: string;
   /** 期间日均展示值 */
@@ -51,9 +53,13 @@ export interface HomeOverviewQuery {
 }
 
 export interface HomeOverviewData {
+  /** 在线总人数（商家端 + 个人端），后端计算的权威合计值 */
   onlineCount: number;
+  /** 商家端（purelyProfit）在线人数 */
+  profitOnlineCount: number;
+  /** 个人端（purelyClub）在线人数 */
+  clubOnlineCount: number;
   onlinePeak: number;
-  onlineTrend: number[];
   onlineGrowthRate: number;
   pendingApplicationCount: number;
   partnerStats: HomePartnerStats;

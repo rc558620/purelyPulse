@@ -4,6 +4,7 @@ import { useAnimatedNavigate } from '@hooks/useAnimatedNavigate';
 import { ROUTE_PATHS } from '../../router/paths';
 import type { CascadeValue } from '@components/form/CascaderView/types';
 import { normalizeRegionValue, resolveRegionFieldName } from '@constants/regionData';
+import { createEmptyRevenuePeriod } from './home.defaults';
 import type { HomeRevenuePeriodData, RevenuePeriod } from './home.types';
 import { useHomeOverview } from './useHomeOverview';
 import HomeHeroSection from './components/HomeHeroSection/HomeHeroSection';
@@ -74,7 +75,7 @@ const Home = (): React.JSX.Element => {
 
   const isInitialLoading = isLoading && !hasLoaded;
   const showInitialError = !isLoading && !hasLoaded && Boolean(errorMessage);
-  const emptyRevenuePeriodData = useMemo<HomeRevenuePeriodData>(() => ({ dates: [], values: [], totalDisplay: '', avgDisplay: '', growth: 0 }), []);
+  const emptyRevenuePeriodData = useMemo<HomeRevenuePeriodData>(() => createEmptyRevenuePeriod(), []);
   const revenueSummary = overview.revenueByPeriod[revenuePeriod] ?? emptyRevenuePeriodData;
 
   return (

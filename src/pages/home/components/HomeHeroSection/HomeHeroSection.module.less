@@ -5,16 +5,18 @@
 .heroCard {
   position: relative;
   overflow: hidden;
-  padding: 2.4rem 2rem;
+  // 移动端（< 768px）1.6rem，iPad / PC（>= 768px）2.4rem
+  padding: 1.6rem;
   display: flex;
+  flex-direction: column;
   align-items: stretch;
+  gap: 1.2rem;
   // 不用 backdrop-filter：卡片背后是 900px 径向渐变光斑 + 全屏网格，
   // 毛玻璃会迫使合成器每帧重算模糊（卡内还有 ECharts 画布），是 GPU 占用的主要来源。
   // 装饰层本身只有 4%~9% 透明度，提高卡片底色不透明度后观感几乎无差别。
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid rgba(255, 255, 255, 0.7);
   border-radius: 20px;
-  min-height: 14rem;
   box-shadow:
     0 4px 24px rgba(0, 0, 0, 0.05),
     0 1px 4px rgba(0, 0, 0, 0.04),
@@ -33,9 +35,11 @@
 
   @media (min-width: @bp-mobile) {
     grid-column: 1 / -1;
-    padding: 3.2rem 3.6rem;
+    flex-direction: row;
+    align-items: center;
+    gap: 3.2rem;
+    padding: 2.4rem;
     border-radius: 24px;
-    min-height: 16rem;
 
     &::before {
       border-radius: 24px 24px 0 0;
@@ -44,12 +48,15 @@
 }
 
 .heroLeft {
-  // 宽度由内容自然撑开，不强制拉伸；right: 46% 的绝对定位趋势图不占 flex 空间
-  width: auto;
-  flex-shrink: 0;
+  // 窄屏时纵向铺满；宽屏时左侧内容区按内容宽度收缩，剩余空间留给柱状图
   .flex-col();
-  gap: 1rem;
-  justify-content: center;
+  gap: 1.2rem;
+  min-width: 0;
+
+  @media (min-width: @bp-mobile) {
+    flex-shrink: 0;
+    gap: 1.6rem;
+  }
 }
 
 .heroLiveBadge {
@@ -98,31 +105,23 @@
   }
 }
 
-.heroCountWrap {
+// LIVE 徽标与标题同行，构成卡片的语义头部
+.heroHead {
   display: flex;
-  align-items: baseline;
-  gap: 0.8rem;
+  align-items: center;
+  gap: 1.2rem;
 }
 
-.heroCount {
-  font-size: 4.8rem;
-  font-weight: 900;
+.heroTitle {
+  margin: 0;
+  font-size: 2.2rem;
+  font-weight: 800;
   color: @text-main;
-  letter-spacing: -0.03em;
-  line-height: 1;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
 
   @media (min-width: @bp-mobile) {
-    font-size: 6.4rem;
-  }
-}
-
-.heroCountUnit {
-  font-size: 1.6rem;
-  font-weight: 600;
-  color: @text-sub;
-
-  @media (min-width: @bp-mobile) {
-    font-size: 2rem;
+    font-size: 2.8rem;
   }
 }
 
@@ -157,28 +156,18 @@
   flex-shrink: 0;
 }
 
-.heroSparkline {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 62%;
-  pointer-events: none;
-  overflow: hidden;
-  border-radius: 0 20px 20px 0;
-
-  @media (min-width: @bp-mobile) {
-    width: 68%;
-    border-radius: 0 24px 24px 0;
-  }
+// 柱状图占据剩余宽度，高度由 HOME_CHART_HEIGHTS.onlineBreakdown 单点控制
+.heroChart {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
-.heroSparklineCanvas {
+.heroChartCanvas {
   width: 100%;
-  height: 100%;
   display: block;
-  // 覆盖 Echarts 组件默认的 min-height，让趋势图随 heroCard 自适应
-  min-height: 0 !important;
 }
 
 .heroDecorCircle {
