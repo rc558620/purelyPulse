@@ -84,6 +84,26 @@
   }
 }
 
+// 详情视图固定区：门店头部 + 变动记录统计 + 流水 Tab。
+// 下拉手势只作用于变动记录，滚到记录深处时 Tab 仍然可见可切。
+.fixedShell {
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+  padding: 0 1.6rem 1.6rem;
+  flex-shrink: 0;
+
+  @media (min-width: @bp-mobile) {
+    gap: 2rem;
+    padding: 0 2.4rem 1.8rem;
+  }
+
+  @media (min-width: @bp-tablet) {
+    gap: 2.4rem;
+    padding: 0 2.4rem 2rem;
+  }
+}
+
 // 列表滚动视口：占满头部固定区以下的剩余高度
 .refreshShell {
   flex: 1;

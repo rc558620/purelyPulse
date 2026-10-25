@@ -33,6 +33,7 @@ interface ImportMetaEnv {
   // ─── 营销管理：群发短信 ────────────────────────────────────────
   readonly VITE_SMS_BROADCAST_ACCOUNTS_API_PATH?: string;
   readonly VITE_GRANT_SMS_BALANCE_API_PATH?: string;
+  readonly VITE_SMS_WALLET_LOGS_API_PATH?: string;
 }
 
 interface ImportMeta {

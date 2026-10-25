@@ -9,12 +9,17 @@
 // 本模块的「平台赠送」是它们的第一个生产者——即「运营给商家补额度」这条链路的唯一入口。
 import { createKeyedInFlightRequest, http, resolveEnvPath } from '@utils/http';
 import { safeNum, safeStr } from '@utils/utils';
-import { SMS_BROADCAST_PAGE_SIZE } from './smsBroadcast.constants';
+import { SMS_BROADCAST_LOG_PAGE_SIZE, SMS_BROADCAST_PAGE_SIZE } from './smsBroadcast.constants';
 import type {
   SmsAccount,
   SmsBroadcastListPageResult,
   SmsBroadcastListQuery,
   SmsBroadcastStats,
+  SmsWalletLog,
+  SmsWalletLogPageResult,
+  SmsWalletLogRequestParams,
+  SmsWalletLogStats,
+  SmsWalletLogType,
 } from './smsBroadcast.types';
 
 const SMS_ACCOUNTS_API_PATH = resolveEnvPath(
@@ -25,6 +30,11 @@ const SMS_ACCOUNTS_API_PATH = resolveEnvPath(
 const SMS_GRANT_API_PATH = resolveEnvPath(
   import.meta.env.VITE_GRANT_SMS_BALANCE_API_PATH,
   '/pulse/marketing/admin/sms/accounts/{storeId}/grant',
+);
+/** 钱包变动记录接口（真分页）：`{storeId}` 占位符由 resolveSmsWalletLogsPath 展开 */
+const SMS_WALLET_LOGS_API_PATH = resolveEnvPath(
+  import.meta.env.VITE_SMS_WALLET_LOGS_API_PATH,
+  '/pulse/marketing/admin/sms/accounts/{storeId}/wallet-logs',
 );
 
 /** 后端未回传预警阈值时的兜底值（分），与 purelyProfit SMS_WARNING_THRESHOLD_FEN 一致 */
@@ -175,3 +185,139 @@ export const submitSmsBalanceGrant = async (
 
   return mapSmsAccount(response, 0);
 };
+
+// ─── 门店短信钱包变动记录（page / pageSize 真分页） ────────────────────
+
+interface SmsWalletLogResponseDTO {
+  id?: string | number | null;
+  storeId?: string | number | null;
+  type?: string | null;
+  changeFen?: number | null;
+  balanceAfterFen?: number | null;
+  description?: string | null;
+  orderNo?: string | null;
+  broadcastId?: string | null;
+  createdAt?: number | string | null;
+}
+
+interface SmsWalletLogsStatsResponseDTO {
+  totalRecords?: number | null;
+  adminAdjustCount?: number | null;
+  rechargeCount?: number | null;
+  consumeCount?: number | null;
+  refundCount?: number | null;
+}
+
+interface SmsWalletLogsResponseDTO {
+  items?: SmsWalletLogResponseDTO[] | null;
+  total?: number | null;
+  page?: number | null;
+  pageSize?: number | null;
+  hasMore?: boolean | null;
+  stats?: SmsWalletLogsStatsResponseDTO | null;
+}
+
+/** 流水类型白名单：后端新增类型时前端不至于把脏值当已知类型渲染 */
+const SMS_WALLET_LOG_TYPES: readonly SmsWalletLogType[] = [
+  'recharge',
+  'consume',
+  'refund',
+  'grant',
+  'admin_adjust',
+];
+
+const normalizeWalletLogType = (rawType: unknown): SmsWalletLogType => {
+  if (typeof rawType !== 'string') {
+    return 'unknown';
+  }
+
+  return SMS_WALLET_LOG_TYPES.find((type) => type === rawType) ?? 'unknown';
+};
+
+/** 后端毫秒时间戳（兼容 ISO 字符串）→ 毫秒；脏值统一归 0，由 UI 决定展示什么 */
+const normalizeWalletLogTimestamp = (rawTime: unknown): number => {
+  if (typeof rawTime === 'number') {
+    return Number.isFinite(rawTime) ? rawTime : 0;
+  }
+  if (typeof rawTime !== 'string' || !rawTime) {
+    return 0;
+  }
+
+  const parsedTimestamp = Date.parse(rawTime);
+  return Number.isFinite(parsedTimestamp) ? parsedTimestamp : 0;
+};
+
+/** 展开变动记录接口路径里的 `{storeId}` / `:storeId` 占位符 */
+export const resolveSmsWalletLogsPath = (storeId: string): string => {
+  const encodedStoreId = encodeURIComponent(storeId);
+  if (SMS_WALLET_LOGS_API_PATH.includes('{storeId}')) {
+    return SMS_WALLET_LOGS_API_PATH.replace('{storeId}', encodedStoreId);
+  }
+  if (SMS_WALLET_LOGS_API_PATH.includes(':storeId')) {
+    return SMS_WALLET_LOGS_API_PATH.replace(':storeId', encodedStoreId);
+  }
+  return `${SMS_WALLET_LOGS_API_PATH.replace(/\/+$/, '')}/${encodedStoreId}/wallet-logs`;
+};
+
+const mapSmsWalletLog = (response: SmsWalletLogResponseDTO, index: number): SmsWalletLog => ({
+  id: toSafeId(response?.id) || `sms-wallet-log-${index}`,
+  storeId: toSafeId(response?.storeId),
+  type: normalizeWalletLogType(response?.type),
+  changeFen: safeNum(response?.changeFen, 0),
+  balanceAfterFen: safeNum(response?.balanceAfterFen, 0),
+  description: safeStr(response?.description, ''),
+  // 关联单号只在部分类型存在：空串归一为 undefined，避免 UI 渲染空标签
+  orderNo: safeStr(response?.orderNo, '') || undefined,
+  broadcastId: safeStr(response?.broadcastId, '') || undefined,
+  createdAt: normalizeWalletLogTimestamp(response?.createdAt),
+});
+
+const mapSmsWalletLogStats = (
+  response: SmsWalletLogsStatsResponseDTO | null | undefined,
+): SmsWalletLogStats => ({
+  totalRecords: safeNum(response?.totalRecords, 0),
+  adminAdjustCount: safeNum(response?.adminAdjustCount, 0),
+  rechargeCount: safeNum(response?.rechargeCount, 0),
+  consumeCount: safeNum(response?.consumeCount, 0),
+  refundCount: safeNum(response?.refundCount, 0),
+});
+
+/** 变动记录单页请求：Tab 与分页全部由后端权威处理 */
+const requestSmsWalletLogs = async (
+  params: SmsWalletLogRequestParams,
+): Promise<SmsWalletLogPageResult> => {
+  const normalizedPage = safeNum(params.page, 1) || 1;
+  const response = await http.get<SmsWalletLogsResponseDTO>(
+    resolveSmsWalletLogsPath(params.query.storeId),
+    {
+      params: {
+        tab: params.query.tab,
+        page: normalizedPage,
+        pageSize: SMS_BROADCAST_LOG_PAGE_SIZE,
+      },
+      signal: params.signal,
+      skipGlobalErrorHandler: true,
+      errorMessage: '获取短信变动记录失败，请稍后重试',
+    },
+  );
+  const rawItems = Array.isArray(response?.items) ? response.items : [];
+
+  return {
+    logs: rawItems.map(mapSmsWalletLog),
+    stats: mapSmsWalletLogStats(response?.stats),
+    total: safeNum(response?.total, rawItems.length),
+    hasMore: response?.hasMore === true,
+    page: safeNum(response?.page, normalizedPage),
+  };
+};
+
+/** 拉取门店短信钱包变动记录单页，并按「门店 + Tab + 页码」对并发请求去重 */
+export const fetchSmsWalletLogs = createKeyedInFlightRequest(
+  (params: SmsWalletLogRequestParams) =>
+    JSON.stringify({
+      storeId: params.query.storeId,
+      tab: params.query.tab,
+      page: params.page,
+    }),
+  requestSmsWalletLogs,
+);

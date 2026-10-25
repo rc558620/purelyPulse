@@ -1,0 +1,232 @@
+@import (reference) "@styles/variables.less";
+@import (reference) "@styles/breakpoints.less";
+
+.listCard {
+  background: #fff;
+  border-radius: 1.6rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border: 1px solid @border-color;
+  overflow: hidden;
+
+  @media (min-width: @bp-mobile) {
+    border-radius: 2rem;
+  }
+}
+
+.listHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.4rem 1.6rem;
+  border-bottom: 1px solid @border-color;
+
+  @media (min-width: @bp-mobile) {
+    padding: 1.6rem 2rem;
+  }
+
+  @media (min-width: @bp-tablet) {
+    padding: 1.8rem 2.4rem;
+  }
+}
+
+.listTitle {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: @text-main;
+}
+
+.listCount {
+  font-size: 1.2rem;
+  color: @text-sub;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 4rem 2rem;
+  color: @text-sub;
+  font-size: 1.3rem;
+
+  svg {
+    opacity: 0.45;
+  }
+}
+
+.logList {
+  display: flex;
+  flex-direction: column;
+}
+
+.logItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.2rem;
+  padding: 1.4rem 1.6rem;
+  border-bottom: 1px solid @border-color;
+  transition: background 0.12s;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.02);
+  }
+
+  @media (min-width: @bp-mobile) {
+    padding: 1.6rem 2rem;
+    gap: 1.6rem;
+  }
+
+  @media (min-width: @bp-tablet) {
+    padding: 1.8rem 2.4rem;
+  }
+}
+
+// ─── 左侧类型徽标 ──────────────────────────────────────────────────────
+.typeIcon {
+  width: 2.8rem;
+  height: 2.8rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 0.2rem;
+}
+
+.typeIconRecharge {
+  background: rgba(59, 130, 246, 0.12);
+  color: #3b82f6;
+}
+
+.typeIconGrant {
+  background: rgba(8, 145, 178, 0.12);
+  color: #0891b2;
+}
+
+.typeIconConsume {
+  background: rgba(249, 115, 22, 0.14);
+  color: #f97316;
+}
+
+.typeIconAdmin {
+  background: rgba(132, 204, 22, 0.14);
+  color: darken(#84cc16, 12%);
+}
+
+.typeIconUnknown {
+  background: rgba(100, 116, 139, 0.12);
+  color: @text-sub;
+}
+
+// ─── 中间信息区 ────────────────────────────────────────────────────────
+.logInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.logTopRow {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.logDesc {
+  font-size: 1.25rem;
+  color: @text-main;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  @media (min-width: @bp-mobile) {
+    font-size: 1.35rem;
+  }
+}
+
+.typeTag {
+  padding: 0.2rem 0.7rem;
+  border-radius: 2rem;
+  font-size: 1.1rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.typeTagRecharge {
+  background: rgba(59, 130, 246, 0.12);
+  color: #3b82f6;
+}
+
+.typeTagGrant {
+  background: rgba(8, 145, 178, 0.12);
+  color: #0891b2;
+}
+
+.typeTagConsume {
+  background: rgba(249, 115, 22, 0.12);
+  color: #f97316;
+}
+
+.typeTagClear {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.typeTagAdmin {
+  background: rgba(132, 204, 22, 0.14);
+  color: darken(#84cc16, 12%);
+}
+
+.typeTagUnknown {
+  background: rgba(100, 116, 139, 0.1);
+  color: @text-sub;
+}
+
+.logBottomRow {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+}
+
+.logTime {
+  font-size: 1.1rem;
+  color: @text-sub;
+}
+
+.logBalance {
+  font-size: 1.1rem;
+  color: @text-sub;
+}
+
+.logBalanceVal {
+  font-weight: 600;
+  color: #0891b2;
+}
+
+// ─── 右侧变动数量 ──────────────────────────────────────────────────────
+.logAmount {
+  font-size: 1.6rem;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-top: 0.2rem;
+
+  @media (min-width: @bp-mobile) {
+    font-size: 1.9rem;
+  }
+}
+
+.logAmountIncrease {
+  color: #0891b2;
+}
+
+.logAmountDecrease {
+  color: #f97316;
+}

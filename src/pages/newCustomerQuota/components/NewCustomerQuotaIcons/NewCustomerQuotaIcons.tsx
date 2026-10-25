@@ -162,3 +162,74 @@ export const IconNewCustomerQuotaArrow: React.FC<SvgProps> = (props) => (
     <path d="M5 12h14M12 5l7 7-7 7" />
   </svg>
 );
+
+/** 变动记录：充值类型（钱包） */
+export const IconNewCustomerQuotaRecharge: React.FC<SvgProps> = (props) => (
+  <svg
+    width={14}
+    height={14}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    {...props}
+  >
+    <path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    <path d="M16 12h3" />
+  </svg>
+);
+
+/** 变动记录：增加类（会员赠送 / 运营增发）加号 */
+export const IconNewCustomerQuotaIncrease: React.FC<SvgProps> = (props) => (
+  <svg
+    width={14}
+    height={14}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2.5}
+    aria-hidden="true"
+    {...props}
+  >
+    <line x1="12" y1="5" x2="12" y2="19" />
+    <line x1="5" y1="12" x2="19" y2="12" />
+  </svg>
+);
+
+/** 变动记录：消耗 / 清零类减号 */
+export const IconNewCustomerQuotaDecrease: React.FC<SvgProps> = (props) => (
+  <svg
+    width={14}
+    height={14}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2.5}
+    aria-hidden="true"
+    {...props}
+  >
+    <line x1="5" y1="12" x2="19" y2="12" />
+  </svg>
+);
+
+/** 变动记录：管理员调整（齿轮） */
+export const IconNewCustomerQuotaAdmin: React.FC<SvgProps> = (props) => (
+  <svg
+    width={14}
+    height={14}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    {...props}
+  >
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.11A1.7 1.7 0 0 0 8.9 19.3a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.7 15a1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.11A1.7 1.7 0 0 0 4.7 8.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.7a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.11A1.7 1.7 0 0 0 15.1 4.7a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.3 9v.11A1.7 1.7 0 0 0 20.86 10H21a2 2 0 1 1 0 4h-.11A1.7 1.7 0 0 0 19.4 15z" />
+  </svg>
+);

@@ -1,6 +1,6 @@
-@import (reference) '@styles/variables.less';
-@import (reference) '@styles/mixins.less';
-@import (reference) '@styles/breakpoints.less';
+@import (reference) "@styles/variables.less";
+@import (reference) "@styles/mixins.less";
+@import (reference) "@styles/breakpoints.less";
 
 // 页面容器：滚动交给 PullRefreshLoadMore 自己的滚动视口（它按容器高度计算下拉距离），
 // 所以页面容器只负责「占满高度 + 不抢滚动」，不能再写 overflow-y: auto。
@@ -13,7 +13,7 @@
   flex-direction: column;
   background-color: @bg-light;
   color: @text-main;
-  font-family: 'Inter', 'Noto Sans SC', sans-serif;
+  font-family: "Inter", "Noto Sans SC", sans-serif;
   overflow: hidden;
 }
 
@@ -81,6 +81,26 @@
   @media (min-width: @bp-mobile) {
     gap: 2rem;
     padding: 0 2.4rem 1.8rem;
+  }
+}
+
+// 详情视图固定区：门店头部 + 变动记录统计 + 记录 Tab。
+// 下拉手势只作用于变动记录，滚到记录深处时 Tab 仍然可见可切。
+.fixedShell {
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+  padding: 0 1.6rem 1.6rem;
+  flex-shrink: 0;
+
+  @media (min-width: @bp-mobile) {
+    gap: 2rem;
+    padding: 0 2.4rem 1.8rem;
+  }
+
+  @media (min-width: @bp-tablet) {
+    gap: 2.4rem;
+    padding: 0 2.4rem 2rem;
   }
 }
 

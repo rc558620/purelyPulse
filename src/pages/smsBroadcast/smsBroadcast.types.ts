@@ -110,3 +110,92 @@ export interface SmsBroadcastListPageResult {
   /** 是否还有下一页 */
   hasMore: boolean;
 }
+
+// ─── 门店短信钱包变动记录 ─────────────────────────────────────────────
+
+/** 变动记录筛选 Tab：全部 / 平台调整 / 充值 / 消耗 / 退费 */
+export type SmsBroadcastLogTab = 'all' | 'admin' | 'recharge' | 'consume' | 'refund';
+
+/** 变动记录 Tab 选项 */
+export interface SmsBroadcastLogTabOption {
+  /** Tab 值 */
+  value: SmsBroadcastLogTab;
+  /** Tab 文案 */
+  label: string;
+}
+
+/**
+ * 短信钱包流水类型（后端 SmsWalletLogType 原义）。
+ *
+ * `grant`（平台赠送）与 `admin_adjust`（平台回收）在「平台调整」Tab 中合并展示，
+ * 在「全部」里仍按各自类型文案区分。
+ */
+export type SmsWalletLogType = 'recharge' | 'consume' | 'refund' | 'grant' | 'admin_adjust' | 'unknown';
+
+/** 一条短信钱包变动记录 */
+export interface SmsWalletLog {
+  /** 流水 ID */
+  id: string;
+  /** 所属门店 ID */
+  storeId: string;
+  /** 变动类型 */
+  type: SmsWalletLogType;
+  /** 变动金额（分）：正数入账、负数出账 */
+  changeFen: SafeNumber;
+  /** 变动后的账户余额（分） */
+  balanceAfterFen: SafeNumber;
+  /** 流水说明 */
+  description: string;
+  /** 关联充值订单号，仅充值 / 退费有值 */
+  orderNo?: string;
+  /** 关联群发任务 ID，仅扣费 / 退费有值 */
+  broadcastId?: string;
+  /** 变动时间戳（ms），脏值归一为 0 */
+  createdAt: SafeNumber;
+}
+
+/** 变动记录统计概览（与列表同口径，不随分页变化） */
+export interface SmsWalletLogStats {
+  /** 当前 Tab 下的流水总条数 */
+  totalRecords: SafeNumber;
+  /** 平台调整次数（赠送 + 回收） */
+  adminAdjustCount: SafeNumber;
+  /** 商家充值次数 */
+  rechargeCount: SafeNumber;
+  /** 群发扣费次数 */
+  consumeCount: SafeNumber;
+  /** 失败退费次数 */
+  refundCount: SafeNumber;
+}
+
+/** 变动记录查询条件：门店 + Tab，均由后端权威过滤 */
+export interface SmsWalletLogQuery {
+  /** 目标门店 ID */
+  storeId: string;
+  /** 当前筛选 Tab */
+  tab: SmsBroadcastLogTab;
+}
+
+/** 变动记录单页结果（page / pageSize 真分页） */
+export interface SmsWalletLogPageResult {
+  /** 当前页记录 */
+  logs: SmsWalletLog[];
+  /** 后端统计概览 */
+  stats: SmsWalletLogStats;
+  /** 当前 Tab 下的记录总数（后端口径） */
+  total: SafeNumber;
+  /** 是否还有下一页 */
+  hasMore: boolean;
+  /** 后端回显的当前页码，用于校准下一页 */
+  page: SafeNumber;
+}
+
+/** 拉取单页变动记录的入参：每页条数由页面常量统一给出 */
+export interface SmsWalletLogRequestParams {
+  /** 查询条件 */
+  query: SmsWalletLogQuery;
+  /** 页码，从 1 开始 */
+  page: number;
+  /** 取消信号：换 Tab / 卸载时作废在途请求 */
+  signal?: AbortSignal;
+}

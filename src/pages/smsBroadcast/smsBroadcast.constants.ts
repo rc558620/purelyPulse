@@ -8,7 +8,11 @@ import type {
   SmsBroadcastGrantOption,
   SmsBroadcastFilterTab,
   SmsBroadcastHealth,
+  SmsBroadcastLogTab,
+  SmsBroadcastLogTabOption,
   SmsBroadcastTabOption,
+  SmsWalletLogStats,
+  SmsWalletLogType,
 } from './smsBroadcast.types';
 
 /** 主题色：紫罗兰 Violet（短信余额取值为青色 #0891b2 / #22d3ee，本功能刻意换色区分） */
@@ -92,3 +96,38 @@ export const SMS_BROADCAST_REASON_PRESETS = [
   '活动赠送短信额度',
   '额度异常修正',
 ];
+
+// ─── 门店短信钱包变动记录 ─────────────────────────────────────────────
+
+/** 变动记录筛选 Tab（顺序即页面展示顺序） */
+export const SMS_BROADCAST_LOG_TABS: SmsBroadcastLogTabOption[] = [
+  { value: 'all', label: '全部' },
+  { value: 'admin', label: '平台调整' },
+  { value: 'recharge', label: '充值' },
+  { value: 'consume', label: '消耗' },
+  { value: 'refund', label: '退费' },
+];
+
+export const SMS_BROADCAST_LOG_DEFAULT_TAB: SmsBroadcastLogTab = 'all';
+
+/** 变动记录单页条数：与后端 PULSE_ADMIN_SMS_WALLET_LOGS_DEFAULT_PAGE_SIZE 一致 */
+export const SMS_BROADCAST_LOG_PAGE_SIZE = 20;
+
+/** 变动记录空统计：后端未就绪或清空列表时的占位 */
+export const SMS_BROADCAST_EMPTY_LOG_STATS: SmsWalletLogStats = {
+  totalRecords: 0,
+  adminAdjustCount: 0,
+  rechargeCount: 0,
+  consumeCount: 0,
+  refundCount: 0,
+};
+
+/** 流水类型 → 展示文案（类型语义由后端给定，前端只做映射） */
+export const SMS_BROADCAST_LOG_TYPE_LABELS: Record<SmsWalletLogType, string> = {
+  recharge: '商家充值',
+  consume: '群发扣费',
+  refund: '失败退费',
+  grant: '平台赠送',
+  admin_adjust: '平台回收',
+  unknown: '其他变动',
+};

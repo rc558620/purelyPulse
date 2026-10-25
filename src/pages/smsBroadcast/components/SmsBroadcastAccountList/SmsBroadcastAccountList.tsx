@@ -1,5 +1,6 @@
 // 门店短信余额一览区块：展示门店主账号身份与可用余额，并支持逐个调整。
-// 加载 / 失败 / 空态在本组件内呈现，滚动与下拉刷新由外层 PullRefreshLoadMore 接管。
+// 点击整行进入该门店的短信钱包变动记录；加载 / 失败 / 空态在本组件内呈现，
+// 滚动与下拉刷新由外层 PullRefreshLoadMore 接管。
 import React from 'react';
 import { cx, isNonEmptyArray, safeNum } from '@utils/utils';
 import {
@@ -9,7 +10,7 @@ import {
 import { formatFen } from '../../smsBroadcast.utils';
 import { IconSmsAccount } from '../SmsBroadcastIcons/SmsBroadcastIcons';
 import SmsBroadcastPageState from '../SmsBroadcastPageState/SmsBroadcastPageState';
-import type { SmsAccount } from '../../smsBroadcast.types';
+import type { SmsAccount, SmsBroadcastHealth } from '../../smsBroadcast.types';
 import styles from './SmsBroadcastAccountList.module.less';
 
 interface SmsBroadcastAccountListProps {
@@ -25,8 +26,25 @@ interface SmsBroadcastAccountListProps {
   isRefreshing: boolean;
   errorMessage: string;
   onRetry: () => void;
+  /** 点击门店行：进入该门店的短信钱包变动记录 */
+  onOpen: (store: SmsAccount) => void;
   onAdjust: (store: SmsAccount) => void;
 }
+
+/** 健康度 → 标签/余额着色类名：用映射表取类名，避免模板字符串拼 className */
+const HEALTH_TAG_CLASS: Record<SmsBroadcastHealth, string> = {
+  none: styles.storeHealthTagNone,
+  healthy: styles.storeHealthTagHealthy,
+  warning: styles.storeHealthTagWarning,
+  exhausted: styles.storeHealthTagExhausted,
+};
+
+const HEALTH_BALANCE_CLASS: Record<SmsBroadcastHealth, string> = {
+  none: styles.storeQuotaValNone,
+  healthy: styles.storeQuotaValHealthy,
+  warning: styles.storeQuotaValWarning,
+  exhausted: styles.storeQuotaValExhausted,
+};
 
 const SmsBroadcastAccountListComponent: React.FC<SmsBroadcastAccountListProps> = ({
   isSubmitting,
@@ -36,6 +54,7 @@ const SmsBroadcastAccountListComponent: React.FC<SmsBroadcastAccountListProps> =
   isRefreshing,
   errorMessage,
   onRetry,
+  onOpen,
   onAdjust,
 }) => {
   const hasStores = isNonEmptyArray(stores);
@@ -71,58 +90,80 @@ const SmsBroadcastAccountListComponent: React.FC<SmsBroadcastAccountListProps> =
       ) : null}
       {hasStores ? (
         <div className={styles.storeList}>
-        {stores.map((store) => {
-          const health = resolveSmsAccountHealth(store);
+          {stores.map((store) => {
+            const health = resolveSmsAccountHealth(store);
 
-          return (
-            <div key={store.id} className={styles.storeItem}>
+            return (
               <div
-                className={cx(styles.storeAvatar, store.ownerAvatarUrl && styles.storeAvatarWithImage)}
-                aria-hidden="true"
+                key={store.id}
+                className={cx(styles.storeItem, styles.storeItemActionable)}
+                role="button"
+                tabIndex={0}
+                onClick={() => onOpen(store)}
+                onKeyDown={(event) => {
+                  // 只响应「行本身」的按键：行内还有「设置」按钮，
+                  // 键盘 Enter / Space 会冒泡到这一层，不判来源会同时打开弹窗与变动记录
+                  if (event.target !== event.currentTarget) {
+                    return;
+                  }
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    onOpen(store);
+                  }
+                }}
+                aria-label={`查看 ${store.ownerName} 的短信变动记录`}
               >
-                {store.ownerAvatarUrl ? (
-                  <img className={styles.storeAvatarImg} src={store.ownerAvatarUrl} alt="" />
-                ) : (
-                  store.ownerName[0]
-                )}
-              </div>
+                <div
+                  className={cx(styles.storeAvatar, store.ownerAvatarUrl && styles.storeAvatarWithImage)}
+                  aria-hidden="true"
+                >
+                  {store.ownerAvatarUrl ? (
+                    <img className={styles.storeAvatarImg} src={store.ownerAvatarUrl} alt="" />
+                  ) : (
+                    store.ownerName[0]
+                  )}
+                </div>
 
-              <div className={styles.storeInfo}>
-                <div className={styles.storeTopRow}>
-                  <span className={styles.storeName}>{store.ownerName}</span>
-                  <span className={cx(styles.storeHealthTag, styles[`storeHealthTag_${health}`])}>
-                    {SMS_BROADCAST_HEALTH_LABELS[health]}
+                <div className={styles.storeInfo}>
+                  <div className={styles.storeTopRow}>
+                    <span className={styles.storeName}>{store.ownerName}</span>
+                    <span className={cx(styles.storeHealthTag, HEALTH_TAG_CLASS[health])}>
+                      {SMS_BROADCAST_HEALTH_LABELS[health]}
+                    </span>
+                  </div>
+                  <span className={styles.storePhone}>
+                    {store.ownerPhone || '未绑定手机号'}
                   </span>
                 </div>
-                <span className={styles.storePhone}>
-                  {store.ownerPhone || '未绑定手机号'}
-                </span>
-              </div>
 
-              <div className={styles.storeQuota}>
-                <div className={styles.storeQuotaRow}>
-                  <span className={cx(styles.storeQuotaVal, styles[`storeQuotaVal_${health}`])}>
-                    {formatFen(safeNum(store.balanceFen))}
+                <div className={styles.storeQuota}>
+                  <div className={styles.storeQuotaRow}>
+                    <span className={cx(styles.storeQuotaVal, HEALTH_BALANCE_CLASS[health])}>
+                      {formatFen(safeNum(store.balanceFen))}
+                    </span>
+                  </div>
+                  <span className={styles.storeConsumed}>
+                    累计发送 {safeNum(store.sentSmsCount).toLocaleString('zh-CN')} 条
                   </span>
                 </div>
-                <span className={styles.storeConsumed}>
-                  累计发送 {safeNum(store.sentSmsCount).toLocaleString('zh-CN')} 条
-                </span>
-              </div>
 
-              <button
-                type="button"
-                className={styles.adjustBtn}
-                onClick={() => onAdjust(store)}
-                aria-label={`调整 ${store.ownerName} 的短信余额`}
-                disabled={isSubmitting}
-              >
-                设置
-              </button>
-            </div>
-          );
-        })}
-      </div>
+                <button
+                  type="button"
+                  className={styles.adjustBtn}
+                  onClick={(event) => {
+                    // 设置按钮不再向上冒泡：点击设置不应顺带打开变动记录
+                    event.stopPropagation();
+                    onAdjust(store);
+                  }}
+                  aria-label={`调整 ${store.ownerName} 的短信余额`}
+                  disabled={isSubmitting}
+                >
+                  设置
+                </button>
+              </div>
+            );
+          })}
+        </div>
       ) : null}
     </div>
   );

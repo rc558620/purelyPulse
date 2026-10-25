@@ -5,10 +5,15 @@
 // 因此这里调整成功后，商家端额度页与 purelyClub 的新客下单闸门会立即按新额度生效。
 import { createKeyedInFlightRequest, http, resolveEnvPath } from '@utils/http';
 import { safeNum, safeStr } from '@utils/utils';
-import { NEW_CUSTOMER_QUOTA_PAGE_SIZE } from './newCustomerQuota.constants';
+import { NEW_CUSTOMER_QUOTA_LOG_PAGE_SIZE, NEW_CUSTOMER_QUOTA_PAGE_SIZE } from './newCustomerQuota.constants';
 import type {
   NewCustomerQuotaListPageResult,
   NewCustomerQuotaListQuery,
+  NewCustomerQuotaLog,
+  NewCustomerQuotaLogPageResult,
+  NewCustomerQuotaLogRequestParams,
+  NewCustomerQuotaLogStats,
+  NewCustomerQuotaLogType,
   NewCustomerQuotaStore,
   NewCustomerQuotaStats,
 } from './newCustomerQuota.types';
@@ -21,6 +26,11 @@ const QUOTA_STORES_API_PATH = resolveEnvPath(
 const QUOTA_ADJUST_PATH = resolveEnvPath(
   import.meta.env.VITE_ADJUST_NEW_CUSTOMER_QUOTA_API_PATH,
   '/pulse/membership/admin/new-customer-quota/stores/{storeId}/adjust',
+);
+/** 变动记录接口（真分页）：`{storeId}` 占位符由 resolveQuotaLogsPath 展开 */
+const QUOTA_LOGS_PATH = resolveEnvPath(
+  import.meta.env.VITE_NEW_CUSTOMER_QUOTA_LOGS_API_PATH,
+  '/pulse/membership/admin/new-customer-quota/stores/{storeId}/logs',
 );
 
 // ─── 响应 DTO ────────────────────────────────────────────────────────
@@ -163,3 +173,119 @@ export const submitNewCustomerQuotaAdjust = async (
 
   return mapQuotaStore(response, 0);
 };
+
+// ─── 门店额度变动记录（page / pageSize 真分页） ────────────────────────
+
+interface QuotaLogResponseDTO {
+  id?: string | number | null;
+  storeId?: string | number | null;
+  type?: string | null;
+  changeAmount?: number | null;
+  balanceAfter?: number | null;
+  amountFen?: number | null;
+  description?: string | null;
+  createdAt?: string | null;
+}
+
+interface QuotaLogsStatsResponseDTO {
+  totalRecords?: number | null;
+  adminAdjustCount?: number | null;
+  rechargeCount?: number | null;
+  consumeCount?: number | null;
+}
+
+interface QuotaLogsResponseDTO {
+  items?: QuotaLogResponseDTO[] | null;
+  total?: number | null;
+  page?: number | null;
+  pageSize?: number | null;
+  hasMore?: boolean | null;
+  stats?: QuotaLogsStatsResponseDTO | null;
+}
+
+/** 额度流水类型白名单：后端新增类型时前端不至于把脏值当已知类型渲染 */
+const QUOTA_LOG_TYPES: readonly NewCustomerQuotaLogType[] = ['recharge', 'grant', 'consume', 'clear', 'admin_adjust'];
+
+const normalizeQuotaLogType = (rawType: unknown): NewCustomerQuotaLogType => {
+  if (typeof rawType !== 'string') {
+    return 'unknown';
+  }
+
+  return QUOTA_LOG_TYPES.find((type) => type === rawType) ?? 'unknown';
+};
+
+/** ISO 字符串 → 毫秒时间戳；脏值统一归 0，由 UI 决定展示什么 */
+const normalizeLogTimestamp = (rawTime: unknown): number => {
+  if (typeof rawTime !== 'string' || !rawTime) {
+    return 0;
+  }
+
+  const parsedTimestamp = Date.parse(rawTime);
+  return Number.isFinite(parsedTimestamp) ? parsedTimestamp : 0;
+};
+
+/** 展开变动记录接口路径里的 `{storeId}` / `:storeId` 占位符 */
+export const resolveQuotaLogsPath = (storeId: string): string => {
+  const encodedStoreId = encodeURIComponent(storeId);
+  if (QUOTA_LOGS_PATH.includes('{storeId}')) {
+    return QUOTA_LOGS_PATH.replace('{storeId}', encodedStoreId);
+  }
+  if (QUOTA_LOGS_PATH.includes(':storeId')) {
+    return QUOTA_LOGS_PATH.replace(':storeId', encodedStoreId);
+  }
+  return `${QUOTA_LOGS_PATH.replace(/\/+$/, '')}/${encodedStoreId}/logs`;
+};
+
+const mapQuotaLog = (response: QuotaLogResponseDTO, index: number): NewCustomerQuotaLog => ({
+  id: toSafeId(response?.id) || `quota-log-${index}`,
+  storeId: toSafeId(response?.storeId),
+  type: normalizeQuotaLogType(response?.type),
+  changeAmount: safeNum(response?.changeAmount, 0),
+  balanceAfter: safeNum(response?.balanceAfter, 0),
+  // 仅充值流水带金额：0 与「没有金额」必须区分，这里用 undefined 表达缺失
+  amountFen: typeof response?.amountFen === 'number' ? safeNum(response.amountFen, 0) : undefined,
+  description: safeStr(response?.description, ''),
+  createdAt: normalizeLogTimestamp(response?.createdAt),
+});
+
+const mapQuotaLogStats = (response: QuotaLogsStatsResponseDTO | null | undefined): NewCustomerQuotaLogStats => ({
+  totalRecords: safeNum(response?.totalRecords, 0),
+  adminAdjustCount: safeNum(response?.adminAdjustCount, 0),
+  rechargeCount: safeNum(response?.rechargeCount, 0),
+  consumeCount: safeNum(response?.consumeCount, 0),
+});
+
+/** 变动记录单页请求：Tab 与分页全部由后端权威处理 */
+const requestQuotaLogs = async (params: NewCustomerQuotaLogRequestParams): Promise<NewCustomerQuotaLogPageResult> => {
+  const normalizedPage = safeNum(params.page, 1) || 1;
+  const response = await http.get<QuotaLogsResponseDTO>(resolveQuotaLogsPath(params.query.storeId), {
+    params: {
+      tab: params.query.tab,
+      page: normalizedPage,
+      pageSize: NEW_CUSTOMER_QUOTA_LOG_PAGE_SIZE,
+    },
+    signal: params.signal,
+    skipGlobalErrorHandler: true,
+    errorMessage: '获取额度变动记录失败，请稍后重试',
+  });
+  const rawItems = Array.isArray(response?.items) ? response.items : [];
+
+  return {
+    logs: rawItems.map(mapQuotaLog),
+    stats: mapQuotaLogStats(response?.stats),
+    total: safeNum(response?.total, rawItems.length),
+    hasMore: response?.hasMore === true,
+    page: safeNum(response?.page, normalizedPage),
+  };
+};
+
+/** 拉取门店额度变动记录单页，并按「门店 + Tab + 页码」对并发请求去重 */
+export const fetchNewCustomerQuotaLogs = createKeyedInFlightRequest(
+  (params: NewCustomerQuotaLogRequestParams) =>
+    JSON.stringify({
+      storeId: params.query.storeId,
+      tab: params.query.tab,
+      page: params.page,
+    }),
+  requestQuotaLogs,
+);

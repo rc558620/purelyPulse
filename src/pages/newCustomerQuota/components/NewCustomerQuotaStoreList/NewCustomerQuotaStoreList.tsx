@@ -2,13 +2,10 @@
 // 加载 / 失败 / 空态在本组件内呈现，滚动与下拉刷新由外层 PullRefreshLoadMore 接管。
 import React from 'react';
 import { cx, isNonEmptyArray, safeNum } from '@utils/utils';
-import {
-  NEW_CUSTOMER_QUOTA_HEALTH_LABELS,
-  resolveQuotaHealth,
-} from '../../newCustomerQuota.constants';
+import { NEW_CUSTOMER_QUOTA_HEALTH_LABELS, resolveQuotaHealth } from '../../newCustomerQuota.constants';
 import { IconNewCustomerQuotaStore } from '../NewCustomerQuotaIcons/NewCustomerQuotaIcons';
 import NewCustomerQuotaPageState from '../NewCustomerQuotaPageState/NewCustomerQuotaPageState';
-import type { NewCustomerQuotaStore } from '../../newCustomerQuota.types';
+import type { NewCustomerQuotaHealth, NewCustomerQuotaStore } from '../../newCustomerQuota.types';
 import styles from './NewCustomerQuotaStoreList.module.less';
 
 interface NewCustomerQuotaStoreListProps {
@@ -24,8 +21,25 @@ interface NewCustomerQuotaStoreListProps {
   isRefreshing: boolean;
   errorMessage: string;
   onRetry: () => void;
+  /** 点击门店行：进入该门店的额度变动记录 */
+  onOpen: (store: NewCustomerQuotaStore) => void;
   onAdjust: (store: NewCustomerQuotaStore) => void;
 }
+
+/** 健康度 → 标签/额度着色类名：用映射表取类名，避免模板字符串拼 className */
+const HEALTH_TAG_CLASS: Record<NewCustomerQuotaHealth, string> = {
+  none: styles.storeHealthTagNone,
+  healthy: styles.storeHealthTagHealthy,
+  warning: styles.storeHealthTagWarning,
+  exhausted: styles.storeHealthTagExhausted,
+};
+
+const HEALTH_QUOTA_CLASS: Record<NewCustomerQuotaHealth, string> = {
+  none: styles.storeQuotaValNone,
+  healthy: styles.storeQuotaValHealthy,
+  warning: styles.storeQuotaValWarning,
+  exhausted: styles.storeQuotaValExhausted,
+};
 
 const NewCustomerQuotaStoreListComponent: React.FC<NewCustomerQuotaStoreListProps> = ({
   isSubmitting,
@@ -35,6 +49,7 @@ const NewCustomerQuotaStoreListComponent: React.FC<NewCustomerQuotaStoreListProp
   isRefreshing,
   errorMessage,
   onRetry,
+  onOpen,
   onAdjust,
 }) => {
   const hasStores = isNonEmptyArray(stores);
@@ -54,12 +69,8 @@ const NewCustomerQuotaStoreListComponent: React.FC<NewCustomerQuotaStoreListProp
       </div>
 
       {showFullLoading ? <NewCustomerQuotaPageState message="加载中..." variant="loading" /> : null}
-      {showFullError ? (
-        <NewCustomerQuotaPageState message={errorMessage} variant="error" onRetry={onRetry} />
-      ) : null}
-      {showEmpty ? (
-        <NewCustomerQuotaPageState message="暂无符合条件的门店" variant="empty" />
-      ) : null}
+      {showFullError ? <NewCustomerQuotaPageState message={errorMessage} variant="error" onRetry={onRetry} /> : null}
+      {showEmpty ? <NewCustomerQuotaPageState message="暂无符合条件的门店" variant="empty" /> : null}
       {hasStores && errorMessage ? (
         <div className={styles.listErrorBanner} role="alert">
           <span className={styles.listErrorText}>{errorMessage}</span>
@@ -70,59 +81,79 @@ const NewCustomerQuotaStoreListComponent: React.FC<NewCustomerQuotaStoreListProp
       ) : null}
       {hasStores ? (
         <div className={styles.storeList}>
-        {stores.map((store) => {
-          const health = resolveQuotaHealth(store);
+          {stores.map((store) => {
+            const health = resolveQuotaHealth(store);
 
-          return (
-            <div key={store.id} className={styles.storeItem}>
+            return (
               <div
-                className={cx(styles.storeAvatar, store.ownerAvatarUrl && styles.storeAvatarWithImage)}
-                aria-hidden="true"
+                key={store.id}
+                className={cx(styles.storeItem, styles.storeItemActionable)}
+                role="button"
+                tabIndex={0}
+                onClick={() => onOpen(store)}
+                onKeyDown={(event) => {
+                  // 只响应「行本身」的按键：行内还有「设置」按钮，
+                  // 键盘 Enter / Space 会冒泡到这一层，不判来源会同时打开弹窗与变动记录
+                  if (event.target !== event.currentTarget) {
+                    return;
+                  }
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    onOpen(store);
+                  }
+                }}
+                aria-label={`查看 ${store.ownerName} 的额度变动记录`}
               >
-                {store.ownerAvatarUrl ? (
-                  <img className={styles.storeAvatarImg} src={store.ownerAvatarUrl} alt="" />
-                ) : (
-                  store.ownerName[0]
-                )}
-              </div>
+                <div
+                  className={cx(styles.storeAvatar, store.ownerAvatarUrl && styles.storeAvatarWithImage)}
+                  aria-hidden="true"
+                >
+                  {store.ownerAvatarUrl ? (
+                    <img className={styles.storeAvatarImg} src={store.ownerAvatarUrl} alt="" />
+                  ) : (
+                    store.ownerName[0]
+                  )}
+                </div>
 
-              <div className={styles.storeInfo}>
-                <div className={styles.storeTopRow}>
-                  <span className={styles.storeName}>{store.ownerName}</span>
-                  <span className={cx(styles.storeHealthTag, styles[`storeHealthTag_${health}`])}>
-                    {NEW_CUSTOMER_QUOTA_HEALTH_LABELS[health]}
+                <div className={styles.storeInfo}>
+                  <div className={styles.storeTopRow}>
+                    <span className={styles.storeName}>{store.ownerName}</span>
+                    <span className={cx(styles.storeHealthTag, HEALTH_TAG_CLASS[health])}>
+                      {NEW_CUSTOMER_QUOTA_HEALTH_LABELS[health]}
+                    </span>
+                  </div>
+                  <span className={styles.storePhone}>{store.ownerPhone || '未绑定手机号'}</span>
+                </div>
+
+                <div className={styles.storeQuota}>
+                  <div className={styles.storeQuotaRow}>
+                    <span className={cx(styles.storeQuotaVal, HEALTH_QUOTA_CLASS[health])}>
+                      {safeNum(store.remaining).toLocaleString('zh-CN')}
+                    </span>
+                    <span className={styles.storeQuotaUnit}>位新客</span>
+                  </div>
+                  <span className={styles.storeConsumed}>
+                    已服务 {safeNum(store.consumed).toLocaleString('zh-CN')} 位
                   </span>
                 </div>
-                <span className={styles.storePhone}>
-                  {store.ownerPhone || '未绑定手机号'}
-                </span>
-              </div>
 
-              <div className={styles.storeQuota}>
-                <div className={styles.storeQuotaRow}>
-                  <span className={cx(styles.storeQuotaVal, styles[`storeQuotaVal_${health}`])}>
-                    {safeNum(store.remaining).toLocaleString('zh-CN')}
-                  </span>
-                  <span className={styles.storeQuotaUnit}>位新客</span>
-                </div>
-                <span className={styles.storeConsumed}>
-                  已服务 {safeNum(store.consumed).toLocaleString('zh-CN')} 位
-                </span>
+                <button
+                  type="button"
+                  className={styles.adjustBtn}
+                  onClick={(event) => {
+                    // 设置按钮不再向上冒泡：点击设置不应顺带打开变动记录
+                    event.stopPropagation();
+                    onAdjust(store);
+                  }}
+                  aria-label={`调整 ${store.ownerName} 的新客额度`}
+                  disabled={isSubmitting}
+                >
+                  设置
+                </button>
               </div>
-
-              <button
-                type="button"
-                className={styles.adjustBtn}
-                onClick={() => onAdjust(store)}
-                aria-label={`调整 ${store.ownerName} 的新客额度`}
-                disabled={isSubmitting}
-              >
-                设置
-              </button>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
       ) : null}
     </div>
   );

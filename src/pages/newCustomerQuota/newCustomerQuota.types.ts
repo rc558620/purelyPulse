@@ -102,3 +102,88 @@ export interface NewCustomerQuotaListPageResult {
   /** 是否还有下一页 */
   hasMore: boolean;
 }
+
+// ─── 门店额度变动记录 ─────────────────────────────────────────────────
+
+/** 变动记录筛选 Tab：全部 / 管理员调整 / 充值 / 消耗 */
+export type NewCustomerQuotaLogTab = 'all' | 'admin' | 'recharge' | 'consume';
+
+/** 变动记录 Tab 选项 */
+export interface NewCustomerQuotaLogTabOption {
+  /** Tab 值 */
+  value: NewCustomerQuotaLogTab;
+  /** Tab 文案 */
+  label: string;
+}
+
+/**
+ * 额度流水类型（后端枚举原义）。
+ *
+ * `grant`（会员赠送）不单独占 Tab，只在「全部」中出现；
+ * `consume` Tab 同时覆盖 `consume` 与 `clear`（清零同样是余额减少）。
+ */
+export type NewCustomerQuotaLogType = 'recharge' | 'grant' | 'consume' | 'clear' | 'admin_adjust' | 'unknown';
+
+/** 一条额度变动记录 */
+export interface NewCustomerQuotaLog {
+  /** 流水 ID */
+  id: string;
+  /** 所属门店 ID */
+  storeId: string;
+  /** 变动类型 */
+  type: NewCustomerQuotaLogType;
+  /** 变动数量：正数增加，负数减少 */
+  changeAmount: SafeNumber;
+  /** 变动后的余额 */
+  balanceAfter: SafeNumber;
+  /** 充值金额（分），仅充值流水有值 */
+  amountFen?: SafeNumber;
+  /** 流水说明 */
+  description: string;
+  /** 变动时间戳（ms），脏值归一为 0 */
+  createdAt: SafeNumber;
+}
+
+/** 变动记录统计概览（门店全量口径，不随 Tab 变化） */
+export interface NewCustomerQuotaLogStats {
+  /** 变动记录总条数 */
+  totalRecords: SafeNumber;
+  /** 管理员调整次数 */
+  adminAdjustCount: SafeNumber;
+  /** 充值次数 */
+  rechargeCount: SafeNumber;
+  /** 消耗次数（含额度清零） */
+  consumeCount: SafeNumber;
+}
+
+/** 变动记录查询条件：门店 + Tab，均由后端权威过滤 */
+export interface NewCustomerQuotaLogQuery {
+  /** 目标门店 ID */
+  storeId: string;
+  /** 当前筛选 Tab */
+  tab: NewCustomerQuotaLogTab;
+}
+
+/** 变动记录单页结果（page / pageSize 真分页） */
+export interface NewCustomerQuotaLogPageResult {
+  /** 当前页记录 */
+  logs: NewCustomerQuotaLog[];
+  /** 后端统计概览 */
+  stats: NewCustomerQuotaLogStats;
+  /** 当前 Tab 下的记录总数（后端口径） */
+  total: SafeNumber;
+  /** 是否还有下一页 */
+  hasMore: boolean;
+  /** 后端回显的当前页码，用于校准下一页 */
+  page: SafeNumber;
+}
+
+/** 拉取单页变动记录的入参：每页条数由页面常量统一给出 */
+export interface NewCustomerQuotaLogRequestParams {
+  /** 查询条件 */
+  query: NewCustomerQuotaLogQuery;
+  /** 页码，从 1 开始 */
+  page: number;
+  /** 取消信号：换 Tab / 卸载时作废在途请求 */
+  signal?: AbortSignal;
+}

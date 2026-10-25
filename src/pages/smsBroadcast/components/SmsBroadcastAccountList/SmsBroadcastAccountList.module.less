@@ -104,6 +104,21 @@
   }
 }
 
+// 整行可点：进入该门店的短信钱包变动记录
+.storeItemActionable {
+  cursor: pointer;
+  transition: background 0.12s;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.02);
+  }
+
+  &:focus-visible {
+    outline: 2px solid fade(#7c3aed, 45%);
+    outline-offset: -2px;
+  }
+}
+
 // ─── 主账号头像 ────────────────────────────────────────────────────────
 .storeAvatar {
   width: 3.8rem;
@@ -168,26 +183,26 @@
   font-size: 1.05rem;
   font-weight: 600;
   white-space: nowrap;
+}
 
-  &_none {
-    background: rgba(100, 116, 139, 0.1);
-    color: @text-sub;
-  }
+.storeHealthTagNone {
+  background: rgba(100, 116, 139, 0.1);
+  color: @text-sub;
+}
 
-  &_healthy {
-    background: rgba(124, 58, 237, 0.1);
-    color: #7c3aed;
-  }
+.storeHealthTagHealthy {
+  background: rgba(124, 58, 237, 0.1);
+  color: #7c3aed;
+}
 
-  &_warning {
-    background: rgba(245, 158, 11, 0.12);
-    color: #d97706;
-  }
+.storeHealthTagWarning {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+}
 
-  &_exhausted {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
-  }
+.storeHealthTagExhausted {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
 }
 
 .storePhone {
@@ -213,22 +228,22 @@
 .storeQuotaVal {
   font-size: 1.7rem;
   font-weight: 700;
+}
 
-  &_none {
-    color: @text-sub;
-  }
+.storeQuotaValNone {
+  color: @text-sub;
+}
 
-  &_healthy {
-    color: #7c3aed;
-  }
+.storeQuotaValHealthy {
+  color: #7c3aed;
+}
 
-  &_warning {
-    color: #f59e0b;
-  }
+.storeQuotaValWarning {
+  color: #f59e0b;
+}
 
-  &_exhausted {
-    color: #ef4444;
-  }
+.storeQuotaValExhausted {
+  color: #ef4444;
 }
 
 .storeQuotaUnit {

@@ -4,6 +4,9 @@ import type {
   NewCustomerQuotaAdjustOption,
   NewCustomerQuotaFilterTab,
   NewCustomerQuotaHealth,
+  NewCustomerQuotaLogTab,
+  NewCustomerQuotaLogTabOption,
+  NewCustomerQuotaLogType,
   NewCustomerQuotaStore,
   NewCustomerQuotaTabOption,
 } from './newCustomerQuota.types';
@@ -64,3 +67,36 @@ export const NEW_CUSTOMER_QUOTA_REASON_PRESETS = [
   '会员赠送额度补发',
   '额度异常修正',
 ];
+
+// ─── 门店额度变动记录 ─────────────────────────────────────────────────
+
+/** 变动记录筛选 Tab（顺序即页面展示顺序） */
+export const NEW_CUSTOMER_QUOTA_LOG_TABS: NewCustomerQuotaLogTabOption[] = [
+  { value: 'all', label: '全部' },
+  { value: 'admin', label: '管理员调整' },
+  { value: 'recharge', label: '充值' },
+  { value: 'consume', label: '消耗' },
+];
+
+export const NEW_CUSTOMER_QUOTA_LOG_DEFAULT_TAB: NewCustomerQuotaLogTab = 'all';
+
+/** 变动记录单页条数：与后端 pageSize 默认口径一致 */
+export const NEW_CUSTOMER_QUOTA_LOG_PAGE_SIZE = 20;
+
+/** 变动记录空统计：后端未就绪或清空列表时的占位 */
+export const NEW_CUSTOMER_QUOTA_EMPTY_LOG_STATS = {
+  totalRecords: 0,
+  adminAdjustCount: 0,
+  rechargeCount: 0,
+  consumeCount: 0,
+};
+
+/** 流水类型 → 展示文案（类型语义由后端给定，前端只做映射） */
+export const NEW_CUSTOMER_QUOTA_LOG_TYPE_LABELS: Record<NewCustomerQuotaLogType, string> = {
+  recharge: '充值',
+  grant: '会员赠送',
+  consume: '新客消耗',
+  clear: '额度清零',
+  admin_adjust: '管理员调整',
+  unknown: '其他变动',
+};
