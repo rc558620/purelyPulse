@@ -1,0 +1,28 @@
+---
+description: purelyPulse 前端通用核心规范（可关闭：IDE 规则设置 enabled 开关）
+alwaysApply: true
+enabled: true
+---
+
+# 前端通用核心规范 · purelyPulse
+
+> 本规则默认生效（alwaysApply）。若要临时不加载，在 IDE 规则设置中将 `enabled` 置为 false 即可，届时仅保留项目根 `CODEBUDDY.md` 的极简身份说明。
+
+## 规范查阅协议（First-Step Protocol）
+
+每次任务开始，**第一步**必须读取：
+
+1. 通用规则（核心编码约束、工作模式、api 模式要求、质量门）：
+   `/Users/f0rest/Documents/AgentMode/f0rest_frontend_shared_rules.md`
+2. 完整约束：
+   `/Users/f0rest/Documents/AgentMode/f0rest_frontend_conventions.md`
+   - 禁止依赖记忆或直觉编码，必须实际读取。
+   - 读取后在回答开头标注当前模式，例如：【模式：main】。
+
+## 按需模式（不要一次性全读）
+
+进入 `strict` / `bug` / `refactor` / `arch` / `dto` / `ui` / `api` / `perf` 等模式时，按共享规则文件中的路由表读取：
+`/Users/f0rest/Documents/AgentMode/frontend-modes/mode-<模式名>.md`
+
+- 未声明 mode 时按 `main` 执行，**不读任何附加文件**。
+- 一个任务组合多个模式时，读取对应多个文件。
