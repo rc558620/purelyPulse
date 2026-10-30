@@ -10,468 +10,86 @@
 //   PC 端（≥ 768px） ：下拉 Dropdown，点外部 / ESC 关闭
 //
 // 子组件层级：
-//   DatePicker
-//     ├─ CalendarView     (日期格子 + 年月导航 + 时间面板)
-//     │    └─ TimePickerPanel  → ScrollColumn × 2
-//     └─ MonthPickerView  (月份网格)
+//   DatePicker（本文件，仅做组合）
+//     ├─ DatePickerTrigger              输入框
+//     ├─ DatePickerSheet     (移动端)  ┐
+//     │    └─ DatePickerPanelContent    │
+//     └─ DatePickerDropdown  (PC 端)  ┘
+//          └─ DatePickerPanelContent
+//                ├─ MonthPickerView
+//                └─ CalendarView → TimePickerPanel → ScrollColumn × 2
+//
+// 状态与交互逻辑集中在 useDatePicker，Props 类型见 ./types
 
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-  useMemo,
-} from 'react';
-import ReactDOM from 'react-dom';
-import CalendarView    from './CalendarView';
-import MonthPickerView from './MonthPickerView';
-import {
-  toDateString,
-  parseDatetimeValue,
-  buildDatetimeValue,
-} from './utils';
+import React from 'react';
+import useDatePicker        from './useDatePicker';
+import DatePickerTrigger    from './DatePickerTrigger';
+import DatePickerSheet      from './DatePickerSheet';
+import DatePickerDropdown   from './DatePickerDropdown';
+import DatePickerPanelContent from './DatePickerPanelContent';
+import type { DatePickerProps } from './types';
 import styles from './DatePicker.module.less';
-import { CalendarIcon, SmallCloseIcon } from '@components/form/_shared/icons';
-import { useIsMobile } from '@hooks/useIsMobile';
 
-// ─── Props ────────────────────────────────────────────────────
+// ─── Props（类型定义见 ./types）──────────────────────────────
 
-export interface DatePickerProps {
-  /**
-   * 选择器模式：
-   * - `date`     = 选日期（默认），值格式 `"YYYY-MM-DD"`
-   * - `month`    = 选月份，值格式 `"YYYY-MM"`
-   * - `datetime` = 日期+时间，值格式 `"YYYY-MM-DD HH:mm"`
-   */
-  picker?: 'date' | 'month' | 'datetime';
-  /** 受控值，null 表示无选中 */
-  value?: string | null;
-  /** 非受控默认值 */
-  defaultValue?: string;
-  /** 值变更回调，null 表示已清除 */
-  onChange?: (val: string | null) => void;
-  /** 占位文本（不传则按 picker 自动设置） */
-  placeholder?: string;
-  /** 最大可选日期/月份（含），格式同 picker */
-  maxDate?: string;
-  /** 最小可选日期/月份（含），格式同 picker */
-  minDate?: string;
-  /** 强制指定显示模式（不传则自动检测设备宽度） */
-  displayMode?: 'mobile' | 'pc';
-  /** 是否允许清除，默认 true */
-  allowClear?: boolean;
-  /** 禁用状态，默认 false */
-  disabled?: boolean;
-  /** 错误状态（输入框显示红色边框） */
-  status?: 'error';
-  /** 额外类名 */
-  className?: string;
-  /** 前缀图标（替换默认日历图标） */
-  prefix?: React.ReactNode;
-  /** 隐藏底部「今天」快捷按钮，默认 false */
-  hideToday?: boolean;
-  /** 在底部显示「确定」关闭按钮，默认 false */
-  showConfirm?: boolean;
-  /**
-   * 返回需要禁用的小时数组（0-23），仅 `picker="datetime"` 时生效。
-   * @example disabledHours={() => [0, 1, 2, 3, 22, 23]}
-   */
-  disabledHours?: () => number[];
-  /**
-   * 返回需要禁用的分钟数组（0-59），仅 `picker="datetime"` 时生效。
-   * 接收当前选中的小时作为参数，可用于联动禁用。
-   * @example disabledMinutes={(h) => h === 8 ? [0, 1, 2, 3, 4] : []}
-   */
-  disabledMinutes?: (hour: number) => number[];
-  /** PC 端弹出位置：'top' | 'bottom'，默认 'bottom' */
-  popupPlacement?: 'top' | 'bottom';
-}
+export type { DatePickerProps };
+
+// datetime 模式工具：供外部取「当前时分」作为默认值（如客存存入弹窗的到期时间）
+export { getCurrentTime } from './utils';
 
 // ─── DatePicker 主组件 ────────────────────────────────────────
 
-const DatePicker: React.FC<DatePickerProps> = ({
-  picker        = 'date',
-  value,
-  defaultValue,
-  onChange,
-  placeholder,
-  maxDate,
-  minDate,
-  displayMode,
-  allowClear    = true,
-  disabled      = false,
-  status,
-  className,
-  prefix,
-  hideToday     = false,
-  showConfirm   = false,
-  disabledHours,
-  disabledMinutes,
-  popupPlacement = 'bottom',
-}) => {
-  const isMonthMode    = picker === 'month';
-  const isDatetimeMode = picker === 'datetime';
+const DatePicker: React.FC<DatePickerProps> = (props) => {
+  const { className, popupPlacement = 'bottom' } = props;
 
-  const defaultPlaceholder = isMonthMode ? '请选择月份' : isDatetimeMode ? '请选择日期时间' : '请选择日期';
-  const resolvedPlaceholder = placeholder ?? defaultPlaceholder;
-
-  // Bug9 修复：使用项目级 useIsMobile hook，支持 displayMode 强制锁定
-  const isMobile = useIsMobile(768); // 768px 断点
-  // displayMode 强制覆盖
-  const effectiveIsMobile = displayMode === 'pc' ? false : displayMode === 'mobile' ? true : isMobile;
-  const wrapperRef  = useRef<HTMLDivElement>(null);
-  // Portal 面板 ref，用于 onClickOutside 排除面板内部的点击（如“此刻”按钮）
-  const panelRef    = useRef<HTMLDivElement>(null);
-
-  // Bug13 修复：移动端 BottomSheet 下滑关闭手势（ref 在此声明，回调在 handleClose 之后定义）
-  const sheetRef     = useRef<HTMLDivElement>(null);
-  const touchStartY  = useRef(0);
-  const touchDeltaY  = useRef(0);
-
-  // PC端下拉位置状态（Portal + fixed 定位，避免被父容器 overflow 裁切）
-  // top / bottom 二选一：向上弹出时必须用 bottom 贴住触发器上边，
-  // 否则 position:fixed 下同时给 top 会让面板从触发器顶部「向下」展开，反而盖住下方。
-  const [dropdownPos, setDropdownPos] = useState<{
-    top?: number;
-    bottom?: number;
-    left: number;
-  } | null>(null);
-
-  // ── 受控/非受控状态 ──
-  const [internalValue, setInternalValue] = useState<string | null>(defaultValue ?? null);
-  // 空字符串等同于 null（Form 未设置时会传入 ''），回退到 internalValue
-  const currentValue = (value !== undefined && value !== '') ? (value ?? null) : internalValue;
-
-  // ── 面板开关 ──
-  const [visible,   setVisible]   = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
-
-  // ── datetime 临时状态（面板内预览，确认后才提交） ──
-  const [tempDate, setTempDate] = useState('');
-  const [tempTime, setTempTime] = useState('09:00');
-
-  // 打开 datetime 面板时同步初始值
-  useEffect(() => {
-    if (visible && isDatetimeMode) {
-      const { date, time } = parseDatetimeValue(currentValue);
-      setTempDate(date || toDateString(new Date()));
-      setTempTime(time || '09:00');
-    }
-  // currentValue 刻意不加入依赖：只在 visible 变为 true 时初始化一次
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, isDatetimeMode]);
-
-  // ── 值更新 ──
-  const handleChange = useCallback((val: string | null) => {
-    if (value === undefined) setInternalValue(val);
-    onChange?.(val);
-  }, [value, onChange]);
-
-  // ── 关闭动画（PC 端有退出动画） ──
-  const handleClose = useCallback(() => {
-    if (!effectiveIsMobile && visible) setIsClosing(true);
-    else                                setVisible(false);
-  }, [effectiveIsMobile, visible]);
-
-  // Bug13 续：下滑关闭回调（必须在 handleClose 之后定义）
-  const handleSheetTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStartY.current = e.touches[0].clientY;
-    touchDeltaY.current = 0;
-  }, []);
-
-  const handleSheetTouchMove = useCallback((e: React.TouchEvent) => {
-    const deltaY = e.touches[0].clientY - touchStartY.current;
-    // 只允许向下拖动
-    if (deltaY > 0 && sheetRef.current) {
-      touchDeltaY.current = deltaY;
-      sheetRef.current.style.transform = `translateY(${deltaY}px)`;
-      sheetRef.current.style.transition = 'none';
-    }
-  }, []);
-
-  const handleSheetTouchEnd = useCallback(() => {
-    if (sheetRef.current) {
-      sheetRef.current.style.transition = '';
-      sheetRef.current.style.transform = '';
-    }
-    // 下拉超过 100px 视为关闭
-    if (touchDeltaY.current > 100) {
-      handleClose();
-    }
-    touchDeltaY.current = 0;
-  }, [handleClose]);
-
-  const handleAnimationEnd = useCallback(() => {
-    if (isClosing) { setVisible(false); setIsClosing(false); }
-  }, [isClosing]);
-
-  // ── datetime 确认提交 ──
-  // Bug12 修复：tempDate 为空时不提交，但仍关闭面板
-  const handleDatetimeConfirm = useCallback(() => {
-    if (tempDate) {
-      handleChange(buildDatetimeValue(tempDate, tempTime));
-    }
-    handleClose();
-  }, [tempDate, tempTime, handleChange, handleClose]);
-
-  // ── 「此刻」按钮 ──
-  // Bug8 修复：通过 temp 状态机制更新，而非直接调用 handleChange
-  const handleNow = useCallback(() => {
-    const now     = new Date();
-    const dateStr = toDateString(now);
-    const hh      = String(now.getHours()).padStart(2, '0');
-    const mm      = String(now.getMinutes()).padStart(2, '0');
-    setTempDate(dateStr);
-    setTempTime(`${hh}:${mm}`);
-    // 同步提交值
-    handleChange(buildDatetimeValue(dateStr, `${hh}:${mm}`));
-    handleClose();
-  }, [handleChange, handleClose]);
-
-  // ── Trigger 点击：切换开关 ──
-  const handleOpen = useCallback(() => {
-    if (disabled) return;
-    if (visible || isClosing) {
-      // 再次点击：datetime 模式提交，否则关闭
-      if (isDatetimeMode && visible) handleDatetimeConfirm();
-      else                           handleClose();
-    } else {
-      setIsClosing(false);
-      setVisible(true);
-    }
-  }, [disabled, visible, isClosing, isDatetimeMode, handleDatetimeConfirm, handleClose]);
-
-  // ── PC：点击外部关闭 ──
-  useEffect(() => {
-    if (effectiveIsMobile || !visible || isClosing) return;
-    const onClickOutside = (e: MouseEvent) => {
-      const target = e.target as Node;
-      // 排除 wrapper（触发器）和 panel（Portal 面板）内部的点击
-      const insideWrapper = wrapperRef.current?.contains(target);
-      const insidePanel   = panelRef.current?.contains(target);
-      if (!insideWrapper && !insidePanel) {
-        if (isDatetimeMode) handleDatetimeConfirm();
-        else                handleClose();
-      }
-    };
-    document.addEventListener('mousedown', onClickOutside);
-    return () => document.removeEventListener('mousedown', onClickOutside);
-  }, [effectiveIsMobile, visible, isClosing, isDatetimeMode, handleDatetimeConfirm, handleClose]);
-
-  // ── ESC 关闭 ──
-  // Bug6 修复：datetime 模式下 ESC 也走确认提交，与点击外部行为一致
-  useEffect(() => {
-    if (!visible) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (isDatetimeMode) handleDatetimeConfirm();
-        else                handleClose();
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [visible, isDatetimeMode, handleDatetimeConfirm, handleClose]);
-
-  // ── PC端下拉位置计算（Portal + fixed 定位，避免被父容器 overflow 裁切）──
-  useEffect(() => {
-    if (effectiveIsMobile || !visible || isClosing) return;
-    const el = wrapperRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    // 向上弹出：用 bottom 定位（fixed 下相对视口底边），让面板整体落在触发器上方；
-    // 若只设 top，panel 会从触发器顶部向下展开，视觉上仍是「向下弹」。
-    setDropdownPos(
-      popupPlacement === 'top'
-        ? { bottom: window.innerHeight - rect.top + 6, left: rect.left }
-        : { top: rect.bottom + 6, left: rect.left },
-    );
-  }, [effectiveIsMobile, visible, isClosing, popupPlacement]);
-
-  // ── 显示文本格式化 ──
-  const displayText = useMemo(() => {
-    if (!currentValue) return '';
-    if (isMonthMode) {
-      const [y, m] = currentValue.split('-');
-      return `${y}年${parseInt(m, 10)}月`;
-    }
-    if (isDatetimeMode) {
-      const { date, time } = parseDatetimeValue(currentValue);
-      if (!date) return '';
-      return `${date.replace(/-/g, '/')} ${time}`;
-    }
-    return currentValue.replace(/-/g, '/');
-  }, [currentValue, isMonthMode, isDatetimeMode]);
-
-  // ── CalendarView 回调统一处理 ──
-  const handleCalendarClose = useCallback(() => {
-    if (isDatetimeMode) handleDatetimeConfirm();
-    else                handleClose();
-  }, [isDatetimeMode, handleDatetimeConfirm, handleClose]);
-
-  const handleClearClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    handleChange(null);
-  }, [handleChange]);
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleOpen();
-  }, [handleOpen]);
-
-  // showConfirm date 模式下，面板打开无已选值时默认高亮「明年今日」
-  // Bug10 修复：每次面板打开时重新计算，保证时间基准一致
-  const nextYearToday = useMemo(() => {
-    const d = new Date();
-    d.setFullYear(d.getFullYear() + 1);
-    return toDateString(d);
-  }, [visible]); // visible 变化时重新计算
-
-  // ── datetime 模式：点击日期格子时立即提交值（与时间列滚动行为保持一致）──
-  // 修复：datetime 模式下点击日期仅调用 setTempDate 不会更新输入框，
-  // 用户期望点日期后输入框跟着变（和点时分框一样的即时反馈）。
-  const handleDatetimeDateSelect = useCallback((dateStr: string) => {
-    setTempDate(dateStr);
-    handleChange(buildDatetimeValue(dateStr, tempTime));
-  }, [handleChange, tempTime]);
-
-  // ── datetime 模式：时间列滚动时立即提交值（与日期点击行为保持一致）──
-  const handleDatetimeTimeChange = useCallback((t: string) => {
-    setTempTime(t);
-    handleChange(buildDatetimeValue(tempDate, t));
-  }, [handleChange, tempDate]);
-
-  // ── 公用 CalendarView props ──
-  const calViewProps = {
-    maxDate,
-    minDate,
-    isDatetime:   isDatetimeMode,
-    time:         tempTime,
-    onTimeChange: isDatetimeMode ? handleDatetimeTimeChange : setTempTime,
-    onNow:        isDatetimeMode ? handleNow             : undefined,
-    onConfirm:    isDatetimeMode ? handleDatetimeConfirm : undefined,
-    hideToday,
-    showConfirm,
-    // 无已选值时默认预选「明年今日」；有值则用已有值（由 CalendarView 内部 initPending 处理）
-    defaultPending: showConfirm && !isDatetimeMode && !currentValue ? nextYearToday : undefined,
-    disabledHours,
-    disabledMinutes,
-  };
-
-  // ── 日历 / 月份面板（PC 和 Mobile 共用，封装成函数避免重复） ──
-  const renderCalPanel = (extraClose: () => void) =>
-    isMonthMode ? (
-      <MonthPickerView
-        selected={currentValue}
-        maxMonth={maxDate}
-        minMonth={minDate}
-        onSelect={handleChange}
-        onClose={extraClose}
-      />
-    ) : (
-      <CalendarView
-        {...calViewProps}
-        selected={isDatetimeMode ? tempDate || null : currentValue}
-        onSelect={isDatetimeMode ? handleDatetimeDateSelect : handleChange}
-        onClose={isDatetimeMode ? () => {} : extraClose}
-      />
-    );
+  const {
+    isDatetimeMode,
+    effectiveIsMobile,
+    visible,
+    isClosing,
+    dropdownPos,
+    wrapperRef,
+    panelRef,
+    handleClose,
+    handleAnimationEnd,
+    handleCalendarClose,
+    handleDatetimeConfirm,
+    triggerProps,
+    panelProps,
+    panelTitle,
+  } = useDatePicker(props);
 
   return (
     <div ref={wrapperRef} className={className ? `${styles.wrapper} ${className}` : styles.wrapper}>
 
       {/* ── Trigger ── */}
-      <div
-        className={`${styles.trigger}${status === 'error' ? ` ${styles.triggerError}` : ''}${visible ? ` ${styles.triggerOpen}` : ''}${disabled ? ` ${styles.triggerDisabled}` : ''}`}
-        onClick={handleOpen}
-        role="button"
-        tabIndex={disabled ? -1 : 0}
-        onKeyDown={handleKeyDown}
-        aria-label={displayText || resolvedPlaceholder}
-        aria-expanded={visible}
-        aria-haspopup="dialog"
-        aria-disabled={disabled || undefined}
-      >
-        {/* 前缀图标 */}
-        {prefix ? (
-          <div className={styles.triggerPrefix}>{prefix}</div>
-        ) : (
-          <CalendarIcon className={styles.calIcon} />
-        )}
-
-        {/* 文本 */}
-        <span className={displayText ? styles.triggerText : `${styles.triggerText} ${styles.triggerPlaceholder}`}>
-          {displayText || resolvedPlaceholder}
-        </span>
-
-        {/* 清除 / 占位 */}
-        {allowClear && currentValue ? (
-          <button type="button" className={styles.clearBtn} onClick={handleClearClick} aria-label="清除日期">
-            <SmallCloseIcon />
-          </button>
-        ) : (
-          <span className={styles.arrowPlaceholder} aria-hidden="true" />
-        )}
-      </div>
+      <DatePickerTrigger {...triggerProps} />
 
       {/* ── 移动端：底部 BottomSheet（Portal） ── */}
       {/* Bug5 修复：仅在 visible 时渲染，避免空挂 DOM */}
-      {/* Bug7 修复：遮罩层点击一律关闭，不自动提交 datetime 值 */}
-      {effectiveIsMobile && visible && ReactDOM.createPortal(
-        <>
-          <div
-            className={styles.mask}
-            onClick={handleClose}
-            aria-hidden="true"
-          />
-          <div
-            ref={(el) => {
-              sheetRef.current = el;
-              panelRef.current = el;
-            }}
-            className={`${styles.bottomSheet} ${styles.bottomSheetVisible}${isDatetimeMode ? ` ${styles.bottomSheetDatetime}` : ''}`}
-            role="dialog"
-            aria-modal="true"
-            onTouchStart={handleSheetTouchStart}
-            onTouchMove={handleSheetTouchMove}
-            onTouchEnd={handleSheetTouchEnd}
-          >
-            <div className={styles.sheetHeader}>
-              <div className={styles.sheetHandle} aria-hidden="true" />
-              <div className={styles.sheetTitleRow}>
-                <button type="button" className={styles.sheetCancelBtn} onClick={handleClose}>取消</button>
-                <span className={styles.sheetTitle}>
-                  {isMonthMode ? '选择月份' : isDatetimeMode ? '选择日期时间' : '选择日期'}
-                </span>
-                {isDatetimeMode ? (
-                  <button type="button" className={styles.sheetConfirmBtn} onClick={handleDatetimeConfirm}>确定</button>
-                ) : (
-                  <div className={styles.sheetHeaderRight} />
-                )}
-              </div>
-            </div>
-            {renderCalPanel(handleClose)}
-          </div>
-        </>,
-        document.body,
+      {effectiveIsMobile && visible && (
+        <DatePickerSheet
+          title={panelTitle}
+          isDatetime={isDatetimeMode}
+          onClose={handleClose}
+          onConfirm={handleDatetimeConfirm}
+        >
+          <DatePickerPanelContent {...panelProps} onClose={handleClose} />
+        </DatePickerSheet>
       )}
 
       {/* ── PC 端：下拉 Dropdown（Portal + fixed 定位，避免被父容器 overflow 裁切）── */}
-      {!effectiveIsMobile && visible && ReactDOM.createPortal(
-        <div
-          ref={panelRef}
-          className={`${styles.dropdown}${isDatetimeMode ? ` ${styles.dropdownDatetime}` : ''}${popupPlacement === 'top' ? ` ${styles.dropdownTop}` : ` ${styles.dropdownBottom}`}${isClosing ? ` ${styles.dropdownClosing}` : ''}`}
-          style={{
-            position: 'fixed',
-            top: dropdownPos?.top ?? 'auto',
-            bottom: dropdownPos?.bottom ?? 'auto',
-            left: dropdownPos?.left ?? 0,
-          }}
+      {!effectiveIsMobile && visible && (
+        <DatePickerDropdown
+          isDatetime={isDatetimeMode}
+          placement={popupPlacement}
+          isClosing={isClosing}
+          pos={dropdownPos}
+          panelRef={panelRef}
           onAnimationEnd={handleAnimationEnd}
-          role="dialog"
-          aria-modal="true"
         >
-          {renderCalPanel(handleCalendarClose)}
-        </div>,
-        document.body,
+          <DatePickerPanelContent {...panelProps} onClose={handleCalendarClose} />
+        </DatePickerDropdown>
       )}
     </div>
   );

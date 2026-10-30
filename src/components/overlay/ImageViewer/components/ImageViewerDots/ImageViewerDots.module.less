@@ -1,0 +1,25 @@
+@import (reference) '@styles/variables.less';
+
+.dots {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.dot {
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: @radius-full;
+  background-color: rgba(255, 255, 255, 0.32);
+  transition: background-color @duration-fast ease;
+}
+
+.dotActive {
+  background-color: @bg-white;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot {
+    transition: none;
+  }
+}

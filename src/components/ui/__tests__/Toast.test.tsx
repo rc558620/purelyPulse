@@ -1,7 +1,7 @@
 /**
  * Toast 组件单元测试
  */
-import React, { act } from 'react';
+import { act } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { showToast, ToastContainer } from '../feedback/Toast/index';

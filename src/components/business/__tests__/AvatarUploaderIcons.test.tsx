@@ -23,7 +23,6 @@
  *    16. 包含 path 和 circle 子元素（相机图标）
  */
 
-import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { IconAvatarPlaceholder, IconAvatarEdit } from '../AvatarUploader/AvatarUploaderIcons';
@@ -214,7 +213,7 @@ describe('IconAvatarPlaceholder – data-* 与 style 透传', () => {
         const { container } = render(
             <IconAvatarPlaceholder style={{ color: 'red', opacity: 0.5 }} />,
         );
-        const svg = container.querySelector('svg') as HTMLElement;
+        const svg = container.querySelector('svg') as unknown as HTMLElement;
         expect(svg.style.color).toBe('red');
         expect(svg.style.opacity).toBe('0.5');
     });
@@ -227,7 +226,7 @@ describe('IconAvatarPlaceholder – data-* 与 style 透传', () => {
                 data-role="avatar-icon"
             />,
         );
-        const svg = container.querySelector('svg') as HTMLElement;
+        const svg = container.querySelector('svg') as unknown as HTMLElement;
         expect(svg).toHaveClass('combo-test');
         expect(svg.style.fontSize).toBe('12px');
         expect(svg).toHaveAttribute('data-role', 'avatar-icon');
@@ -249,7 +248,7 @@ describe('IconAvatarEdit – data-* 与 style 透传', () => {
         const { container } = render(
             <IconAvatarEdit style={{ color: 'white', opacity: 0.8 }} />,
         );
-        const svg = container.querySelector('svg') as HTMLElement;
+        const svg = container.querySelector('svg') as unknown as HTMLElement;
         expect(svg.style.color).toBe('white');
         expect(svg.style.opacity).toBe('0.8');
     });
@@ -262,7 +261,7 @@ describe('IconAvatarEdit – data-* 与 style 透传', () => {
                 data-icon="camera"
             />,
         );
-        const svg = container.querySelector('svg') as HTMLElement;
+        const svg = container.querySelector('svg') as unknown as HTMLElement;
         expect(svg).toHaveClass('edit-combo');
         expect(svg.style.cursor).toBe('pointer');
         expect(svg).toHaveAttribute('data-icon', 'camera');

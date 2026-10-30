@@ -276,6 +276,18 @@
 }
 
 // ─── PC 端下拉面板 ─────────────────────────────────────
+// Portal 定位容器：fixed 元素会生成层叠上下文，内部 .dropdown 的 z-index 只在本上下文内生效，
+// 因此这里必须给容器一个高于业务弹窗遮罩的层级，否则下拉会被遮罩覆盖（DOM 存在但看不见）。
+.dropdownPortal {
+  position: fixed;
+  z-index: 10000; // 高于 @z-picker-panel(9999) 与业务弹窗遮罩
+  pointer-events: none;
+
+  > * {
+    pointer-events: auto;
+  }
+}
+
 .dropdown {
   position: absolute;
   z-index: 1000;

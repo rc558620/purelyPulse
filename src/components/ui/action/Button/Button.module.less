@@ -12,6 +12,11 @@
   text-align: center;
   cursor: pointer;
   border: none;
+  // 文案永不换行、永不被压缩：
+  // 中文可逐字断行，flex 行内按钮的 min-content 只有 1 个字宽，
+  // 与弹性输入框同行时会被压成竖排文字（如「核销取件」「搜索」）。
+  flex-shrink: 0;
+  white-space: nowrap;
   .btn-press-effect();
 
   &:disabled {

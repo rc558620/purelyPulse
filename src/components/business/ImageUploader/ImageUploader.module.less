@@ -1,0 +1,174 @@
+@import (reference) '@styles/variables.less';
+
+// ─── 通用图片上传区 ───────────────────────────────────────────
+.imageUploader {
+  width: 100%;
+  height: 14rem;
+  border: 2px dashed @border-color;
+  border-radius: @radius-lg;
+  background-color: @bg-white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.3s ease, background-color 0.3s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  overflow: hidden;
+  margin-top: 0.8rem;
+  position: relative;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    border-color: @primary;
+    background-color: fade(@primary, 5%);
+  }
+
+  &:active {
+    transform: scale(0.97);
+    box-shadow: 0 0 0 3px fade(@primary, 18%);
+  }
+}
+
+.imageUploaderDragging {
+  border-color: @primary;
+  background-color: fade(@primary, 8%);
+  border-style: solid;
+  transform: scale(1.01);
+  box-shadow: 0 0 0 4px fade(@primary, 15%);
+}
+
+// ─── 紧凑模式：塞进方形小槽（多图上传），高度跟随父容器、去掉格式提示 ──────
+// 默认态固定 14rem 高 + margin-top，放进 10.4rem 方槽会被裁掉并错位。
+.imageUploaderCompact {
+  height: 100%;
+  margin-top: 0;
+  border-radius: @radius-md;
+
+  .imagePlaceholder {
+    gap: 0.4rem;
+
+    .uploadIcon {
+      width: 2.8rem;
+      height: 2.8rem;
+    }
+
+    span {
+      font-size: 1.2rem;
+    }
+  }
+}
+
+/*
+ * 禁用态：声明排在 :hover / :active 之后并加 !important 的必要性——
+ * 上面 .imageUploader:hover 是同名单类选择器的伪类，权重高于单类，
+ * 只靠类名叠加压不住 hover 的品牌色描边，必须提权才能彻底锁死视觉反馈。
+ */
+.imageUploaderDisabled,
+.imageUploaderDisabled:hover,
+.imageUploaderDisabled:active {
+  border-color: @border-color !important;
+  border-style: dashed !important;
+  background-color: @bg-light !important;
+  box-shadow: none !important;
+  transform: none !important;
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.imagePlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  color: @text-sub;
+  pointer-events: none;
+
+  .uploadIcon {
+    width: 3.6rem;
+    height: 3.6rem;
+    opacity: 0.7;
+    transition: all 0.3s ease;
+  }
+
+  span {
+    font-size: 1.4rem;
+    font-weight: 500;
+  }
+}
+
+.uploadTip {
+  font-size: 1.2rem !important;
+  font-weight: 400 !important;
+  opacity: 0.6;
+}
+
+.imageUploader:hover .imagePlaceholder .uploadIcon,
+.imageUploaderDragging .imagePlaceholder .uploadIcon {
+  opacity: 1;
+  transform: translateY(-3px);
+  filter: drop-shadow(0 4px 8px fade(@primary, 40%));
+}
+
+.imagePreview {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 1.2rem;
+}
+
+// ─── 已选图片的移除按钮（右上角圆形）────────────────────────────
+.removeBtn {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  padding: 0;
+  border: none;
+  border-radius: @radius-full;
+  background-color: fade(@slate-600, 72%);
+  color: @bg-white;
+  cursor: pointer;
+  transition: background-color @duration-fast ease;
+
+  &:hover {
+    background-color: @rose-500;
+  }
+}
+
+// ─── 上传中遮罩：覆盖点击区，阻断重复选择 ───────────────────────
+.uploadingOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  background-color: fade(@bg-white, 72%);
+  color: @primary;
+  font-size: 1.3rem;
+  font-weight: 500;
+}
+
+// 只动 transform（合成层动画），不触发布局重排
+.uploadingSpinner {
+  animation: imageUploaderSpin 0.8s linear infinite;
+}
+
+@keyframes imageUploaderSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .uploadingSpinner {
+    animation-duration: 1ms;
+  }
+}

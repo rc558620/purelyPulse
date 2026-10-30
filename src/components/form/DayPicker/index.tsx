@@ -9,7 +9,7 @@
 //   useDayPickerState.ts     ← 面板内选中状态（selYear / selMonth / selDay / 确定 / 今天）
 //   DayPickerMobilePanel     ← 移动端底部 BottomSheet
 //   DayPickerPcDropdown      ← PC 端下拉面板
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import classNames from 'classnames';
 
@@ -20,6 +20,10 @@ import { pad2 }       from '@components/form/_shared/pickerUtils';
 import DayPickerMobilePanel from './DayPickerMobilePanel';
 import DayPickerPcDropdown  from './DayPickerPcDropdown';
 import styles from './DayPicker.module.less';
+
+// PC 端下拉最小宽度（对应 .dropdown 的 min-width: 34rem）+ 视口边距
+const DROPDOWN_MIN_WIDTH = 340;
+const VIEWPORT_PADDING = 8;
 
 // ─── Props ────────────────────────────────────────────────────
 
@@ -58,6 +62,9 @@ const DayPicker: React.FC<DayPickerProps> = ({
   const isMobile = useDeviceType(displayMode);
 
   // ── 面板开/关状态（复用 _shared，含 ESC + 点击外部关闭） ──
+  // PC 端面板走 Portal（不在 wrapperRef 内），需把 portalRef 一起登记为「内部区域」
+  const portalRef = useRef<HTMLDivElement | null>(null);
+  const extraInsideRefs = useMemo(() => [portalRef], []);
   const {
     visible,
     isClosing,
@@ -66,7 +73,7 @@ const DayPicker: React.FC<DayPickerProps> = ({
     handleClose,
     handleAnimationEnd,
     handleKeyDown,
-  } = usePickerPopup({ isMobile });
+  } = usePickerPopup({ isMobile, extraInsideRefs });
 
   // PC端下拉位置状态（Portal + fixed 定位，避免被父容器 overflow 裁切）
   const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number } | null>(null);
@@ -76,11 +83,12 @@ const DayPicker: React.FC<DayPickerProps> = ({
     const el = wrapperRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
+    // 面板自身通过 .dropdownBottom / .dropdownTop 的 ±6px 做偏移，这里只给锚点，
+    // 避免偏移被重复累加。
+    const maxLeft = window.innerWidth - DROPDOWN_MIN_WIDTH - VIEWPORT_PADDING;
     setDropdownPos({
-      top: popupPlacement === 'top'
-        ? rect.top - 6
-        : rect.bottom + 6,
-      left: rect.left,
+      top: popupPlacement === 'top' ? rect.top : rect.bottom,
+      left: Math.max(VIEWPORT_PADDING, Math.min(rect.left, maxLeft)),
     });
   }, [isMobile, visible, isClosing, popupPlacement]);
 
@@ -141,7 +149,11 @@ const DayPicker: React.FC<DayPickerProps> = ({
 
       {/* ── PC 端：下拉 Dropdown（Portal + fixed 定位，避免被父容器 overflow 裁切）── */}
       {!isMobile && visible && ReactDOM.createPortal(
-        <div style={{ position: 'fixed', top: dropdownPos?.top ?? 0, left: dropdownPos?.left ?? 0 }}>
+        <div
+          ref={portalRef}
+          className={styles.dropdownPortal}
+          style={{ top: dropdownPos?.top ?? 0, left: dropdownPos?.left ?? 0 }}
+        >
           <DayPickerPcDropdown
             year={year}
             month={month}

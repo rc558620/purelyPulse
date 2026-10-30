@@ -44,6 +44,26 @@
   }
 }
 
+// 左下角停靠：扫码点餐新订单通知使用，卡片贴底并从左侧滑入
+.stackBottomLeft {
+  top: auto;
+  bottom: 1.6rem;
+  left: 1.6rem;
+  right: auto;
+
+  // 提高选择器权重，覆盖卡片外壳自带的「从右侧滑入」动画
+  &.stack > * {
+    animation: noticeSlideInFromLeft 0.3s ease-out;
+  }
+
+  @media (max-width: 768px) {
+    top: auto;
+    bottom: 1.2rem;
+    left: 1rem;
+    right: auto;
+  }
+}
+
 @keyframes noticeSlideInFromLeft {
   from {
     opacity: 0;

@@ -15,7 +15,6 @@
  *  - displayMode 透传给子 DayPicker
  */
 
-import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import DateRangePicker from '../DateRangePicker';

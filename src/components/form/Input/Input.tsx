@@ -1,4 +1,4 @@
-import React, { memo, forwardRef } from 'react';
+import { memo, forwardRef } from 'react';
 import type { InputHTMLAttributes, TextareaHTMLAttributes, ReactNode } from 'react';
 import { cx } from '@utils/utils';
 import styles from './Input.module.less';
@@ -35,9 +35,9 @@ export const Textarea = memo(forwardRef<HTMLTextAreaElement, TextareaProps>(({
       {...rest}
     />
   </div>
-))) as React.FC<TextareaProps>;
+)));
 
-(Textarea as React.FC & { displayName?: string }).displayName = 'Textarea';
+Textarea.displayName = 'Textarea';
 
 // ─── Input ──────────────────────────────────────────────────────
 
@@ -80,6 +80,6 @@ export const Input = memo(forwardRef<HTMLInputElement, InputProps>(({
             {suffix && <div className={styles.suffixWrapper}>{suffix}</div>}
         </div>
     );
-})) as React.FC<InputProps>;
+}));
 
-(Input as React.FC & { displayName?: string }).displayName = 'Input';
+Input.displayName = 'Input';

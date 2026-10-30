@@ -20,7 +20,27 @@ export function dirOf(n: number): 'up' | 'down' | 'flat' {
 export const isNonEmptyArray = <T>(arr: T[] | undefined | null): arr is T[] =>
   Array.isArray(arr) && arr.length > 0;
 
-// 前端禁止金额转换和格式化。所有金额展示值由后端直接返回 xxxDisplay 字段。
+// 金额计算权归属后端：前端不做求和、折扣、差价等任何业务金额运算，
+// 业务金额的展示值优先使用后端下发的 xxxDisplay 字段；本处只提供纯展示格式化。
+
+/**
+ * 金额展示格式化：只解决「怎么显示」，不做任何业务计算。
+ *
+ * 先过滤 null / undefined / NaN / Infinity，再按中文本地化输出千分位，最多保留 2 位小数。
+ * @param value - 后端下发的金额数值（元）
+ * @returns 形如 `3,200` / `12.5` 的展示文案
+ */
+export const fmtAmount = (value: number | null | undefined): string => {
+  const normalized = safeNum(value);
+  if (!Number.isFinite(normalized)) {
+    return '0';
+  }
+
+  return normalized.toLocaleString('zh-CN', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
+};
 
 /** 千分位格式化（不改变小数精度） */
 export const formatNumber = (num: number | string | null | undefined): string => {

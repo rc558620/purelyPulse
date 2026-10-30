@@ -249,7 +249,7 @@ describe('Button – HTML 属性透传', () => {
     });
 
     it('data-testid 透传', () => {
-        renderButton({ 'data-testid': 'my-btn' } as React.ComponentProps<typeof Button>);
+        renderButton({ 'data-testid': 'my-btn' } as unknown as React.ComponentProps<typeof Button>);
         expect(screen.getByTestId('my-btn')).toBeInTheDocument();
     });
 

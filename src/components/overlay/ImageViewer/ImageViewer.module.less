@@ -1,0 +1,126 @@
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/breakpoints.less';
+
+.mask {
+  position: fixed;
+  inset: 0;
+  z-index: @z-image-viewer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.88);
+  // 浮层自身接管手势，避免移动端滑动查看器时带动底层页面滚动
+  touch-action: none;
+}
+
+// ─── 图片舞台：铺满遮罩，承接左右拖拽手势与层叠的图片 ──────────────────
+.stage {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  // 接管手势：触屏不带动底层滚动，鼠标拖拽不选中文字
+  touch-action: none;
+  user-select: none;
+  cursor: grab;
+}
+
+// 拖拽 / 滑动进行中：抓手按下光标
+.stageGrabbing {
+  cursor: grabbing;
+}
+
+// ─── 左右滑动：仅动 transform，时长与缓动统一走 Motion 令牌 ─────────
+// 拖拽跟手态不挂过渡类（手指到哪图到哪）；收尾态按松手结果二选一：
+// 切图走减速曲线（时长由 JS 按剩余距离等比覆盖，与按钮切换同速），
+// 回弹走弹性曲线；过渡结束由 transitionend 落地索引（状态机在 hook）。
+.slideSettleCommit {
+  transition: transform @duration-normal @ease-decelerate;
+}
+
+.slideSettleCancel {
+  transition: transform @duration-normal @ease-pop;
+}
+
+// 按钮与底栏需压在舞台之上，避免被铺满的图片层拦截点击
+.iconBtn {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  // 触控热区不小于 44px，视觉上更小也不会误触
+  width: 4.4rem;
+  height: 4.4rem;
+  border: none;
+  border-radius: @radius-full;
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background-color @duration-fast ease;
+
+  // 仅可用态响应 hover；禁用态不亮起，避免「看着还能点」的误导
+  &:not(:disabled):hover {
+    background-color: rgba(255, 255, 255, 0.24);
+  }
+
+  // 首 / 尾越界：按钮保留占位只置灰，hover 也维持禁用外观，光标提示不可操作
+  &:disabled {
+    opacity: 0.28;
+    cursor: not-allowed;
+  }
+}
+
+.closeBtn {
+  top: 1.6rem;
+  right: 1.6rem;
+}
+
+.prevBtn {
+  top: 50%;
+  left: 1.6rem;
+  transform: translateY(-50%);
+}
+
+.nextBtn {
+  top: 50%;
+  right: 1.6rem;
+  transform: translateY(-50%);
+}
+
+// 移动端左右滑动已覆盖翻页手势，切换按钮会遮挡图片，故整体隐藏
+.mobile({
+  .prevBtn,
+  .nextBtn {
+    display: none;
+  }
+});
+
+.footer {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  bottom: 2.4rem;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.counter {
+  font-size: 1.3rem;
+  color: rgba(255, 255, 255, 0.72);
+  font-variant-numeric: tabular-nums;
+}
+
+// 减少动态效果：降级为瞬态切换（JS 侧同时跳过滑动态，此处为兜底）
+@media (prefers-reduced-motion: reduce) {
+  .iconBtn {
+    transition: none;
+  }
+
+  .slideSettleCommit,
+  .slideSettleCancel {
+    transition: none;
+  }
+}

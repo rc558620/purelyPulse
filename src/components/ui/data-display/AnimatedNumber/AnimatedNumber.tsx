@@ -44,10 +44,17 @@ const reducer = (state: State, action: Action): State => {
         lastValue: action.value,
       };
     case 'VALUE_CHANGE': {
-      // 同一 triggerKey 下 value 变化：直接更新最后一项，无动画
+      // 直接更新最后一项，无动画。
+      //
+      // key 必须写成 action.triggerKey（而不是 state.lastTriggerKey）：
+      // skipFirstChange 降级路径是在 triggerKey 已经变化的情况下派发 VALUE_CHANGE 的，
+      // 若沿用旧 key，最后一项的 key 会与 lastTriggerKey 不一致；之后 triggerKey 再回到
+      // 那个旧值（例如净利润由非 0 变回 0）时走 TRIGGER_CHANGE 追加同 key 的新项，
+      // 就会渲染出两个 key 相同的子节点并触发 React「Encountered two children with
+      // the same key」告警。
       const newItems = [...state.items];
       if (newItems.length > 0) {
-        newItems[newItems.length - 1] = { key: state.lastTriggerKey, value: action.value };
+        newItems[newItems.length - 1] = { key: action.triggerKey, value: action.value };
       }
       return {
         items: newItems,

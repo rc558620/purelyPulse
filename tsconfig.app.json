@@ -34,6 +34,8 @@
       "@pages/*": ["./src/pages/*"],
       "@router": ["./src/router"],
       "@router/*": ["./src/router/*"],
+      "@services": ["./src/services"],
+      "@services/*": ["./src/services/*"],
       "@stores": ["./src/stores"],
       "@stores/*": ["./src/stores/*"],
       "@styles/*": ["./src/styles/*"]

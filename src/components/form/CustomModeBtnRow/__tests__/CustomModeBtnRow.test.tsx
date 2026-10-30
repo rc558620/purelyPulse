@@ -17,7 +17,6 @@
  *  - Bug6: 互斥保护（isCustomDate + isCustomRange 同时为 true 时优先 isCustomDate）
  */
 
-import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';

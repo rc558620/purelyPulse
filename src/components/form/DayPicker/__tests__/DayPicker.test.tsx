@@ -18,7 +18,6 @@
  *  - 月份切换后日期自动 clamp（Bug #5 fix）
  */
 
-import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';

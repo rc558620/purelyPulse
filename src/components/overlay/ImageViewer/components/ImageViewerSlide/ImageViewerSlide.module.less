@@ -1,0 +1,28 @@
+@import (reference) "@styles/variables.less";
+@import (reference) '@styles/breakpoints.less';
+// 单张图片：绝对定位铺满舞台，与另一张图叠放时 translateX(100%) 即整整一屏，
+// 无论图片本身多宽，入场 / 出场位移都保持一致（网格自适应宽会导致位移错乱）。
+// will-change 常驻：滑动开始前就完成合成层提升，避免手势瞬间临时提升图层
+// 造成开头掉帧（查看器至多两张全屏图，常驻成本可接受）。
+.slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  will-change: transform;
+}
+
+.image {
+  max-width: 88vw;
+  max-height: 80vh;
+  object-fit: contain;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.mobile({
+  .image {
+  max-width: 100vw;
+}
+});

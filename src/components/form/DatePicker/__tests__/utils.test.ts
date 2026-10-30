@@ -204,22 +204,22 @@ describe('DatePicker/utils – parseTime', () => {
 // ─── parseDatetimeValue ───────────────────────────────────────────────────────
 
 describe('DatePicker/utils – parseDatetimeValue', () => {
-    it('null → { date: "", time: "09:00" }', () => {
-        expect(parseDatetimeValue(null)).toEqual({ date: '', time: '09:00' });
+    it('null → { date: "", time: "" }（缺省时分由调用方回退到当前时分）', () => {
+        expect(parseDatetimeValue(null)).toEqual({ date: '', time: '' });
     });
 
-    it('undefined → { date: "", time: "09:00" }', () => {
-        expect(parseDatetimeValue(undefined)).toEqual({ date: '', time: '09:00' });
+    it('undefined → { date: "", time: "" }', () => {
+        expect(parseDatetimeValue(undefined)).toEqual({ date: '', time: '' });
     });
 
-    it('空字符串 → { date: "", time: "09:00" }', () => {
-        expect(parseDatetimeValue('')).toEqual({ date: '', time: '09:00' });
+    it('空字符串 → { date: "", time: "" }', () => {
+        expect(parseDatetimeValue('')).toEqual({ date: '', time: '' });
     });
 
-    it('无空格的纯日期字符串 → date=该值, time="09:00"', () => {
+    it('无空格的纯日期字符串 → date=该值, time=""', () => {
         expect(parseDatetimeValue('2024-03-15')).toEqual({
             date: '2024-03-15',
-            time: '09:00',
+            time: '',
         });
     });
 

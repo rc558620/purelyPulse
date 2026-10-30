@@ -2,7 +2,7 @@
 import type { ReactElement, ReactNode } from 'react';
 import styles from './GlobalNoticeStack.module.less';
 
-export type GlobalNoticeStackPlacement = 'top-right' | 'top-left' | 'bottom-right';
+export type GlobalNoticeStackPlacement = 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
 
 export interface GlobalNoticeStackProps {
   /** 通知卡片列表（由业务侧 map 渲染各自的通知卡片）。 */
@@ -18,6 +18,7 @@ const PLACEMENT_CLASS_MAP: Record<GlobalNoticeStackPlacement, string | undefined
   'top-right': undefined,
   'top-left': styles.stackTopLeft,
   'bottom-right': styles.stackBottomRight,
+  'bottom-left': styles.stackBottomLeft,
 };
 
 /** 全局通知堆栈容器：仅承担固定定位与布局，卡片内容由业务侧注入。 */

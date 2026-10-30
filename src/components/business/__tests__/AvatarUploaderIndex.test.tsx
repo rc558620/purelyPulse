@@ -8,7 +8,6 @@
  *  4. 通过 index 渲染组件，与直接渲染 AvatarUploader.tsx 结果一致
  */
 
-import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 

@@ -60,6 +60,14 @@ export interface OperationModalShellProps {
   /** 确认按钮禁用（灰显不可点），默认 false */
   confirmDisabled?: boolean;
   /**
+   * 关闭通道禁用（✕ / ESC / 遮罩 / 取消按钮全部失效），默认 false。
+   *
+   * 用于「提交中不可中断」的场景：扣款、发送短信这类操作一旦在途，
+   * 关掉弹窗并不会让请求停下，反而会让用户以为操作被取消，
+   * 然后重新发起一次——幂等键被换掉就会重复扣费 / 重复发送。
+   */
+  closeDisabled?: boolean;
+  /**
    * 展示形态
    * - `sheet`（默认）：底部抽屉（mobile）/ 居中（desktop）
    * - `center`       ：始终居中弹窗
@@ -116,6 +124,7 @@ const OperationModalShell: React.FC<OperationModalShellProps> = ({
   showCloseButton = true,
   headerExtra,
   confirmDisabled = false,
+  closeDisabled  = false,
   variant      = 'sheet',
   maxWidth,
   desktopAlign = 'center',
@@ -130,11 +139,14 @@ const OperationModalShell: React.FC<OperationModalShellProps> = ({
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   // BUG-5: 用 ref 缓存最新回调，避免 onClose 引用变化导致监听器反复注册
   const onCloseRef = useRef(onClose);
+  // 同上：ESC 监听器只注册一次，closeDisabled 也必须走 ref 读取最新值
+  const closeDisabledRef = useRef(closeDisabled);
   // 不能在 render 阶段写 ref（违反 React 渲染规则），改在 effect 中同步最新回调；
   // 无依赖数组的 effect 每次提交后都会执行，保证 ref 始终指向最新 onClose，
   // 同时 ESC 监听器仍只注册一次，不随 onClose 引用变化而反复注册。
   useEffect(() => {
     onCloseRef.current = onClose;
+    closeDisabledRef.current = closeDisabled;
   });
 
   // ─── BUG-2: body scroll lock ─────────────────────────────────
@@ -152,6 +164,8 @@ const OperationModalShell: React.FC<OperationModalShellProps> = ({
       if (e.key !== 'Escape') return;
       // 事件触发时才查栈顶：快照式判断会被 React Compiler 折叠掉
       if (!isTopModalListener(handler)) return;
+      // 提交中不允许 ESC 关闭（关闭并不会取消已发出的请求）
+      if (closeDisabledRef.current) return;
       e.stopImmediatePropagation();
       onCloseRef.current();
     };
@@ -232,8 +246,8 @@ const OperationModalShell: React.FC<OperationModalShellProps> = ({
 
   // ─── backdrop 点击 ──────────────────────────────────────────
   const handleOverlayClick = useCallback(() => {
-    if (closeOnBackdropClick) onClose();
-  }, [closeOnBackdropClick, onClose]);
+    if (closeOnBackdropClick && !closeDisabled) onClose();
+  }, [closeDisabled, closeOnBackdropClick, onClose]);
 
   // ─── BUG-6: SSR 兼容 ────────────────────────────────────────
   if (typeof document === 'undefined') return null;
@@ -265,6 +279,7 @@ const OperationModalShell: React.FC<OperationModalShellProps> = ({
               type="button"
               className={styles.closeBtn}
               onClick={onClose}
+              disabled={closeDisabled}
               aria-label="关闭"
             >
               <IconClose />
@@ -280,7 +295,12 @@ const OperationModalShell: React.FC<OperationModalShellProps> = ({
         {/* ── 底部操作区 ── */}
         <div className={styles.actions}>
           {cancelText ? (
-            <button type="button" className={styles.cancelBtn} onClick={onClose}>
+            <button
+              type="button"
+              className={styles.cancelBtn}
+              onClick={onClose}
+              disabled={closeDisabled}
+            >
               {cancelText}
             </button>
           ) : null}

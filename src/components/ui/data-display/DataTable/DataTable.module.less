@@ -1,0 +1,168 @@
+// ─── 通用数据表格样式 ────────────────────────────────────────────────
+@import (reference) '@styles/variables.less';
+@import (reference) '@styles/breakpoints.less';
+
+// ─── 外层容器 ────────────────────────────────────────────────────────
+//
+// 桌面 / iPad 不设 overflow：一旦某条轴为 auto，另一条 visible 会被计算成 auto，
+// 容器自己变成滚动容器，表头 sticky 就会失效（永远不吸顶）。
+// 横向滚动只在窄屏开启。
+.scrollWrapper {
+  position: relative;
+  width: 100%;
+  border: 1px solid @border-color;
+  border-radius: @radius-md;
+  background: @bg-white;
+}
+
+// ─── 表格本体 ────────────────────────────────────────────────────────
+.table {
+  width: 100%;
+  min-width: 52rem;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 1.4rem;
+  color: @text-main;
+  table-layout: fixed;
+}
+
+// ─── 表头：吸顶 ──────────────────────────────────────────────────────
+.thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+
+  .th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 1.2rem 1.2rem;
+    background: @bg-slate-50;
+    border-bottom: 1px solid @border-color;
+    color: @text-sub;
+    font-size: 1.3rem;
+    font-weight: 600;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  // ── 顶部圆角补偿 ──────────────────────────────────────────────────
+  // 桌面端 .scrollWrapper 刻意不设 overflow（设了表头就失去吸顶），
+  // 于是容器的 border-radius 裁不到子元素；而表头背景 @bg-slate-50 是不透明的，
+  // 方形的表头直接把容器顶部两角顶成直角。
+  // 窄屏因为开了 overflow-x: auto 会自动裁剪，所以只有桌面端会露出来。
+  // 给首尾表头补上与容器一致的内圆角（1px 边框内侧 = @radius-md - 1px）。
+  .th:first-child {
+    border-top-left-radius: calc(@radius-md - 1px);
+  }
+
+  .th:last-child {
+    border-top-right-radius: calc(@radius-md - 1px);
+  }
+}
+
+.tbody {
+  .row {
+    transition: background-color @duration-fast ease;
+
+    &:not(:last-child) .td {
+      border-bottom: 1px solid @border-color;
+    }
+
+    &:hover {
+      background: @bg-slate-50;
+    }
+  }
+
+  .rowSelected {
+    background: @primary-fade-10;
+
+    &:hover {
+      background: @primary-fade-20;
+    }
+  }
+
+  // 达到选择上限后未选行置灰（已选行保持可选，便于取消）
+  .rowDisabled {
+    opacity: 0.45;
+
+    &:hover {
+      background: transparent;
+    }
+  }
+
+  // 与表头同理：最后一行 hover / 选中时的不透明背景会盖住容器底部两角，
+  // 首尾单元格补内圆角，让行背景始终落在容器圆角内侧。
+  .row:last-child {
+    .td:first-child {
+      border-bottom-left-radius: calc(@radius-md - 1px);
+    }
+
+    .td:last-child {
+      border-bottom-right-radius: calc(@radius-md - 1px);
+    }
+  }
+}
+
+.td {
+  padding: 1rem 1.2rem;
+  vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// ─── 首列：checkbox ──────────────────────────────────────────────────
+//
+// ⚠️ 必须写成 .th.checkCell / .td.checkCell 两段式（特异性 0,2,0）。
+// 表头单元格同时带 .th，而 .thead .th 也是 (0,2,0) 且定义了
+// text-align: left + padding 简写；若这里只写单类 .checkCell（0,1,0），
+// 会被它整段覆盖 → 表头全选框靠左、行内选框居中，两者错位。
+// 保持选择器同特异性后，靠源码顺序取胜，表头与数据行规则完全一致。
+.th.checkCell,
+.td.checkCell {
+  width: 4.8rem;
+  text-align: center;
+  padding-left: 0.8rem;
+  padding-right: 0.8rem;
+}
+
+// ⚠️ 与 .checkCell 同一个坑：必须写 .th.alignCenter / .td.alignCenter 两段式。
+// 只写单类 .alignCenter（0,1,0）会被 .thead .th 的 text-align: left（0,2,0）覆盖，
+// 结果是「数据行居中、表头仍靠左」，调用方传 align: 'center' 却不生效。
+// 列对齐对表头与数据行必须始终一致，否则看着就是错位。
+.th.alignRight,
+.td.alignRight {
+  text-align: right;
+}
+
+.th.alignCenter,
+.td.alignCenter {
+  text-align: center;
+}
+
+// ─── 空态 ────────────────────────────────────────────────────────────
+.empty {
+  margin: 0;
+  padding: 3.2rem 1.6rem;
+  text-align: center;
+  color: @text-muted;
+  font-size: 1.4rem;
+}
+
+.mobile({
+  // 窄屏才开启横向滚动
+  .scrollWrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table {
+    min-width: 44rem;
+  }
+
+  .td,
+  .thead .th {
+    padding: 0.9rem 0.8rem;
+  }
+});

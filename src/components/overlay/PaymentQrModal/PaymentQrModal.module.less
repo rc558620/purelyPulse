@@ -1,0 +1,77 @@
+// 通用支付二维码弹窗样式
+@import (reference) "@styles/variables.less";
+
+.body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.amount {
+  margin: 0;
+  font-size: 1.4rem;
+  color: @text-sub;
+
+  strong {
+    font-size: 2rem;
+    color: @lime-800;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.qrBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22rem;
+  height: 22rem;
+  border: 1px solid @border-color;
+  border-radius: @radius-md;
+  background: @bg-white;
+  overflow: hidden;
+}
+
+// 已支付时弱化二维码：避免用户以为还要再扫一次
+.qrBoxPaid {
+  opacity: 0.4;
+}
+
+.qr {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+// 倒计时：等宽数字避免每秒跳动时宽度抖动
+.countdown {
+  margin: 0;
+  font-size: 1.2rem;
+  color: @text-muted;
+
+  strong {
+    color: @text-main;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.qrFallback {
+  padding: 1.6rem;
+  text-align: center;
+  font-size: 1.3rem;
+  color: @danger;
+}
+
+.status {
+  margin: 0;
+  font-size: 1.3rem;
+  color: @text-main;
+  text-align: center;
+}
+
+.tip {
+  margin: 0;
+  font-size: 1.2rem;
+  color: @text-muted;
+  text-align: center;
+}

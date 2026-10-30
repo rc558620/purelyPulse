@@ -36,6 +36,7 @@
 @orange-500:     #f97316;
 @orange-100:     #ffedd5;
 @red-500:        #ef4444;  // Red-500
+@danger:         @red-500;  // Semantic alias：错误 / 危险操作
 @rose-500:       #f43f5e;
 @rose-100:       #ffe4e6;
 @emerald-500:    #10b981;
@@ -49,7 +50,9 @@
 @cyan-500:       #06b6d4;
 @cyan-100:       #cffafe;
 @slate-500:      #64748b;
+@slate-600:      #475569;
 @slate-100:      #f1f5f9;
+@lime-800:       #3f6212;
 @amber-500:      #f59e0b;
 @amber-100:      #fef3c7;
 
@@ -61,12 +64,23 @@
 @profit-red:         #ff5252;
 
 // === Layout ===
+@radius-sm:      8px;
 @radius-md:      12px;
 @radius-lg:      16px;
 @radius-full:    9999px;
 
 // === Shadows ===
 @shadow-sm:      0 1px 2px 0 rgba(0, 0, 0, 0.05);
+
+// === Motion（动画令牌：时长与缓动统一走令牌，禁止组件内散落魔数） ===
+@duration-fast:   150ms;
+@duration-normal: 300ms;
+// 弹性回弹缓动（入场 / 按压反馈等需要轻微过冲的场景）
+@ease-pop:        cubic-bezier(0.34, 1.56, 0.64, 1);
+// 标准位移动画缓动（左右滑动、面板进出等线性推进场景，无过冲）
+@ease-standard:   cubic-bezier(0.4, 0, 0.2, 1);
+// 减速收尾缓动（跟手松手 / 惯性续接：起步即接住手指速度，收尾平滑停止）
+@ease-decelerate: cubic-bezier(0.4, 0.7, 0.3, 1);
 
 // === Z-Index Layers ===
 // 移动端弹层遮罩 & 弹层
@@ -76,6 +90,8 @@
 @z-dropdown-pc:     1050;
 // Toast 通知
 @z-toast:           10000;
+// 图片查看器浮层（须高于通用弹层与裁剪弹窗）
+@z-image-viewer:    10050;
 // 页面悬浮操作按钮（FAB）
 @z-fab:              50;
 

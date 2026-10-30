@@ -38,6 +38,13 @@ export const getDaysInMonth = (year: number, month: number): number =>
 export const getFirstDayOfWeek = (year: number, month: number): number =>
   new Date(year, month, 1).getDay();
 
+/** 获取「明年今日」的 "YYYY-MM-DD"（showConfirm 模式下无已选值时的默认预选） */
+export const getNextYearToday = (): string => {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() + 1);
+  return toDateString(d);
+};
+
 // ─── 时间解析 ─────────────────────────────────────────────────
 
 /** 解析 "HH:mm" 为 { hour, minute }，边界 clamp，NaN 兜底为 0 */
@@ -57,11 +64,19 @@ export const parseTime = (time: string): { hour: number; minute: number } => {
 
 // ─── datetime 模式 ─────────────────────────────────────────────
 
-/** 从 "YYYY-MM-DD HH:mm" 解析出 { date, time } */
+/** 当前时刻的 "HH:mm"（datetime 模式默认时分 = 打开面板时的当前时分） */
+export const getCurrentTime = (): string => {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  return `${hh}:${mm}`;
+};
+
+/** 从 "YYYY-MM-DD HH:mm" 解析出 { date, time }；无时间尾缀时 time 为空串，由调用方决定默认时分 */
 export const parseDatetimeValue = (val: string | null | undefined): { date: string; time: string } => {
-  if (!val) return { date: '', time: '09:00' };
+  if (!val) return { date: '', time: '' };
   const spaceIdx = val.indexOf(' ');
-  if (spaceIdx === -1) return { date: val, time: '09:00' };
+  if (spaceIdx === -1) return { date: val, time: '' };
   return { date: val.slice(0, spaceIdx), time: val.slice(spaceIdx + 1) };
 };
 

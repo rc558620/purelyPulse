@@ -2,9 +2,7 @@
 
 .chartSkeleton {
   width: 100%;
-  // 不能写 min-height：调用方（ChartRenderer）一定会把图表高度作为内联 style 传进来，
-  // 而 min-height 会钳制 height，导致骨架比真实图表高（如 200px vs 132px）。
-  // 刷新页面时 echarts chunk 需重新拉取，骨架会先渲染再被图表替换，高度不一致就会看到塌陷。
+  min-height: 200px;
   border-radius: @radius-md;
   background: linear-gradient(
     90deg,

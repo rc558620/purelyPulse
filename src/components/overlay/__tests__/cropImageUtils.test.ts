@@ -56,10 +56,6 @@ interface MockImageInstance extends EventTarget {
   _triggerError: () => void;
 }
 
-/** 收集创建的 MockImage 实例，供测试手动触发事件 */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-let lastMockImageInstance: MockImageInstance | null = null;
-
 /** 是否触发 error（而非 load） */
 let triggerError = false;
 
@@ -68,8 +64,6 @@ function createMockImageClass() {
     // 用 EventTarget 作为 prototype base 使得 addEventListener/dispatchEvent 可用
     this._loadCallbacks = [];
     this._errorCallbacks = [];
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    lastMockImageInstance = this;
 
     this.addEventListener = (type: string, cb: EventListenerOrEventListenerObject) => {
       const fn = typeof cb === 'function' ? cb : cb.handleEvent.bind(cb);
@@ -122,7 +116,6 @@ beforeEach(() => {
   mockBlob = new Blob(['fake-image'], { type: 'image/jpeg' });
   drawImageArgs = [];
   lastCanvas = null;
-  lastMockImageInstance = null;
   triggerError = false;
 
   // ── mock Image constructor

@@ -16,6 +16,11 @@ export interface UsePickerPopupOptions {
   externalVisible?: boolean;
   /** 面板开关变化回调（可选） */
   onVisibleChange?: (visible: boolean) => void;
+  /**
+   * 额外的「内部区域」ref（如 Portal 渲染的面板），
+   * 点击这些区域不会被判定为「点击外部关闭」。PC 端面板走 Portal 时必须传入。
+   */
+  extraInsideRefs?: Array<RefObject<HTMLElement | null> | null | undefined>;
 }
 
 export interface UsePickerPopupReturn {
@@ -28,7 +33,7 @@ export interface UsePickerPopupReturn {
   handleKeyDown:      (e: React.KeyboardEvent) => void;
 }
 
-const usePickerPopup = ({ isMobile, externalVisible, onVisibleChange }: UsePickerPopupOptions): UsePickerPopupReturn => {
+const usePickerPopup = ({ isMobile, externalVisible, onVisibleChange, extraInsideRefs }: UsePickerPopupOptions): UsePickerPopupReturn => {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
 
   const [visible,   setVisible]   = useState(false);
@@ -99,17 +104,22 @@ const usePickerPopup = ({ isMobile, externalVisible, onVisibleChange }: UsePicke
     if (e.key === 'Enter') handleOpen();
   }, [handleOpen]);
 
-  // PC 端：点击组件外部时关闭
+  // PC 端：点击组件外部时关闭（wrapper + Portal 面板内部均视为内部点击）
   useEffect(() => {
     if (isMobile || !visible || isClosing) return;
     const handler = (e: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const insideWrapper = wrapperRef.current?.contains(target) ?? false;
+      const insideExtra = (extraInsideRefs ?? []).some(
+        ref => ref?.current?.contains(target) ?? false,
+      );
+      if (!insideWrapper && !insideExtra) {
         handleClose();
       }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [isMobile, visible, isClosing, handleClose]);
+  }, [isMobile, visible, isClosing, handleClose, extraInsideRefs]);
 
   // ESC 键关闭
   useEffect(() => {

@@ -6,6 +6,14 @@
 @bp-tablet: 1024px;
 @bp-desktop: 1280px;
 
+// === 页面宽度令牌 ===
+// 页面容器按宽窄分档：移动端全宽，iPad / PC 收敛到固定最大宽度。
+// 需要跟容器对齐的固定定位元素（如 PageFab）直接引用这些变量，
+// 禁止在组件里写死 max-width 数字。
+@page-wide-mobile:  100%;   // 宽型页面 · 移动端（全宽）
+@page-wide-tablet:  120rem; // 宽型页面 · iPad
+@page-wide-desktop: 120rem; // 宽型页面 · PC（≥1280px）
+
 // Usage: .mobile({ ...styles... })
 .mobile(@rules) {
   @media (max-width: @bp-mobile) {

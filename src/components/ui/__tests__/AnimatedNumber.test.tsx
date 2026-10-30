@@ -24,6 +24,8 @@
  *    15. 多次变化后最多同时存在两个 item
  *  ─ 无障碍
  *    16. 初始 item aria-hidden="false"
+ *  ─ skipFirstChange 降级路径
+ *    17. 降级更新后 triggerKey 回到原值时不产生重复 key（回归）
  */
 
 import React, { act } from 'react';
@@ -218,5 +220,43 @@ describe('AnimatedNumber – 无障碍', () => {
             (el) => el.tagName === 'SPAN',
         ) as HTMLElement[];
         expect(items[0].getAttribute('aria-hidden')).toBe('false');
+    });
+});
+
+// ─── 7. skipFirstChange 降级路径 ──────────────────────────────────────────────
+describe('AnimatedNumber – skipFirstChange 降级路径', () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(async () => {
+        await act(async () => {
+            vi.runAllTimers();
+            await Promise.resolve();
+        });
+        vi.useRealTimers();
+    });
+
+    it('降级更新后 triggerKey 回到原值时不产生重复 key', async () => {
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        // 场景来自利润详情英雄卡：triggerKey 是净利润的字符串形式，
+        // 首屏占位为 '0'，真实数据到达后走 skipFirstChange 降级（VALUE_CHANGE），
+        // 切周期回到 0 时再走 TRIGGER_CHANGE 追加新项。
+        const { container, rerender } = renderAnimated({
+            value: '0.00',
+            triggerKey: '0',
+            skipFirstChange: true,
+        });
+        await rerenderAnimated(rerender, { value: '100.00', triggerKey: '100', skipFirstChange: true });
+        await rerenderAnimated(rerender, { value: '0.00', triggerKey: '0', skipFirstChange: true });
+
+        const outerSpan = container.querySelector('span')!;
+        const items = Array.from(outerSpan.children).filter((el) => el.tagName === 'SPAN');
+        expect(items).toHaveLength(2);
+
+        const duplicateKeyErrors = errorSpy.mock.calls
+            .map((call) => String(call[0]))
+            .filter((message) => message.includes('same key'));
+        expect(duplicateKeyErrors).toEqual([]);
+
+        errorSpy.mockRestore();
     });
 });

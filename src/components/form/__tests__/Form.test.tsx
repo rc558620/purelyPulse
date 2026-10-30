@@ -18,7 +18,7 @@
 
 import React, { act, useEffect, useRef } from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, renderHook, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Form } from '../Form';
 import { FormItem } from '../FormItem';
@@ -91,21 +91,20 @@ describe('Form – Context 注入', () => {
     });
 
     it('外部传入 form 实例后 context 使用该实例', () => {
-        const { result } = (() => {
-            let capturedCtx: ReturnType<typeof useFormContext> | null = null;
-            const Wrapper = () => {
-                const [form] = useForm();
-                form.setFieldValue('test', 'external');
-                return (
-                    <Form form={form}>
-                        <ContextCapture onCapture={ctx => { capturedCtx = ctx; }} />
-                    </Form>
-                );
-            };
-            render(<Wrapper />);
-            return { result: capturedCtx };
-        })();
-        expect((result as ReturnType<typeof useFormContext> | null)?.getFieldValue('test')).toBe('external');
+        // 测试内不定义内联组件：组件包装器会被编译提升，闭包变量读取不稳定
+        const { result } = renderHook(() => useForm());
+        const [form] = result.current;
+        form.setFieldValue('test', 'external');
+
+        const capturedCtxList: ReturnType<typeof useFormContext>[] = [];
+
+        render(
+            <Form form={form}>
+                <ContextCapture onCapture={ctx => capturedCtxList.push(ctx)} />
+            </Form>,
+        );
+
+        expect(capturedCtxList[0]?.getFieldValue('test')).toBe('external');
     });
 });
 

@@ -20,6 +20,7 @@ const alias = [
   ['@hooks', './src/hooks'],
   ['@pages', './src/pages'],
   ['@router', './src/router'],
+  ['@services', './src/services'],
   ['@stores', './src/stores'],
   ['@styles', './src/styles'],
 ].map(([find, replacement]) => ({

@@ -66,7 +66,8 @@ const verifySelectViewTypeContracts = () => {
             defaultValue="a"
             displayMode="pc"
             onChange={(value) => {
-                expectTypeOf(value).toEqualTypeOf<SelectValue>();
+                // 未选中/清空时为 undefined，选中时为 SelectValue
+                expectTypeOf(value).toEqualTypeOf<SelectValue | undefined>();
             }}
         />
     );
@@ -98,7 +99,7 @@ const verifySelectViewTypeContracts = () => {
     void invalidMultipleDefaultValueElement;
 
     const singleOnChange: NonNullable<SingleSelectViewProps['onChange']> = (value) => {
-        expectTypeOf(value).toEqualTypeOf<SelectValue>();
+        expectTypeOf(value).toEqualTypeOf<SelectValue | undefined>();
     };
     void singleOnChange;
 

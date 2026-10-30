@@ -156,7 +156,11 @@ describe('usePartnerBeansPage 双视图编排', () => {
       expect(result.current.viewMode).toBe('list');
     });
 
-    expect(result.current.records).toHaveLength(0);
+    // 流水清空发生在 query 变 null 后的下一拍（usePartnerBeanRecords 里延后一拍发起），
+    // 必须先等它落地再断言，否则断言会早于状态清理执行
+    await waitFor(() => {
+      expect(result.current.records).toHaveLength(0);
+    });
     expect(result.current.selectedUser).toBeNull();
     expect(fetchRecordsMock.mock.calls.length).toBe(callsBeforeBack);
   });

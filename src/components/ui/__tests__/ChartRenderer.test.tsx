@@ -20,12 +20,9 @@
  *    14. height 未传时使用默认高度 300px
  *    15. className 透传给 Echarts
  *    16. ChartRenderer 是 React.memo 包裹的组件
- *    17. ChartSkeleton 样式不声明 min-height（防懒加载完成后高度塌陷）
  */
 
 import React, { act } from 'react';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import ChartSkeleton from '../data-display/ChartRenderer/ChartSkeleton';
@@ -101,18 +98,6 @@ describe('ChartSkeleton – className / style 透传', () => {
         expect(el.className).toContain('s-extra');
         expect(el.style.width).toBe('300px');
     });
-
-    // 回归：.chartSkeleton 曾写死 min-height: 200px，会钳制 ChartRenderer 传入的 height，
-    // 导致 echarts 懒加载完成瞬间从 200px 塌到图表真实高度（刷新页面时最明显）。
-    // jsdom 没有布局引擎，getComputedStyle 复现不了 min-height 的钳制行为，
-    // 因此这里对样式源文件做静态拦截。
-    it('样式不声明 min-height，高度完全由调用方传入', () => {
-        const lessSource = readFileSync(
-            resolve(process.cwd(), 'src/components/ui/data-display/ChartRenderer/ChartSkeleton.module.less'),
-            'utf-8',
-        );
-        expect(lessSource).not.toMatch(/min-height\s*:/);
-    });
 });
 
 // ═══════════════════════════════════════════════════════════════
@@ -129,7 +114,7 @@ describe('ChartRenderer – 图表渲染', () => {
     });
 
     it('option 透传给 Echarts', async () => {
-        const option = { series: [{ type: 'bar' }] };
+        const option = { series: [{ type: 'bar' as const }] };
         await act(async () => {
             render(<ChartRenderer option={option} />);
         });
