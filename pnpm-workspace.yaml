@@ -1,0 +1,5 @@
+# pnpm 11 起不再读取 package.json 的 pnpm 字段，所有 pnpm 设置统一放本文件（settings-only，非 monorepo）。
+# 本项目依赖中没有需要 postinstall 的包，故不需要配置 allowBuilds。
+
+# 非交互环境（CI / IDE 终端）下 node_modules 需要整体重建时不再要求 TTY 确认
+confirmModulesPurge: false

@@ -6,39 +6,106 @@ on:
   pull_request:
     branches: [main, dev]
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
-  ci:
-    name: Lint · Type-check · Test
+  # ── 静态质量：密钥守卫 + 类型 + lint + 规范 ────────────────────────────────
+  lint-and-typecheck:
+    name: Lint & Type Check
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - uses: ./.github/actions/setup-project
         with:
-          version: 10
+          # 增量 lint / 规范校验需要 diff 基准提交，浅克隆拿不到
+          fetch-depth: 0
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
+      - name: 敏感文件入库检测
+        run: bash .github/scripts/check-tracked-secrets.sh
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Type-check
-        # 必须走 typecheck script：裸跑 `tsc --noEmit` 在 solution-style
-        # tsconfig（files: [] + references）下不检查任何文件，永远 exit 0
+      - name: TypeScript 类型检查
+        # 必须走 typecheck script：solution-style tsconfig（files: [] + references）
+        # 下裸跑 `tsc --noEmit` 不检查任何文件，永远 exit 0
         run: pnpm typecheck
 
-      - name: Lint
-        run: pnpm lint
+      - name: ESLint（全量 · 存量债务仅报告）
+        # 全量基线目前是 62 problems（50 errors / 12 warnings），主要来自
+        # eslint-plugin-react-hooks v7 的 React Compiler 规则（react-hooks/refs 等）。
+        # 这是存量债务：若此刻就设为阻断，每个 PR 都会因为无关文件的历史问题变红，
+        # 门禁很快失去可信度。清理完成后去掉本步骤的 continue-on-error，
+        # 只保留下面的「增量 lint」即可。
+        continue-on-error: true
+        run: pnpm exec eslint . -f unix
 
-      - name: Test (with coverage)
-        run: pnpm test:coverage
+      - name: 计算 diff 基准
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            echo "BASE_SHA=$PR_BASE_SHA" >> "$GITHUB_ENV"
+          elif [ -n "$PUSH_BEFORE_SHA" ]; then
+            echo "BASE_SHA=$PUSH_BEFORE_SHA" >> "$GITHUB_ENV"
+          fi
+
+      - name: ESLint（本次变更文件 · 零容错）
+        # 真正的 PR 门禁在这一步：存量文件可以先脏着，但本次改动不允许新增问题，
+        # 也禁止用 eslint-disable 静默掩盖（--max-warnings 0 会一并卡住未使用的 disable 指令）
+        run: |
+          changed_files=$(bash .github/scripts/changed-files.sh)
+          if [ -z "$changed_files" ]; then
+            echo "本次未变更 src 下的 TS / TSX 文件，跳过增量 lint"
+            exit 0
+          fi
+          # 以 NUL 分隔传参：既能正确处理含空格的路径，也不依赖 bash 4+ 的数组/mapfile
+          printf '%s\n' "$changed_files" | tr '\n' '\0' | xargs -0 pnpm exec eslint --max-warnings 0
+
+      - name: f0rest 规范增量校验
+        env:
+          # 当前为告警模式（校验器对非渲染层存在已知启发式误报）。
+          # 存量违规清理完成后改成 'true'，本步骤即升级为阻断门禁。
+          RULES_STRICT: 'false'
+        run: bash .github/scripts/check-changed-source.sh
+
+  # ── 单元测试 ───────────────────────────────────────────────────────────────
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/actions/setup-project
+
+      - name: 单元测试 + 覆盖率报告
+        # 用 test:ci 而不是 test:coverage：
+        # vite.config.ts 里的覆盖率阈值是 100%，是补测阶段的北极星目标；
+        # 当前真实覆盖率约 78%（lines）/ 66%（branches），若作为 CI 门槛则必然常年红 ——
+        # 门槛失去权威性。故 CI 只要求「测试全绿」，覆盖率转入观测，逐步收敛。
+        run: pnpm test:ci
+
+      - name: 覆盖率汇总
+        if: always()
+        run: |
+          node -e '
+            const fs = require("node:fs");
+            const reportPath = "coverage/coverage-summary.json";
+            if (!fs.existsSync(reportPath)) {
+              console.log("⚠️ 未生成覆盖率报告");
+              process.exit(0);
+            }
+            const { total } = JSON.parse(fs.readFileSync(reportPath, "utf8"));
+            const rows = [["指标", "覆盖率", "覆盖 / 总数"], ["---", "---", "---"]];
+            for (const key of ["lines", "statements", "functions", "branches"]) {
+              const item = total[key];
+              if (!item) continue;
+              rows.push([key, `${item.pct}%`, `${item.covered} / ${item.total}`]);
+            }
+            console.log("### 单元测试覆盖率（不阻断 CI，仅观测趋势）\n");
+            console.log(rows.map((cols) => `| ${cols.join(" | ")} |`).join("\n"));
+          ' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4

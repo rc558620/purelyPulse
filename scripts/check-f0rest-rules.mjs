@@ -42,9 +42,40 @@ if (/key=\{.*(Math\.random|Date\.now).*\}/.test(content)) {
 
 // 检查数字和字符串安全 (Rule 4) - 启发式扫描
 // 检查常见的数字运算或显示是否缺少 safeNum
-const numSuspects = content.match(/\w+\s*:\s*number/g);
+// 排除类型字段声明（`name: number;` / `name: number,`）：那属于类型定义，不是 UI 数字输出
+const numSuspects = content.match(/\w+\s*:\s*number(?!\s*[;,])/g);
 if (numSuspects && !content.includes('safeNum')) {
   errors.push(`[Rule 4] 检测到数字类型操作，但未引用 safeNum。请确保 UI 数字输出经过 safeNum 处理。`);
+}
+
+// 检查链式数字方法是否被 safeNum 包裹 (Rule 4 扩展)
+// 上面的启发式只在「整个文件完全没有 safeNum」时才报错，只要文件里有一处 safeNum 就整体放行，
+// 无法拦截 x.toFixed() 这类未经兜底的直接调用（后端字段为 null/undefined 时会抛 TypeError 中断整份导出）。
+// 说明：safeNum(x, 0).toFixed(2) 中 `safeNum(x, 0)` 含参数括号与逗号，不会被标识符链匹配，故天然放行。
+const numericChainViolations = [];
+const NUMERIC_CHAIN_PATTERN = /([A-Za-z_$][\w$]*(?:\??\.[A-Za-z_$][\w$]*)*)\.(toFixed|toPrecision)\(/g;
+
+lines.forEach((lineText, lineIndex) => {
+  let chainMatch = NUMERIC_CHAIN_PATTERN.exec(lineText);
+
+  while (chainMatch !== null) {
+    numericChainViolations.push(`第 ${lineIndex + 1} 行：${chainMatch[1]}.${chainMatch[2]}() 未经 safeNum 兜底`);
+
+    if (NUMERIC_CHAIN_PATTERN.lastIndex === chainMatch.index) {
+      NUMERIC_CHAIN_PATTERN.lastIndex += 1;
+    }
+    chainMatch = NUMERIC_CHAIN_PATTERN.exec(lineText);
+  }
+
+  NUMERIC_CHAIN_PATTERN.lastIndex = 0;
+});
+
+if (numericChainViolations.length > 0) {
+  // 渐进式引入：存量代码尚有历史债务，先以提醒形式暴露，待清理完毕后改为 errors 强拦截。
+  warnings.push(
+    `[Rule 4] 检测到 ${numericChainViolations.length} 处数字链式调用未使用 safeNum 兜底`
+    + `（后端字段缺失时会抛 TypeError）：\n     - ${numericChainViolations.join('\n     - ')}`,
+  );
 }
 
 // 3. 架构规范 (Rule 5)

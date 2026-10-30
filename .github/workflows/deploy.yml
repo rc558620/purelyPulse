@@ -26,15 +26,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # v6 起支持 pnpm 11；刻意不写 version，版本统一由 package.json 的 packageManager 决定。
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
+        uses: pnpm/action-setup@v6.1.0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          # 版本统一由 .nvmrc 决定（与 package.json 的 engines.node 保持一致），
+          # 避免构建环境与 CI / 本地开发出现版本漂移。
+          node-version-file: .nvmrc
           cache: pnpm
 
       - name: Setup Pages

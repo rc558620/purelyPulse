@@ -1,0 +1,42 @@
+name: Setup project
+description: >-
+  CI 统一的准备入口：checkout → pnpm → Node → 依赖安装。
+  抽取为复合 action，避免多条工作流里重复粘贴同一段装环境代码。
+
+inputs:
+  fetch-depth:
+    description: checkout 时拉取的 git 历史深度；需要 diff 变更文件的 job 传 0
+    required: false
+    default: '1'
+  install:
+    description: 是否执行依赖安装
+    required: false
+    default: 'true'
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: ${{ inputs.fetch-depth }}
+
+    # 故意不给 version：版本由 package.json 的 packageManager 字段决定，
+    # 保证 CI 与本地开发用同一个 pnpm，避免 lockfile 版本漂移。
+    # 必须用 v6：v4 装不了 pnpm 11/12。
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v6.1.0
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        # 版本统一由 .nvmrc 决定（与 package.json 的 engines.node 保持一致）
+        node-version-file: .nvmrc
+        cache: pnpm
+
+    - name: Install dependencies
+      if: inputs.install == 'true'
+      shell: bash
+      # --frozen-lockfile：CI 上 lockfile 与 package.json 不一致时直接失败，
+      # 而不是静默改写 lockfile 造成「本地能装、CI 装出来另一棵树」
+      run: pnpm install --frozen-lockfile

@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# 测试覆盖率产物（同 purelyProfit / purelyClub）
+coverage
+coverage-out.txt
+coverage.json
+
 # 环境变量文件（可能包含密钥、token 等敏感信息）
 .env
 .env.local
