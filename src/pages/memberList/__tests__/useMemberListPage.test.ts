@@ -42,6 +42,8 @@ const buildQuery = (overrides: Partial<MemberListQuery> = {}): MemberListQuery =
   expiry: 'all',
   pendingSubAccountBackfill: false,
   renewalPriceAdjusted: false,
+  sortBy: 'default',
+  sortOrder: 'desc',
   ...overrides,
 });
 
@@ -249,4 +251,43 @@ describe('useMemberListPage 分页竞态', () => {
     expect(result.current.members.map((member) => member.id)).toEqual(['a1', 'a2']);
     expect(result.current.hasMore).toBe(false);
   });
+
+  it('切换排序后按新条件重查第 1 页，方向默认降序', async () => {
+    const initialDeferred = createDeferred<MemberListPageResult>();
+    const sortedDeferred = createDeferred<MemberListPageResult>();
+    fetchMemberListMock
+      .mockImplementationOnce(() => initialDeferred.promise)
+      .mockImplementationOnce(() => sortedDeferred.promise);
+
+    const { result } = renderHook(() => useMemberListPage());
+
+    expect(result.current.sortBy).toBe('default');
+
+    initialDeferred.resolve(buildPageResult());
+    await waitFor(() => {
+      expect(fetchMemberListMock).toHaveBeenCalledTimes(1);
+    });
+
+    await act(async () => {
+      result.current.setSortBy('revenue');
+    });
+
+    // 查询条件变化走 setTimeout(0) 触发重查，等第二次请求真正发出
+    await waitFor(() => {
+      expect(fetchMemberListMock).toHaveBeenCalledTimes(2);
+    });
+
+    // 排序是查询条件的一部分：切换后回第 1 页，整表替换
+    expect(fetchMemberListMock).toHaveBeenNthCalledWith(
+      2,
+      buildQuery({ sortBy: 'revenue', sortOrder: 'desc' }),
+      1,
+    );
+    expect(result.current.sortBy).toBe('revenue');
+
+    await act(async () => {
+      sortedDeferred.resolve(buildPageResult());
+    });
+  });
+
 });

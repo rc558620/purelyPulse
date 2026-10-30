@@ -3,7 +3,16 @@ import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } f
 import { safeNum } from '@utils/utils';
 import { MEMBER_STATUS_SYNC_EVENT } from './memberList.constants';
 import { fetchMemberList } from './memberList.service';
-import type { MemberFilterExpiry, MemberFilterLevel, MemberFilterStatus, MemberListItem, MemberListQuery, MemberListStats } from './memberList.types';
+import { MEMBER_LIST_DEFAULT_SORT_ORDER } from './memberList.constants';
+import type {
+  MemberFilterExpiry,
+  MemberFilterLevel,
+  MemberFilterStatus,
+  MemberListItem,
+  MemberListQuery,
+  MemberListStats,
+  MemberSortBy,
+} from './memberList.types';
 
 interface UseMemberListPageReturn {
   /** 当前已加载的会员列表（分页累积）。 */
@@ -28,6 +37,8 @@ interface UseMemberListPageReturn {
   pendingBackfillFilter: boolean;
   /** 是否只看「续费价被单独调整过」的门店。 */
   renewalPriceFilter: boolean;
+  /** 当前排序字段。 */
+  sortBy: MemberSortBy;
   /** 当前搜索词。 */
   searchQuery: string;
   /** 更新状态筛选。 */
@@ -40,6 +51,8 @@ interface UseMemberListPageReturn {
   setPendingBackfillFilter: (value: boolean) => void;
   /** 切换「已调续费价」筛选。 */
   setRenewalPriceFilter: (value: boolean) => void;
+  /** 更新排序字段。 */
+  setSortBy: (value: MemberSortBy) => void;
   /** 更新搜索词。 */
   setSearchQuery: (value: string) => void;
   /** 清空搜索词。 */
@@ -70,6 +83,7 @@ export const useMemberListPage = (): UseMemberListPageReturn => {
   const [expiryFilter, setExpiryFilter] = useState<MemberFilterExpiry>('all');
   const [pendingBackfillFilter, setPendingBackfillFilter] = useState<boolean>(false);
   const [renewalPriceFilter, setRenewalPriceFilter] = useState<boolean>(false);
+  const [sortBy, setSortBy] = useState<MemberSortBy>('default');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -88,12 +102,15 @@ export const useMemberListPage = (): UseMemberListPageReturn => {
     expiry: expiryFilter,
     pendingSubAccountBackfill: pendingBackfillFilter,
     renewalPriceAdjusted: renewalPriceFilter,
+    sortBy,
+    sortOrder: MEMBER_LIST_DEFAULT_SORT_ORDER,
   }), [
     deferredSearchQuery,
     expiryFilter,
     levelFilter,
     pendingBackfillFilter,
     renewalPriceFilter,
+    sortBy,
     statusFilter,
   ]);
   const latestQueryRef = useRef<MemberListQuery>(currentQuery);
@@ -221,12 +238,14 @@ export const useMemberListPage = (): UseMemberListPageReturn => {
     expiryFilter,
     pendingBackfillFilter,
     renewalPriceFilter,
+    sortBy,
     searchQuery,
     setStatusFilter,
     setLevelFilter,
     setExpiryFilter,
     setPendingBackfillFilter,
     setRenewalPriceFilter,
+    setSortBy,
     setSearchQuery,
     handleSearchClear,
     refreshMembers,

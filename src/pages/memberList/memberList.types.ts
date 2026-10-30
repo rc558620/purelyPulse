@@ -222,6 +222,18 @@ export type MemberFilterLevel = 'all' | MemberLevel;
 /** 会员到期时间筛选。 */
 export type MemberFilterExpiry = 'all' | '1m' | '3m' | '6m' | '1y' | '2y';
 
+/**
+ * 会员列表排序字段（与后端 PulseMemberSortBy 对齐）。
+ *
+ * - default：默认顺序（后端门店 id 升序）
+ * - revenue：按门店累计营业额
+ * - memberCount：按门店在 purelyClub 的 C 端会员数
+ */
+export type MemberSortBy = 'default' | 'revenue' | 'memberCount';
+
+/** 排序方向（与后端 PulseMemberSortOrder 对齐）。 */
+export type MemberSortOrder = 'asc' | 'desc';
+
 /** 会员列表查询参数。 */
 export interface MemberListQuery {
   /** 搜索关键词。 */
@@ -232,6 +244,10 @@ export interface MemberListQuery {
   level: MemberFilterLevel;
   /** 到期时间筛选。 */
   expiry: MemberFilterExpiry;
+  /** 排序字段（default 时后端不下排序）。 */
+  sortBy: MemberSortBy;
+  /** 排序方向。 */
+  sortOrder: MemberSortOrder;
   /**
    * 只看「有子账号能力、但成交价快照里缺子账号加价」的门店。
    *

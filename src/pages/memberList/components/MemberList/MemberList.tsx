@@ -31,12 +31,14 @@ const MemberList: React.FC = () => {
     expiryFilter,
     pendingBackfillFilter,
     renewalPriceFilter,
+    sortBy,
     searchQuery,
     setStatusFilter,
     setLevelFilter,
     setExpiryFilter,
     setPendingBackfillFilter,
     setRenewalPriceFilter,
+    setSortBy,
     setSearchQuery,
     handleSearchClear,
     refreshMembers,
@@ -57,10 +59,10 @@ const MemberList: React.FC = () => {
     await refreshMembers();
   }, [isLoading, refreshMembers]);
 
-  // 筛选 / 搜索变化会让列表重置回第 1 页，滚动位置一并回到顶部
+  // 筛选 / 搜索 / 排序变化会让列表重置回第 1 页，滚动位置一并回到顶部
   const scrollToTopTrigger = useMemo(
-    () => [statusFilter, levelFilter, expiryFilter, pendingBackfillFilter, renewalPriceFilter, searchQuery].join('|'),
-    [statusFilter, levelFilter, expiryFilter, pendingBackfillFilter, renewalPriceFilter, searchQuery],
+    () => [statusFilter, levelFilter, expiryFilter, pendingBackfillFilter, renewalPriceFilter, sortBy, searchQuery].join('|'),
+    [statusFilter, levelFilter, expiryFilter, pendingBackfillFilter, renewalPriceFilter, sortBy, searchQuery],
   );
 
   // 清单型筛选的空态文案：说清「筛的是什么」+ 下一步动作。
@@ -115,6 +117,8 @@ const MemberList: React.FC = () => {
             onPendingBackfillChange={setPendingBackfillFilter}
             renewalPriceFilter={renewalPriceFilter}
             onRenewalPriceChange={setRenewalPriceFilter}
+            sortBy={sortBy}
+            onSortByChange={setSortBy}
           />
         </div>
 

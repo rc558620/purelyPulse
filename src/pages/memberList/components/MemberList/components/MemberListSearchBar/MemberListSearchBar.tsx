@@ -8,6 +8,7 @@ import type {
   MemberFilterExpiry,
   MemberFilterLevel,
   MemberFilterStatus,
+  MemberSortBy,
 } from '../../../../memberList.types';
 import styles from '../../../../memberList.module.less';
 
@@ -34,6 +35,16 @@ const LEVEL_OPTIONS: { label: string; value: MemberFilterLevel }[] = [
   { value: 'quarterly', label: '季卡' },
   { value: 'monthly', label: '月卡' },
   { value: 'free', label: '免费' },
+];
+
+/**
+ * 排序下拉选项：只选「按什么排」，方向固定降序。
+ * 营业额 = 门店累计营业额，会员数量 = 门店在 purelyClub 的 C 端会员数，均由后端权威排序。
+ */
+const SORT_OPTIONS: { label: string; value: MemberSortBy }[] = [
+  { value: 'default', label: '默认排序' },
+  { value: 'revenue', label: '按营业额' },
+  { value: 'memberCount', label: '按会员数量' },
 ];
 
 interface MemberListSearchBarProps {
@@ -63,6 +74,10 @@ interface MemberListSearchBarProps {
   renewalPriceFilter: boolean;
   /** 已调续费价筛选切换回调 */
   onRenewalPriceChange: (value: boolean) => void;
+  /** 当前选中的排序字段 */
+  sortBy: MemberSortBy;
+  /** 排序字段变更回调 */
+  onSortByChange: (value: MemberSortBy) => void;
 }
 
 const MemberListSearchBar: React.FC<MemberListSearchBarProps> = ({
@@ -79,10 +94,13 @@ const MemberListSearchBar: React.FC<MemberListSearchBarProps> = ({
   onPendingBackfillChange,
   renewalPriceFilter,
   onRenewalPriceChange,
+  sortBy,
+  onSortByChange,
 }) => {
   const expirySelectOptions = useMemo(() => EXPIRY_OPTIONS, []);
   const statusSelectOptions = useMemo(() => STATUS_OPTIONS, []);
   const levelSelectOptions = useMemo(() => LEVEL_OPTIONS, []);
+  const sortSelectOptions = useMemo(() => SORT_OPTIONS, []);
 
   const handleExpiryChange = (val: string | number | null | undefined): void => {
     // 清除时（val 为 null 或 undefined）重置为 'all'
@@ -107,6 +125,15 @@ const MemberListSearchBar: React.FC<MemberListSearchBarProps> = ({
       return;
     }
     onLevelChange(val as MemberFilterLevel);
+  };
+
+  const handleSortByChange = (val: string | number | null | undefined): void => {
+    // 清除时回到默认排序：'default' 不下发排序参数，后端免跑一次聚合
+    if (val == null || val === '') {
+      onSortByChange('default');
+      return;
+    }
+    onSortByChange(val as MemberSortBy);
   };
 
   return (
@@ -159,6 +186,19 @@ const MemberListSearchBar: React.FC<MemberListSearchBarProps> = ({
             placeholder="全部到期日"
             searchable={false}
             allowClear={expiryFilter !== 'all'}
+            triggerClassName={styles.expirySelectTrigger}
+          />
+        </div>
+
+        {/* 排序下拉：营业额 / 会员数量，由后端按全量结果排序后分页 */}
+        <div className={styles.searchRowSelect}>
+          <SelectView
+            options={sortSelectOptions}
+            value={sortBy}
+            onChange={handleSortByChange}
+            placeholder="默认排序"
+            searchable={false}
+            allowClear={sortBy !== 'default'}
             triggerClassName={styles.expirySelectTrigger}
           />
         </div>

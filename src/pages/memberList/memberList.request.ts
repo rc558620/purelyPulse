@@ -107,6 +107,9 @@ export const requestMemberList = async (query: MemberListQuery, page: number, pa
       status: query.status !== 'all' ? query.status : undefined,
       level: query.level !== 'all' ? query.level : undefined,
       expiry: query.expiry !== 'all' ? query.expiry : undefined,
+      // 排序：默认顺序不下发，避免后端为无排序请求白跑一次聚合
+      sortBy: query.sortBy !== 'default' ? query.sortBy : undefined,
+      sortOrder: query.sortBy !== 'default' ? query.sortOrder : undefined,
       // 待补录清单：由后端按「有子账号能力 + 缺子账号加价」筛选，前端只传开关
       ...(query.pendingSubAccountBackfill
         ? { pendingSubAccountBackfill: true }

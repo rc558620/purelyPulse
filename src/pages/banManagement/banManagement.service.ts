@@ -1,6 +1,6 @@
 // 封禁管理页：封装列表查询与封禁状态变更请求。
 import { emitMemberStatusSync, fetchMemberList, submitMemberBan, submitMemberUnban } from '../memberList/memberList.service';
-import { MEMBER_LIST_MAX_PAGE_SIZE } from '../memberList/memberList.constants';
+import { MEMBER_LIST_DEFAULT_SORT_ORDER, MEMBER_LIST_MAX_PAGE_SIZE } from '../memberList/memberList.constants';
 import type { MemberListItem, MemberListStats } from '../memberList/memberList.types';
 import type { BanManagementQuery } from './banManagement.types';
 
@@ -20,6 +20,9 @@ const buildBanManagementMemberListQuery = (query: BanManagementQuery) => ({
   pendingSubAccountBackfill: false,
   // 同样不按「已调续费价」筛选
   renewalPriceAdjusted: false,
+  // 封禁管理页固定走默认顺序
+  sortBy: 'default' as const,
+  sortOrder: MEMBER_LIST_DEFAULT_SORT_ORDER,
 });
 
 export const fetchBanManagementList = async (query: BanManagementQuery): Promise<BanManagementListResponse> => {

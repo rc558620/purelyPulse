@@ -1,5 +1,5 @@
 // 会员列表 / 详情模块共享展示常量。
-import type { MemberLevel, MemberStatus } from './memberList.types';
+import type { MemberLevel, MemberSortOrder, MemberStatus } from './memberList.types';
 
 export type PaidMemberLevel = Exclude<MemberLevel, 'free'>;
 
@@ -32,6 +32,14 @@ export const AVATAR_COLORS = [
 
 /** 会员列表默认单页条数（与后端默认值保持一致）。 */
 export const MEMBER_LIST_PAGE_SIZE = 20;
+
+/**
+ * 会员列表默认排序方向。
+ *
+ * 排序下拉只给「按什么排」，方向固定降序：运营点排序一般是找头部商家
+ *（营业额高 / 会员数多），升序属于低频诉求，暂不占一个下拉位。
+ */
+export const MEMBER_LIST_DEFAULT_SORT_ORDER: MemberSortOrder = 'desc';
 
 /** 会员列表单页最大条数（与后端上限保持一致）。 */
 export const MEMBER_LIST_MAX_PAGE_SIZE = 100;
